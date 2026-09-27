@@ -23,6 +23,7 @@ namespace MoreSailwindSails.Controls
             internal int Slot;
             internal Vector3 Position;
             internal float Radius;
+            internal WinchSeat Seat;
         }
 
         private readonly List<Reservation> entries = new List<Reservation>();
@@ -77,6 +78,61 @@ namespace MoreSailwindSails.Controls
                 return entry;
             }
             return null;
+        }
+
+        internal sealed class Claim
+        {
+            internal readonly object Owner;
+            internal readonly WinchSeat[] Seats;
+
+            internal Claim(object owner, WinchSeat[] seats)
+            {
+                Owner = owner;
+                Seats = seats;
+            }
+        }
+
+        // Check the whole transaction before touching the ledger. A failed
+        // acquisition cannot leave half a pair or consume another owner's seat.
+        internal Claim AcquireSeats(object owner, WinchSeat[] seats)
+        {
+            if (
+                owner == null
+                || seats == null
+                || seats.Length == 0
+                || seats.Any(s => s == null || !s.Valid)
+            )
+                return null;
+            for (int i = 0; i < seats.Length; i++)
+            {
+                for (int j = 0; j < i; j++)
+                    if (seats[i].Conflicts(seats[j]))
+                        return null;
+                if (
+                    entries.Any(e =>
+                        !ReferenceEquals(e.Owner, owner)
+                        && (
+                            e.Seat != null
+                                ? seats[i].Conflicts(e.Seat)
+                                : Overlap(seats[i].Position, seats[i].Radius, e.Position, e.Radius)
+                        )
+                    )
+                )
+                    return null;
+            }
+            Release(owner);
+            foreach (var seat in seats)
+                entries.Add(
+                    new Reservation
+                    {
+                        Owner = owner,
+                        Donor = seat.Identity,
+                        Position = seat.Position,
+                        Radius = seat.Radius,
+                        Seat = seat,
+                    }
+                );
+            return new Claim(owner, seats.ToArray());
         }
 
         internal void Release(object owner) =>
