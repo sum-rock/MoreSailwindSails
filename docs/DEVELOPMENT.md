@@ -467,7 +467,13 @@ shipyard:
 That session's build retried silently at one-second intervals after failure;
 its logs identify the affected sail and donor, but neither the individual blocking
 fittings nor successful recovery. The updated **0.2.1** build adds initial-placement
-and recovery messages; in-game verification of these diagnostics is pending.
+and recovery messages. A subsequent game session confirms both messages, including
+successful retries on Junk and Brig. Shroud Mk.B mount **128** (`Foremast 1 /
+Mainmast 1`) fails all three controls; mount **132** (`Mainmast 1 / Mizzen 1`)
+fails its halyard while both sheets place. All Shroud rejections are native-blocked,
+repeat after leaving the shipyard, and have no logged recovery in that session.
+These remain concrete unresolved #21 cases; the capture tool below gathers
+proposed mounting points without changing the placement policy.
 Match boat/owner instances and role between warnings and recovery messages.
 Check both sheets of the identified sail after leaving the shipyard before
 treating a warning as a currently missing control. After installation, verify
@@ -485,6 +491,50 @@ emit one contextual warning per control instance, and recover after space frees.
 Do not mark the broader #21 capacity cases resolved without their own evidence.
 
 ## Local investigation
+
+### Capturing proposed winch positions
+
+Version **0.2.1** includes an on-demand capture key, **F9** by default. After
+installing the DLL, load the boat, close menus, aim the centre of the screen at
+the desired mounting surface within **10 m**, and press **F9** once. An on-screen
+notification confirms the numbered capture; `BepInEx/LogOutput.log` records
+`Winch position capture #N` with boat identity, boat-relative surface `position`
+and `normal`, full collider object path/type, hit-model identity and distance.
+Record the capture numbers for each intended role (for example forward port and
+forward starboard sheet). Captures do not place winches or modify saves.
+
+The key is configured in `BepInEx/config/com.august.moresailwindsails.cfg`:
+
+```ini
+[Diagnostics]
+CaptureWinchPosition = F9
+```
+
+With the game closed, change the shortcut as needed; `None` disables it. The
+tool uses the main camera's centre ray. It checks ordinary world obstructions
+using the native pointer layer mask, and separately transforms the ray from each
+boat's visual model into its displaced walking model before querying that model's
+enabled, non-trigger colliders. Hits compete by distance in visual-world units,
+so nearby terrain still blocks a farther boat surface. Walking hits are mapped
+back into the same `BoatRefs` coordinates used by winch definitions. Normals use
+the inverse-transpose transform, and ray distance limits account for scaled roots.
+No colliders, transforms or physics settings are modified.
+
+Captured points describe **collision surfaces**, which may differ from visible
+rail geometry. Aim at bare structure, check the reported object, and retain a
+screenshot when needed for comparison with installed meshes. A capture is a
+surface reference; winch orientation and mounting offset still need authoring.
+The first capture build failed in-game on Shroud, reporting terrain or no hit.
+It transformed walking-model hits only after raycasting, leaving the ray in the
+visual world where most boat surfaces have no solid collider. The corrected path
+transforms the ray before collision queries. Geometry checks reproduce the miss
+against a displaced plane and verify rotated/scaled rays, returned points and
+world-distance limits. In-game verification of the correction is pending:
+check both Shroud sheet positions, a miss and
+a non-boat hit, menu suppression, a rebound key, and repeated captures of one
+spot as the boat moves. Holding the key should produce only one capture.
+
+### Installed references and logs
 
 Game directory: `/home/august/.local/share/Steam/steamapps/common/Sailwind`.
 Inspect `Sailwind_Data/Managed/Assembly-CSharp.dll`, Unity assemblies,

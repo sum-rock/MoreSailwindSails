@@ -7,6 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Controls/WinchCaptureGeometry.cs"
+      Link="Controls/WinchCaptureGeometry.cs"
+    />
+    <Compile
       Include="../../src/Compatibility/TextureCatalogOrder.cs"
       Link="Compatibility/TextureCatalogOrder.cs"
     />
