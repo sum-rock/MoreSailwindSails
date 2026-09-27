@@ -32,6 +32,14 @@
     />
     <None Update="FishermansStay/WinchMeasurements.txt" CopyToOutputDirectory="PreserveNewest" />
     <None
+      Update="FishermansStay/ShroudNativeWinchMeasurements.txt"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Update="FishermansStay/ShroudTrimMeasurements.txt"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
       Update="FishermansStay/JongNativeWinchMeasurements.txt"
       CopyToOutputDirectory="PreserveNewest"
     />

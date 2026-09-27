@@ -15,6 +15,17 @@ namespace MoreSailwindSails.Controls
             Vector3 axisPoint
         )
         {
+            if (definition.FixedSurfacePoint.HasValue)
+            {
+                var point = definition.FixedSurfacePoint.Value;
+                return new[]
+                {
+                    new WinchPlacement(
+                        point.Position + point.Normal * definition.BaseOffset,
+                        Align(definition.SourceNormal, point.Normal)
+                    ),
+                };
+            }
             float spacing = Math.Max(0.35f, radius * 2f + 0.02f);
             if (definition.SurfaceSegments != null)
                 return SurfaceCandidates(definition, origin, radius, spacing);

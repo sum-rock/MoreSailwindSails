@@ -145,6 +145,7 @@ namespace MoreSailwindSails.BoatRigs
         // changing the stay's geometry donor or its saved mounting identity.
         internal readonly int SourceMast;
         internal readonly WinchSurfaceSegment[] SurfaceSegments;
+        internal readonly WinchSurfacePoint? FixedSurfacePoint;
         internal readonly Vector3 SourceNormal;
         internal readonly float BaseOffset;
 
@@ -201,6 +202,33 @@ namespace MoreSailwindSails.BoatRigs
             SurfaceSegments = railSegments;
             SourceNormal = sourceNormal.normalized;
             BaseOffset = baseOffset;
+        }
+
+        internal WinchMountDefinition(
+            int mast,
+            WinchRole role,
+            Vector3 sourceNormal,
+            float baseOffset,
+            WinchSurfacePoint point
+        )
+            : this(mast, role, Vector3.zero, false, -1)
+        {
+            FixedSurfacePoint = point;
+            SourceNormal = sourceNormal.normalized;
+            BaseOffset = baseOffset;
+        }
+    }
+
+    // An explicitly measured contact point, independent of the control donor.
+    internal readonly struct WinchSurfacePoint
+    {
+        internal readonly Vector3 Position,
+            Normal;
+
+        internal WinchSurfacePoint(Vector3 position, Vector3 normal)
+        {
+            Position = position;
+            Normal = normal.normalized;
         }
     }
 

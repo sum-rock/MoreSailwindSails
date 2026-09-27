@@ -80,7 +80,9 @@ internal static class SurfaceWinchChecks
         foreach (var mount in boat.WinchMounts)
         {
             Check(
-                mount.OnMast || mount.SurfaceSegments?.Length > 0,
+                mount.OnMast
+                    || mount.SurfaceSegments?.Length > 0
+                    || mount.FixedSurfacePoint.HasValue,
                 "A deck/rail winch still relies on an unsupported tangent: " + boat.BoatName
             );
             if (mount.OnMast || boat.BoatName == Brig.Definition.BoatName)
@@ -120,7 +122,8 @@ internal static class SurfaceWinchChecks
                     $"Unsupported surface placement: {boat.BoatName}/{mount.Mast}/{mount.Role}."
                 );
                 Check(
-                    (candidate.Position - donor.Origin).magnitude <= 1.4011f,
+                    mount.FixedSurfacePoint.HasValue
+                        || (candidate.Position - donor.Origin).magnitude <= 1.4011f,
                     "Surface candidate exceeds bounded donor travel."
                 );
             }

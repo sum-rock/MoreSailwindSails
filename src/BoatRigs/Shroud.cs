@@ -66,14 +66,14 @@ namespace MoreSailwindSails.BoatRigs
                     WinchRole.Left,
                     new Vector3(-0.006981f, 0.999976f, -0.000000f),
                     0.076685f,
-                    MainRail(WinchRole.Left)
+                    MainSheetPoint(WinchRole.Left)
                 ),
                 new WinchMountDefinition(
                     24,
                     WinchRole.Right,
                     new Vector3(-0.006981f, 0.999976f, -0.000000f),
                     0.076685f,
-                    MainRail(WinchRole.Right)
+                    MainSheetPoint(WinchRole.Right)
                 ),
                 new WinchMountDefinition(
                     25,
@@ -91,35 +91,13 @@ namespace MoreSailwindSails.BoatRigs
                 ),
             };
 
-        // Measured solid support: Clipper_Upper_Trim.
-        private static WinchSurfaceSegment[] MainRail(WinchRole role) =>
-            role == WinchRole.Left
-                ? new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(-3.125180f, 5.713330f, -8.093550f),
-                        new Vector3(-2.981270f, 5.760250f, -9.246100f),
-                        new Vector3(-0.004320f, 0.999185f, 0.040137f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-3.297550f, 5.699420f, -6.818345f),
-                        new Vector3(-3.125180f, 5.713330f, -8.093550f),
-                        new Vector3(-0.001157f, 0.999942f, 0.010751f)
-                    ),
-                }
-                : new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(3.297610f, 5.699420f, -6.818345f),
-                        new Vector3(3.125240f, 5.713330f, -8.093550f),
-                        new Vector3(0.001157f, 0.999942f, 0.010751f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(3.125240f, 5.713330f, -8.093550f),
-                        new Vector3(2.981330f, 5.760240f, -9.246100f),
-                        new Vector3(0.004319f, 0.999185f, 0.040129f)
-                    ),
-                };
+        // Captures 1/3 centred across the visible Clipper_Upper_Trim cap and
+        // mirrored at their mean longitudinal position. The collider is 1 cm lower.
+        private static WinchSurfacePoint MainSheetPoint(WinchRole role) =>
+            new WinchSurfacePoint(
+                new Vector3(role == WinchRole.Left ? -3.465970f : 3.465970f, 4.829765f, -3.901223f),
+                Vector3.up
+            );
 
         // Measured solid support: Clipper_Upper_Trim.
         private static WinchSurfaceSegment[] AftRail(WinchRole role) =>

@@ -1,0 +1,99 @@
+# Installed Shattered Seas 0.1.3 veil piercer prefab, 2026-09-26. Numeric measurements only.
+# BoatRefs frame; all 95 sphere fittings plus the mesh-collider anchor; includes inactive variants.
+# path|boat-local position|padded interaction radius|default hierarchy active
+shroud large/Winches and Blocks/Foremast Center Sheet Coils/Coil_Foremast_Center_1|-0.179688,4.502000,4.056154|0.185000|1
+shroud large/Winches and Blocks/Foremast Center Sheet Coils/Coil_Foremast_Center_2|0.179687,4.502000,4.056154|0.185000|1
+shroud large/Winches and Blocks/Foremast Center Sheet Coils/Coil_Foremast_Center_3|0.535156,4.502000,4.056154|0.185000|1
+shroud large/Winches and Blocks/Foremast Center Sheet Coils/Coil_Foremast_Center_4|-0.535157,4.502000,4.056154|0.185000|1
+shroud large/Winches and Blocks/Foremast Center Sheet Coils/Coil_Foremast_Center_5|0.875000,4.502000,4.056154|0.185000|1
+shroud large/Winches and Blocks/Foremast Center Sheet Coils/Coil_Foremast_Center_6|-0.890626,4.502000,4.056154|0.185000|1
+shroud large/Winches and Blocks/Foremast Center Sheet Coils/Coil_Foremast_Center_7|-0.020001,4.723000,3.819122|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Jib Reefs/Coil_Foremast_Jib_Reef_1|0.808592,4.792000,12.295904|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Jib Reefs/Coil_Foremast_Jib_Reef_2|0.808592,4.792000,12.831060|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Jib Reefs/Coil_Foremast_Jib_Reef_3|0.492186,4.792000,12.827154|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Jib Reefs/Coil_Foremast_Jib_Reef_4|0.160155,4.792000,12.827154|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Jib Reefs/Coil_Foremast_Jib_Reef_5|0.222655,4.974000,12.559088|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Jib Reefs/Coil_Foremast_Jib_Reef_6|0.492186,4.792000,12.280767|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Jib Reefs/Coil_Foremast_Jib_Reef_7|0.160155,4.792000,12.280767|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Main Reefs/Coil_Foremast_Reef_1|-0.828127,4.826000,12.288091|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Main Reefs/Coil_Foremast_Reef_2|-0.828127,4.826000,12.819830|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Main Reefs/Coil_Foremast_Reef_3|-0.507814,4.811000,12.823248|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Main Reefs/Coil_Foremast_Reef_4|-0.183596,4.792000,12.815924|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Main Reefs/Coil_Foremast_Reef_5|-0.230471,4.974000,12.559088|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Main Reefs/Coil_Foremast_Reef_6|-0.507814,4.811000,12.284185|0.185000|1
+shroud large/Winches and Blocks/Foremast Reef Coils/Main Reefs/Coil_Foremast_Reef_7|-0.183595,4.792000,12.291998|0.185000|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Foremast_Halyard_Left|-3.438001,4.365000,6.185000|0.316078|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Foremast_Halyard_Right|3.437500,4.365000,6.185062|0.316078|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Left_1|-2.969002,4.976000,11.081001|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Left_2|-2.894533,4.980924,11.540530|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Left_3|-2.820314,4.995000,12.041002|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Left_4|-2.680002,5.013000,12.746002|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Left_5|-2.582002,5.025000,13.200001|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Left_6|-2.504002,5.055000,13.625001|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Left_7|-2.414002,5.073000,14.061001|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Right_1|2.968999,4.976000,11.081002|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Right_2|2.894530,4.980924,11.540531|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Right_3|2.820311,4.995000,12.041021|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Right_4|2.679999,5.013000,12.746002|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Right_5|2.581999,5.025000,13.200002|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Right_6|2.503905,5.055000,13.625006|0.254863|1
+shroud large/Winches and Blocks/Foremast_0_Sheet Winches/Jib Halyards/Foremast_Halyard_Jib_Right_7|2.414061,5.073000,14.061041|0.254863|1
+shroud large/Winches and Blocks/Mainmast Center Sheet Coils/Coil_Mainmast_Center_1|-0.183688,4.502000,0.014968|0.185000|1
+shroud large/Winches and Blocks/Mainmast Center Sheet Coils/Coil_Mainmast_Center_2|0.175688,4.502000,0.014968|0.185000|1
+shroud large/Winches and Blocks/Mainmast Center Sheet Coils/Coil_Mainmast_Center_3|-0.539156,4.502000,0.014968|0.185000|1
+shroud large/Winches and Blocks/Mainmast Center Sheet Coils/Coil_Mainmast_Center_4|0.531156,4.502000,0.014968|0.185000|1
+shroud large/Winches and Blocks/Mainmast Center Sheet Coils/Coil_Mainmast_Center_5|-0.879000,4.502000,0.014968|0.185000|1
+shroud large/Winches and Blocks/Mainmast Center Sheet Coils/Coil_Mainmast_Center_6|0.886625,4.502000,0.014968|0.185000|1
+shroud large/Winches and Blocks/Mainmast Center Sheet Coils/Coil_Mainmast_Center_7|-0.012000,4.723000,0.252000|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Jib Reefs/Coil_Mainmast_Jib_Reef_1|0.265625,4.549400,1.758302|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Jib Reefs/Coil_Mainmast_Jib_Reef_2|0.269531,4.533900,2.077149|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Jib Reefs/Coil_Mainmast_Jib_Reef_3|0.261718,4.515000,2.403321|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Jib Reefs/Coil_Mainmast_Jib_Reef_4|0.273437,4.515000,2.745607|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Jib Reefs/Coil_Mainmast_Jib_Reef_5|0.273437,4.515000,3.077150|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Jib Reefs/Coil_Mainmast_Jib_Reef_6|0.257812,4.515000,3.395509|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Jib Reefs/Coil_Mainmast_Jib_Reef_7|0.027343,4.697000,2.806154|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Main Reefs/Coil_Mainmast_Reef_1|-0.265625,4.549400,1.758301|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Main Reefs/Coil_Mainmast_Reef_2|-0.269532,4.533900,2.077149|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Main Reefs/Coil_Mainmast_Reef_3|-0.261719,4.515000,2.403321|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Main Reefs/Coil_Mainmast_Reef_4|-0.273438,4.515000,2.745607|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Main Reefs/Coil_Mainmast_Reef_5|-0.273438,4.515000,3.077150|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Main Reefs/Coil_Mainmast_Reef_6|-0.277344,4.515000,3.395997|0.185000|1
+shroud large/Winches and Blocks/Mainmast Reef Coils/Main Reefs/Coil_Mainmast_Reef_7|0.027343,4.697000,2.358888|0.185000|1
+shroud large/Winches and Blocks/Mainmast_0_Sheet Winches/Mainmast Jib Halyards/Mainmast_Jib_Sheet_Left_1|-3.101563,5.756000,-8.138187|0.254863|1
+shroud large/Winches and Blocks/Mainmast_0_Sheet Winches/Mainmast Jib Halyards/Mainmast_Jib_Sheet_Left_2|-3.164063,5.756000,-7.681156|0.254863|1
+shroud large/Winches and Blocks/Mainmast_0_Sheet Winches/Mainmast Jib Halyards/Mainmast_Jib_Sheet_Left_3|-3.223099,5.756000,-7.237001|0.254863|1
+shroud large/Winches and Blocks/Mainmast_0_Sheet Winches/Mainmast Jib Halyards/Mainmast_Jib_Sheet_Right_1|3.101565,5.756000,-8.138186|0.254863|1
+shroud large/Winches and Blocks/Mainmast_0_Sheet Winches/Mainmast Jib Halyards/Mainmast_Jib_Sheet_Right_2|3.164064,5.756000,-7.681155|0.254863|1
+shroud large/Winches and Blocks/Mainmast_0_Sheet Winches/Mainmast Jib Halyards/Mainmast_Jib_Sheet_Right_3|3.222658,5.756000,-7.236818|0.254863|1
+shroud large/Winches and Blocks/Mainmast_0_Sheet Winches/Mainmast_Halyard_Left|-2.812500,5.310000,-9.593265|0.316078|1
+shroud large/Winches and Blocks/Mainmast_0_Sheet Winches/Mainmast_Halyard_Right|2.812502,5.310000,-9.599612|0.316078|1
+shroud large/Winches and Blocks/Mizzenmast Center Sheet Coils/Coil_Mizzen_Center_1|0.179689,5.831000,-13.632970|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Center Sheet Coils/Coil_Mizzen_Center_2|-0.179686,5.831000,-13.632970|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Center Sheet Coils/Coil_Mizzen_Center_3|0.535158,5.831000,-13.632970|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Center Sheet Coils/Coil_Mizzen_Center_4|-0.535154,5.831000,-13.632970|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Center Sheet Coils/Coil_Mizzen_Center_5|0.875002,5.831000,-13.632970|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Center Sheet Coils/Coil_Mizzen_Center_6|-0.890623,5.831000,-13.632970|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Center Sheet Coils/Coil_Mizzen_Center_7|-0.007998,6.052000,-13.870002|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Jib Reef/Coil_Mizzenmast_Jib_Reef_1|0.265627,5.741400,-11.617191|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Jib Reef/Coil_Mizzenmast_Jib_Reef_2|0.269533,5.725900,-11.298343|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Jib Reef/Coil_Mizzenmast_Jib_Reef_3|0.261720,5.707000,-10.972171|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Jib Reef/Coil_Mizzenmast_Jib_Reef_4|0.273439,5.707000,-10.629886|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Jib Reef/Coil_Mizzenmast_Jib_Reef_5|0.273439,5.707000,-10.298343|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Jib Reef/Coil_Mizzenmast_Jib_Reef_6|0.257814,5.707000,-9.979984|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Jib Reef/Coil_Mizzenmast_Jib_Reef_7|0.027345,5.889000,-11.019535|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Main Reef/Coil_Mizzenmast_Reef_1|-0.265623,5.741400,-11.617191|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Main Reef/Coil_Mizzenmast_Reef_2|-0.269530,5.725900,-11.298343|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Main Reef/Coil_Mizzenmast_Reef_3|-0.261717,5.707000,-10.972171|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Main Reef/Coil_Mizzenmast_Reef_4|-0.273436,5.707000,-10.629886|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Main Reef/Coil_Mizzenmast_Reef_5|-0.273436,5.707000,-10.298343|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Main Reef/Coil_Mizzenmast_Reef_6|0.027345,5.889000,-10.559085|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast Reef Coils/Main Reef/Coil_Mizzenmast_Reef_7|-0.277342,5.707000,-9.979495|0.185000|1
+shroud large/Winches and Blocks/Mizzenmast_0_Sheet Winches/Foremast_Halyard_Left|-1.714998,5.718000,-15.747955|0.316078|1
+shroud large/Winches and Blocks/Mizzenmast_0_Sheet Winches/Foremast_Halyard_Right|1.715003,5.718000,-15.747955|0.316078|1
+shroud large/Winches and Blocks/Mizzenmast_0_Sheet Winches/Mizzenmast Jib Sheet Winches/Mizzen_Jib_Sheet_Left_1|-2.148437,6.168000,-14.636236|0.254863|1
+shroud large/Winches and Blocks/Mizzenmast_0_Sheet Winches/Mizzenmast Jib Sheet Winches/Mizzen_Jib_Sheet_Left_2|-2.238280,6.133000,-14.189947|0.254863|1
+shroud large/Winches and Blocks/Mizzenmast_0_Sheet Winches/Mizzenmast Jib Sheet Winches/Mizzen_Jib_Sheet_Left_3|-2.339843,6.116000,-13.737798|0.254863|1
+shroud large/Winches and Blocks/Mizzenmast_0_Sheet Winches/Mizzenmast Jib Sheet Winches/Mizzen_Jib_Sheet_Right_1|2.148440,6.168000,-14.636235|0.254863|1
+shroud large/Winches and Blocks/Mizzenmast_0_Sheet Winches/Mizzenmast Jib Sheet Winches/Mizzen_Jib_Sheet_Right_2|2.238284,6.133000,-14.189946|0.254863|1
+shroud large/Winches and Blocks/Mizzenmast_0_Sheet Winches/Mizzenmast Jib Sheet Winches/Mizzen_Jib_Sheet_Right_3|2.340003,6.116000,-13.737955|0.254863|1
+shroud large/anchor_winch|0.093998,4.376000,15.279002|1.507612|1

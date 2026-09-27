@@ -324,8 +324,9 @@ stay variants do not. Release unused reservations and rebind on donor changes
 without destroying sail-owned controllers. Reposition the parent mount, never
 the wheel whose local rotation drives input.
 
-Eight profiles contain **180** donor/role mappings: **46** mast and **134** bounded
-surface mappings. Native winch datums supply attachment radius/facing; mast
+Eight profiles contain **180** donor/role mappings: **46** mast, **132** bounded
+surface strips and **2** fixed surface points. Native winch datums supply
+attachment radius/facing; mast
 collider axes identify spar direction, but sail-space collider ends are not
 physical spar ends. Deck-facing coils use measured supporting surfaces.
 
@@ -338,6 +339,10 @@ physical spar ends. Deck-facing coils use measured supporting surfaces.
   donor-specific mesh-base offsets within **1.401 m** of the donor. Include safe
   strip ends inset by interaction radius. Native fittings and reserved controls
   exclude candidates. Never restore unsupported surface-tangent offsets.
+- Explicit fixed points supply a measured contact position and normal, plus the
+  existing donor-specific mounting offset. They produce one candidate independent
+  of donor distance; native clearance and custom reservations still apply. A
+  blocked fixed point hides/retries through the same control lifecycle.
 - Exhaustion hides the control, logs once and retries while retaining its
   controller. The warning identifies boat/owner instances, stay or mast,
   requested and resolved donor mast, role, source instance, boat-local origin,
@@ -389,6 +394,33 @@ extra sheet per side, including the logged neighboring Flying Sail between masts
 **2–3**, which shares reef donor **2** with the foremast staysail. More custom
 sails sharing the foremast sheet space can still exhaust it; hidden controls
 retain their controllers and retry when reservations are released.
+
+### Shroud forward sheets (#21)
+
+F9 captures **1** and **3** selected opposite sides of `Hull Trim 1` near
+Z **−3.901223**. The forward sheet mappings **24/Left** and **24/Right** now use
+fixed surface contacts **(±3.465970, 4.829765, −3.901223)**, centred across the
+visible trim cap at the captures' mean longitudinal position. Both normals point
+up. The retained **0.076685 m** base offset puts their pivots at Y **4.906450**.
+The rendered cap is approximately **1 cm** above the captured walking collider;
+painted and unpainted cap measurements agree within **0.1 mm** at these points.
+
+The native donors remain mast **24**. All four mutually exclusive fore/main stay
+variants **128–131** share this pair. These positions are about **3.45 m** from
+their donors, so they use explicit fixed points rather than expanding the generic
+**1.401 m** strip search. Each side has one slot. The existing native clearance
+and reservation rules remain in effect; the halyard mappings and aft sheets are
+unchanged. Shroud halyards remain unresolved #21 cases.
+
+`ShroudNativeWinchMeasurements.txt` records **96** prefab fittings: **95** sphere
+controls and the mesh-collider anchor, conservatively including inactive options.
+`ShroudTrimMeasurements.txt` records the cap's inner/outer edges for both finishes;
+`WinchSurfaceMeasurements.txt` also retains the former rail faces to reproduce
+the original sheet exhaustion and includes measured support faces for the new
+points. Checks cover centring, exact symmetry, mounting height/normal, clearance,
+donor independence, exhaustion and release/retry. In-game confirmation of the new
+pair is pending: verify appearance, reach and independent operation after loading
+and leaving the shipyard. Automated checks do not establish runtime accessibility.
 
 ### Asset provenance and measurement fixtures
 
@@ -529,10 +561,11 @@ It transformed walking-model hits only after raycasting, leaving the ray in the
 visual world where most boat surfaces have no solid collider. The corrected path
 transforms the ray before collision queries. Geometry checks reproduce the miss
 against a displaced plane and verify rotated/scaled rays, returned points and
-world-distance limits. In-game verification of the correction is pending:
-check both Shroud sheet positions, a miss and
-a non-boat hit, menu suppression, a rebound key, and repeated captures of one
-spot as the boat moves. Holding the key should produce only one capture.
+world-distance limits. Subsequent in-game captures **1** and **3** successfully
+recorded the Shroud's opposite `Hull Trim 1` surfaces and supplied the fixed-sheet
+locations above. Broader capture checks remain pending: a miss, a non-boat hit,
+menu suppression, a rebound key, and repeated captures of one spot as the boat
+moves. Holding the key should produce only one capture.
 
 ### Installed references and logs
 

@@ -164,6 +164,7 @@ internal static class WinchChecks
             var normal = Parse(fields[4]).normalized;
             Check(
                 definition.SurfaceSegments != null
+                    || definition.FixedSurfacePoint.HasValue
                     || Math.Abs(Vector3.Dot(normal, definition.Direction)) < 0.12f,
                 "Mounting travel leaves the donor's surface: " + line
             );
@@ -176,7 +177,7 @@ internal static class WinchChecks
                 axisPoint
             );
             Check(
-                candidates.Length >= (definition.SurfaceSegments == null ? 4 : 1),
+                candidates.Length >= (definition.OnMast ? 4 : 1),
                 "A measured winch has too few mounting candidates: " + line
             );
             var sourceRadial = Vector3.ProjectOnPlane(origin - axisPoint, definition.Direction);
@@ -206,7 +207,10 @@ internal static class WinchChecks
                         "Mast fitting escaped its bounded height band."
                     );
                 }
-                else if (definition.SurfaceSegments == null)
+                else if (
+                    definition.SurfaceSegments == null
+                    && !definition.FixedSurfacePoint.HasValue
+                )
                 {
                     Check(
                         delta.magnitude >= 0.34f && delta.magnitude <= 1.401f,
@@ -231,7 +235,8 @@ internal static class WinchChecks
             // mesh radius; require one extra slot in the existing height band.
             // Retain the three-slot requirement for the older mast fittings.
             int minimum =
-                definition.SurfaceSegments != null ? 2
+                definition.FixedSurfacePoint.HasValue ? 1
+                : definition.SurfaceSegments != null ? 2
                 : fields[0] == LargeDhow.Definition.BoatName ? 1
                 : 3;
             for (int i = 0; i < minimum; i++)
@@ -255,6 +260,7 @@ internal static class WinchChecks
         SurfaceWinchChecks.Run();
         LargeDhowWinchChecks.Run();
         JongWinchChecks.Run();
+        ShroudWinchChecks.Run();
         Console.WriteLine(
             $"PASS: shared winch allocation, release, donor changes, bounded placement and {measured} installed donor datums across eight boats. Surface accessibility and Unity lifecycle require in-game validation."
         );
