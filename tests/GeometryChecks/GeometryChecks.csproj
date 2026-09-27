@@ -6,6 +6,7 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <None Update="FishermansStay/NativeWinchSeats.txt" CopyToOutputDirectory="PreserveNewest" />
     <Compile
       Include="../../src/Controls/WinchCaptureGeometry.cs"
       Link="Controls/WinchCaptureGeometry.cs"

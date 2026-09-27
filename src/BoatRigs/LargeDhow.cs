@@ -10,8 +10,28 @@ namespace MoreSailwindSails.BoatRigs
             Supports(),
             Stays(),
             MastParents(),
-            WinchMounts()
+            WinchMounts(),
+            SheetCategories()
         );
+
+        // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
+        private static SheetWinchCategory[] SheetCategories() =>
+            new[]
+            {
+                new SheetWinchCategory(
+                    "Foremast",
+                    new[] { 0, 1 },
+                    new[] { 0, 1, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31 },
+                    null
+                ),
+                new SheetWinchCategory(
+                    "Mainmast",
+                    new[] { 2, 4 },
+                    new[] { 2, 4, 3, 5, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43 },
+                    null
+                ),
+                new SheetWinchCategory("Mizzenmast", new[] { 6, 7, 8 }, new[] { 6, 7, 8 }, null),
+            };
 
         private static MastSupportDefinition[] Supports() =>
             new[]

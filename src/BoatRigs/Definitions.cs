@@ -277,13 +277,15 @@ namespace MoreSailwindSails.BoatRigs
         internal readonly FishermansStayGroupDefinition[] Stays;
         internal readonly IReadOnlyDictionary<int, int> MastParents;
         internal readonly WinchMountDefinition[] WinchMounts;
+        internal readonly SheetWinchCategory[] SheetCategories;
 
         internal BoatRigDefinition(
             string boatName,
             MastSupportDefinition[] supports,
             FishermansStayGroupDefinition[] stays,
             IReadOnlyDictionary<int, int> mastParents,
-            WinchMountDefinition[] winchMounts
+            WinchMountDefinition[] winchMounts,
+            SheetWinchCategory[] sheetCategories = null
         )
         {
             if (
@@ -309,6 +311,15 @@ namespace MoreSailwindSails.BoatRigs
                 mastParents.ToDictionary(p => p.Key, p => p.Value)
             );
             WinchMounts = winchMounts;
+            SheetCategories = sheetCategories ?? Array.Empty<SheetWinchCategory>();
+            if (
+                SheetCategories
+                    .SelectMany(c => c.PhysicalMasts)
+                    .GroupBy(id => id)
+                    .Any(g => g.Count() != 1)
+                || SheetCategories.GroupBy(c => c.Name).Any(g => g.Count() != 1)
+            )
+                throw new ArgumentException("Duplicate physical winch category.");
             foreach (int section in MastParents.Keys)
                 Sections(section); // Reject cycles before any runtime lookup can hang.
         }
@@ -333,6 +344,12 @@ namespace MoreSailwindSails.BoatRigs
                     throw new ArgumentException("No authored staysail mast reference.");
             }
             return sections.ToArray();
+        }
+
+        internal SheetWinchCategory SheetCategory(int mast)
+        {
+            int physical = MastParents.ContainsKey(mast) ? Base(mast) : mast;
+            return SheetCategories.FirstOrDefault(c => c.PhysicalMasts.Contains(physical));
         }
 
         internal WinchMountDefinition WinchMount(int mast, WinchRole role) =>
