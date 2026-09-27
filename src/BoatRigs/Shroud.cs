@@ -33,34 +33,10 @@ namespace MoreSailwindSails.BoatRigs
         private static WinchMountDefinition[] WinchMounts() =>
             new[]
             {
-                new WinchMountDefinition(
-                    7,
-                    WinchRole.Reef,
-                    new Vector3(0.913644f, -0.390731f, -0.112181f),
-                    0.088011f,
-                    MainReefBeam()
-                ),
-                new WinchMountDefinition(
-                    8,
-                    WinchRole.Reef,
-                    new Vector3(0.913644f, -0.390731f, -0.112181f),
-                    0.088011f,
-                    MainReefBeam()
-                ),
-                new WinchMountDefinition(
-                    9,
-                    WinchRole.Reef,
-                    new Vector3(0.913644f, -0.390731f, -0.112181f),
-                    0.088011f,
-                    AftReefBeam()
-                ),
-                new WinchMountDefinition(
-                    10,
-                    WinchRole.Reef,
-                    new Vector3(0.913644f, -0.390731f, -0.112181f),
-                    0.088011f,
-                    AftReefBeam()
-                ),
+                new WinchMountDefinition(7, WinchRole.Reef, 0.14f, ReefPins("Mainmast", false)),
+                new WinchMountDefinition(8, WinchRole.Reef, 0.14f, ReefPins("Mainmast", false)),
+                new WinchMountDefinition(9, WinchRole.Reef, 0.14f, ReefPins("Mizzenmast", true)),
+                new WinchMountDefinition(10, WinchRole.Reef, 0.14f, ReefPins("Mizzenmast", true)),
                 new WinchMountDefinition(
                     24,
                     WinchRole.Left,
@@ -139,27 +115,18 @@ namespace MoreSailwindSails.BoatRigs
                     ),
                 };
 
-        // Measured solid support: Halyard_Points/Cube.004 or Cube.005.
-        private static WinchSurfaceSegment[] MainReefBeam() =>
-            new[]
+        // Six seats on each side of each existing rack. Mizzen main reef 6 is
+        // on top of the beam; number 7 is its sixth side pin instead.
+        private static string[] ReefPins(string mast, bool mizzen)
+        {
+            var pins = new string[12];
+            for (int i = 0; i < 6; i++)
             {
-                new WinchSurfaceSegment(
-                    new Vector3(0.000000f, 4.588700f, 3.500000f),
-                    new Vector3(0.000000f, 4.588700f, 1.650000f),
-                    new Vector3(-0.000000f, 1.000000f, -0.000000f)
-                ),
-            };
-
-        // Measured solid support: Halyard_Points/Cube.004 or Cube.005.
-        private static WinchSurfaceSegment[] AftReefBeam() =>
-            new[]
-            {
-                new WinchSurfaceSegment(
-                    new Vector3(0.000000f, 5.776000f, -9.880000f),
-                    new Vector3(0.000000f, 5.776000f, -11.720000f),
-                    new Vector3(-0.000000f, 1.000000f, -0.000000f)
-                ),
-            };
+                pins[i] = "Coil_" + mast + "_Reef_" + (mizzen && i == 5 ? 7 : i + 1);
+                pins[i + 6] = "Coil_" + mast + "_Jib_Reef_" + (i + 1);
+            }
+            return pins;
+        }
 
         // Authored from installed Shroud and Shipyard Expansion assets.
         // Endpoint vectors are local to the named physical mast section.

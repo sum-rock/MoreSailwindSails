@@ -324,8 +324,9 @@ stay variants do not. Release unused reservations and rebind on donor changes
 without destroying sail-owned controllers. Reposition the parent mount, never
 the wheel whose local rotation drives input.
 
-Eight profiles contain **180** donor/role mappings: **46** mast, **132** bounded
-surface strips and **2** fixed surface points. Native winch datums supply
+Eight profiles contain **180** donor/role mappings: **46** mast, **128** bounded
+surface strips, **2** fixed surface points and **4** native pin-bank mappings.
+Native winch datums supply
 attachment radius/facing; mast
 collider axes identify spar direction, but sail-space collider ends are not
 physical spar ends. Deck-facing coils use measured supporting surfaces.
@@ -343,6 +344,10 @@ physical spar ends. Deck-facing coils use measured supporting surfaces.
   existing donor-specific mounting offset. They produce one candidate independent
   of donor distance; native clearance and custom reservations still apply. A
   blocked fixed point hides/retries through the same control lifecycle.
+- Shroud halyards use authored native pin banks. Only those named native coils
+  may lend their seats while hidden; other mappings still protect unused native
+  fittings. Borrowed pins follow the native position/orientation and yield when
+  their native coil is shown. See the Shroud halyard details below.
 - Exhaustion hides the control, logs once and retries while retaining its
   controller. The warning identifies boat/owner instances, stay or mast,
   requested and resolved donor mast, role, source instance, boat-local origin,
@@ -409,8 +414,10 @@ The native donors remain mast **24**. All four mutually exclusive fore/main stay
 variants **128–131** share this pair. These positions are about **3.45 m** from
 their donors, so they use explicit fixed points rather than expanding the generic
 **1.401 m** strip search. Each side has one slot. The existing native clearance
-and reservation rules remain in effect; the halyard mappings and aft sheets are
-unchanged. Shroud halyards remain unresolved #21 cases.
+and reservation rules remain in effect; aft sheet placement is unchanged.
+Later runtime logs confirm these fixed sheet positions and recovery after
+temporary shipyard contention. Visual centring and accessibility still require
+user confirmation; the halyard correction below needs its own in-game check.
 
 `ShroudNativeWinchMeasurements.txt` records **96** prefab fittings: **95** sphere
 controls and the mesh-collider anchor, conservatively including inactive options.
@@ -421,6 +428,45 @@ points. Checks cover centring, exact symmetry, mounting height/normal, clearance
 donor independence, exhaustion and release/retry. In-game confirmation of the new
 pair is pending: verify appearance, reach and independent operation after loading
 and leaving the shipyard. Automated checks do not establish runtime accessibility.
+
+### Shroud halyards (#21)
+
+The racks already have native coils assigned to their side pins. Native
+`GPButtonRopeWinch.ShowWinch(false)` hides both renderer and collider while leaving
+the object active. The previous generic obstruction policy reserved those hidden
+coils too, and the top-of-beam search could exhaust despite visibly empty pins.
+
+Reef mappings **7/8** now share the mainmast's twelve side-pin seats; **9/10**
+share the mizzen's twelve. Each bank names the existing native coil controls:
+mainmast left/right rows **1–6**; mizzen left **1–5, 7**, right **1–6**. Mizzen
+left **6** and the other **7** controls sit on the beam top, not side pins, and
+are excluded. Lookup includes inactive hierarchy objects without activating them
+or depending on `Mast.Awake` registration. Missing pin references do not cause
+stay registration rollback; an empty bank retains the controller and reports
+placement exhaustion.
+
+Custom halyards clone their usual donor, borrowing only a pin's live position
+and orientation. An active native pin is occupied if either its renderer or
+collider is enabled. Otherwise it is available subject to custom reservations
+and surrounding fittings. For these named pins only, allocation clearance uses
+**0.14 m** per coil instead of the **0.185 m** interaction-radius estimate: this
+fits the native **0.318 m or greater** pin spacing with over **2 cm** between
+allocation footprints. Actual input colliders are unchanged. Unlisted fittings
+retain their existing clearance and protection.
+
+The selected native coil is checked every refresh. If a native sail needs it,
+the custom control releases the seat and tries another unused pin; existing
+controllers survive exhaustion and retry. Stable reservations do not move just
+because another pin becomes free. Success messages include `pin=<name>#<id>`;
+reassignment logs the new pin. Both custom sail families share reservations.
+
+Geometry checks use the 96-fitting fixture to validate both banks, adjacent
+spacing, mixed-family allocation, native reclaim and full-bank exhaustion/retry.
+Assembly checks verify the installed visibility contract and runtime recheck.
+Live validation is pending: after Brig smoke checks, fit both Shroud staysails,
+operate both halyards, add/remove native sails using the borrowed pins, and repeat
+after leaving the shipyard and save/load. Confirm seating, reach and input
+selection on adjacent pins in-game before treating the Shroud #21 case as closed.
 
 ### Asset provenance and measurement fixtures
 

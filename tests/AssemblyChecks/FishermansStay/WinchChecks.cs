@@ -127,6 +127,40 @@ internal static class WinchChecks
         if (!suspend.Any(m => m.Name == "Release") || !suspend.Any(m => m.Name == "SetActive"))
             throw new Exception("Unused controls must be inactive and release allocation.");
         var refresh = owned.GetMethod("Refresh", all);
+        // Reuse relies on the installed ShowWinch visibility contract, not merely
+        // whether a native coil's GameObject exists or remains active.
+        var show = source.ReturnType.GetMethod("ShowWinch", all);
+        var occupied = manager.GetMethod("PinOccupied", all);
+        foreach (string component in new[] { "Renderer", "Collider" })
+        {
+            if (
+                !CalledMethods(show)
+                    .Any(m => m.Name == "set_enabled" && m.DeclaringType.Name == component)
+                || !CalledMethods(occupied)
+                    .Any(m => m.Name == "get_enabled" && m.DeclaringType.Name == component)
+            )
+                throw new Exception(
+                    "Pin availability must follow native ShowWinch's renderer/collider visibility."
+                );
+        }
+        if (
+            !CalledMethods(refresh).Contains(occupied)
+            || !CalledMethods(manager.GetMethod("Obstructed", all)).Contains(occupied)
+        )
+            throw new Exception(
+                "Borrowed pins must check native occupancy during allocation and while reserved."
+            );
+        var pinPlacement = CalledMethods(owned.GetMethod("PinPlacements", all)).ToArray();
+        if (
+            !pinPlacement.Any(m => m.Name == "get_position")
+            || !pinPlacement.Any(m => m.Name == "get_rotation")
+            || pinPlacement.Any(m =>
+                m.Name is "SetActive" or "SetParent" or "set_position" or "set_rotation"
+            )
+        )
+            throw new Exception(
+                "Pin placement must read native seating transforms without moving or activating donors."
+            );
         if (
             !CalledMethods(refresh).Any(m => m.Name == "PlacementContext")
             || !CalledMethods(refresh)
@@ -155,6 +189,9 @@ internal static class WinchChecks
             throw new Exception("Stay-owned vanilla controls bypass the shared clone factory.");
         Console.WriteLine(
             "PASS: structural winch checks for common clone setup, mounting/input separation and all three ownership paths; Unity activation, handles and outlines are not executed."
+        );
+        Console.WriteLine(
+            "PASS (structural): borrowed-pin visibility matches installed ShowWinch, is rechecked while reserved, and uses native seating transforms without mutating donors."
         );
     }
 }

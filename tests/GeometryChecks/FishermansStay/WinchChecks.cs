@@ -160,6 +160,13 @@ internal static class WinchChecks
             var fields = line.Split('|');
             var role = (WinchRole)Enum.Parse(typeof(WinchRole), fields[2], true);
             var definition = BoatRigCatalog.Find(fields[0]).WinchMount(int.Parse(fields[1]), role);
+            // Native pin seats use live transforms/visibility, covered separately
+            // against the complete Shroud fixture and native ShowWinch contract.
+            if (definition.PinNames != null)
+            {
+                measured++;
+                continue;
+            }
             var origin = Parse(fields[3]);
             var normal = Parse(fields[4]).normalized;
             Check(
@@ -261,6 +268,7 @@ internal static class WinchChecks
         LargeDhowWinchChecks.Run();
         JongWinchChecks.Run();
         ShroudWinchChecks.Run();
+        ShroudPinChecks.Run();
         Console.WriteLine(
             $"PASS: shared winch allocation, release, donor changes, bounded placement and {measured} installed donor datums across eight boats. Surface accessibility and Unity lifecycle require in-game validation."
         );

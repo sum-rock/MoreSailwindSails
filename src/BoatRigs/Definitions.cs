@@ -146,6 +146,8 @@ namespace MoreSailwindSails.BoatRigs
         internal readonly int SourceMast;
         internal readonly WinchSurfaceSegment[] SurfaceSegments;
         internal readonly WinchSurfacePoint? FixedSurfacePoint;
+        internal readonly string[] PinNames;
+        internal readonly float PinRadius;
         internal readonly Vector3 SourceNormal;
         internal readonly float BaseOffset;
 
@@ -216,6 +218,22 @@ namespace MoreSailwindSails.BoatRigs
             FixedSurfacePoint = point;
             SourceNormal = sourceNormal.normalized;
             BaseOffset = baseOffset;
+        }
+
+        // Existing native coils mark real pin seats; hidden controls can lend
+        // their positions to custom halyards without moving the native fitting.
+        internal WinchMountDefinition(
+            int mast,
+            WinchRole role,
+            float pinRadius,
+            params string[] pins
+        )
+            : this(mast, role, Vector3.zero, false, -1)
+        {
+            if (pinRadius <= 0f || pins == null || pins.Length == 0)
+                throw new ArgumentException("A pin bank needs positions and positive clearance.");
+            PinNames = pins;
+            PinRadius = pinRadius;
         }
     }
 
