@@ -34,7 +34,7 @@ sections before changing a feature:
 | Mast-mounted sail | [Flying Sail](docs/DEVELOPMENT.md#flying-sail) |
 | Mk.A/B/C fitting, fixed head and reefing | [Staysails](docs/DEVELOPMENT.md#staysails) |
 | Authored stays, registration and large dhow | [Boat profiles and stays](docs/DEVELOPMENT.md#boat-profiles-and-stays) |
-| Reservations and measured support surfaces | [Winch placement](docs/DEVELOPMENT.md#winch-placement) |
+| Native seats and manual fallback pairs | [Winch placement](docs/DEVELOPMENT.md#winch-placement) |
 | Installed assemblies, logs and inspection tools | [Local investigation](docs/DEVELOPMENT.md#local-investigation) |
 
 ## Essential safeguards
@@ -57,9 +57,11 @@ sections before changing a feature:
   run after `false` and must receive consumed input.
 - Preserve Flying Sail **85%** upper sheeting and fixed ties; staysails use
   **14° × clamped currentUnroll**, independent lower sheets and upward reefing.
-- Winches reserve by actual donor identity. Move the parent mount, never the
-  input wheel. Use measured, bounded supports; exhaustion hides/retries with a
-  diagnostic while retaining the controller. No unsupported offset fallback.
+- Sheets reserve complete native pairs atomically by identity/aliases and space,
+  then try the category's explicit manual fallback. Halyards use only the requested
+  active mast's native seats. Native bindings take priority. Move the parent mount,
+  never the input wheel; exhaustion hides/retries while retaining controllers.
+  Never restore generated rail/mast offsets or pooled Shroud pin selection.
 
 ## Verification and handoff
 

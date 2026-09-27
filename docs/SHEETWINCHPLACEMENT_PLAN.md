@@ -1,8 +1,21 @@
 # Native winch placement resolver plan
 
-Review draft for the **0.2.1** codebase. This document proposes a replacement
-placement policy; it does not describe implemented behavior. Current behavior
-and build instructions remain in [DEVELOPMENT.md](DEVELOPMENT.md#winch-placement).
+Implemented for the **0.2.1** codebase on **2026-09-27**. The accepted policy
+below now replaces generated placement on all eight boats. Current behavior and
+build instructions are in [DEVELOPMENT.md](DEVELOPMENT.md#winch-placement).
+
+## Implementation status
+
+- Inventory, profile categories, atomic allocation, both resolvers and all three
+  ownership paths are implemented. SE part-group metadata is included in the audit.
+- Generated rail/mast searches, old donor-row overrides and pooled pin selection
+  are removed. Shroud uses the common resolver with its measured forward fallback;
+  other fallbacks are explicitly unrecorded.
+- Release build and both automated suites pass. Native visibility/binding and
+  lifecycle wiring are checked against installed assemblies.
+- In-game acceptance remains pending on every boat. No installation, save changes
+  or remote publication were performed. See the
+  [runtime checklist](DEVELOPMENT.md#runtime-validation).
 
 ## Goal and viability
 
