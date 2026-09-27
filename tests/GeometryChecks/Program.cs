@@ -12,6 +12,7 @@ internal static class Program
         ProfileChecks.Run();
         StayChecks.Run();
         WinchChecks.Run();
+        Controls.WinchCaptureChecks.Run();
         OrderTextChecks.Run();
         FlyingSailChecks.Run();
         RopeChecks.Run();

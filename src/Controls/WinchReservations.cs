@@ -8,6 +8,14 @@ namespace MoreSailwindSails.Controls
     // Pure allocation policy. Positions and radii are in the boat's local frame.
     internal sealed class WinchReservations
     {
+        // Count each rejected candidate once, with native obstructions taking
+        // precedence over reservations. Collection is optional for silent retries.
+        internal sealed class Rejections
+        {
+            internal int Native,
+                Reserved;
+        }
+
         internal sealed class Reservation
         {
             internal object Donor,
@@ -25,11 +33,14 @@ namespace MoreSailwindSails.Controls
             object owner,
             Vector3[] candidates,
             float radius,
-            Func<Vector3, float, bool> obstructed
+            Func<Vector3, float, bool> obstructed,
+            Rejections rejections = null
         )
         {
             if (donor == null || owner == null)
                 throw new ArgumentNullException();
+            if (rejections != null)
+                rejections.Native = rejections.Reserved = 0;
             var existing = entries.FirstOrDefault(e => ReferenceEquals(e.Owner, owner));
             if (existing != null && ReferenceEquals(existing.Donor, donor))
                 return existing;
@@ -37,14 +48,23 @@ namespace MoreSailwindSails.Controls
             for (int slot = 0; slot < candidates.Length; slot++)
             {
                 var position = candidates[slot];
+                if (obstructed(position, radius))
+                {
+                    if (rejections != null)
+                        rejections.Native++;
+                    continue;
+                }
                 if (
-                    obstructed(position, radius)
-                    || entries.Any(e =>
+                    entries.Any(e =>
                         (ReferenceEquals(e.Donor, donor) && e.Slot == slot)
                         || Overlap(position, radius, e.Position, e.Radius)
                     )
                 )
+                {
+                    if (rejections != null)
+                        rejections.Reserved++;
                     continue;
+                }
                 var entry = new Reservation
                 {
                     Donor = donor,

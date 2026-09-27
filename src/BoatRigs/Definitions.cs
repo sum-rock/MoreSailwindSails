@@ -140,7 +140,14 @@ namespace MoreSailwindSails.BoatRigs
         // -1 retains the first usable native control. An authored index selects
         // an exact fitting when another row provides the measured mounting space.
         internal readonly int SourceIndex;
+
+        // -1 uses Mast. A different native mast can supply controls without
+        // changing the stay's geometry donor or its saved mounting identity.
+        internal readonly int SourceMast;
         internal readonly WinchSurfaceSegment[] SurfaceSegments;
+        internal readonly WinchSurfacePoint? FixedSurfacePoint;
+        internal readonly string[] PinNames;
+        internal readonly float PinRadius;
         internal readonly Vector3 SourceNormal;
         internal readonly float BaseOffset;
 
@@ -150,17 +157,21 @@ namespace MoreSailwindSails.BoatRigs
             Vector3 direction,
             bool onMast,
             int support,
-            int sourceIndex = -1
+            int sourceIndex = -1,
+            int sourceMast = -1
         )
         {
             if (sourceIndex < -1)
                 throw new ArgumentOutOfRangeException(nameof(sourceIndex));
+            if (sourceMast < -1)
+                throw new ArgumentOutOfRangeException(nameof(sourceMast));
             Mast = mast;
             Role = role;
             Direction = direction.normalized;
             OnMast = onMast;
             Support = support;
             SourceIndex = sourceIndex;
+            SourceMast = sourceMast;
         }
 
         internal WinchMountDefinition(
@@ -170,11 +181,72 @@ namespace MoreSailwindSails.BoatRigs
             float baseOffset,
             params WinchSurfaceSegment[] railSegments
         )
-            : this(mast, role, railSegments[0].End - railSegments[0].Start, false, -1)
+            : this(mast, role, sourceNormal, baseOffset, -1, railSegments) { }
+
+        internal WinchMountDefinition(
+            int mast,
+            WinchRole role,
+            Vector3 sourceNormal,
+            float baseOffset,
+            int sourceMast,
+            params WinchSurfaceSegment[] railSegments
+        )
+            : this(
+                mast,
+                role,
+                railSegments[0].End - railSegments[0].Start,
+                false,
+                -1,
+                -1,
+                sourceMast
+            )
         {
             SurfaceSegments = railSegments;
             SourceNormal = sourceNormal.normalized;
             BaseOffset = baseOffset;
+        }
+
+        internal WinchMountDefinition(
+            int mast,
+            WinchRole role,
+            Vector3 sourceNormal,
+            float baseOffset,
+            WinchSurfacePoint point
+        )
+            : this(mast, role, Vector3.zero, false, -1)
+        {
+            FixedSurfacePoint = point;
+            SourceNormal = sourceNormal.normalized;
+            BaseOffset = baseOffset;
+        }
+
+        // Existing native coils mark real pin seats; hidden controls can lend
+        // their positions to custom halyards without moving the native fitting.
+        internal WinchMountDefinition(
+            int mast,
+            WinchRole role,
+            float pinRadius,
+            params string[] pins
+        )
+            : this(mast, role, Vector3.zero, false, -1)
+        {
+            if (pinRadius <= 0f || pins == null || pins.Length == 0)
+                throw new ArgumentException("A pin bank needs positions and positive clearance.");
+            PinNames = pins;
+            PinRadius = pinRadius;
+        }
+    }
+
+    // An explicitly measured contact point, independent of the control donor.
+    internal readonly struct WinchSurfacePoint
+    {
+        internal readonly Vector3 Position,
+            Normal;
+
+        internal WinchSurfacePoint(Vector3 position, Vector3 normal)
+        {
+            Position = position;
+            Normal = normal.normalized;
         }
     }
 

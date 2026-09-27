@@ -1,0 +1,155 @@
+# Installed Sailwind 0.39 level24 and Shipyard Expansion 0.11.1 shipyard_expansion.assets, 2026-09-26. Numeric measurements only.
+# Native Jong boat frame; SE_parts_jong imported below the outer junk large (3) model as in JongPatches.Patch.
+# All native and imported sphere-collider winches, including inactive/mutually exclusive variants; conservative obstruction union.
+# path|boat-local position|padded interaction radius|default hierarchy active (before runtime customization)
+SE/SE_parts_jong/winches/winch_angle_foremast (1)|-2.968215,4.456000,5.542040|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_foremast (2)|-3.006146,4.456000,5.137446|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_foremast_left|-2.242148,2.322000,10.800222|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_foremast_right|2.254285,2.321000,10.800134|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_foremast|-2.958450,4.456000,5.946294|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_back (0)|2.116662,3.951000,-11.312050|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_back (1)|2.202018,3.947000,-10.931805|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_back (2)|2.248347,3.946000,-10.549864|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_back (3)|2.047002,3.952000,-11.691001|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_back_left|-2.605394,4.157000,-8.948359|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_back_right|2.605548,4.158000,-8.989694|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_front (3)|2.636001,3.784000,-7.066001|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_front_angle (1)|2.701975,3.794106,-6.377353|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_front_angle (2)|2.674650,3.789228,-6.717894|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_front_angle|2.743382,3.799000,-6.036643|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_front_left|-3.208445,4.158000,-1.418942|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_main_front_right|3.229768,4.156000,-1.434681|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_mizzen (1)|-2.188198,3.947000,-10.934773|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_mizzen (2)|-2.113803,3.951000,-11.309844|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_mizzen_left|-1.420746,2.519000,-14.972331|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_mizzen_right|1.450779,2.522000,-14.863031|0.182474|1
+SE/SE_parts_jong/winches/winch_angle_mizzen|-2.255721,3.946000,-10.545533|0.182474|1
+SE/SE_parts_jong/winches/winch_back_reef_extra|-0.000999,4.625000,-5.898001|0.168101|1
+SE/SE_parts_jong/winches/winch_forestay_left (1)|-2.045562,2.392775,11.616278|0.182474|0
+SE/SE_parts_jong/winches/winch_forestay_left|-1.935516,2.454000,12.060745|0.182474|0
+SE/SE_parts_jong/winches/winch_forestay_right (1)|2.061378,2.388947,11.614755|0.182474|0
+SE/SE_parts_jong/winches/winch_forestay_right|1.933621,2.451007,12.057445|0.182474|0
+SE/SE_parts_jong/winches/winch_front_reef_extra|0.018000,3.931000,3.400001|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_foremast (1)|-0.230259,2.125259,13.299959|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_foremast (2)|-0.245954,1.691246,13.181066|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_foremast (3)|-0.225002,3.466000,14.740002|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_foremast (4)|-0.218774,3.898161,14.618765|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_foremast (5)|-0.197002,4.304000,14.483002|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_foremast|-0.222622,2.557003,13.412525|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_forestay_lower|0.212345,2.125288,13.299869|0.168101|0
+SE/SE_parts_jong/winches/winch_reef_forestay_upper|0.215569,2.555342,13.418659|0.168102|0
+SE/SE_parts_jong/winches/winch_reef_main_back (0)|-0.348634,4.837155,-1.686835|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_back (1)|-0.356694,4.369155,-1.692349|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_back (2)|-0.360766,3.915000,-1.714068|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_back (3)|0.002000,4.607000,-1.855000|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_front (0)|-0.377590,5.254000,7.068553|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_front (1)|-0.382001,4.808000,7.075001|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_front (2)|-0.237001,5.254000,6.749001|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_front (3)|-0.237001,4.809000,6.749001|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_front (4)|-0.382001,4.829608,6.705029|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_main_front (5)|-0.377589,5.258503,6.582527|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_mizzen (1)|-0.229485,4.381000,-8.439800|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_mizzen (2)|-0.229485,3.907000,-8.439800|0.168101|1
+SE/SE_parts_jong/winches/winch_reef_mizzen|-0.229485,4.837155,-8.439800|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_back_left (1)|-2.182359,4.351000,-11.735393|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_back_left|-2.087434,4.351000,-12.105885|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_back_reef (1)|0.240269,4.837155,-12.453852|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_back_reef (2)|0.287132,4.821105,-7.664792|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_back_reef low (1)|0.232209,4.369155,-12.459367|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_back_reef low (2)|0.291001,4.360449,-7.581710|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_back_reef low|0.229660,4.369155,-8.419109|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_back_reef|0.237720,4.837155,-8.413594|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_back_right (1)|2.179689,4.365000,-11.732763|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_back_right|2.091535,4.344000,-12.105458|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_left (1)|-3.030849,4.132000,3.689234|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_left (2)|-3.035353,4.132000,3.298045|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_left (3)|-3.017001,4.233000,4.487000|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_left (4)|-3.045001,4.123000,2.886000|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_left|-3.025849,4.139000,4.073234|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_reef (1)|0.215999,5.241000,6.726001|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef (2)|0.366411,5.235967,6.562027|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef (3)|1.004702,4.522000,6.594212|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef low (1)|0.215999,4.787000,6.726001|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef low (2)|0.371740,4.381000,3.188812|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef low (3)|0.016000,4.357000,3.389000|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef low (4)|0.361999,4.788856,6.656800|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef low (5)|-1.425001,4.521000,6.532001|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef low (6)|-0.965615,4.520000,6.609250|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef low|0.378355,4.779000,7.041760|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_reef|0.382767,5.236000,7.035313|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_front_right (1)|3.042050,4.132000,3.688605|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_right (2)|3.039158,4.132000,3.298518|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_right (3)|3.056137,4.252000,4.533192|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_right (4)|3.030581,4.123000,2.885610|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_front_right|3.047050,4.139000,4.072605|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_main_reef (1)|0.006000,4.837000,3.402000|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_mid_left (1)|-3.016355,4.159000,-4.913015|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_mid_left|-3.025935,4.162000,-4.521994|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_mid_reef (1)|0.334319,4.837155,-5.725408|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_mid_reef (2)|0.291471,4.832950,-0.617127|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_mid_reef low (1)|0.321848,4.369155,-5.724474|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_mid_reef low (2)|0.291000,4.375351,-0.528000|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_mid_reef low|0.314463,4.369155,-1.687526|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_mid_reef|0.326934,4.837155,-1.688460|0.168101|1
+SE/SE_parts_jong/winches/winch_stay_mid_right (1)|3.001823,4.144000,-4.913219|0.182474|1
+SE/SE_parts_jong/winches/winch_stay_mid_right|3.048577,4.144000,-4.521521|0.182474|1
+native/winch_anchor|0.047000,1.597000,14.581000|0.409995|1
+native/winch_angle_bowsprit left|-1.449000,2.799000,13.620000|0.182474|1
+native/winch_angle_bowsprit right|1.415000,2.791000,13.621407|0.182474|1
+native/winch_angle_foremast (1)|-2.970000,4.456000,5.543156|0.182474|1
+native/winch_angle_foremast (2)|-3.005000,4.456000,5.137156|0.182474|1
+native/winch_angle_foremast_left|-2.242000,2.322000,10.800000|0.182474|1
+native/winch_angle_foremast_right|2.255000,2.321000,10.800000|0.182474|1
+native/winch_angle_foremast|-2.958000,4.456000,5.945000|0.182474|1
+native/winch_angle_main_back (0)|2.117188,3.951000,-11.312500|0.182474|1
+native/winch_angle_main_back (1)|2.203000,3.947000,-10.933594|0.182474|1
+native/winch_angle_main_back (2)|2.246000,3.946000,-10.547000|0.182474|1
+native/winch_angle_main_back_left|-2.606000,4.157000,-8.946000|0.182474|1
+native/winch_angle_main_back_right|2.606000,4.158000,-8.990000|0.182474|1
+native/winch_angle_main_front_angle (1)|2.703125,3.794106,-6.378906|0.182474|1
+native/winch_angle_main_front_angle (2)|2.675781,3.789228,-6.718750|0.182474|1
+native/winch_angle_main_front_angle|2.746000,3.799000,-6.039062|0.182474|1
+native/winch_angle_main_front_left|-3.211000,4.158000,-1.416000|0.182474|1
+native/winch_angle_main_front_right|3.230000,4.156000,-1.436000|0.182474|1
+native/winch_angle_mizzen (1)|-2.188000,3.947000,-10.933594|0.182474|1
+native/winch_angle_mizzen (2)|-2.113156,3.951000,-11.312500|0.182474|1
+native/winch_angle_mizzen_left|-1.422000,2.519000,-14.969000|0.182474|1
+native/winch_angle_mizzen_right|1.453000,2.522000,-14.865000|0.182474|1
+native/winch_angle_mizzen|-2.254094,3.946000,-10.547000|0.182474|1
+native/winch_forestay_left (1)|-2.047000,2.392775,11.617188|0.182474|1
+native/winch_forestay_left|-1.934000,2.454000,12.058594|0.182474|1
+native/winch_forestay_right (1)|2.062000,2.388947,11.613281|0.182474|1
+native/winch_forestay_right|1.933594,2.451007,12.058594|0.182474|1
+native/winch_reef_bowsprit|0.214500,1.715000,13.198906|0.168101|1
+native/winch_reef_foremast (1)|-0.226906,2.177000,13.198906|0.168101|1
+native/winch_reef_foremast (2)|-0.243000,1.727000,13.199000|0.168101|1
+native/winch_reef_foremast|-0.222656,2.623155,13.199219|0.168101|1
+native/winch_reef_forestay_lower|0.214500,2.177000,13.198906|0.168101|1
+native/winch_reef_forestay_upper|0.219000,2.623155,13.199219|0.168101|1
+native/winch_reef_main_back (0)|-0.339844,4.837155,-5.726562|0.168101|1
+native/winch_reef_main_back (1)|-0.352000,4.369155,-5.726562|0.168101|1
+native/winch_reef_main_back (2)|-0.351875,3.915000,-5.754000|0.168101|1
+native/winch_reef_main_front (0)|-0.355469,4.827000,3.183594|0.168101|1
+native/winch_reef_main_front (1)|-0.359000,4.381000,3.188000|0.168101|1
+native/winch_reef_main_front (2)|-0.351562,3.930845,3.203125|0.168101|1
+native/winch_reef_mizzen (1)|-0.226656,4.381000,-12.479938|0.168101|1
+native/winch_reef_mizzen (2)|-0.227000,3.907000,-12.480000|0.168101|1
+native/winch_reef_mizzen|-0.226656,4.837155,-12.479938|0.168101|1
+native/winch_stay_back_left (1)|-2.183000,4.351000,-11.732906|0.182474|1
+native/winch_stay_back_left|-2.089000,4.351000,-12.104000|0.182474|1
+native/winch_stay_back_reef low|0.231000,4.369155,-12.457000|0.168101|1
+native/winch_stay_back_reef|0.242250,4.837155,-12.457031|0.168101|1
+native/winch_stay_back_right (1)|2.181000,4.365000,-11.733000|0.182474|1
+native/winch_stay_back_right|2.091000,4.344000,-12.104094|0.182474|1
+native/winch_stay_front_left (1)|-3.028000,4.139000,3.680000|0.182474|1
+native/winch_stay_front_left|-3.028000,4.139000,4.075000|0.182474|1
+native/winch_stay_front_reef low|0.372000,4.381000,3.188000|0.168101|1
+native/winch_stay_front_reef|0.375000,4.827000,3.183594|0.168101|1
+native/winch_stay_front_right (1)|3.046000,4.139000,3.680469|0.182474|1
+native/winch_stay_front_right|3.046000,4.139000,4.075000|0.182474|1
+native/winch_stay_mid_left (1)|-3.016000,4.159000,-4.913750|0.182474|1
+native/winch_stay_mid_left|-3.028000,4.162000,-4.520000|0.182474|1
+native/winch_stay_mid_reef low|0.323781,4.369155,-5.726562|0.168101|1
+native/winch_stay_mid_reef|0.336000,4.837155,-5.726562|0.168101|1
+native/winch_stay_mid_right (1)|3.003000,4.144000,-4.913281|0.182474|1
+native/winch_stay_mid_right|3.046000,4.144000,-4.518750|0.182474|1

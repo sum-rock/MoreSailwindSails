@@ -53,6 +53,7 @@ namespace MoreSailwindSails.BoatRigs
                     WinchRole.Left,
                     new Vector3(0.023180f, 0.999569f, -0.018025f),
                     0.053645f,
+                    7,
                     ForeRail(WinchRole.Left)
                 ),
                 new WinchMountDefinition(
@@ -60,6 +61,7 @@ namespace MoreSailwindSails.BoatRigs
                     WinchRole.Right,
                     new Vector3(0.023180f, 0.999569f, -0.018025f),
                     0.053645f,
+                    7,
                     ForeRail(WinchRole.Right)
                 ),
                 new WinchMountDefinition(
@@ -179,21 +181,13 @@ namespace MoreSailwindSails.BoatRigs
                 ),
             };
 
-        // Measured solid support: trim_010.
+        // Donor 10's band is blocked on port by native and SE fittings. Clone
+        // native lower-stay (7) sheets instead, on the opposed lower trim_010
+        // caps. Restrict both sides to those caps so they remain symmetric.
         private static WinchSurfaceSegment[] ForeRail(WinchRole role) =>
             role == WinchRole.Left
                 ? new[]
                 {
-                    new WinchSurfaceSegment(
-                        new Vector3(-2.940535f, 4.400170f, 6.362840f),
-                        new Vector3(-3.027815f, 4.400170f, 5.117075f),
-                        new Vector3(0.000000f, 1.000000f, 0.000000f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-3.030760f, 4.389230f, 5.052955f),
-                        new Vector3(-3.048285f, 4.090250f, 4.200120f),
-                        new Vector3(-0.028331f, 0.943493f, -0.330180f)
-                    ),
                     new WinchSurfaceSegment(
                         new Vector3(-3.050210f, 4.079560f, 4.135915f),
                         new Vector3(-3.186495f, 4.105650f, 0.674695f),
@@ -206,16 +200,6 @@ namespace MoreSailwindSails.BoatRigs
                         new Vector3(3.050210f, 4.079560f, 4.135915f),
                         new Vector3(3.186500f, 4.105650f, 0.674695f),
                         new Vector3(-0.000441f, 0.999972f, 0.007520f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(3.030760f, 4.389230f, 5.052960f),
-                        new Vector3(3.048285f, 4.090250f, 4.200125f),
-                        new Vector3(0.028331f, 0.943493f, -0.330180f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(2.940535f, 4.400170f, 6.362840f),
-                        new Vector3(3.027810f, 4.400170f, 5.117075f),
-                        new Vector3(-0.000000f, 1.000000f, -0.000000f)
                     ),
                 };
 

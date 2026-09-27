@@ -80,10 +80,13 @@ internal static class SurfaceWinchChecks
         foreach (var mount in boat.WinchMounts)
         {
             Check(
-                mount.OnMast || mount.SurfaceSegments?.Length > 0,
+                mount.OnMast
+                    || mount.SurfaceSegments?.Length > 0
+                    || mount.FixedSurfacePoint.HasValue
+                    || mount.PinNames?.Length > 0,
                 "A deck/rail winch still relies on an unsupported tangent: " + boat.BoatName
             );
-            if (mount.OnMast || boat.BoatName == Brig.Definition.BoatName)
+            if (mount.OnMast || mount.PinNames != null || boat.BoatName == Brig.Definition.BoatName)
                 continue;
             var donor = donors.Single(d =>
                 d.Boat == boat.BoatName && d.Id == mount.Mast && d.Role == mount.Role
@@ -120,7 +123,8 @@ internal static class SurfaceWinchChecks
                     $"Unsupported surface placement: {boat.BoatName}/{mount.Mast}/{mount.Role}."
                 );
                 Check(
-                    (candidate.Position - donor.Origin).magnitude <= 1.4011f,
+                    mount.FixedSurfacePoint.HasValue
+                        || (candidate.Position - donor.Origin).magnitude <= 1.4011f,
                     "Surface candidate exceeds bounded donor travel."
                 );
             }
@@ -147,7 +151,10 @@ internal static class SurfaceWinchChecks
             Check(allocator.Count == count, "Surface exhaustion leaked a reservation.");
             measured++;
         }
-        Check(measured == 110, "Expected 110 surface mappings beyond the 24 Brig sheet mappings.");
+        Check(
+            measured == 106,
+            "Expected 106 surface mappings beyond Brig sheets and Shroud pin banks."
+        );
 
         // Leopard's neighboring reef coils leave a safe strip end between the
         // native controls and the raised post, outside the donor-centered spacing grid.
@@ -185,7 +192,7 @@ internal static class SurfaceWinchChecks
             "Unmeasured surface must not fall back to floating tangent positions."
         );
         Console.WriteLine(
-            "PASS: 110 additional measured deck/rail mappings, native-neighbor clearance, support normals, bounded ends and finite reservations; all eight boats have authored surface support."
+            "PASS: 106 additional measured deck/rail mappings, native-neighbor clearance, support normals, bounded ends and finite reservations; Shroud native pin banks checked separately."
         );
     }
 }

@@ -63,9 +63,25 @@ internal static class ProfileChecks
                 throw new Exception(
                     "Authored winch source selection changed outside large-dhow stacked rows."
                 );
+            bool jongForeSheet =
+                ReferenceEquals(boat, Jong.Definition)
+                && winch.Mast == 10
+                && winch.Role is WinchRole.Left or WinchRole.Right;
+            if (winch.SourceMast != (jongForeSheet ? 7 : -1))
+                throw new Exception("Unexpected native mast override outside Jong fore sheets.");
         }
         Reject<ArgumentOutOfRangeException>(() =>
             new WinchMountDefinition(0, WinchRole.Reef, UnityEngine.Vector3.up, true, 0, -2)
+        );
+        Reject<ArgumentOutOfRangeException>(() =>
+            new WinchMountDefinition(
+                0,
+                WinchRole.Left,
+                UnityEngine.Vector3.up,
+                0.05f,
+                -2,
+                new WinchSurfaceSegment(UnityEngine.Vector3.zero, UnityEngine.Vector3.forward)
+            )
         );
 
         BoatRigDefinition Profile(

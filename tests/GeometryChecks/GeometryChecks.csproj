@@ -7,6 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Controls/WinchCaptureGeometry.cs"
+      Link="Controls/WinchCaptureGeometry.cs"
+    />
+    <Compile
       Include="../../src/Compatibility/TextureCatalogOrder.cs"
       Link="Compatibility/TextureCatalogOrder.cs"
     />
@@ -27,6 +31,18 @@
       Link="FishermansStay/WinchReservations.cs"
     />
     <None Update="FishermansStay/WinchMeasurements.txt" CopyToOutputDirectory="PreserveNewest" />
+    <None
+      Update="FishermansStay/ShroudNativeWinchMeasurements.txt"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Update="FishermansStay/ShroudTrimMeasurements.txt"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Update="FishermansStay/JongNativeWinchMeasurements.txt"
+      CopyToOutputDirectory="PreserveNewest"
+    />
     <None Update="FishermansStay/BrigRailMeasurements.txt" CopyToOutputDirectory="PreserveNewest" />
     <None
       Update="FishermansStay/LargeDhowNativeWinchMeasurements.txt"

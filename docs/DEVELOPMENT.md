@@ -57,7 +57,7 @@ physics or the live shipyard. Passing checks do not establish in-game behavior.
 
 ## Release and manual installation
 
-For **0.2.0**, keep `Plugin.PluginVersion`, the project `<Version>`, README and
+For **0.2.1**, keep `Plugin.PluginVersion`, the project `<Version>`, README and
 startup example consistent. Preserve GUID `com.august.moresailwindsails`, assembly
 `MoreSailwindSails.dll`, display name/namespace `MoreSailwindSails` and prefab
 IDs **400** (Flying Sail), **401/402/403** (Mk.A/B/C). Distribute only the plugin DLL.
@@ -80,7 +80,7 @@ Builds/checks do not install the plugin, change saves or publish a release.
   a GitHub release with that DLL and generated notes. It requires Nix and an
   authenticated `gh`. A later build/publish failure can leave the pushed tag.
 
-After manual installation, confirm `MoreSailwindSails 0.2.0 loaded!` in
+After manual installation, confirm `MoreSailwindSails 0.2.1 loaded!` in
 `BepInEx/LogOutput.log`. Flying Sail registration uses donor **110**, prefab
 **400** and **825** vertices; staysails register **401/402/403**. Check the
 installed DLL separately from build output when diagnosing.
@@ -317,66 +317,168 @@ return empty before looking up a mounting definition.
 
 ## Winch placement
 
-`FishermanWinchControls` clones inactive controls with owned external handles and
-fresh outlines. All three control paths use boat-owned reservations keyed by
-actual donor identity. Only active owners with bound ropes reserve slots; unbound
-stay variants do not. Release unused reservations and rebind on donor changes
-without destroying sail-owned controllers. Reposition the parent mount, never
-the wheel whose local rotation drives input.
+### Placement and ownership
 
-Eight profiles contain **180** donor/role mappings: **46** mast and **134** bounded
-surface mappings. Native winch datums supply attachment radius/facing; mast
-collider axes identify spar direction, but sail-space collider ends are not
-physical spar ends. Deck-facing coils use measured supporting surfaces.
+Boat profiles in `src/BoatRigs/` own placement definitions;
+`FishermanWinchControls` owns cloning, binding and reservations shared by both
+sail families. Clone controls inactive with owned external handles and fresh
+outlines. Reserve by actual donor identity only for active owners with bound
+ropes; unbound stay variants must not reserve slots. Release unused reservations
+and rebind on donor changes without destroying sail-owned controllers. Move the
+parent mount, never the wheel whose local rotation drives input.
 
-- Spacing uses interaction radii with a **0.35 m** minimum and **2 cm** beyond
-  padded radii. Mast candidates prefer vertical stacks, then **±90°/180°** faces,
-  rotating position and facing together. Travel is **−0.7 to +1.4 m** from the
-  datum; try the upper endpoint after regular positions, without adding a lower
-  endpoint near deck level.
-- Surface candidates follow measured finite solid strips, explicit normals and
-  donor-specific mesh-base offsets within **1.401 m** of the donor. Include safe
+`WinchMountDefinition.SourceMast` optionally selects controls from another mast
+without changing stay geometry or save IDs; `SourceIndex` selects an explicit
+native control row. Resolve mast overrides by authored `orderIndex` through
+`GetComponentsInChildren<Mast>(true)`: the live `BoatRefs.masts` array may be
+incomplete before native `Mast.Awake`. Never activate donors or populate native
+array slots to make lookup succeed. Missing explicit donors must not silently
+fall back to a blocked donor. Jong's foremast sheet mappings use this override.
+
+Use measured supports and finite candidates. Native winch datums supply radius
+and facing; mast collider axes supply spar direction, but sail-space collider
+ends are not physical spar ends.
+
+- **Masts:** candidate spacing is at least **0.35 m**, or twice the padded
+  interaction radius plus **2 cm**. Prefer vertical stacks, then **±90°/180°**
+  faces, rotating position and facing together. Travel is **−0.7 to +1.4 m**
+  from the datum; try the upper endpoint last, without adding a lower endpoint
+  near deck level.
+- **Surface strips:** use measured finite solid strips, explicit normals and
+  donor-specific mesh-base offsets within **1.401 m** of the donor. Include
   strip ends inset by interaction radius. Native fittings and reserved controls
   exclude candidates. Never restore unsupported surface-tangent offsets.
-- Exhaustion hides the control, logs once and retries while retaining its
-  controller. Do not expand bounds. With large-dhow mesh interaction colliders,
-  checks establish at least **one** extra reef control per donor; multiple custom
-  sails can exhaust space. Older isolated mast checks require three, bounded
-  surface checks at least two. These counts do not establish mixed-sail capacity.
+- **Fixed points:** use a measured contact position and normal plus the donor's
+  mounting offset. Each produces one candidate independent of donor distance;
+  native clearance and reservations still apply. Shroud's forward sheets use
+  fixed points on the trim; its aft sheets retain bounded strips.
+
+Exhaustion hides the fitting, retains its controller and retries at one-second
+intervals. Do not expand bounds to mask exhaustion. Capacity depends on the
+complete native and custom rig: isolated placement checks do not establish
+mixed-sail capacity. Keep coordinates and detailed measurements in profiles and
+fixtures rather than duplicating them here.
+
+### Shroud belaying pins
+
+**Only Shroud enables belaying-pin reuse.** The optional support lives in the
+shared controller, but only Shroud's four halyard mappings provide `PinNames`.
+All other boats retain their existing placement and clearance rules.
+
+The mainmast and mizzen racks each offer twelve authored side-pin seats. Custom
+halyards clone their usual donor and borrow the selected native coil's live
+position and orientation. Native `GPButtonRopeWinch.ShowWinch(false)` disables
+its renderer and collider without deactivating the object; an active native coil
+is occupied if either component is enabled. Look up named coils through the
+inactive hierarchy without activating them. An empty bank hides/retries normally.
+
+Only these named pins may lend unused seats. Allocation uses **0.14 m** clearance
+radius per coil to fit the existing pin spacing; actual interaction colliders
+are unchanged. Other native fittings retain their usual clearance and protection.
+Both custom families share reservations. Check the selected native coil every
+refresh: if a native sail needs it, release the seat and try another free pin.
+Otherwise keep the reservation stable, including when other pins become free.
+
+### Placement logging
+
+Read `BepInEx/LogOutput.log`; full log paths and installed references are under
+[Local investigation](#local-investigation).
+
+| Message                                 | Meaning                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------- |
+| `Placed authored winch`                 | Initial successful placement, or a Shroud pin reassignment without placement failure. |
+| `No free authored winch position`       | All candidates were rejected, or none were available; the hidden control will retry.  |
+| `Missing authored winch support`        | The required mast support is unavailable; the hidden control will retry.              |
+| `Winch successfully placed after retry` | Placement succeeded after a failure, including missing support.                       |
+
+Messages identify boat/owner instances, stay or mast, requested/resolved donor
+mast, role, source instance, boat-local origin and radius. Exhaustion adds
+`candidates`, `nativeBlocked` and `reservationBlocked`. Rejection counts are
+mutually exclusive, with native obstructions taking precedence; zero candidates
+produce zero rejection counts. They do not identify individual blocking fittings.
+Success adds the boat-local `position` and zero-based `slot`; borrowed Shroud
+pins also report `pin=<name>#<id>`.
+
+Success is logged after positioning, binding and showing the control. Warnings
+are limited to once per control instance; repeated failed retries and routine
+refreshes/rebindings stay silent. Recovery is reported for each failure episode,
+and Shroud pin reassignment logs the new pin. Match boat/owner instances and role
+between warnings and recovery, then inspect the control after leaving the
+shipyard before treating a warning as a persistent missing fitting.
+
+### Capturing proposed winch positions
+
+Version **0.2.1** includes an on-demand capture tool, **F9** by default. Load the
+boat, close menus, aim the centre of the screen at bare mounting structure within
+**10 m**, and press the key once. An on-screen notification confirms the numbered
+capture. `BepInEx/LogOutput.log` records `Winch position capture #N` with boat
+identity, boat-relative surface `position` and `normal`, collider object path/type,
+hit-model identity and distance. Record capture numbers and intended roles
+(for example forward port/starboard sheets). Captures do not place winches or
+modify saves.
+
+Configure the shortcut with the game closed in
+`BepInEx/config/com.august.moresailwindsails.cfg`; `None` disables it:
+
+```ini
+[Diagnostics]
+CaptureWinchPosition = F9
+```
+
+The tool checks ordinary world obstructions and separately transforms the camera
+ray into each boat's displaced walking model **before** querying its enabled,
+non-trigger colliders. Compare hits in visual-world distances and map the chosen
+point/normal back to boat coordinates, accounting for rotated/scaled roots.
+Nearby terrain still blocks farther boat surfaces. No colliders, transforms or
+physics settings are modified.
+
+Captures describe **collision surfaces**, which can differ from visible rail
+geometry. Check the reported object and compare against installed meshes or a
+screenshot before authoring a position. Winch orientation and mounting offset
+still need authoring; a captured surface point is not automatically a winch pivot.
 
 ### Asset provenance and measurement fixtures
 
-Installed sources are `Sailwind_Data/level24`, SE's `shipyard_expansion.assets`,
-`Leopard/leopard` and `ShatteredSeasExpansion/veil piercer`. SE imports below the
-boat model; compare transformed coordinates in that common frame. Confirm import
-parents/dependencies against installed assemblies. Fixtures contain numeric
-measurements only, never meshes, textures or assemblies.
+Installed references are `Sailwind_Data/level24`, SE's `shipyard_expansion.assets`,
+`Leopard/leopard` and `ShatteredSeasExpansion/veil piercer`. Include import-parent
+transforms when comparing measurements in boat coordinates. Confirm dependencies
+against installed assemblies. Fixtures contain numeric measurements only, never
+meshes, textures or assemblies.
 
-| Boat       | Permanent surface references                                                                  |
-| ---------- | --------------------------------------------------------------------------------------------- |
-| Brig       | `medi medium new/structure_container/trim_006` rail caps; omit bevels/bends and stair opening |
-| Sanbuq     | `structure/Cube_013` forward/raised aft caps; exclude lower trim                              |
-| Junk       | `structure/trim_001` caps, `Cube_035` handrails, `Cube_032` transverse reef beam              |
-| Jong       | `structure/trim_010` forward/middle/aft caps                                                  |
-| Cog        | `structure/trim_001` aft caps                                                                 |
-| Leopard    | `structure_container/decking trim`, `mainfife back`, `mizzenfife`; exclude raised end posts   |
-| Shroud     | `Clipper_Upper_Trim`, `Halyard_Points/Cube.004` and `Cube.005`; exclude rounded ends          |
-| Large dhow | `Cube_001` and `Cube_008` lower/sloped/raised caps and inner aft rail faces                   |
+| Boat       | Permanent support references                                                                                       |
+| ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| Brig       | `medi medium new/structure_container/trim_006` rail caps; omit bevels/bends and stair opening                      |
+| Sanbuq     | `structure/Cube_013` forward/raised aft caps; exclude lower trim                                                   |
+| Junk       | `structure/trim_001` caps, `Cube_035` handrails, `Cube_032` transverse reef beam                                   |
+| Jong       | `structure/trim_010` forward/middle/aft caps                                                                       |
+| Cog        | `structure/trim_001` aft caps                                                                                      |
+| Leopard    | `structure_container/decking trim`, `mainfife back`, `mizzenfife`; exclude raised end posts                        |
+| Shroud     | `Clipper_Upper_Trim` fixed forward sheet points and aft strips; native mainmast/mizzen side-pin seats for halyards |
+| Large dhow | `Cube_001` and `Cube_008` lower/sloped/raised caps and inner aft rail faces                                        |
 
-Fixtures in `tests/GeometryChecks/FishermansStay/` are `StayMeasurements.txt`
-(mast transforms, spar extents and guides), `WinchMeasurements.txt` (donor frames,
-roles and radii), `BrigRailMeasurements.txt` and `WinchSurfaceMeasurements.txt`
-(independent solid face bounds). `LargeDhowNativeWinchMeasurements.txt` includes
-all **85** native fittings, not just the first entry in each donor array. It
-reproduces both blocked lower-mainmast cases and checks the corrected donors
-against every native row, including mutually exclusive variants.
-Checks cover attachment/angles, fixed IDs,
-ancestry/cycle rejection, reservations, strip ends, obstructions and exhaustion.
-Surface comparisons allow **2 cm** for slight face warp. Brig/Sanbuq/Junk
-screenshots confirmed unsupported tangent-based placement; measured strips
-replace it. Keep numeric details in profiles/fixtures instead of duplicating tables.
+Fixtures in `tests/GeometryChecks/FishermansStay/` cover mast/support transforms
+(`StayMeasurements.txt`), donor frames/radii (`WinchMeasurements.txt`), rail
+bounds (`BrigRailMeasurements.txt`, `WinchSurfaceMeasurements.txt`), full native
+obstructions (`LargeDhowNativeWinchMeasurements.txt`,
+`JongNativeWinchMeasurements.txt`, `ShroudNativeWinchMeasurements.txt`) and Shroud
+trim edges for both finishes (`ShroudTrimMeasurements.txt`). Include native/SE
+options and neighboring custom controls when checking clearance. Geometry checks
+cover supported seating, reservations, exhaustion/retry and pin reuse; assembly
+checks cover donor lookup and native visibility contracts. Surface comparisons
+allow **2 cm** for slight face warp; neither suite establishes runtime accessibility.
+
+### Related issues
+
+- [#16](https://github.com/sum-rock/MoreSailwindSails/issues/16): Jong foremast staysail port sheet placement.
+- [#21](https://github.com/sum-rock/MoreSailwindSails/issues/21): broader winch placement and capacity investigation.
 
 ## Local investigation
+
+For placement diagnostics and F9 instructions, see
+[Placement logging](#placement-logging) and
+[Capturing proposed winch positions](#capturing-proposed-winch-positions).
+
+### Installed references and logs
 
 Game directory: `/home/august/.local/share/Steam/steamapps/common/Sailwind`.
 Inspect `Sailwind_Data/Managed/Assembly-CSharp.dll`, Unity assemblies,

@@ -43,18 +43,24 @@ namespace MoreSailwindSails.Controls
 
         internal static GPButtonRopeWinch Source(BoatRefs boat, Mast mast, WinchRole role)
         {
-            var sources =
-                role == WinchRole.Reef ? mast.reefWinch
-                : role == WinchRole.Left ? mast.leftAngleWinch
-                : role == WinchRole.Right ? mast.rightAngleWinch
-                : mast.midAngleWinch;
+            var sources = Sources(mast, role);
             // Optional native roles (for example a stay's middle sheet) can have
             // no control and no mounting definition. Keep those probes harmless.
             var first = sources?.FirstOrDefault(Usable);
             if (!first)
                 return null;
-            int index =
-                BoatRigCatalog.Find(boat.name)?.WinchMount(mast.orderIndex, role).SourceIndex ?? -1;
+            var definition = BoatRigCatalog.Find(boat.name)?.WinchMount(mast.orderIndex, role);
+            if (definition != null && definition.SourceMast >= 0)
+            {
+                // Stay construction can precede the donor's Awake/RegisterMast.
+                // Include inactive native options without activating them or
+                // relying on the live boat.masts array being populated yet.
+                var sourceMast = boat.GetComponentsInChildren<Mast>(true)
+                    .FirstOrDefault(m => m && m.orderIndex == definition.SourceMast);
+                sources = Sources(sourceMast, role);
+                first = sources?.FirstOrDefault(Usable);
+            }
+            int index = definition?.SourceIndex ?? -1;
             if (index < 0)
                 return first;
             // Do not silently switch back to a blocked row if an authored donor
@@ -62,6 +68,13 @@ namespace MoreSailwindSails.Controls
             var source = sources != null && index < sources.Length ? sources[index] : null;
             return Usable(source) ? source : null;
         }
+
+        private static GPButtonRopeWinch[] Sources(Mast mast, WinchRole role) =>
+            !mast ? null
+            : role == WinchRole.Reef ? mast.reefWinch
+            : role == WinchRole.Left ? mast.leftAngleWinch
+            : role == WinchRole.Right ? mast.rightAngleWinch
+            : mast.midAngleWinch;
 
         private static bool Usable(GPButtonRopeWinch winch) =>
             winch && winch.GetComponent<Renderer>() && winch.GetComponent<Collider>();
@@ -120,11 +133,17 @@ namespace MoreSailwindSails.Controls
                     control.Suspend();
         }
 
-        private bool Obstructed(Vector3 position, float radius, GPButtonRopeWinch donor)
+        private bool Obstructed(
+            Vector3 position,
+            float radius,
+            GPButtonRopeWinch donor,
+            GPButtonRopeWinch[] pinTargets = null
+        )
         {
             // Include unused native fittings on active parts: fitting another native
             // sail must not put its controls through ours. Include the donor even if
-            // its source stay is not installed.
+            // its source stay is not installed. Authored pin banks alone can borrow
+            // hidden native coils and use clearance matching the existing pin pitch.
             foreach (var native in boat.GetComponentsInChildren<GPButtonRopeWinch>(true))
             {
                 if (
@@ -133,18 +152,26 @@ namespace MoreSailwindSails.Controls
                     || (native != donor && !native.gameObject.activeInHierarchy)
                 )
                     continue;
+                bool bankPin = pinTargets != null && pinTargets.Contains(native);
+                if (bankPin && !PinOccupied(native))
+                    continue;
                 if (
                     WinchReservations.Overlap(
                         position,
                         radius,
                         boat.transform.InverseTransformPoint(native.transform.position),
-                        Radius(native)
+                        bankPin ? radius : Radius(native)
                     )
                 )
                     return true;
             }
             return false;
         }
+
+        private static bool PinOccupied(GPButtonRopeWinch pin) =>
+            pin
+            && pin.gameObject.activeInHierarchy
+            && (pin.GetComponent<Renderer>().enabled || pin.GetComponent<Collider>().enabled);
 
         private float Radius(GPButtonRopeWinch winch)
         {
@@ -186,10 +213,13 @@ namespace MoreSailwindSails.Controls
             private readonly Transform mount,
                 sourceFrame;
             private readonly Quaternion frameRotation;
+            private readonly GPButtonRopeWinch[] pinTargets;
             private float radius;
             private WinchReservations.Reservation reservation;
             private bool disposed,
-                warned;
+                warned,
+                hasLoggedPlacement,
+                placementFailed;
             private float retryAfter;
             private Vector3 lastSourcePosition;
             private Quaternion placementRotation = Quaternion.identity;
@@ -211,6 +241,16 @@ namespace MoreSailwindSails.Controls
                 this.definition = definition;
                 Owner = owner;
                 Source = source;
+                if (definition.PinNames != null)
+                {
+                    var natives = manager.boat.GetComponentsInChildren<GPButtonRopeWinch>(true);
+                    pinTargets = definition
+                        .PinNames.Select(name =>
+                            natives.FirstOrDefault(n => n.name == name && Usable(n))
+                        )
+                        .Where(n => n)
+                        .ToArray();
+                }
                 sourceFrame = source.transform.parent;
                 frameRotation = source.transform.localRotation;
                 radius = manager.Radius(source);
@@ -255,8 +295,15 @@ namespace MoreSailwindSails.Controls
                 manager.ReleaseUnused();
                 // A part refresh may enable a nearby native fitting while keeping
                 // our donor. Keep stable reservations unless that fitting obstructs one.
-                if (reservation != null && manager.Obstructed(reservation.Position, radius, Source))
+                if (
+                    reservation != null
+                    && manager.Obstructed(reservation.Position, radius, Source, pinTargets)
+                )
+                {
                     Suspend();
+                    if (pinTargets != null)
+                        hasLoggedPlacement = false;
+                }
                 retryAfter = 0f;
                 Refresh();
             }
@@ -268,10 +315,23 @@ namespace MoreSailwindSails.Controls
                     Suspend();
                     return;
                 }
+                // Native sails take precedence over borrowed pins. Check the
+                // selected native coil each refresh, including after shipyard changes.
+                if (
+                    reservation != null
+                    && pinTargets != null
+                    && (!pinTargets[reservation.Slot] || PinOccupied(pinTargets[reservation.Slot]))
+                )
+                {
+                    Suspend();
+                    retryAfter = 0f;
+                    hasLoggedPlacement = false;
+                }
                 var origin = manager.boat.transform.InverseTransformPoint(
                     Source.transform.position
                 );
-                float currentRadius = manager.Radius(Source);
+                float currentRadius =
+                    pinTargets == null ? manager.Radius(Source) : definition.PinRadius;
                 if (
                     reservation != null
                     && (
@@ -299,12 +359,15 @@ namespace MoreSailwindSails.Controls
                         if (!support)
                         {
                             Suspend();
+                            placementFailed = true;
                             if (!warned)
                                 Plugin.Log.LogWarning(
                                     "Missing authored winch support "
                                         + definition.Support
                                         + " for "
                                         + mount.name
+                                        + "; "
+                                        + PlacementContext(origin)
                                 );
                             warned = true;
                             retryAfter = Time.unscaledTime + 1f;
@@ -314,19 +377,24 @@ namespace MoreSailwindSails.Controls
                             support.transform.TransformPoint(support.center)
                         );
                     }
-                    var placements = WinchPlacementGeometry.Candidates(
-                        definition,
-                        origin,
-                        radius,
-                        axisPoint
-                    );
+                    var placements =
+                        pinTargets != null
+                            ? PinPlacements()
+                            : WinchPlacementGeometry.Candidates(
+                                definition,
+                                origin,
+                                radius,
+                                axisPoint
+                            );
                     var positions = placements.Select(p => p.Position).ToArray();
+                    var rejections = warned ? null : new WinchReservations.Rejections();
                     reservation = manager.reservations.Acquire(
                         Source,
                         this,
                         positions,
                         radius,
-                        (p, r) => manager.Obstructed(p, r, Source)
+                        (p, r) => manager.Obstructed(p, r, Source, pinTargets),
+                        rejections
                     );
                     lastSourcePosition = origin;
                     if (reservation != null)
@@ -334,9 +402,14 @@ namespace MoreSailwindSails.Controls
                     if (reservation == null)
                     {
                         Suspend();
+                        placementFailed = true;
                         if (!warned)
                             Plugin.Log.LogWarning(
-                                "No free authored winch position for " + mount.name
+                                "No free authored winch position for "
+                                    + mount.name
+                                    + "; "
+                                    + PlacementContext(origin)
+                                    + $", candidates={positions.Length}, nativeBlocked={rejections.Native}, reservationBlocked={rejections.Reserved}."
                             );
                         warned = true;
                         retryAfter = Time.unscaledTime + 1f;
@@ -350,6 +423,54 @@ namespace MoreSailwindSails.Controls
                     Winch.AttachToController(Winch.rope);
                 mount.gameObject.SetActive(true);
                 Winch.ShowWinch(true);
+                // Report initial success and recovery only, after binding and showing
+                // the control. Routine refreshes and rebindings stay silent.
+                if (!hasLoggedPlacement || placementFailed)
+                {
+                    Plugin.Log.LogInfo(
+                        (
+                            placementFailed
+                                ? "Winch successfully placed after retry for "
+                                : "Placed authored winch for "
+                        )
+                            + mount.name
+                            + "; "
+                            + PlacementContext(origin)
+                            + $", position={reservation.Position.ToString("F4")}, slot={reservation.Slot}."
+                    );
+                    hasLoggedPlacement = true;
+                    placementFailed = false;
+                }
+            }
+
+            private string PlacementContext(Vector3 origin)
+            {
+                var mast = Owner.GetComponentInParent<Mast>();
+                int donor = definition.SourceMast >= 0 ? definition.SourceMast : definition.Mast;
+                var pin =
+                    pinTargets != null && reservation != null ? pinTargets[reservation.Slot] : null;
+                return $"boat={manager.boat.name}#{manager.boat.GetInstanceID()}, owner={Owner.name}#{Owner.GetInstanceID()}, stay/mast={(mast ? mast.orderIndex : -1)}, requestedMast={definition.Mast}, donorMast={donor}, role={definition.Role}, source={Source.name}#{Source.GetInstanceID()}, origin={origin.ToString("F4")}, radius={radius:F4}"
+                    + (pin ? $", pin={pin.name}#{pin.GetInstanceID()}" : "");
+            }
+
+            private WinchPlacement[] PinPlacements()
+            {
+                if (pinTargets.Any(pin => !pin))
+                    return Array.Empty<WinchPlacement>();
+                var inverseBoat = Quaternion.Inverse(manager.boat.transform.rotation);
+                var inverseSource = Quaternion.Inverse(
+                    inverseBoat * sourceFrame.rotation * frameRotation
+                );
+                var placements = new WinchPlacement[pinTargets.Length];
+                for (int i = 0; i < pinTargets.Length; i++)
+                {
+                    var pin = pinTargets[i].transform;
+                    placements[i] = new WinchPlacement(
+                        manager.boat.transform.InverseTransformPoint(pin.position),
+                        inverseBoat * pin.rotation * inverseSource
+                    );
+                }
+                return placements;
             }
 
             private void Position(Vector3 position)

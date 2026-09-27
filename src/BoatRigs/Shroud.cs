@@ -33,47 +33,23 @@ namespace MoreSailwindSails.BoatRigs
         private static WinchMountDefinition[] WinchMounts() =>
             new[]
             {
-                new WinchMountDefinition(
-                    7,
-                    WinchRole.Reef,
-                    new Vector3(0.913644f, -0.390731f, -0.112181f),
-                    0.088011f,
-                    MainReefBeam()
-                ),
-                new WinchMountDefinition(
-                    8,
-                    WinchRole.Reef,
-                    new Vector3(0.913644f, -0.390731f, -0.112181f),
-                    0.088011f,
-                    MainReefBeam()
-                ),
-                new WinchMountDefinition(
-                    9,
-                    WinchRole.Reef,
-                    new Vector3(0.913644f, -0.390731f, -0.112181f),
-                    0.088011f,
-                    AftReefBeam()
-                ),
-                new WinchMountDefinition(
-                    10,
-                    WinchRole.Reef,
-                    new Vector3(0.913644f, -0.390731f, -0.112181f),
-                    0.088011f,
-                    AftReefBeam()
-                ),
+                new WinchMountDefinition(7, WinchRole.Reef, 0.14f, ReefPins("Mainmast", false)),
+                new WinchMountDefinition(8, WinchRole.Reef, 0.14f, ReefPins("Mainmast", false)),
+                new WinchMountDefinition(9, WinchRole.Reef, 0.14f, ReefPins("Mizzenmast", true)),
+                new WinchMountDefinition(10, WinchRole.Reef, 0.14f, ReefPins("Mizzenmast", true)),
                 new WinchMountDefinition(
                     24,
                     WinchRole.Left,
                     new Vector3(-0.006981f, 0.999976f, -0.000000f),
                     0.076685f,
-                    MainRail(WinchRole.Left)
+                    MainSheetPoint(WinchRole.Left)
                 ),
                 new WinchMountDefinition(
                     24,
                     WinchRole.Right,
                     new Vector3(-0.006981f, 0.999976f, -0.000000f),
                     0.076685f,
-                    MainRail(WinchRole.Right)
+                    MainSheetPoint(WinchRole.Right)
                 ),
                 new WinchMountDefinition(
                     25,
@@ -91,35 +67,13 @@ namespace MoreSailwindSails.BoatRigs
                 ),
             };
 
-        // Measured solid support: Clipper_Upper_Trim.
-        private static WinchSurfaceSegment[] MainRail(WinchRole role) =>
-            role == WinchRole.Left
-                ? new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(-3.125180f, 5.713330f, -8.093550f),
-                        new Vector3(-2.981270f, 5.760250f, -9.246100f),
-                        new Vector3(-0.004320f, 0.999185f, 0.040137f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-3.297550f, 5.699420f, -6.818345f),
-                        new Vector3(-3.125180f, 5.713330f, -8.093550f),
-                        new Vector3(-0.001157f, 0.999942f, 0.010751f)
-                    ),
-                }
-                : new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(3.297610f, 5.699420f, -6.818345f),
-                        new Vector3(3.125240f, 5.713330f, -8.093550f),
-                        new Vector3(0.001157f, 0.999942f, 0.010751f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(3.125240f, 5.713330f, -8.093550f),
-                        new Vector3(2.981330f, 5.760240f, -9.246100f),
-                        new Vector3(0.004319f, 0.999185f, 0.040129f)
-                    ),
-                };
+        // Captures 1/3 centred across the visible Clipper_Upper_Trim cap and
+        // mirrored at their mean longitudinal position. The collider is 1 cm lower.
+        private static WinchSurfacePoint MainSheetPoint(WinchRole role) =>
+            new WinchSurfacePoint(
+                new Vector3(role == WinchRole.Left ? -3.465970f : 3.465970f, 4.829765f, -3.901223f),
+                Vector3.up
+            );
 
         // Measured solid support: Clipper_Upper_Trim.
         private static WinchSurfaceSegment[] AftRail(WinchRole role) =>
@@ -161,27 +115,18 @@ namespace MoreSailwindSails.BoatRigs
                     ),
                 };
 
-        // Measured solid support: Halyard_Points/Cube.004 or Cube.005.
-        private static WinchSurfaceSegment[] MainReefBeam() =>
-            new[]
+        // Six seats on each side of each existing rack. Mizzen main reef 6 is
+        // on top of the beam; number 7 is its sixth side pin instead.
+        private static string[] ReefPins(string mast, bool mizzen)
+        {
+            var pins = new string[12];
+            for (int i = 0; i < 6; i++)
             {
-                new WinchSurfaceSegment(
-                    new Vector3(0.000000f, 4.588700f, 3.500000f),
-                    new Vector3(0.000000f, 4.588700f, 1.650000f),
-                    new Vector3(-0.000000f, 1.000000f, -0.000000f)
-                ),
-            };
-
-        // Measured solid support: Halyard_Points/Cube.004 or Cube.005.
-        private static WinchSurfaceSegment[] AftReefBeam() =>
-            new[]
-            {
-                new WinchSurfaceSegment(
-                    new Vector3(0.000000f, 5.776000f, -9.880000f),
-                    new Vector3(0.000000f, 5.776000f, -11.720000f),
-                    new Vector3(-0.000000f, 1.000000f, -0.000000f)
-                ),
-            };
+                pins[i] = "Coil_" + mast + "_Reef_" + (mizzen && i == 5 ? 7 : i + 1);
+                pins[i + 6] = "Coil_" + mast + "_Jib_Reef_" + (i + 1);
+            }
+            return pins;
+        }
 
         // Authored from installed Shroud and Shipyard Expansion assets.
         // Endpoint vectors are local to the named physical mast section.
