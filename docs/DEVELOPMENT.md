@@ -344,6 +344,12 @@ physical spar ends. Deck-facing coils use measured supporting surfaces.
   radius, candidate count and native/reservation rejection counts. Counts are
   mutually exclusive: native obstructions take precedence. Repeated one-second
   retries remain silent; no support candidates produces zero rejection counts.
+  After positioning, binding and showing a control, an info-level message reports
+  `Placed authored winch` on initial success or `Winch successfully placed after retry`
+  after a placement failure (including missing support). Both include the warning's
+  boat/owner/donor context plus the selected boat-local `position` and zero-based
+  candidate `slot`. Routine refreshes/rebindings stay silent. Recovery is reported
+  for each failure episode; warnings remain limited to once per control instance.
   Do not expand bounds. With large-dhow mesh interaction colliders,
   checks establish at least **one** extra reef control per donor; multiple custom
   sails can exhaust space. Older isolated mast checks require three, bounded
@@ -434,8 +440,39 @@ Jong profile. Geometry checks missed the startup dependency on native mast
 registration, and the old structural check incorrectly required live-array access.
 The lookup now searches inactive hierarchy objects; updated assembly checks verify
 that path, authored-ID matching, and absence of activation/registration side effects.
-**Game validation of this startup correction and the new positions is pending.**
-Neither suite executes Unity rendering, interaction or control lifecycle recovery.
+The user subsequently reported that the correction appears to work on Jong.
+The latest game log confirms successful registration of **5 groups and 9 variants**.
+This is a positive observation for the tested setup, not coverage of every sail,
+stay, save/load or shipyard combination. Neither suite executes Unity rendering,
+interaction or control lifecycle recovery.
+
+The same session's contextual warnings identify cases to investigate, not
+confirmed persistent failures. The user reports the Junk's current build appears
+fine and suspects the Jong conflicts came from trying additional sails in the
+shipyard:
+
+- **Junk** (`BOAT junk medium (80)`), Mk.B on mount **136**, mapping/donor **52**,
+  starboard sheet: **5** candidates, all blocked by native fittings and none by
+  custom reservations. Mount **136** is `main mast 2 / mizzen mast 3`. This warning
+  occurs during initial loading and again during shipyard rebuilding. Later,
+  after leaving the shipyard, the rebuilt sail also warns for its port sheet:
+  **10** candidates, **7** native-blocked and **3** reservation-blocked.
+- **Jong**, Mk.B on mount **128**, mapping **10** / donor **7**, both sheets:
+  **5** candidates, **4** blocked by native fittings and **1** by a reservation.
+  Several different owner instances warn during the session. These identify
+  contention for the remaining slot; the logs do not identify the reserving owner
+  or report recovery in that build, so persistent failure versus transient shipyard contention
+  is unconfirmed. Preserve the user's positive observation alongside these warnings.
+
+That session's build retried silently at one-second intervals after failure;
+its logs identify the affected sail and donor, but neither the individual blocking
+fittings nor successful recovery. The updated **0.2.1** build adds initial-placement
+and recovery messages; in-game verification of these diagnostics is pending.
+Match boat/owner instances and role between warnings and recovery messages.
+Check both sheets of the identified sail after leaving the shipyard before
+treating a warning as a currently missing control. After installation, verify
+initial success logs once, failed retries remain quiet, and recovery logs once
+when space or missing support becomes available.
 
 After manual installation, start on **Brig** to check existing sheet/reef controls.
 Then confirm **Jong** logs successful registration of **5 groups and 9 variants**,

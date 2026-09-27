@@ -202,7 +202,9 @@ namespace MoreSailwindSails.Controls
             private float radius;
             private WinchReservations.Reservation reservation;
             private bool disposed,
-                warned;
+                warned,
+                hasLoggedPlacement,
+                placementFailed;
             private float retryAfter;
             private Vector3 lastSourcePosition;
             private Quaternion placementRotation = Quaternion.identity;
@@ -312,6 +314,7 @@ namespace MoreSailwindSails.Controls
                         if (!support)
                         {
                             Suspend();
+                            placementFailed = true;
                             if (!warned)
                                 Plugin.Log.LogWarning(
                                     "Missing authored winch support "
@@ -351,6 +354,7 @@ namespace MoreSailwindSails.Controls
                     if (reservation == null)
                     {
                         Suspend();
+                        placementFailed = true;
                         if (!warned)
                             Plugin.Log.LogWarning(
                                 "No free authored winch position for "
@@ -371,6 +375,24 @@ namespace MoreSailwindSails.Controls
                     Winch.AttachToController(Winch.rope);
                 mount.gameObject.SetActive(true);
                 Winch.ShowWinch(true);
+                // Report initial success and recovery only, after binding and showing
+                // the control. Routine refreshes and rebindings stay silent.
+                if (!hasLoggedPlacement || placementFailed)
+                {
+                    Plugin.Log.LogInfo(
+                        (
+                            placementFailed
+                                ? "Winch successfully placed after retry for "
+                                : "Placed authored winch for "
+                        )
+                            + mount.name
+                            + "; "
+                            + PlacementContext(origin)
+                            + $", position={reservation.Position.ToString("F4")}, slot={reservation.Slot}."
+                    );
+                    hasLoggedPlacement = true;
+                    placementFailed = false;
+                }
             }
 
             private string PlacementContext(Vector3 origin)
