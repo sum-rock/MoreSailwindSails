@@ -52,10 +52,11 @@ namespace MoreSailwindSails.Controls
             var definition = BoatRigCatalog.Find(boat.name)?.WinchMount(mast.orderIndex, role);
             if (definition != null && definition.SourceMast >= 0)
             {
-                var sourceMast =
-                    boat.masts != null && definition.SourceMast < boat.masts.Length
-                        ? boat.masts[definition.SourceMast]
-                        : null;
+                // Stay construction can precede the donor's Awake/RegisterMast.
+                // Include inactive native options without activating them or
+                // relying on the live boat.masts array being populated yet.
+                var sourceMast = boat.GetComponentsInChildren<Mast>(true)
+                    .FirstOrDefault(m => m && m.orderIndex == definition.SourceMast);
                 sources = Sources(sourceMast, role);
                 first = sources?.FirstOrDefault(Usable);
             }

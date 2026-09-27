@@ -70,9 +70,21 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     && (Mount.leftAngleWinch.Length == 0 || Mount.rightAngleWinch.Length == 0)
                 )
             )
+            {
+                var missing = new List<string>();
+                if (Mount.reefWinch.Length == 0)
+                    missing.Add("halyard");
+                if (Mount.midAngleWinch.Length == 0)
+                {
+                    if (Mount.leftAngleWinch.Length == 0)
+                        missing.Add("port sheet");
+                    if (Mount.rightAngleWinch.Length == 0)
+                        missing.Add("starboard sheet");
+                }
                 throw new InvalidOperationException(
-                    "The stay donor has no complete independent controls."
+                    $"Incomplete controls for Fisherman's Stay mount {definition.MountIndex} ({definition.Label}): missing {string.Join(", ", missing)}; sheet mapping={source.orderIndex}, halyard mapping={references.Aft.orderIndex}."
                 );
+            }
             Mount.midRopeAtt = CloneAnchors(source.midRopeAtt, "Sheet attachment");
             Mount.mastReefAtt = CloneAnchors(new[] { references.Guide }, "Halyard guide");
             Mount.mastReefAttExtension = CloneAnchors(

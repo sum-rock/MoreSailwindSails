@@ -369,6 +369,15 @@ Stay geometry still comes from mast **10**, and mount **128** and its save slot
 are unchanged. `SourceMast = -1` preserves every other mapping; missing explicit
 donors yield no usable source rather than reverting to the blocked donor.
 
+Resolve explicit donors through the owning boat's `GetComponentsInChildren<Mast>(true)`
+hierarchy and authored `orderIndex`, including inactive native options. Native
+`Mast.Awake` populates `BoatRefs.masts`; that live array is not a complete donor
+catalog during early stay construction. The first override implementation used
+`boat.masts[7]` and failed Jong registration with incomplete controls, rolling
+back all five groups. Do not activate donors or write native array slots to make
+lookup succeed. Incomplete-control errors now include the custom mount, missing
+roles, and sheet/halyard mapping IDs.
+
 The complete conservative native/SE obstruction fixture establishes **one**
 extra sheet per side, including the logged neighboring Flying Sail between masts
 **2–3**, which shares reef donor **2** with the foremast staysail. More custom
@@ -418,12 +427,20 @@ replace it. Keep numeric details in profiles/fixtures instead of duplicating tab
 
 For the Jong correction in **0.2.1**, the user's pre-fix observation and screenshot
 confirm a persistently missing port control with a visible starboard control.
-The corrected placement is validated by geometry/assembly checks only; **post-fix
-game validation is pending**. Neither suite executes Unity rendering, interaction
-or control lifecycle recovery.
+The first donor-override build then failed in game: existing stays did not load
+and none were available at the shipyard. The matching installed DLL logged
+`The stay donor has no complete independent controls` and rejected the entire
+Jong profile. Geometry checks missed the startup dependency on native mast
+registration, and the old structural check incorrectly required live-array access.
+The lookup now searches inactive hierarchy objects; updated assembly checks verify
+that path, authored-ID matching, and absence of activation/registration side effects.
+**Game validation of this startup correction and the new positions is pending.**
+Neither suite executes Unity rendering, interaction or control lifecycle recovery.
 
 After manual installation, start on **Brig** to check existing sheet/reef controls.
-Then test **Jong** with a foremast staysail alone and with a Flying Sail between
+Then confirm **Jong** logs successful registration of **5 groups and 9 variants**,
+restores stays from an intact previous save and offers stays in the shipyard.
+Test a foremast staysail alone and with a Flying Sail between
 masts **2–3**. Confirm both lower-rail sheet winches are visible, reachable and
 independently usable; repeat after save/load, shipyard cancellation, and fitting
 or removing neighboring sails. Genuine exhaustion must preserve controllers,

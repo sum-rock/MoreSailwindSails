@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using static MoreSailwindSails.Tests.AssemblyChecks.Shared.IlReader;
 
 namespace MoreSailwindSails.Tests.AssemblyChecks.FishermansStay;
@@ -23,14 +24,59 @@ internal static class WinchChecks
             throw new Exception("Runtime winch selection ignores the authored donor row.");
         if (
             !sourceInstructions.Any(i => i.Operand is FieldInfo f && f.Name == "SourceMast")
-            || !sourceInstructions.Any(i => i.Operand is FieldInfo f && f.Name == "masts")
             || CalledMethods(source).Count(m => m.Name == "Sources") != 2
-            || CalledMethods(source).Count(m => m.Name == "FirstOrDefault") != 2
             || CalledMethods(source).Contains(source)
         )
             throw new Exception(
                 "Authored mast overrides must directly reselect their native role array."
             );
+        // The Jong regression passed geometry checks but failed during stay
+        // construction: native Awake had not populated boat.masts[7] yet.
+        // Verify the actual lookup includes inactive hierarchy objects and uses
+        // the authored ID, without depending on or forcing native registration.
+        int donorSearch = Array.FindIndex(
+            sourceInstructions,
+            i =>
+                i.Operand is MethodInfo m
+                && m.Name == "GetComponentsInChildren"
+                && m.IsGenericMethod
+                && m.GetGenericArguments().Single().Name == "Mast"
+        );
+        if (
+            donorSearch <= 0
+            || sourceInstructions[donorSearch - 1].Code != OpCodes.Ldc_I4_1
+            || sourceInstructions.Any(i => i.Operand is FieldInfo f && f.Name == "masts")
+        )
+            throw new Exception(
+                "Override donors must be found before Awake, including inactive native options."
+            );
+        var donorPredicate = CalledMethods(source)
+            .OfType<MethodInfo>()
+            .Single(m => m.Name.StartsWith("<Source>b__", StringComparison.Ordinal));
+        var predicateInstructions = Instructions(donorPredicate).ToArray();
+        if (
+            !predicateInstructions.Any(i => i.Operand is FieldInfo f && f.Name == "orderIndex")
+            || !predicateInstructions.Any(i => i.Operand is FieldInfo f && f.Name == "SourceMast")
+            || !predicateInstructions.Any(i => i.Code == OpCodes.Ceq)
+        )
+            throw new Exception("Hierarchy donor lookup must match the authored mast ID.");
+        if (
+            CalledMethods(source)
+                .Concat(CalledMethods(donorPredicate))
+                .Any(m =>
+                    m.Name
+                        is "SetActive"
+                            or "RegisterMast"
+                            or "get_activeInHierarchy"
+                            or "get_activeSelf"
+                )
+        )
+            throw new Exception(
+                "Donor lookup must neither require activation nor force native registration."
+            );
+        var nativeMast = source.GetParameters()[1].ParameterType;
+        if (!CalledMethods(nativeMast.GetMethod("Awake", all)).Any(m => m.Name == "RegisterMast"))
+            throw new Exception("Recheck the installed native mast-registration lifecycle.");
         int firstControl = Array.FindIndex(
             sourceInstructions,
             i => i.Operand is MethodBase m && m.Name == "FirstOrDefault"
