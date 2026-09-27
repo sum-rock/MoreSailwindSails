@@ -100,6 +100,11 @@ feature's `Patches/` directory and `.Patches` namespace.
 | `src/BoatRigs/`                   | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks; shared definitions validate the catalog |
 | `src/Controls/`                   | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning                                                          |
 
+In boat profile files, use named arguments for every supplied domain constructor
+argument, including explicit null fallbacks and boolean flags. Keep conventional
+`Vector3(x, y, z)` coordinates positional. Preserve authored values and ordering
+when changing argument style.
+
 Add future sail families under their own `src/Sails/<Family>/` directory.
 Keep existing families independently editable; [shared-helper extraction is
 deferred](CLEANUP.md). Runtime mesh/object labels use the family or mark prefix;

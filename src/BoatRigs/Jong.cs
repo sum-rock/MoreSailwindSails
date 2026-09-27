@@ -6,11 +6,11 @@ namespace MoreSailwindSails.BoatRigs
     internal static class Jong
     {
         internal static readonly BoatRigDefinition Definition = new BoatRigDefinition(
-            "BOAT junk large (70)",
-            Supports(),
-            Stays(),
-            MastParents(),
-            SheetCategories()
+            boatName: "BOAT junk large (70)",
+            supports: Supports(),
+            stays: Stays(),
+            mastParents: MastParents(),
+            sheetCategories: SheetCategories()
         );
 
         // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
@@ -18,15 +18,15 @@ namespace MoreSailwindSails.BoatRigs
             new[]
             {
                 new SheetWinchCategory(
-                    "Foremast",
-                    new[] { 1, 67, 79 },
-                    new[] { 1, 67, 79, 7, 10, 73, 74, 5, 6, 81 },
-                    null
+                    name: "Foremast",
+                    physicalMasts: new[] { 1, 67, 79 },
+                    sources: new[] { 1, 67, 79, 7, 10, 73, 74, 5, 6, 81 },
+                    fallback: null
                 ),
                 new SheetWinchCategory(
-                    "MainmastA",
-                    new[] { 2, 51, 78 },
-                    new[]
+                    name: "MainmastA",
+                    physicalMasts: new[] { 2, 51, 78 },
+                    sources: new[]
                     {
                         2,
                         51,
@@ -54,32 +54,61 @@ namespace MoreSailwindSails.BoatRigs
                         83,
                         84,
                     },
-                    null
+                    fallback: null
                 ),
                 new SheetWinchCategory(
-                    "MainmastB",
-                    new[] { 3, 52, 77 },
-                    new[] { 3, 52, 77, 13, 14, 56, 57, 70, 71 },
-                    null
+                    name: "MainmastB",
+                    physicalMasts: new[] { 3, 52, 77 },
+                    sources: new[] { 3, 52, 77, 13, 14, 56, 57, 70, 71 },
+                    fallback: null
                 ),
                 new SheetWinchCategory(
-                    "Mizzenmast",
-                    new[] { 4, 53, 80 },
-                    new[] { 4, 53, 80 },
-                    null
+                    name: "Mizzenmast",
+                    physicalMasts: new[] { 4, 53, 80 },
+                    sources: new[] { 4, 53, 80 },
+                    fallback: null
                 ),
-                new SheetWinchCategory("Bowsprit", new[] { 0 }, new[] { 0 }, null),
+                new SheetWinchCategory(
+                    name: "Bowsprit",
+                    physicalMasts: new[] { 0 },
+                    sources: new[] { 0 },
+                    fallback: null
+                ),
             };
 
         private static MastSupportDefinition[] Supports() =>
             new[]
             {
-                new MastSupportDefinition(10, new[] { 1 }, new[] { 2 }),
-                new MastSupportDefinition(12, new[] { 2 }, new[] { 3 }),
-                new MastSupportDefinition(55, new[] { 51 }, new[] { 52 }),
-                new MastSupportDefinition(58, new[] { 51 }, new[] { 3 }),
-                new MastSupportDefinition(73, new[] { 1 }, new[] { 52 }),
-                new MastSupportDefinition(71, new[] { 52 }, new[] { 4 }),
+                new MastSupportDefinition(
+                    sheetControlSource: 10,
+                    foreSections: new[] { 1 },
+                    aftSections: new[] { 2 }
+                ),
+                new MastSupportDefinition(
+                    sheetControlSource: 12,
+                    foreSections: new[] { 2 },
+                    aftSections: new[] { 3 }
+                ),
+                new MastSupportDefinition(
+                    sheetControlSource: 55,
+                    foreSections: new[] { 51 },
+                    aftSections: new[] { 52 }
+                ),
+                new MastSupportDefinition(
+                    sheetControlSource: 58,
+                    foreSections: new[] { 51 },
+                    aftSections: new[] { 3 }
+                ),
+                new MastSupportDefinition(
+                    sheetControlSource: 73,
+                    foreSections: new[] { 1 },
+                    aftSections: new[] { 52 }
+                ),
+                new MastSupportDefinition(
+                    sheetControlSource: 71,
+                    foreSections: new[] { 52 },
+                    aftSections: new[] { 4 }
+                ),
             };
 
         // Installed mast ancestry: -1 marks a physical base section.
@@ -102,158 +131,158 @@ namespace MoreSailwindSails.BoatRigs
             new[]
             {
                 new FishermansStayGroupDefinition(
-                    "Foremast / mainmast 1",
-                    new[]
+                    label: "Foremast / mainmast 1",
+                    variants: new[]
                     {
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            128,
-                            10,
-                            "foremast / main mast 1",
-                            1,
-                            new Vector3(0.00000f, -0.00000f, 1.13012f),
-                            2,
-                            new Vector3(-0.00000f, -0.00000f, 0.05000f),
-                            false,
-                            0,
-                            new[] { 1, 2 },
-                            new int[0]
+                            mountIndex: 128,
+                            donor: 10,
+                            label: "foremast / main mast 1",
+                            fore: 1,
+                            forePoint: new Vector3(0.00000f, -0.00000f, 1.13012f),
+                            aft: 2,
+                            aftPoint: new Vector3(-0.00000f, -0.00000f, 0.05000f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 1, 2 },
+                            forbidden: new int[0]
                         ),
                     }
                 ),
                 new FishermansStayGroupDefinition(
-                    "Mainmast 1 / mainmast 2",
-                    new[]
+                    label: "Mainmast 1 / mainmast 2",
+                    variants: new[]
                     {
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            129,
-                            12,
-                            "main mast 1 / main mast 2",
-                            2,
-                            new Vector3(0.00000f, -0.00000f, -2.22414f),
-                            3,
-                            new Vector3(-0.00000f, -0.00000f, 0.09200f),
-                            false,
-                            0,
-                            new[] { 2, 3 },
-                            new int[0]
+                            mountIndex: 129,
+                            donor: 12,
+                            label: "main mast 1 / main mast 2",
+                            fore: 2,
+                            forePoint: new Vector3(0.00000f, -0.00000f, -2.22414f),
+                            aft: 3,
+                            aftPoint: new Vector3(-0.00000f, -0.00000f, 0.09200f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 2, 3 },
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            130,
-                            55,
-                            "main mast 1 fore / main mast 2 fore",
-                            51,
-                            new Vector3(0.00000f, -0.00000f, -2.22315f),
-                            52,
-                            new Vector3(0.00000f, -0.00000f, 0.09200f),
-                            false,
-                            0,
-                            new[] { 51, 52 },
-                            new int[0]
+                            mountIndex: 130,
+                            donor: 55,
+                            label: "main mast 1 fore / main mast 2 fore",
+                            fore: 51,
+                            forePoint: new Vector3(0.00000f, -0.00000f, -2.22315f),
+                            aft: 52,
+                            aftPoint: new Vector3(0.00000f, -0.00000f, 0.09200f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 51, 52 },
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            131,
-                            58,
-                            "main mast 1 fore / main mast 2",
-                            51,
-                            new Vector3(0.00000f, -0.00000f, -3.69245f),
-                            3,
-                            new Vector3(-0.00000f, -0.00000f, 0.09200f),
-                            false,
-                            0,
-                            new[] { 3, 51 },
-                            new int[0]
+                            mountIndex: 131,
+                            donor: 58,
+                            label: "main mast 1 fore / main mast 2",
+                            fore: 51,
+                            forePoint: new Vector3(0.00000f, -0.00000f, -3.69245f),
+                            aft: 3,
+                            aftPoint: new Vector3(-0.00000f, -0.00000f, 0.09200f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 3, 51 },
+                            forbidden: new int[0]
                         ),
                     }
                 ),
                 new FishermansStayGroupDefinition(
-                    "Foremast / mainmast 2",
-                    new[]
+                    label: "Foremast / mainmast 2",
+                    variants: new[]
                     {
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            132,
-                            73,
-                            "foremast / main mast 2 fore",
-                            1,
-                            new Vector3(-0.00000f, -0.00000f, 0.32528f),
-                            52,
-                            new Vector3(0.00000f, -0.00000f, 0.09200f),
-                            false,
-                            0,
-                            new[] { 1, 52 },
-                            new int[0]
+                            mountIndex: 132,
+                            donor: 73,
+                            label: "foremast / main mast 2 fore",
+                            fore: 1,
+                            forePoint: new Vector3(-0.00000f, -0.00000f, 0.32528f),
+                            aft: 52,
+                            aftPoint: new Vector3(0.00000f, -0.00000f, 0.09200f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 1, 52 },
+                            forbidden: new int[0]
                         ),
                     }
                 ),
                 new FishermansStayGroupDefinition(
-                    "Mainmast 2 / mizzenmast",
-                    new[]
+                    label: "Mainmast 2 / mizzenmast",
+                    variants: new[]
                     {
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            133,
-                            13,
-                            "main mast 2 / mizzen mast",
-                            3,
-                            new Vector3(0.00000f, -0.00000f, -7.77488f),
-                            4,
-                            new Vector3(-0.00000f, -0.00000f, 0.15000f),
-                            false,
-                            0,
-                            new[] { 3, 4 },
-                            new int[0]
+                            mountIndex: 133,
+                            donor: 13,
+                            label: "main mast 2 / mizzen mast",
+                            fore: 3,
+                            forePoint: new Vector3(0.00000f, -0.00000f, -7.77488f),
+                            aft: 4,
+                            aftPoint: new Vector3(-0.00000f, -0.00000f, 0.15000f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 3, 4 },
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            134,
-                            56,
-                            "main mast 2 fore / mizzen mast 2",
-                            52,
-                            new Vector3(0.00000f, -0.00000f, -7.77379f),
-                            53,
-                            new Vector3(0.00000f, -0.00000f, 0.15000f),
-                            false,
-                            0,
-                            new[] { 52, 53 },
-                            new int[0]
+                            mountIndex: 134,
+                            donor: 56,
+                            label: "main mast 2 fore / mizzen mast 2",
+                            fore: 52,
+                            forePoint: new Vector3(0.00000f, -0.00000f, -7.77379f),
+                            aft: 53,
+                            aftPoint: new Vector3(0.00000f, -0.00000f, 0.15000f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 52, 53 },
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            135,
-                            71,
-                            "main mast 2 fore / mizzen mast",
-                            52,
-                            new Vector3(0.00000f, -0.00000f, -9.24418f),
-                            4,
-                            new Vector3(-0.00000f, -0.00000f, 0.15000f),
-                            false,
-                            0,
-                            new[] { 4, 52 },
-                            new int[0]
+                            mountIndex: 135,
+                            donor: 71,
+                            label: "main mast 2 fore / mizzen mast",
+                            fore: 52,
+                            forePoint: new Vector3(0.00000f, -0.00000f, -9.24418f),
+                            aft: 4,
+                            aftPoint: new Vector3(-0.00000f, -0.00000f, 0.15000f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 4, 52 },
+                            forbidden: new int[0]
                         ),
                     }
                 ),
                 new FishermansStayGroupDefinition(
-                    "Mainmast 1 / mizzenmast",
-                    new[]
+                    label: "Mainmast 1 / mizzenmast",
+                    variants: new[]
                     {
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            136,
-                            75,
-                            "main mast 1 / mizzen mast 2",
-                            2,
-                            new Vector3(0.00000f, -0.00000f, -8.62064f),
-                            53,
-                            new Vector3(0.00000f, -0.00000f, 0.15000f),
-                            false,
-                            0,
-                            new[] { 2, 53 },
-                            new int[0]
+                            mountIndex: 136,
+                            donor: 75,
+                            label: "main mast 1 / mizzen mast 2",
+                            fore: 2,
+                            forePoint: new Vector3(0.00000f, -0.00000f, -8.62064f),
+                            aft: 53,
+                            aftPoint: new Vector3(0.00000f, -0.00000f, 0.15000f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 2, 53 },
+                            forbidden: new int[0]
                         ),
                     }
                 ),
