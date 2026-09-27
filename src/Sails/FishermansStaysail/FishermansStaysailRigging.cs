@@ -237,6 +237,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 Pair.Boat,
                 sail.gameObject,
                 controlsRoot.transform,
+                Pair.Fore,
                 new[] { Pair.AftBase, Pair.SheetControlSource, Pair.SheetControlSource },
                 new[]
                 {
@@ -248,8 +249,12 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             controlsDirty = false;
             var connections = sail.GetComponent<SailConnections>();
             controls[0].Bind(connections.reefController);
-            controls[1].Bind(connections.angleControllerLeft);
-            controls[2].Bind(connections.angleControllerRight);
+            FishermanWinchControls.BindSheets(
+                controls[1],
+                connections.angleControllerLeft,
+                controls[2],
+                connections.angleControllerRight
+            );
             connections.colChecker.RegisterBoatWalkCol(mast.walkColMast);
             // Old saves can restore the wider donor range; keep the checker,
             // shipyard description and native sail limits in agreement.

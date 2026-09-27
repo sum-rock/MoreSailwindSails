@@ -85,11 +85,8 @@ namespace MoreSailwindSails.Controls
         internal float Radius(GPButtonRopeWinch c)
         {
             // Only previously measured Shroud side pins get the pin-pitch radius.
-            var pin = Profile?.WinchMounts.FirstOrDefault(d =>
-                d.PinNames != null && d.PinNames.Contains(c.name)
-            );
-            if (pin != null)
-                return pin.PinRadius;
+            if (Profile != null && Profile.WinchClearances.TryGetValue(c.name, out var clearance))
+                return clearance;
             var scale = c.transform.lossyScale;
             var bs = Boat.transform.lossyScale;
             float largest = Math.Max(

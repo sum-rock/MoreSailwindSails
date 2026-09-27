@@ -42,30 +42,19 @@ namespace MoreSailwindSails.Controls
                     continue;
                 var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
                 var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
-                var indices =
-                    source.Pairs
-                    ?? Enumerable
-                        .Range(0, Math.Max(left.Length, right.Length))
-                        .Select(i => new[] { i, i })
-                        .ToArray();
+                var indices = NativeSheetPairing.Indices(
+                    left,
+                    right,
+                    source.Pairs,
+                    NativeWinchSeats.Usable,
+                    index =>
+                        native.Diagnose(
+                            $"pair/{source.Mast}/{index}",
+                            $"Unmatched native sheet pair: boat={native.Boat.name}, category={category.Name}, source={source.Mast}, indices={index}."
+                        )
+                );
                 foreach (var index in indices)
                 {
-                    if (
-                        index.Length != 2
-                        || index[0] < 0
-                        || index[1] < 0
-                        || index[0] >= left.Length
-                        || index[1] >= right.Length
-                        || !NativeWinchSeats.Usable(left[index[0]])
-                        || !NativeWinchSeats.Usable(right[index[1]])
-                    )
-                    {
-                        native.Diagnose(
-                            $"pair/{source.Mast}/{string.Join(",", index)}",
-                            $"Unmatched native sheet pair: boat={native.Boat.name}, category={category.Name}, source={source.Mast}, indices={string.Join(",", index)}."
-                        );
-                        continue;
-                    }
                     var p = left[index[0]];
                     var s = right[index[1]];
                     var candidate = native.Candidate(

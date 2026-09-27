@@ -10,7 +10,6 @@ namespace MoreSailwindSails.BoatRigs
             Supports(),
             Stays(),
             MastParents(),
-            WinchMounts(),
             SheetCategories()
         );
 
@@ -20,11 +19,16 @@ namespace MoreSailwindSails.BoatRigs
             {
                 new SheetWinchCategory(
                     "Mainmast",
-                    new[] { 6, 5, 56, 59, 63 },
-                    new[] { 6, 5, 56, 59, 63, 58 },
+                    new[] { 6, 5, 59, 63 },
+                    new[] { 6, 5, 59, 63, 58, 3, 4, 53, 54, 55, 60, 61, 62, 64, 67 },
                     null
                 ),
-                new SheetWinchCategory("Foremast", new[] { 68 }, new[] { 68 }, null),
+                new SheetWinchCategory(
+                    "Foremast",
+                    new[] { 56, 68 },
+                    new[] { 56, 68, 69, 70 },
+                    null
+                ),
                 new SheetWinchCategory(
                     "Mizzenmast",
                     new[] { 8, 57, 66 },
@@ -53,100 +57,7 @@ namespace MoreSailwindSails.BoatRigs
                 { 68, -1 },
             };
 
-        // Installed donor directions in boat space; provenance and numeric fixtures
-        // are documented in docs/DEVELOPMENT.md under shared winch placement.
-        private static WinchMountDefinition[] WinchMounts() =>
-            new[]
-            {
-                new WinchMountDefinition(5, WinchRole.Reef, new Vector3(0f, 1f, 0f), true, 5),
-                new WinchMountDefinition(8, WinchRole.Reef, new Vector3(0f, 1f, 0f), true, 8),
-                new WinchMountDefinition(
-                    51,
-                    WinchRole.Left,
-                    new Vector3(0.080921f, 0.992272f, 0.094062f),
-                    0.057454f,
-                    AftRail(WinchRole.Left)
-                ),
-                new WinchMountDefinition(
-                    51,
-                    WinchRole.Right,
-                    new Vector3(-0.103256f, 0.992379f, 0.067245f),
-                    0.057454f,
-                    AftRail(WinchRole.Right)
-                ),
-                new WinchMountDefinition(57, WinchRole.Reef, new Vector3(0f, 1f, 0f), true, 57),
-                new WinchMountDefinition(
-                    58,
-                    WinchRole.Left,
-                    new Vector3(0.080921f, 0.992272f, 0.094062f),
-                    0.057454f,
-                    AftRail(WinchRole.Left)
-                ),
-                new WinchMountDefinition(
-                    58,
-                    WinchRole.Right,
-                    new Vector3(-0.103256f, 0.992379f, 0.067245f),
-                    0.057454f,
-                    AftRail(WinchRole.Right)
-                ),
-                new WinchMountDefinition(
-                    65,
-                    WinchRole.Left,
-                    new Vector3(0.080921f, 0.992272f, 0.094062f),
-                    0.057454f,
-                    AftRail(WinchRole.Left)
-                ),
-                new WinchMountDefinition(
-                    65,
-                    WinchRole.Right,
-                    new Vector3(-0.103256f, 0.992379f, 0.067245f),
-                    0.057454f,
-                    AftRail(WinchRole.Right)
-                ),
-            };
-
-        // Measured solid support: trim_001.
-        private static WinchSurfaceSegment[] AftRail(WinchRole role) =>
-            role == WinchRole.Left
-                ? new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(-1.938420f, 2.440695f, -2.586095f),
-                        new Vector3(-1.899160f, 2.540430f, -3.484050f),
-                        new Vector3(0.002328f, 0.993874f, 0.110490f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-1.896715f, 2.544770f, -3.530110f),
-                        new Vector3(-1.793510f, 2.672010f, -5.174305f),
-                        new Vector3(0.066976f, 0.994448f, 0.081162f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-1.790820f, 2.675890f, -5.220275f),
-                        new Vector3(-1.727715f, 2.782630f, -6.387575f),
-                        new Vector3(0.145756f, 0.984465f, 0.097901f)
-                    ),
-                }
-                : new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(1.938420f, 2.440695f, -2.586095f),
-                        new Vector3(1.899160f, 2.540430f, -3.484050f),
-                        new Vector3(-0.002328f, 0.993874f, 0.110490f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(1.896715f, 2.544770f, -3.530110f),
-                        new Vector3(1.793510f, 2.672010f, -5.174305f),
-                        new Vector3(-0.066976f, 0.994448f, 0.081162f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(1.790825f, 2.675890f, -5.220275f),
-                        new Vector3(1.727715f, 2.782630f, -6.387575f),
-                        new Vector3(-0.145758f, 0.984464f, 0.097902f)
-                    ),
-                };
-
-        // Authored from installed Cog and Shipyard Expansion assets.
-        // Endpoint vectors are local to the named physical mast section.
+        // Authored from installed native and boat-mod assets.
         private static FishermansStayGroupDefinition[] Stays() =>
             new[]
             {

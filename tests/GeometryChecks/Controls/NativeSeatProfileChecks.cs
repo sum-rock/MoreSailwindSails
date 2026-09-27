@@ -78,6 +78,74 @@ internal static class NativeSeatProfileChecks
             }
         )
             Check(rows.Any(r => r[1] == boat), "Missing boat inventory: " + boat);
+        // Verify profile constants against independently extracted shipyard groups.
+        var rigs = File.ReadAllLines(
+                Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
+            )
+            .Where(l => l.StartsWith("rig|"))
+            .Select(l => l.Split('|'))
+            .ToArray();
+        var names = new[]
+        {
+            "Brig",
+            "Junk",
+            "Jong",
+            "Sanbuq",
+            "Cog",
+            "Leopard",
+            "Shroud",
+            "LargeDhow",
+        };
+        for (int b = 0; b < BoatRigCatalog.All.Length; b++)
+        {
+            var profile = BoatRigCatalog.All[b];
+            foreach (var category in profile.SheetCategories)
+            {
+                var groups = category
+                    .PhysicalMasts.Select(id =>
+                        rigs.Single(r => r[1] == names[b] && r[3] == id.ToString())[5]
+                    )
+                    .Distinct()
+                    .ToArray();
+                Check(
+                    groups.Length == 1,
+                    names[b] + "/" + category.Name + " merges separate shipyard groups."
+                );
+                foreach (var source in category.Sources)
+                    Check(
+                        rigs.Any(r => r[1] == names[b] && r[3] == source.Mast.ToString()),
+                        "Missing audited source: " + names[b] + "/" + source.Mast
+                    );
+            }
+            foreach (
+                var donor in profile
+                    .Stays.SelectMany(g => g.Variants)
+                    .Select(v => v.Donor)
+                    .Distinct()
+            )
+                Check(
+                    !rows.Any(r =>
+                        r[1] == names[b] && r[3] == donor.ToString() && r[4] == "midAngleWinch"
+                    ),
+                    "Stay donor requires an unhandled centre sheet."
+                );
+        }
+        Check(
+            Shroud.Definition.WinchClearances.Count == 24
+                && Shroud.Definition.WinchClearances.Values.All(r => r == 0.14f),
+            "Measured Shroud clearance changed."
+        );
+        Check(
+            BoatRigCatalog
+                .All.Where(b => b != Shroud.Definition)
+                .All(b => b.WinchClearances.Count == 0),
+            "Pin clearance leaked to another boat."
+        );
+        Check(
+            rows.Count(r => r[1] == "Shroud" && r[3] == "7" && r[4] == "reefWinch") == 7
+                && rows.Count(r => r[1] == "Shroud" && r[3] == "8" && r[4] == "reefWinch") == 5,
+            "Re-audit active Shroud mast pin capacity."
+        );
         string Seat(string boat, int mast, string role, int index) =>
             rows.Single(r =>
                 r[1] == boat

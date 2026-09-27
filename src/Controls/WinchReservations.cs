@@ -8,77 +8,14 @@ namespace MoreSailwindSails.Controls
     // Pure allocation policy. Positions and radii are in the boat's local frame.
     internal sealed class WinchReservations
     {
-        // Count each rejected candidate once, with native obstructions taking
-        // precedence over reservations. Collection is optional for silent retries.
-        internal sealed class Rejections
+        private sealed class Reservation
         {
-            internal int Native,
-                Reserved;
-        }
-
-        internal sealed class Reservation
-        {
-            internal object Donor,
-                Owner;
-            internal int Slot;
-            internal Vector3 Position;
-            internal float Radius;
+            internal object Owner;
             internal WinchSeat Seat;
         }
 
         private readonly List<Reservation> entries = new List<Reservation>();
         internal int Count => entries.Count;
-
-        internal Reservation Acquire(
-            object donor,
-            object owner,
-            Vector3[] candidates,
-            float radius,
-            Func<Vector3, float, bool> obstructed,
-            Rejections rejections = null
-        )
-        {
-            if (donor == null || owner == null)
-                throw new ArgumentNullException();
-            if (rejections != null)
-                rejections.Native = rejections.Reserved = 0;
-            var existing = entries.FirstOrDefault(e => ReferenceEquals(e.Owner, owner));
-            if (existing != null && ReferenceEquals(existing.Donor, donor))
-                return existing;
-            Release(owner);
-            for (int slot = 0; slot < candidates.Length; slot++)
-            {
-                var position = candidates[slot];
-                if (obstructed(position, radius))
-                {
-                    if (rejections != null)
-                        rejections.Native++;
-                    continue;
-                }
-                if (
-                    entries.Any(e =>
-                        (ReferenceEquals(e.Donor, donor) && e.Slot == slot)
-                        || Overlap(position, radius, e.Position, e.Radius)
-                    )
-                )
-                {
-                    if (rejections != null)
-                        rejections.Reserved++;
-                    continue;
-                }
-                var entry = new Reservation
-                {
-                    Donor = donor,
-                    Owner = owner,
-                    Slot = slot,
-                    Position = position,
-                    Radius = radius,
-                };
-                entries.Add(entry);
-                return entry;
-            }
-            return null;
-        }
 
         internal sealed class Claim
         {
@@ -109,29 +46,13 @@ namespace MoreSailwindSails.Controls
                     if (seats[i].Conflicts(seats[j]))
                         return null;
                 if (
-                    entries.Any(e =>
-                        !ReferenceEquals(e.Owner, owner)
-                        && (
-                            e.Seat != null
-                                ? seats[i].Conflicts(e.Seat)
-                                : Overlap(seats[i].Position, seats[i].Radius, e.Position, e.Radius)
-                        )
-                    )
+                    entries.Any(e => !ReferenceEquals(e.Owner, owner) && seats[i].Conflicts(e.Seat))
                 )
                     return null;
             }
             Release(owner);
             foreach (var seat in seats)
-                entries.Add(
-                    new Reservation
-                    {
-                        Owner = owner,
-                        Donor = seat.Identity,
-                        Position = seat.Position,
-                        Radius = seat.Radius,
-                        Seat = seat,
-                    }
-                );
+                entries.Add(new Reservation { Owner = owner, Seat = seat });
             return new Claim(owner, seats.ToArray());
         }
 

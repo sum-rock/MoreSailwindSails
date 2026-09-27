@@ -10,8 +10,8 @@ namespace MoreSailwindSails.BoatRigs
             Supports(),
             Stays(),
             MastParents(),
-            WinchMounts(),
-            SheetCategories()
+            SheetCategories(),
+            PinClearances()
         );
 
         // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
@@ -21,7 +21,7 @@ namespace MoreSailwindSails.BoatRigs
                 new SheetWinchCategory(
                     "Foremast",
                     new[] { 6, 5 },
-                    new[] { 6, 5, 16, 17, 24 },
+                    new[] { 6, 5, 16, 17, 24, 13, 14, 15, 20, 21, 22, 23 },
                     ForemastFallback
                 ),
                 new SheetWinchCategory(
@@ -55,6 +55,36 @@ namespace MoreSailwindSails.BoatRigs
                 )
             );
 
+        // Measured side-pin pitch affects clearance only, never seat eligibility.
+        private static Dictionary<string, float> PinClearances() =>
+            new Dictionary<string, float>
+            {
+                { "Coil_Mainmast_Reef_1", 0.14f },
+                { "Coil_Mainmast_Reef_2", 0.14f },
+                { "Coil_Mainmast_Reef_3", 0.14f },
+                { "Coil_Mainmast_Reef_4", 0.14f },
+                { "Coil_Mainmast_Reef_5", 0.14f },
+                { "Coil_Mainmast_Reef_6", 0.14f },
+                { "Coil_Mainmast_Jib_Reef_1", 0.14f },
+                { "Coil_Mainmast_Jib_Reef_2", 0.14f },
+                { "Coil_Mainmast_Jib_Reef_3", 0.14f },
+                { "Coil_Mainmast_Jib_Reef_4", 0.14f },
+                { "Coil_Mainmast_Jib_Reef_5", 0.14f },
+                { "Coil_Mainmast_Jib_Reef_6", 0.14f },
+                { "Coil_Mizzenmast_Reef_1", 0.14f },
+                { "Coil_Mizzenmast_Reef_2", 0.14f },
+                { "Coil_Mizzenmast_Reef_3", 0.14f },
+                { "Coil_Mizzenmast_Reef_4", 0.14f },
+                { "Coil_Mizzenmast_Reef_5", 0.14f },
+                { "Coil_Mizzenmast_Reef_7", 0.14f },
+                { "Coil_Mizzenmast_Jib_Reef_1", 0.14f },
+                { "Coil_Mizzenmast_Jib_Reef_2", 0.14f },
+                { "Coil_Mizzenmast_Jib_Reef_3", 0.14f },
+                { "Coil_Mizzenmast_Jib_Reef_4", 0.14f },
+                { "Coil_Mizzenmast_Jib_Reef_5", 0.14f },
+                { "Coil_Mizzenmast_Jib_Reef_6", 0.14f },
+            };
+
         private static MastSupportDefinition[] Supports() =>
             new[] { new MastSupportDefinition(25, new[] { 7 }, new[] { 9 }) };
 
@@ -70,108 +100,7 @@ namespace MoreSailwindSails.BoatRigs
                 { 9, -1 },
             };
 
-        // Installed donor directions in boat space; provenance and numeric fixtures
-        // are documented in docs/DEVELOPMENT.md under shared winch placement.
-        private static WinchMountDefinition[] WinchMounts() =>
-            new[]
-            {
-                new WinchMountDefinition(7, WinchRole.Reef, 0.14f, ReefPins("Mainmast", false)),
-                new WinchMountDefinition(8, WinchRole.Reef, 0.14f, ReefPins("Mainmast", false)),
-                new WinchMountDefinition(9, WinchRole.Reef, 0.14f, ReefPins("Mizzenmast", true)),
-                new WinchMountDefinition(10, WinchRole.Reef, 0.14f, ReefPins("Mizzenmast", true)),
-                new WinchMountDefinition(
-                    24,
-                    WinchRole.Left,
-                    new Vector3(-0.006981f, 0.999976f, -0.000000f),
-                    0.076685f,
-                    MainSheetPoint(WinchRole.Left)
-                ),
-                new WinchMountDefinition(
-                    24,
-                    WinchRole.Right,
-                    new Vector3(-0.006981f, 0.999976f, -0.000000f),
-                    0.076685f,
-                    MainSheetPoint(WinchRole.Right)
-                ),
-                new WinchMountDefinition(
-                    25,
-                    WinchRole.Left,
-                    new Vector3(-0.006982f, 0.997142f, 0.075225f),
-                    0.076685f,
-                    AftRail(WinchRole.Left)
-                ),
-                new WinchMountDefinition(
-                    25,
-                    WinchRole.Right,
-                    new Vector3(-0.006982f, 0.997142f, 0.075225f),
-                    0.076685f,
-                    AftRail(WinchRole.Right)
-                ),
-            };
-
-        // Captures 1/3 centred across the visible Clipper_Upper_Trim cap and
-        // mirrored at their mean longitudinal position. The collider is 1 cm lower.
-        private static WinchSurfacePoint MainSheetPoint(WinchRole role) =>
-            new WinchSurfacePoint(
-                new Vector3(role == WinchRole.Left ? -3.465970f : 3.465970f, 4.829765f, -3.901223f),
-                Vector3.up
-            );
-
-        // Measured solid support: Clipper_Upper_Trim.
-        private static WinchSurfaceSegment[] AftRail(WinchRole role) =>
-            role == WinchRole.Left
-                ? new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(-2.138915f, 6.125940f, -14.791540f),
-                        new Vector3(-1.946805f, 6.186030f, -15.501990f),
-                        new Vector3(-0.016682f, 0.996672f, 0.079788f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-2.346065f, 6.068880f, -13.846190f),
-                        new Vector3(-2.138915f, 6.125940f, -14.791540f),
-                        new Vector3(-0.012046f, 0.998266f, 0.057614f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-2.593680f, 5.846370f, -12.051000f),
-                        new Vector3(-2.346065f, 6.068880f, -13.846190f),
-                        new Vector3(-0.019018f, 0.992543f, 0.120400f)
-                    ),
-                }
-                : new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(2.593740f, 5.846370f, -12.051000f),
-                        new Vector3(2.346125f, 6.068880f, -13.846190f),
-                        new Vector3(0.019018f, 0.992543f, 0.120400f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(2.346125f, 6.068880f, -13.846190f),
-                        new Vector3(2.138975f, 6.125940f, -14.791540f),
-                        new Vector3(0.012046f, 0.998266f, 0.057614f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(2.138975f, 6.125940f, -14.791540f),
-                        new Vector3(1.946865f, 6.186030f, -15.501990f),
-                        new Vector3(0.016682f, 0.996672f, 0.079788f)
-                    ),
-                };
-
-        // Six seats on each side of each existing rack. Mizzen main reef 6 is
-        // on top of the beam; number 7 is its sixth side pin instead.
-        private static string[] ReefPins(string mast, bool mizzen)
-        {
-            var pins = new string[12];
-            for (int i = 0; i < 6; i++)
-            {
-                pins[i] = "Coil_" + mast + "_Reef_" + (mizzen && i == 5 ? 7 : i + 1);
-                pins[i + 6] = "Coil_" + mast + "_Jib_Reef_" + (i + 1);
-            }
-            return pins;
-        }
-
-        // Authored from installed Shroud and Shipyard Expansion assets.
-        // Endpoint vectors are local to the named physical mast section.
+        // Authored from installed native and boat-mod assets.
         private static FishermansStayGroupDefinition[] Stays() =>
             new[]
             {

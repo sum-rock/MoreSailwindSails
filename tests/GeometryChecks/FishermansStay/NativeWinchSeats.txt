@@ -1,134 +1,134 @@
 # Installed Sailwind 0.39 / SE 0.11.1 / Leopard / Shroud audit.
 # Numeric poses below are control-parent local, NOT boat-local fallback coordinates.
-# rig|boat|asset|orderIndex|option label|shipyard group (native, -1 for SE additions)|required option labels|hierarchy
+# rig|boat|asset|orderIndex|option label|shipyard group (-1 only for unregistered reference options)|required option labels|hierarchy
 # seat|boat|asset|orderIndex|role|array index|asset object identity|hierarchy|local xyz|local quaternion xyzw
 # Physical categories and source order are authored in each boat profile. Left/right indices correspond in this inventory.
 # Native source support must also be checked live; inactive rig data alone never establishes support.
-rig|Brig|SE|51|lower forestay 3|-1||SE_parts_brig/stays/SE_mainstay_bottom_0
+rig|Brig|SE|51|lower forestay 3|5|main mast 2,(no foremast)|SE_parts_brig/stays/SE_mainstay_bottom_0
 seat|Brig|SE|51|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1301084926921181442|SE_parts_brig/winches/rope_winch_megastay_angle_left (3)|-2.191500,2.707700,3.078400|0.726434,0.687074,-0.014921,0.000469
 seat|Brig|SE|51|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7137631769137879831|SE_parts_brig/winches/rope_winch_megastay_angle_right (3)|-2.205000,2.724000,-3.047000|0.002808,0.000224,0.727364,-0.686246
 seat|Brig|SE|51|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5614492253346294320|SE_parts_brig/winches/rope_winch_mastB1_reef_jib_outer (2)|-0.369000,3.869000,-0.316000|0.653281,0.653281,0.270599,0.270598
-rig|Brig|SE|52|forestay 3|-1||SE_parts_brig/stays/SE_mainstay_top_0
+rig|Brig|SE|52|forestay 3|4|main mast 2,(no foremast)|SE_parts_brig/stays/SE_mainstay_top_0
 seat|Brig|SE|52|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8545595568186080861|SE_parts_brig/winches/rope_winch_megastay_angle_left (2)|-0.944000,2.639000,3.153000|0.726434,0.687074,-0.014921,0.000469
 seat|Brig|SE|52|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7156856688744596290|SE_parts_brig/winches/rope_winch_midstay_angle_left|-5.857847,5.021027,3.132932|0.508198,0.522460,0.509999,-0.456805
 seat|Brig|SE|52|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1799329823449099592|SE_parts_brig/winches/rope_winch_megastay_angle_right (2)|-0.960000,2.653000,-3.152000|0.002808,0.000224,0.727364,-0.686246
 seat|Brig|SE|52|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:1466290004653872693|SE_parts_brig/winches/rope_winch_midstay_angle_right|-5.857975,5.022000,-3.124881|0.506808,0.491465,0.506354,-0.495191
 seat|Brig|SE|52|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4869646970703126825|SE_parts_brig/winches/rope_winch_mastB1_reef_jib_outer|-0.368659,3.217999,-0.316399|0.653281,0.653281,0.270599,0.270598
 seat|Brig|SE|52|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3501877186733343545|SE_parts_brig/winches/rope_winch_mastB1_reef_jib_outer (1)|-0.371087,3.238000,0.312508|0.270599,0.270598,0.653282,0.653281
-rig|Brig|SE|53|sprit topmast|-1||SE_parts_brig/sprit_topmast_0
+rig|Brig|SE|53|sprit topmast|22|bowsprit|SE_parts_brig/sprit_topmast_0
 seat|Brig|SE|53|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1112385931524790893|SE_parts_brig/winches/rope_winch_bowsprit_left|11.040570,3.509653,2.077900|0.553967,0.442236,0.550036,-0.441598
 seat|Brig|SE|53|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6759795972808076929|SE_parts_brig/winches/rope_winch_bowsprit_right|11.025838,3.518712,-2.074443|0.553967,0.442236,0.550036,-0.441598
 seat|Brig|SE|53|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:153561137874386835|SE_parts_brig/winches/rope_winch_bowsprit_reef|14.664548,4.210949,-0.226862|-0.815179,0.579153,0.006540,0.004647
-rig|Brig|SE|54|sprit topmast 2|-1||SE_parts_brig/sprit_topmast_1
+rig|Brig|SE|54|sprit topmast 2|22|long bowsprit|SE_parts_brig/sprit_topmast_1
 seat|Brig|SE|54|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1112385931524790893|SE_parts_brig/winches/rope_winch_bowsprit_left|11.040570,3.509653,2.077900|0.553967,0.442236,0.550036,-0.441598
 seat|Brig|SE|54|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6759795972808076929|SE_parts_brig/winches/rope_winch_bowsprit_right|11.025838,3.518712,-2.074443|0.553967,0.442236,0.550036,-0.441598
 seat|Brig|SE|54|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:153561137874386835|SE_parts_brig/winches/rope_winch_bowsprit_reef|14.664548,4.210949,-0.226862|-0.815179,0.579153,0.006540,0.004647
-rig|Brig|SE|55|fore topmast 1|-1||SE_parts_brig/fore_topmast_0
+rig|Brig|SE|55|fore topmast 1|23|foremast 1|SE_parts_brig/fore_topmast_0
 seat|Brig|SE|55|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:291114185991673855|SE_parts_brig/winches/rope_winch_sqfront_angle_left|-1.757000,3.191000,3.285000|0.524217,0.486166,0.503116,-0.485503
 seat|Brig|SE|55|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1277942180039904378|SE_parts_brig/winches/rope_winch_sqfront_angle_right|-1.762000,3.192000,-3.266000|0.516309,0.485408,0.512339,-0.485091
 seat|Brig|SE|55|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1536817327514113917|SE_parts_brig/winches/rope_winch_mastF_angle (2)|-1.221000,3.140000,-0.239000|0.563266,0.432778,0.453930,-0.537943
 seat|Brig|SE|55|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7745295921247265388|SE_parts_brig/winches/rope_winch_fore_topmast_angle2|-1.211909,3.148000,0.238306|0.467885,0.520792,0.547325,-0.458578
 seat|Brig|SE|55|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1104003492193750934|SE_parts_brig/winches/rope_winch_mastF0_reef (2)|6.600000,3.412000,0.402000|-0.000617,-0.000618,-0.706489,-0.707723
 seat|Brig|SE|55|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:1105495403686344141|SE_parts_brig/winches/rope_winch_mastF0_reef_topmast (1)|6.198000,3.403000,-0.001000|0.499564,0.500437,-0.500436,-0.499563
-rig|Brig|SE|56|main topmast 1|-1||SE_parts_brig/main_topmast_0
+rig|Brig|SE|56|main topmast 1|24|main mast 1|SE_parts_brig/main_topmast_0
 seat|Brig|SE|56|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-568038884308125054|SE_parts_brig/winches/rope_winch_mastB_angle_left (1)|-13.731885,5.593000,2.480749|0.561698,0.427120,0.553799,-0.442007
 seat|Brig|SE|56|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6986246505969900856|SE_parts_brig/winches/rope_winch_mastB_angle_right (1)|-13.726126,5.597000,-2.460657|0.556799,0.441161,0.550838,-0.438097
 seat|Brig|SE|56|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8957341087062436327|SE_parts_brig/winches/rope_winch_mastB_angle (2)|-5.405000,5.210000,-1.707200|0.573954,0.399824,0.428817,-0.571694
 seat|Brig|SE|56|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:261682011118345218|SE_parts_brig/winches/rope_winch_main_topmast_angle2|-4.018000,5.199000,-1.215000|0.563266,0.432778,0.453930,-0.537943
 seat|Brig|SE|56|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-140562448579246007|SE_parts_brig/winches/rope_winch_mastB0_reef (2)|-5.756843,5.593100,-0.304571|-0.653281,-0.653282,0.270598,0.270598
 seat|Brig|SE|56|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:4259742963276518186|SE_parts_brig/winches/rope_winch_mastB0_reef (3)|-5.756843,6.288000,-0.304571|-0.653281,-0.653282,0.270598,0.270598
-rig|Brig|SE|57|fore topmast 2|-1||SE_parts_brig/fore_topmast_1
+rig|Brig|SE|57|fore topmast 2|23|foremast 2|SE_parts_brig/fore_topmast_1
 seat|Brig|SE|57|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:291114185991673855|SE_parts_brig/winches/rope_winch_sqfront_angle_left|-1.757000,3.191000,3.285000|0.524217,0.486166,0.503116,-0.485503
 seat|Brig|SE|57|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1277942180039904378|SE_parts_brig/winches/rope_winch_sqfront_angle_right|-1.762000,3.192000,-3.266000|0.516309,0.485408,0.512339,-0.485091
 seat|Brig|SE|57|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1536817327514113917|SE_parts_brig/winches/rope_winch_mastF_angle (2)|-1.221000,3.140000,-0.239000|0.563266,0.432778,0.453930,-0.537943
 seat|Brig|SE|57|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7745295921247265388|SE_parts_brig/winches/rope_winch_fore_topmast_angle2|-1.211909,3.148000,0.238306|0.467885,0.520792,0.547325,-0.458578
 seat|Brig|SE|57|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5646705577059723515|SE_parts_brig/winches/rope_winch_mastF1_reef_jib|10.547000,3.791000,-0.360000|0.681983,0.680823,-0.192300,-0.185474
 seat|Brig|SE|57|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:7644868117049219586|SE_parts_brig/winches/rope_winch_mastF1_reef_topmast (1)|10.360000,3.445000,-0.001000|0.502811,0.498447,-0.502046,-0.496671
-rig|Brig|SE|58|main topmast 2|-1||SE_parts_brig/main_topmast_1
+rig|Brig|SE|58|main topmast 2|24|main mast 2|SE_parts_brig/main_topmast_1
 seat|Brig|SE|58|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-568038884308125054|SE_parts_brig/winches/rope_winch_mastB_angle_left (1)|-13.731885,5.593000,2.480749|0.561698,0.427120,0.553799,-0.442007
 seat|Brig|SE|58|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6986246505969900856|SE_parts_brig/winches/rope_winch_mastB_angle_right (1)|-13.726126,5.597000,-2.460657|0.556799,0.441161,0.550838,-0.438097
 seat|Brig|SE|58|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8957341087062436327|SE_parts_brig/winches/rope_winch_mastB_angle (2)|-5.405000,5.210000,-1.707200|0.573954,0.399824,0.428817,-0.571694
 seat|Brig|SE|58|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:261682011118345218|SE_parts_brig/winches/rope_winch_main_topmast_angle2|-4.018000,5.199000,-1.215000|0.563266,0.432778,0.453930,-0.537943
 seat|Brig|SE|58|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6242625395271477470|SE_parts_brig/winches/rope_winch_mastB1_reef_topmast|-0.371087,3.868000,0.312508|0.270599,0.270598,0.653282,0.653281
 seat|Brig|SE|58|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:2946339258937987236|SE_parts_brig/winches/rope_winch_mastB1_reef_topmast (3)|-0.262207,4.173000,0.003912|0.500436,0.499564,0.499563,0.500436
-rig|Brig|SE|59|mizzen topmast 1|-1||SE_parts_brig/mizzen_topmast_0
+rig|Brig|SE|59|mizzen topmast 1|25|mizzen mast 1|SE_parts_brig/mizzen_topmast_0
 seat|Brig|SE|59|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6209144938484946566|SE_parts_brig/winches/rope_winch_mizzen_angle_left|-14.390000,5.719000,2.407000|0.510277,0.487801,0.500290,-0.501376
 seat|Brig|SE|59|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5868744141152620991|SE_parts_brig/winches/rope_winch_mizzen_angle_right|-14.315000,5.715000,-2.378000|0.518511,0.485364,0.512316,-0.482805
 seat|Brig|SE|59|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8573327451988375463|SE_parts_brig/winches/rope_winch_mizzen_angle (2)|-15.194826,5.517000,-0.007503|-0.707096,-0.003958,0.003958,0.707096
 seat|Brig|SE|59|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:6381440189618054729|SE_parts_brig/winches/rope_winch_mizzen_angle (3)|-15.195000,5.458000,0.473000|-0.603189,-0.003376,0.004464,0.797579
 seat|Brig|SE|59|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8854884788234568861|SE_parts_brig/winches/rope_winch_mizzen0_reef|-10.118000,5.289000,0.008000|-0.500000,-0.500000,-0.500000,-0.500000
 seat|Brig|SE|59|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:4124303158942498996|SE_parts_brig/winches/rope_winch_mizzen0_reef (1)|-10.121000,5.908000,0.004000|-0.500000,-0.500000,-0.500000,-0.500000
-rig|Brig|SE|60|mizzen topmast 2|-1||SE_parts_brig/mizzen_topmast_1
+rig|Brig|SE|60|mizzen topmast 2|25|mizzen mast 2|SE_parts_brig/mizzen_topmast_1
 seat|Brig|SE|60|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6209144938484946566|SE_parts_brig/winches/rope_winch_mizzen_angle_left|-14.390000,5.719000,2.407000|0.510277,0.487801,0.500290,-0.501376
 seat|Brig|SE|60|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5868744141152620991|SE_parts_brig/winches/rope_winch_mizzen_angle_right|-14.315000,5.715000,-2.378000|0.518511,0.485364,0.512316,-0.482805
 seat|Brig|SE|60|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8573327451988375463|SE_parts_brig/winches/rope_winch_mizzen_angle (2)|-15.194826,5.517000,-0.007503|-0.707096,-0.003958,0.003958,0.707096
 seat|Brig|SE|60|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:6381440189618054729|SE_parts_brig/winches/rope_winch_mizzen_angle (3)|-15.195000,5.458000,0.473000|-0.603189,-0.003376,0.004464,0.797579
 seat|Brig|SE|60|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8583353533312776540|SE_parts_brig/winches/rope_winch_mizzen1_reef|-7.597000,5.289000,0.008000|0.500436,0.499563,0.499564,0.500436
 seat|Brig|SE|60|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2239242584105954354|SE_parts_brig/winches/rope_winch_mizzen1_reef (1)|-7.656000,5.908000,0.004000|0.499564,0.498689,0.500436,0.501307
-rig|Brig|SE|61|middle topmast stay 1-1|-1|main topmast 1|SE_parts_brig/stays/midstay_0-0_top
+rig|Brig|SE|61|middle topmast stay 1-1|26|main topmast 1,foremast 1|SE_parts_brig/stays/midstay_0-0_top
 seat|Brig|SE|61|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7156856688744596290|SE_parts_brig/winches/rope_winch_midstay_angle_left|-5.857847,5.021027,3.132932|0.508198,0.522460,0.509999,-0.456805
 seat|Brig|SE|61|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1466290004653872693|SE_parts_brig/winches/rope_winch_midstay_angle_right|-5.857975,5.022000,-3.124881|0.506808,0.491465,0.506354,-0.495191
 seat|Brig|SE|61|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:410024067555494611|SE_parts_brig/winches/rope_winch_mastB0_reef|-5.794600,5.613100,0.273900|-0.270597,-0.270598,0.653282,0.653282
-rig|Brig|SE|62|middle topmast stay 1-2|-1|main topmast 2|SE_parts_brig/stays/midstay_0-1_top
+rig|Brig|SE|62|middle topmast stay 1-2|26|main topmast 2,foremast 1|SE_parts_brig/stays/midstay_0-1_top
 seat|Brig|SE|62|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7156856688744596290|SE_parts_brig/winches/rope_winch_midstay_angle_left|-5.857847,5.021027,3.132932|0.508198,0.522460,0.509999,-0.456805
 seat|Brig|SE|62|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1466290004653872693|SE_parts_brig/winches/rope_winch_midstay_angle_right|-5.857975,5.022000,-3.124881|0.506808,0.491465,0.506354,-0.495191
 seat|Brig|SE|62|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4869646970703126825|SE_parts_brig/winches/rope_winch_mastB1_reef_jib_outer|-0.368659,3.217999,-0.316399|0.653281,0.653281,0.270599,0.270598
-rig|Brig|SE|63|middle top stay 2-1|-1|main topmast 1|SE_parts_brig/stays/midstay_1-0_topmast
+rig|Brig|SE|63|middle top stay 2-1|26|main topmast 1,foremast 2|SE_parts_brig/stays/midstay_1-0_topmast
 seat|Brig|SE|63|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7156856688744596290|SE_parts_brig/winches/rope_winch_midstay_angle_left|-5.857847,5.021027,3.132932|0.508198,0.522460,0.509999,-0.456805
 seat|Brig|SE|63|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1466290004653872693|SE_parts_brig/winches/rope_winch_midstay_angle_right|-5.857975,5.022000,-3.124881|0.506808,0.491465,0.506354,-0.495191
 seat|Brig|SE|63|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:410024067555494611|SE_parts_brig/winches/rope_winch_mastB0_reef|-5.794600,5.613100,0.273900|-0.270597,-0.270598,0.653282,0.653282
-rig|Brig|SE|64|middle topmast stay 2-2|-1|main topmast 2|SE_parts_brig/stays/midstay_1-1_top
+rig|Brig|SE|64|middle topmast stay 2-2|26|main topmast 2,foremast 2|SE_parts_brig/stays/midstay_1-1_top
 seat|Brig|SE|64|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7156856688744596290|SE_parts_brig/winches/rope_winch_midstay_angle_left|-5.857847,5.021027,3.132932|0.508198,0.522460,0.509999,-0.456805
 seat|Brig|SE|64|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1466290004653872693|SE_parts_brig/winches/rope_winch_midstay_angle_right|-5.857975,5.022000,-3.124881|0.506808,0.491465,0.506354,-0.495191
 seat|Brig|SE|64|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4869646970703126825|SE_parts_brig/winches/rope_winch_mastB1_reef_jib_outer|-0.368659,3.217999,-0.316399|0.653281,0.653281,0.270599,0.270598
-rig|Brig|SE|65|mizzen topmast stay 1|-1|mizzen topmast 1|SE_parts_brig/stays/backstay_1-0_top
+rig|Brig|SE|65|mizzen topmast stay 1|27|mizzen topmast 1,main mast 2|SE_parts_brig/stays/backstay_1-0_top
 seat|Brig|SE|65|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5116524115275911368|SE_parts_brig/winches/rope_winch_backstay_angle_left|-10.513000,5.191000,2.868000|0.468887,0.525078,0.541507,-0.459575
 seat|Brig|SE|65|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5402876393053324385|SE_parts_brig/winches/rope_winch_backstay_angle_right|-10.422000,5.161000,-2.902000|0.525043,0.471934,0.487251,-0.513998
 seat|Brig|SE|65|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4515361592609984301|SE_parts_brig/winches/rope_winch_mizzen0_reef_stay|-10.234000,5.599000,-0.215000|-0.653282,-0.653281,-0.270598,-0.270599
-rig|Brig|SE|66|mizzen topmast stay 2|-1|mizzen topmast 2|SE_parts_brig/stays/backstay_1-1_top
+rig|Brig|SE|66|mizzen topmast stay 2|27|mizzen topmast 2,main mast 2|SE_parts_brig/stays/backstay_1-1_top
 seat|Brig|SE|66|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5116524115275911368|SE_parts_brig/winches/rope_winch_backstay_angle_left|-10.513000,5.191000,2.868000|0.468887,0.525078,0.541507,-0.459575
 seat|Brig|SE|66|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5402876393053324385|SE_parts_brig/winches/rope_winch_backstay_angle_right|-10.422000,5.161000,-2.902000|0.525043,0.471934,0.487251,-0.513998
 seat|Brig|SE|66|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8881501627025812007|SE_parts_brig/winches/rope_winch_mizzen1_reef_stay|-7.767000,5.583000,-0.235000|-0.653282,-0.653282,-0.270598,-0.270597
-rig|Brig|SE|67|raked foremast 1|-1||SE_parts_brig/mast_fore
+rig|Brig|SE|67|raked foremast 1|1||SE_parts_brig/mast_fore
 seat|Brig|SE|67|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:291114185991673855|SE_parts_brig/winches/rope_winch_sqfront_angle_left|-1.757000,3.191000,3.285000|0.524217,0.486166,0.503116,-0.485503
 seat|Brig|SE|67|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1277942180039904378|SE_parts_brig/winches/rope_winch_sqfront_angle_right|-1.762000,3.192000,-3.266000|0.516309,0.485408,0.512339,-0.485091
 seat|Brig|SE|67|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4846790449390087888|SE_parts_brig/winches/rope_winch_mastF_angle|-1.379860,3.155000,1.144560|0.454318,0.563237,0.560200,-0.403157
 seat|Brig|SE|67|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5749707807145153001|SE_parts_brig/winches/rope_winch_mastF_angle (1)|-1.263170,3.141000,0.687526|0.426367,0.555295,0.581032,-0.415043
 seat|Brig|SE|67|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2850918248510650447|SE_parts_brig/winches/rope_winch_mastF2_reef|10.824000,3.708000,-0.006000|0.569686,0.410758,-0.424659,-0.571314
 seat|Brig|SE|67|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:6472927378360466345|SE_parts_brig/winches/rope_winch_mastF2_reef (1)|11.138000,3.614000,0.340000|-0.001152,-0.009830,-0.590729,-0.806809
-rig|Brig|SE|68|topmast forestay 1|-1|fore topmast 1|SE_parts_brig/stays/forestay_topmast_0
+rig|Brig|SE|68|topmast forestay 1|28|fore topmast 1|SE_parts_brig/stays/forestay_topmast_0
 seat|Brig|SE|68|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7649800992128094974|SE_parts_brig/winches/rope_winch_jib_angle_left (1)|6.669000,3.135000,2.617000|0.692916,0.719908,-0.025748,-0.030592
 seat|Brig|SE|68|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5070376718387491297|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.146539,3.118576,2.652219|0.692983,0.719965,-0.024129,-0.029033
 seat|Brig|SE|68|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5902875389796165177|SE_parts_brig/winches/rope_winch_jib_angle_right (1)|6.643000,3.123000,-2.609000|0.050031,0.001376,-0.698203,0.714149
 seat|Brig|SE|68|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6244867195012426423|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.102974,3.125592,-2.664187|0.050900,-0.007363,-0.698544,0.713716
 seat|Brig|SE|68|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1245824269143790708|SE_parts_brig/winches/rope_winch_mastF0_reef_jib|6.598000,3.427000,-0.414000|-0.706489,-0.707724,0.001160,-0.000073
 seat|Brig|SE|68|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5105191244212456568|SE_parts_brig/winches/rope_winch_mastF0_reef_jib (2)|6.989746,3.418000,-0.031393|0.498690,0.500435,0.500435,0.500437
-rig|Brig|SE|69|topmast forestay 2|-1|fore topmast 2|SE_parts_brig/stays/forestay_topmast_1
+rig|Brig|SE|69|topmast forestay 2|28|fore topmast 2|SE_parts_brig/stays/forestay_topmast_1
 seat|Brig|SE|69|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7649800992128094974|SE_parts_brig/winches/rope_winch_jib_angle_left (1)|6.669000,3.135000,2.617000|0.692916,0.719908,-0.025748,-0.030592
 seat|Brig|SE|69|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5070376718387491297|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.146539,3.118576,2.652219|0.692983,0.719965,-0.024129,-0.029033
 seat|Brig|SE|69|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5902875389796165177|SE_parts_brig/winches/rope_winch_jib_angle_right (1)|6.643000,3.123000,-2.609000|0.050031,0.001376,-0.698203,0.714149
 seat|Brig|SE|69|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6244867195012426423|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.102974,3.125592,-2.664187|0.050900,-0.007363,-0.698544,0.713716
 seat|Brig|SE|69|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3227143027496188483|SE_parts_brig/winches/rope_winch_mastF1_reef_jib|10.801000,3.460000,-0.402000|0.707107,0.707106,-0.000542,-0.000542
 seat|Brig|SE|69|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3541380060608079284|SE_parts_brig/winches/rope_winch_mastF1_reef_jib (1)|10.801000,3.460000,0.402000|0.001925,-0.000691,-0.707104,0.707106
-rig|Brig|SE|70|topmast forestay 3|-1|main topmast 2|SE_parts_brig/stays/forestay_topmast_2
+rig|Brig|SE|70|topmast forestay 3|28|main topmast 2|SE_parts_brig/stays/forestay_topmast_2
 seat|Brig|SE|70|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3303518117139718323|SE_parts_brig/winches/rope_winch_megastay_angle_left (1)|-1.582500,2.673700,3.066400|0.726434,0.687074,-0.014921,0.000469
 seat|Brig|SE|70|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:6482613318125438144|SE_parts_brig/winches/rope_winch_midstay_angle_left (1)|-5.296811,5.006000,3.156358|0.496905,0.501476,0.516130,-0.484993
 seat|Brig|SE|70|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:781420370135396893|SE_parts_brig/winches/rope_winch_megastay_angle_right (1)|-1.596000,2.690000,-3.059000|0.002808,0.000224,0.727364,-0.686246
 seat|Brig|SE|70|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:2027460331353567393|SE_parts_brig/winches/rope_winch_midstay_angle_right (1)|-5.298892,5.007000,-3.120986|0.505273,0.493043,0.507895,-0.493610
 seat|Brig|SE|70|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1107492925466012956|SE_parts_brig/winches/rope_winch_mastB1_reef_jib|-0.687020,2.891000,-0.414049|0.707107,0.707107,0.000001,0.000001
 seat|Brig|SE|70|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:1353840031210050573|SE_parts_brig/winches/rope_winch_mastB1_reef_jib (1)|-0.687020,3.551000,-0.414049|0.707107,0.707107,0.000001,0.000001
-rig|Brig|SE|71|topmast forestay 4|-1|main topmast 2|SE_parts_brig/stays/forestay_topmast_3
+rig|Brig|SE|71|topmast forestay 4|28|main topmast 2,(no foremast),long bowsprit|SE_parts_brig/stays/forestay_topmast_3
 seat|Brig|SE|71|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3303518117139718323|SE_parts_brig/winches/rope_winch_megastay_angle_left (1)|-1.582500,2.673700,3.066400|0.726434,0.687074,-0.014921,0.000469
 seat|Brig|SE|71|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:6482613318125438144|SE_parts_brig/winches/rope_winch_midstay_angle_left (1)|-5.296811,5.006000,3.156358|0.496905,0.501476,0.516130,-0.484993
 seat|Brig|SE|71|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:781420370135396893|SE_parts_brig/winches/rope_winch_megastay_angle_right (1)|-1.596000,2.690000,-3.059000|0.002808,0.000224,0.727364,-0.686246
 seat|Brig|SE|71|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:2027460331353567393|SE_parts_brig/winches/rope_winch_midstay_angle_right (1)|-5.298892,5.007000,-3.120986|0.505273,0.493043,0.507895,-0.493610
 seat|Brig|SE|71|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1107492925466012956|SE_parts_brig/winches/rope_winch_mastB1_reef_jib|-0.687020,2.891000,-0.414049|0.707107,0.707107,0.000001,0.000001
 seat|Brig|SE|71|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:1353840031210050573|SE_parts_brig/winches/rope_winch_mastB1_reef_jib (1)|-0.687020,3.551000,-0.414049|0.707107,0.707107,0.000001,0.000001
-rig|Brig|SE|72|middle forestay 2|-1||SE_parts_brig/stays/forestay_0_mid_2
+rig|Brig|SE|72|middle forestay 2|6|foremast 1|SE_parts_brig/stays/forestay_0_mid_2
 seat|Brig|SE|72|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7328516369965107503|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.402891,3.329000,2.874869|0.509365,0.486358,0.472854,-0.529539
 seat|Brig|SE|72|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6507062854313174882|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.405216,3.332000,-2.871225|-0.457954,-0.509880,-0.529937,0.499467
 seat|Brig|SE|72|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3776015992293584119|SE_parts_brig/winches/rope_winch_mastF0_reef_jib_mid|6.351068,3.761000,-0.355598|0.683013,0.683013,-0.183013,-0.183013
-rig|Brig|SE|73|forestay 3 short|-1||SE_parts_brig/stays/forestay_m_top_shortsprit
+rig|Brig|SE|73|forestay 3 short|4|main mast 2,(no foremast)|SE_parts_brig/stays/forestay_m_top_shortsprit
 seat|Brig|SE|73|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8545595568186080861|SE_parts_brig/winches/rope_winch_megastay_angle_left (2)|-0.944000,2.639000,3.153000|0.726434,0.687074,-0.014921,0.000469
 seat|Brig|SE|73|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7156856688744596290|SE_parts_brig/winches/rope_winch_midstay_angle_left|-5.857847,5.021027,3.132932|0.508198,0.522460,0.509999,-0.456805
 seat|Brig|SE|73|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1799329823449099592|SE_parts_brig/winches/rope_winch_megastay_angle_right (2)|-0.960000,2.653000,-3.152000|0.002808,0.000224,0.727364,-0.686246
@@ -142,69 +142,69 @@ seat|Brig|SE|74|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:590287538
 seat|Brig|SE|74|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6244867195012426423|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.102974,3.125592,-2.664187|0.050900,-0.007363,-0.698544,0.713716
 seat|Brig|SE|74|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3227143027496188483|SE_parts_brig/winches/rope_winch_mastF1_reef_jib|10.801000,3.460000,-0.402000|0.707107,0.707106,-0.000542,-0.000542
 seat|Brig|SE|74|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3541380060608079284|SE_parts_brig/winches/rope_winch_mastF1_reef_jib (1)|10.801000,3.460000,0.402000|0.001925,-0.000691,-0.707104,0.707106
-rig|Brig|SE|75|topmast forestay 1 long|-1|fore topmast 1,jib-boom|SE_parts_brig/stays/forestay_topmast_0 (1)
+rig|Brig|SE|75|topmast forestay 1 long|28|fore topmast 1,jib-boom|SE_parts_brig/stays/forestay_topmast_0 (1)
 seat|Brig|SE|75|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7649800992128094974|SE_parts_brig/winches/rope_winch_jib_angle_left (1)|6.669000,3.135000,2.617000|0.692916,0.719908,-0.025748,-0.030592
 seat|Brig|SE|75|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5070376718387491297|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.146539,3.118576,2.652219|0.692983,0.719965,-0.024129,-0.029033
 seat|Brig|SE|75|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5902875389796165177|SE_parts_brig/winches/rope_winch_jib_angle_right (1)|6.643000,3.123000,-2.609000|0.050031,0.001376,-0.698203,0.714149
 seat|Brig|SE|75|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6244867195012426423|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.102974,3.125592,-2.664187|0.050900,-0.007363,-0.698544,0.713716
 seat|Brig|SE|75|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1245824269143790708|SE_parts_brig/winches/rope_winch_mastF0_reef_jib|6.598000,3.427000,-0.414000|-0.706489,-0.707724,0.001160,-0.000073
 seat|Brig|SE|75|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5105191244212456568|SE_parts_brig/winches/rope_winch_mastF0_reef_jib (2)|6.989746,3.418000,-0.031393|0.498690,0.500435,0.500435,0.500437
-rig|Brig|SE|76|outer forestay 2 long|-1|jib-boom|SE_parts_brig/stays/forestay_topmast_2 (1)
+rig|Brig|SE|76|outer forestay 2 long|28|jib-boom,foremast 2|SE_parts_brig/stays/forestay_topmast_2 (1)
 seat|Brig|SE|76|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7649800992128094974|SE_parts_brig/winches/rope_winch_jib_angle_left (1)|6.669000,3.135000,2.617000|0.692916,0.719908,-0.025748,-0.030592
 seat|Brig|SE|76|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5070376718387491297|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.146539,3.118576,2.652219|0.692983,0.719965,-0.024129,-0.029033
 seat|Brig|SE|76|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5902875389796165177|SE_parts_brig/winches/rope_winch_jib_angle_right (1)|6.643000,3.123000,-2.609000|0.050031,0.001376,-0.698203,0.714149
 seat|Brig|SE|76|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6244867195012426423|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.102974,3.125592,-2.664187|0.050900,-0.007363,-0.698544,0.713716
 seat|Brig|SE|76|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3227143027496188483|SE_parts_brig/winches/rope_winch_mastF1_reef_jib|10.801000,3.460000,-0.402000|0.707107,0.707106,-0.000542,-0.000542
 seat|Brig|SE|76|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3541380060608079284|SE_parts_brig/winches/rope_winch_mastF1_reef_jib (1)|10.801000,3.460000,0.402000|0.001925,-0.000691,-0.707104,0.707106
-rig|Brig|SE|77|outer forestay 1 long|-1|jib-boom|SE_parts_brig/stays/forestay_topmast_0 (2)
+rig|Brig|SE|77|outer forestay 1 long|28|jib-boom,foremast 1|SE_parts_brig/stays/forestay_topmast_0 (2)
 seat|Brig|SE|77|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7649800992128094974|SE_parts_brig/winches/rope_winch_jib_angle_left (1)|6.669000,3.135000,2.617000|0.692916,0.719908,-0.025748,-0.030592
 seat|Brig|SE|77|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5070376718387491297|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.146539,3.118576,2.652219|0.692983,0.719965,-0.024129,-0.029033
 seat|Brig|SE|77|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5902875389796165177|SE_parts_brig/winches/rope_winch_jib_angle_right (1)|6.643000,3.123000,-2.609000|0.050031,0.001376,-0.698203,0.714149
 seat|Brig|SE|77|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6244867195012426423|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.102974,3.125592,-2.664187|0.050900,-0.007363,-0.698544,0.713716
 seat|Brig|SE|77|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1245824269143790708|SE_parts_brig/winches/rope_winch_mastF0_reef_jib|6.598000,3.427000,-0.414000|-0.706489,-0.707724,0.001160,-0.000073
 seat|Brig|SE|77|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5105191244212456568|SE_parts_brig/winches/rope_winch_mastF0_reef_jib (2)|6.989746,3.418000,-0.031393|0.498690,0.500435,0.500435,0.500437
-rig|Brig|SE|78|bottom forestay 2|-1||SE_parts_brig/stays/forestay_1_bottom
+rig|Brig|SE|78|bottom forestay 2|5|foremast 2|SE_parts_brig/stays/forestay_1_bottom
 seat|Brig|SE|78|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8298034220652819275|SE_parts_brig/winches/rope_winch_jib_angle_left (3)|5.875060,3.311000,2.917849|0.509365,0.486358,0.472854,-0.529539
 seat|Brig|SE|78|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2007361382720845603|SE_parts_brig/winches/rope_winch_jib_angle_right (3)|5.868105,3.315000,-2.914182|-0.462925,-0.514562,-0.525600,0.494642
 seat|Brig|SE|78|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4415455756928124735|SE_parts_brig/winches/rope_winch_mastF1_reef_jib|10.547846,3.131000,-0.351777|0.681983,0.680823,-0.192300,-0.185474
-rig|Brig|SE|79|raked foremast 2|-1||SE_parts_brig/mast_fore (1)
+rig|Brig|SE|79|raked foremast 2|1||SE_parts_brig/mast_fore (1)
 seat|Brig|SE|79|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:291114185991673855|SE_parts_brig/winches/rope_winch_sqfront_angle_left|-1.757000,3.191000,3.285000|0.524217,0.486166,0.503116,-0.485503
 seat|Brig|SE|79|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1277942180039904378|SE_parts_brig/winches/rope_winch_sqfront_angle_right|-1.762000,3.192000,-3.266000|0.516309,0.485408,0.512339,-0.485091
 seat|Brig|SE|79|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4846790449390087888|SE_parts_brig/winches/rope_winch_mastF_angle|-1.379860,3.155000,1.144560|0.454318,0.563237,0.560200,-0.403157
 seat|Brig|SE|79|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5749707807145153001|SE_parts_brig/winches/rope_winch_mastF_angle (1)|-1.263170,3.141000,0.687526|0.426367,0.555295,0.581032,-0.415043
 seat|Brig|SE|79|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8903012052567052722|SE_parts_brig/winches/rope_winch_mastF2_reef (2)|7.783000,3.620100,0.001400|0.569686,0.410758,-0.424659,-0.571314
 seat|Brig|SE|79|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:8994532939868845291|SE_parts_brig/winches/rope_winch_mastF2_reef (3)|8.185000,3.498000,0.422000|-0.001152,-0.009830,-0.590729,-0.806809
-rig|Brig|SE|80|raked forestay 1|-1|raked foremast 1,jib-boom|SE_parts_brig/stays/forestay_raked_0
+rig|Brig|SE|80|raked forestay 1|4|raked foremast 1,jib-boom|SE_parts_brig/stays/forestay_raked_0
 seat|Brig|SE|80|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7649800992128094974|SE_parts_brig/winches/rope_winch_jib_angle_left (1)|6.669000,3.135000,2.617000|0.692916,0.719908,-0.025748,-0.030592
 seat|Brig|SE|80|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5902875389796165177|SE_parts_brig/winches/rope_winch_jib_angle_right (1)|6.643000,3.123000,-2.609000|0.050031,0.001376,-0.698203,0.714149
 seat|Brig|SE|80|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8944222180757703777|SE_parts_brig/winches/rope_winch_mastF2_jib|11.138000,3.614000,-0.340000|-0.590730,-0.806808,0.001152,0.009831
-rig|Brig|SE|81|raked forestay 2|-1|raked foremast 2,jib-boom|SE_parts_brig/stays/forestay_raked_1
+rig|Brig|SE|81|raked forestay 2|4|raked foremast 2,jib-boom|SE_parts_brig/stays/forestay_raked_1
 seat|Brig|SE|81|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7649800992128094974|SE_parts_brig/winches/rope_winch_jib_angle_left (1)|6.669000,3.135000,2.617000|0.692916,0.719908,-0.025748,-0.030592
 seat|Brig|SE|81|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5070376718387491297|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.146539,3.118576,2.652219|0.692983,0.719965,-0.024129,-0.029033
 seat|Brig|SE|81|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5902875389796165177|SE_parts_brig/winches/rope_winch_jib_angle_right (1)|6.643000,3.123000,-2.609000|0.050031,0.001376,-0.698203,0.714149
 seat|Brig|SE|81|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6244867195012426423|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.102974,3.125592,-2.664187|0.050900,-0.007363,-0.698544,0.713716
 seat|Brig|SE|81|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1226702095707965629|SE_parts_brig/winches/rope_winch_mastF3_jib|8.185000,3.498000,-0.422000|-0.590730,-0.806808,0.001152,0.009831
 seat|Brig|SE|81|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7410018371862106236|SE_parts_brig/winches/rope_winch_mastF3_jib (1)|8.403000,4.029000,-0.421000|-0.590730,-0.806808,0.001152,0.009831
-rig|Brig|SE|82|fore bermuda mast|-1||SE_parts_brig/mast_foreberm
+rig|Brig|SE|82|fore bermuda mast|1||SE_parts_brig/mast_foreberm
 seat|Brig|SE|82|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:291114185991673855|SE_parts_brig/winches/rope_winch_sqfront_angle_left|-1.757000,3.191000,3.285000|0.524217,0.486166,0.503116,-0.485503
 seat|Brig|SE|82|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1277942180039904378|SE_parts_brig/winches/rope_winch_sqfront_angle_right|-1.762000,3.192000,-3.266000|0.516309,0.485408,0.512339,-0.485091
 seat|Brig|SE|82|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3421567770046063435|SE_parts_brig/mast_foreberm/rope_winch_mastF2_reef (3)|0.001000,-0.381000,-22.719000|-0.615715,0.343627,-0.357255,-0.612523
-rig|Brig|SE|83|main bermuda mast|-1||SE_parts_brig/mast_bermain
+rig|Brig|SE|83|main bermuda mast|2||SE_parts_brig/mast_bermain
 seat|Brig|SE|83|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5116524115275911368|SE_parts_brig/winches/rope_winch_backstay_angle_left|-10.513000,5.191000,2.868000|0.468887,0.525078,0.541507,-0.459575
 seat|Brig|SE|83|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5402876393053324385|SE_parts_brig/winches/rope_winch_backstay_angle_right|-10.422000,5.161000,-2.902000|0.525043,0.471934,0.487251,-0.513998
 seat|Brig|SE|83|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8653601674164973710|SE_parts_brig/mast_bermain/rope_winch_mastF2_reef (3)|0.011000,-0.392000,-22.056000|-0.615715,0.343627,-0.357255,-0.612523
-rig|Brig|SE|84|mizzen bermuda mast|-1||SE_parts_brig/mast_bermiz
+rig|Brig|SE|84|mizzen bermuda mast|3||SE_parts_brig/mast_bermiz
 seat|Brig|SE|84|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6209144938484946566|SE_parts_brig/winches/rope_winch_mizzen_angle_left|-14.390000,5.719000,2.407000|0.510277,0.487801,0.500290,-0.501376
 seat|Brig|SE|84|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5868744141152620991|SE_parts_brig/winches/rope_winch_mizzen_angle_right|-14.315000,5.715000,-2.378000|0.518511,0.485364,0.512316,-0.482805
 seat|Brig|SE|84|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2319261275935965503|SE_parts_brig/mast_bermiz/rope_winch_mastB0_reef|0.007000,-0.343000,-19.368999|0.558196,-0.444009,0.436326,0.548537
-rig|Brig|SE|85|bermuda forestay|-1|fore bermuda mast|SE_parts_brig/stays/forestay_bermuda
+rig|Brig|SE|85|bermuda forestay|4|fore bermuda mast,long bowsprit|SE_parts_brig/stays/forestay_bermuda
 seat|Brig|SE|85|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7649800992128094974|SE_parts_brig/winches/rope_winch_jib_angle_left (1)|6.669000,3.135000,2.617000|0.692916,0.719908,-0.025748,-0.030592
 seat|Brig|SE|85|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5070376718387491297|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.146539,3.118576,2.652219|0.692983,0.719965,-0.024129,-0.029033
 seat|Brig|SE|85|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5902875389796165177|SE_parts_brig/winches/rope_winch_jib_angle_right (1)|6.643000,3.123000,-2.609000|0.050031,0.001376,-0.698203,0.714149
 seat|Brig|SE|85|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6244867195012426423|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.102974,3.125592,-2.664187|0.050900,-0.007363,-0.698544,0.713716
 seat|Brig|SE|85|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5524245364136253175|SE_parts_brig/mast_foreberm/rope_winch_mastF2_reef (4)|0.001000,0.381000,-22.719000|-0.612523,-0.357255,-0.343627,0.615715
 seat|Brig|SE|85|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3369424560096715976|SE_parts_brig/mast_foreberm/rope_winch_mastF2_reef (5)|0.001000,0.384000,-22.134001|-0.612523,-0.357255,-0.343627,0.615715
-rig|Brig|SE|86|bermuda forestay low|-1|fore bermuda mast|SE_parts_brig/stays/forestay_0_mid_2 (1)
+rig|Brig|SE|86|bermuda forestay low|6|fore bermuda mast|SE_parts_brig/stays/forestay_0_mid_2 (1)
 seat|Brig|SE|86|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7328516369965107503|SE_parts_brig/winches/rope_winch_jib_angle_left (2)|6.402891,3.329000,2.874869|0.509365,0.486358,0.472854,-0.529539
 seat|Brig|SE|86|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6507062854313174882|SE_parts_brig/winches/rope_winch_jib_angle_right (2)|6.405216,3.332000,-2.871225|-0.457954,-0.509880,-0.529937,0.499467
 seat|Brig|SE|86|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8248135266300209171|SE_parts_brig/mast_foreberm/rope_winch_mastF2_reef (6)|0.422000,0.003000,-22.545000|-0.508661,0.496324,-0.494140,0.500751
@@ -354,38 +354,38 @@ seat|Brig|native|26|rightAngleWinch|0|level24:175157|_shifting world/BOAT medi m
 seat|Brig|native|26|rightAngleWinch|1|level24:177044|_shifting world/BOAT medi medium (50)/medi medium new/rope_winch_jib_angle_right (1)|6.945000,3.356000,-2.809000|-0.458365,-0.503415,-0.535888,0.499298
 seat|Brig|native|26|reefWinch|0|level24:174699|_shifting world/BOAT medi medium (50)/medi medium new/rope_winch_mastF1_reef_jib (2)|11.008000,3.120000,-0.285000|0.638517,0.650084,0.297674,0.284741
 seat|Brig|native|26|reefWinch|1|level24:175416|_shifting world/BOAT medi medium (50)/medi medium new/rope_winch_mastF1_reef_jib (3)|11.008000,3.794000,-0.285000|0.648523,0.666020,0.255322,0.265794
-rig|Junk|SE|51|bowsprit 2|-1||SE_parts_junk/mast_flatsprit
+rig|Junk|SE|51|bowsprit 2|0||SE_parts_junk/mast_flatsprit
 seat|Junk|SE|51|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3673381790323040454|SE_parts_junk/mast_flatsprit/winch_angle_bowsprit_left|-5.618254,-1.130130,-7.871122|0.034637,-0.491681,0.044772,0.868934
 seat|Junk|SE|51|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8064923462707334986|SE_parts_junk/mast_flatsprit/winch_angle_bowsprit_right|-5.631721,1.200432,-7.914886|-0.062680,-0.491714,-0.000720,0.868498
 seat|Junk|SE|51|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8164748003151058541|SE_parts_junk/mast_flatsprit/winch_reef_bowsprit|-5.429861,-0.838901,-7.421132|-0.342786,0.391540,0.446947,-0.727621
-rig|Junk|SE|52|mizzen topstay 2-3|-1|mizzen mast 3|SE_parts_junk/stays/midstay_1-1
+rig|Junk|SE|52|mizzen topstay 2-3|15|mizzen mast 3,main mast 2|SE_parts_junk/stays/midstay_1-1
 seat|Junk|SE|52|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4034139768608583214|SE_parts_junk/winches/winch_angle_midstay1_left|-4.330618,2.488000,2.618708|-0.722048,0.151503,0.111721,0.665742
 seat|Junk|SE|52|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5291495356555434282|SE_parts_junk/winches/winch_angle_midstay1_right|-4.375000,2.478000,-2.628000|-0.677606,0.141054,0.119459,0.711817
 seat|Junk|SE|52|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7471911347401021582|SE_parts_junk/mast_miz_2/winch_reef_midstay (1)|-0.005000,-0.265000,-17.416000|0.703197,-0.011783,0.011701,0.710801
-rig|Junk|SE|53|mizzen topmast|-1||SE_parts_junk/topmast_mizzen_0
+rig|Junk|SE|53|mizzen topmast|16|mizzen mast 1|SE_parts_junk/topmast_mizzen_0
 seat|Junk|SE|53|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8353086008125359236|SE_parts_junk/winches/winch_angle_mizzen_left (1)|-10.396252,2.781000,1.261210|-0.725420,0.131825,0.129365,0.663063
 seat|Junk|SE|53|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9152985903488410486|SE_parts_junk/winches/winch_angle_mizzen_right (1)|-10.412831,2.795000,-1.256379|-0.639684,0.147073,0.111965,0.746081
 seat|Junk|SE|53|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8829925486103048897|SE_parts_junk/winches/winch_angle_back (2)|-8.962000,2.542289,-1.502000|0.129335,0.129336,0.695178,0.695178
 seat|Junk|SE|53|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6104868250228305004|SE_parts_junk/winches/winch_reef_midstay|-9.066164,2.908000,0.006445|0.009709,-0.707040,0.009709,-0.707040
-rig|Junk|SE|54|foremast forestay 2|-1|bowsprit 2|SE_parts_junk/stays/forestay_foremast
+rig|Junk|SE|54|foremast forestay 2|4|bowsprit 2,foremast|SE_parts_junk/stays/forestay_foremast
 seat|Junk|SE|54|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3833576703782275470|SE_parts_junk/winches/winch_angle_forestay0_left|3.360969,1.435224,2.722563|-0.723230,0.050546,0.086238,0.683335
 seat|Junk|SE|54|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4579933883225053036|SE_parts_junk/winches/winch_angle_forestay0_left (1)|2.944946,1.434624,2.745788|-0.717001,0.064896,0.072186,0.690281
 seat|Junk|SE|54|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8407377141695631821|SE_parts_junk/winches/winch_angle_forestay0_right|3.328713,1.438453,-2.713593|-0.699953,-0.008323,0.023183,0.713764
 seat|Junk|SE|54|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:3963588051910203468|SE_parts_junk/winches/winch_angle_forestay0_right (1)|2.871341,1.440500,-2.747770|-0.696072,-0.001492,0.016375,0.717784
 seat|Junk|SE|54|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5007255428899026813|SE_parts_junk/winches/winch_reef_forestay|-1.418675,2.115000,-2.793108|-0.711236,-0.014298,0.018415,0.702566
 seat|Junk|SE|54|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6081628272848381044|SE_parts_junk/winches/winch_reef_forestay (1)|-1.974302,2.174000,-2.743750|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|55|forestay 2 long|-1|bowsprit 2|SE_parts_junk/stays/forestay_1
+rig|Junk|SE|55|forestay 2 long|4|bowsprit 2,main mast 2,(no foremast)|SE_parts_junk/stays/forestay_1
 seat|Junk|SE|55|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:341971857525856910|SE_parts_junk/winches/winch_angle_forestay1_left (2)|6.562257,1.510000,2.530345|-0.700751,0.053309,0.084558,0.706368
 seat|Junk|SE|55|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5914356556957819035|SE_parts_junk/winches/winch_angle_forestay1_left (3)|6.129403,1.500000,2.558252|-0.682755,0.074636,0.065173,0.723897
 seat|Junk|SE|55|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4666377918334192630|SE_parts_junk/winches/winch_angle_forestay1_right (2)|6.509925,1.510000,-2.508570|-0.705456,-0.008502,0.023118,0.708325
 seat|Junk|SE|55|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:1236223078687927164|SE_parts_junk/winches/winch_angle_forestay1_right (3)|6.088833,1.500000,-2.549210|-0.685838,0.011215,0.005377,0.727648
 seat|Junk|SE|55|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5007255428899026813|SE_parts_junk/winches/winch_reef_forestay|-1.418675,2.115000,-2.793108|-0.711236,-0.014298,0.018415,0.702566
 seat|Junk|SE|55|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6081628272848381044|SE_parts_junk/winches/winch_reef_forestay (1)|-1.974302,2.174000,-2.743750|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|56|lower forestay 2 long|-1|bowsprit 2|SE_parts_junk/stays/forestay_1_lower
+rig|Junk|SE|56|lower forestay 2 long|6|bowsprit 2,main mast 2,(no foremast)|SE_parts_junk/stays/forestay_1_lower
 seat|Junk|SE|56|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8181962160517165315|SE_parts_junk/winches/winch_angle_forestay1lower_left (1)|5.696271,1.507000,2.591674|-0.682755,0.074636,0.065173,0.723897
 seat|Junk|SE|56|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7993837566594495592|SE_parts_junk/winches/winch_angle_forestay1lower_right (1)|5.685408,1.507000,-2.611084|-0.685838,0.011215,0.005377,0.727648
 seat|Junk|SE|56|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9197500308762766603|SE_parts_junk/winches/winch_reef_forestay_low|-2.865643,2.437000,-2.727952|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|57|mizzen mast 3|-1||SE_parts_junk/mast_miz_2
+rig|Junk|SE|57|mizzen mast 3|3||SE_parts_junk/mast_miz_2
 seat|Junk|SE|57|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5163640264712834685|SE_parts_junk/winches/winch_angle_mizzen_left|-9.990096,2.780000,1.378535|-0.724546,0.157316,0.103970,0.662930
 seat|Junk|SE|57|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-692789423919938201|SE_parts_junk/winches/winch_angle_mizzen_right|-10.042002,2.781000,-1.370390|-0.639684,0.147073,0.111965,0.746081
 seat|Junk|SE|57|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2359740491957021054|SE_parts_junk/winches/winch_angle_back|-9.402282,2.542289,-1.332529|0.129335,0.129336,0.695178,0.695178
@@ -394,83 +394,83 @@ seat|Junk|SE|57|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8829925486
 seat|Junk|SE|57|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2479305471522768531|SE_parts_junk/mast_miz_2/winch_reef_back|-0.012548,-0.303749,-17.941444|0.707599,-0.019065,-0.004048,0.706346
 seat|Junk|SE|57|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8122712689026821334|SE_parts_junk/mast_miz_2/winch_reef_back (1)|-0.300000,0.026000,-17.943001|0.496368,-0.520326,-0.495417,0.487281
 seat|Junk|SE|57|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:5990598835122769500|SE_parts_junk/mast_miz_2/winch_reef_back (2)|0.008000,0.306000,-17.940001|-0.004048,-0.706346,-0.707599,-0.019065
-rig|Junk|SE|58|raked foremast|-1||SE_parts_junk/mast_front_raked
+rig|Junk|SE|58|raked foremast|1||SE_parts_junk/mast_front_raked
 seat|Junk|SE|58|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5715757875214189307|SE_parts_junk/winches/winch_angle_front_left|9.391171,1.743000,1.990195|-0.694562,0.011263,0.043118,0.718051
 seat|Junk|SE|58|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3657814240884472936|SE_parts_junk/winches/winch_angle_front_right|9.341312,1.747000,-2.003176|-0.718831,-0.022935,0.040246,0.693640
 seat|Junk|SE|58|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3954446204403877585|SE_parts_junk/winches/winch_angle_front|-3.296520,2.776263,1.584064|-0.696935,-0.019859,0.008171,0.716813
 seat|Junk|SE|58|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2479264780728686013|SE_parts_junk/winches/winch_angle_front (1)|-3.235501,2.560685,1.744791|-0.004288,-0.000315,0.004622,0.999980
 seat|Junk|SE|58|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1565437006775670788|SE_parts_junk/mast_front_raked/winch_reef_front|-0.299000,0.002000,-13.097000|-0.000000,0.692108,0.000000,-0.721794
 seat|Junk|SE|58|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:430924598873964335|SE_parts_junk/mast_front_raked/winch_reef_front (1)|-0.292000,-0.002000,-12.688000|0.000001,0.692601,-0.028169,-0.720771
-rig|Junk|SE|60|foremast forestay 3|-1|bowsprit 2,raked foremast|SE_parts_junk/stays/forestay_foremast (1)
+rig|Junk|SE|60|foremast forestay 3|4|bowsprit 2,raked foremast|SE_parts_junk/stays/forestay_foremast (1)
 seat|Junk|SE|60|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3833576703782275470|SE_parts_junk/winches/winch_angle_forestay0_left|3.360969,1.435224,2.722563|-0.723230,0.050546,0.086238,0.683335
 seat|Junk|SE|60|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8407377141695631821|SE_parts_junk/winches/winch_angle_forestay0_right|3.328713,1.438453,-2.713593|-0.699953,-0.008323,0.023183,0.713764
 seat|Junk|SE|60|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5007255428899026813|SE_parts_junk/winches/winch_reef_forestay|-1.418675,2.115000,-2.793108|-0.711236,-0.014298,0.018415,0.702566
-rig|Junk|SE|61|foremast stay|-1|raked foremast|SE_parts_junk/stays/midstay_f-0_top
+rig|Junk|SE|61|foremast stay|5|raked foremast,main mast 2|SE_parts_junk/stays/midstay_f-0_top
 seat|Junk|SE|61|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8471568872004597196|SE_parts_junk/winches/winch_angle_forestay0mid_left|2.525746,1.427379,2.777150|-0.727264,0.070355,0.069773,0.679168
 seat|Junk|SE|61|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6445074420616290027|SE_parts_junk/winches/winch_angle_forestay0mid_right|2.435758,1.433700,-2.775315|-0.685838,0.011215,0.005377,0.727648
 seat|Junk|SE|61|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4657378066780281918|SE_parts_junk/winches/winch_reef_forestay_mid|-2.423149,2.298000,-2.727714|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|62|fore topmast|-1||SE_parts_junk/topmast_fore_0
+rig|Junk|SE|62|fore topmast|17|foremast|SE_parts_junk/topmast_fore_0
 seat|Junk|SE|62|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3604183940026546162|SE_parts_junk/winches/winch_angle_front_left (1)|9.003511,1.717000,2.108886|-0.702155,0.010804,0.043236,0.710628
 seat|Junk|SE|62|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3289068347656039647|SE_parts_junk/winches/winch_angle_front_right (1)|8.958450,1.710000,-2.088900|-0.718831,-0.022935,0.040246,0.693640
 seat|Junk|SE|62|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3859903627117199731|SE_parts_junk/winches/winch_angle_front (2)|-3.761000,2.279000,1.746000|-0.004288,-0.000315,0.004622,0.999980
 seat|Junk|SE|62|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4906142565736677738|SE_parts_junk/winches/winch_reef_front (1)|11.951915,2.028180,0.303110|0.000000,0.000001,-0.707107,-0.707107
-rig|Junk|SE|63|forestay 1 long|-1|bowsprit 2|SE_parts_junk/stays/forestay_0
+rig|Junk|SE|63|forestay 1 long|4|bowsprit 2,main mast 1,(no foremast)|SE_parts_junk/stays/forestay_0
 seat|Junk|SE|63|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3833576703782275470|SE_parts_junk/winches/winch_angle_forestay0_left|3.360969,1.435224,2.722563|-0.723230,0.050546,0.086238,0.683335
 seat|Junk|SE|63|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4579933883225053036|SE_parts_junk/winches/winch_angle_forestay0_left (1)|2.944946,1.434624,2.745788|-0.717001,0.064896,0.072186,0.690281
 seat|Junk|SE|63|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8407377141695631821|SE_parts_junk/winches/winch_angle_forestay0_right|3.328713,1.438453,-2.713593|-0.699953,-0.008323,0.023183,0.713764
 seat|Junk|SE|63|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:3963588051910203468|SE_parts_junk/winches/winch_angle_forestay0_right (1)|2.871341,1.440500,-2.747770|-0.696072,-0.001492,0.016375,0.717784
 seat|Junk|SE|63|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5007255428899026813|SE_parts_junk/winches/winch_reef_forestay|-1.418675,2.115000,-2.793108|-0.711236,-0.014298,0.018415,0.702566
 seat|Junk|SE|63|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6081628272848381044|SE_parts_junk/winches/winch_reef_forestay (1)|-1.974302,2.174000,-2.743750|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|64|middle forestay 1 long|-1|bowsprit 2|SE_parts_junk/stays/forestay_0_mid
+rig|Junk|SE|64|middle forestay 1 long|5|bowsprit 2,main mast 1,(no foremast)|SE_parts_junk/stays/forestay_0_mid
 seat|Junk|SE|64|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8471568872004597196|SE_parts_junk/winches/winch_angle_forestay0mid_left|2.525746,1.427379,2.777150|-0.727264,0.070355,0.069773,0.679168
 seat|Junk|SE|64|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6445074420616290027|SE_parts_junk/winches/winch_angle_forestay0mid_right|2.435758,1.433700,-2.775315|-0.685838,0.011215,0.005377,0.727648
 seat|Junk|SE|64|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4657378066780281918|SE_parts_junk/winches/winch_reef_forestay_mid|-2.423149,2.298000,-2.727714|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|65|mizzen topmast stay 1-1|-1|mizzen topmast|SE_parts_junk/stays/midstay_0-0
+rig|Junk|SE|65|mizzen topmast stay 1-1|15|mizzen topmast,main mast 1|SE_parts_junk/stays/midstay_0-0
 seat|Junk|SE|65|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7849973153926118523|SE_parts_junk/winches/winch_angle_midstay0_left (1)|-8.795674,2.767000,1.737000|-0.724546,0.157316,0.103970,0.662930
 seat|Junk|SE|65|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8214088380203598260|SE_parts_junk/winches/winch_angle_midstay0_right (1)|-8.843000,2.762000,-1.726000|-0.639684,0.147073,0.111965,0.746081
 seat|Junk|SE|65|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3079446094253061699|SE_parts_junk/winches/winch_midstay_back|-9.330722,2.907000,0.261344|0.004403,-0.000000,0.000000,0.999990
-rig|Junk|SE|66|mizzen topmast stay 2-1|-1|mizzen topmast|SE_parts_junk/stays/midstay_1-0
+rig|Junk|SE|66|mizzen topmast stay 2-1|15|mizzen topmast,main mast 2|SE_parts_junk/stays/midstay_1-0
 seat|Junk|SE|66|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7849973153926118523|SE_parts_junk/winches/winch_angle_midstay0_left (1)|-8.795674,2.767000,1.737000|-0.724546,0.157316,0.103970,0.662930
 seat|Junk|SE|66|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8214088380203598260|SE_parts_junk/winches/winch_angle_midstay0_right (1)|-8.843000,2.762000,-1.726000|-0.639684,0.147073,0.111965,0.746081
 seat|Junk|SE|66|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3079446094253061699|SE_parts_junk/winches/winch_midstay_back|-9.330722,2.907000,0.261344|0.004403,-0.000000,0.000000,0.999990
-rig|Junk|SE|67|foremast forestay|-1|fore topmast,bowsprit 2|SE_parts_junk/stays/forestay_topmast
+rig|Junk|SE|67|foremast forestay|4|fore topmast,bowsprit 2|SE_parts_junk/stays/forestay_topmast
 seat|Junk|SE|67|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3833576703782275470|SE_parts_junk/winches/winch_angle_forestay0_left|3.360969,1.435224,2.722563|-0.723230,0.050546,0.086238,0.683335
 seat|Junk|SE|67|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4579933883225053036|SE_parts_junk/winches/winch_angle_forestay0_left (1)|2.944946,1.434624,2.745788|-0.717001,0.064896,0.072186,0.690281
 seat|Junk|SE|67|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8407377141695631821|SE_parts_junk/winches/winch_angle_forestay0_right|3.328713,1.438453,-2.713593|-0.699953,-0.008323,0.023183,0.713764
 seat|Junk|SE|67|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:3963588051910203468|SE_parts_junk/winches/winch_angle_forestay0_right (1)|2.871341,1.440500,-2.747770|-0.696072,-0.001492,0.016375,0.717784
 seat|Junk|SE|67|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5007255428899026813|SE_parts_junk/winches/winch_reef_forestay|-1.418675,2.115000,-2.793108|-0.711236,-0.014298,0.018415,0.702566
 seat|Junk|SE|67|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6081628272848381044|SE_parts_junk/winches/winch_reef_forestay (1)|-1.974302,2.174000,-2.743750|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|68|lower forestay 3|-1||SE_parts_junk/stays/forestay_1_lower (1)
+rig|Junk|SE|68|lower forestay 3|6|main mast 2,(no foremast)|SE_parts_junk/stays/forestay_1_lower (1)
 seat|Junk|SE|68|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8181962160517165315|SE_parts_junk/winches/winch_angle_forestay1lower_left (1)|5.696271,1.507000,2.591674|-0.682755,0.074636,0.065173,0.723897
 seat|Junk|SE|68|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7993837566594495592|SE_parts_junk/winches/winch_angle_forestay1lower_right (1)|5.685408,1.507000,-2.611084|-0.685838,0.011215,0.005377,0.727648
 seat|Junk|SE|68|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9197500308762766603|SE_parts_junk/winches/winch_reef_forestay_low|-2.865643,2.437000,-2.727952|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|69|foremast bermuda|-1||SE_parts_junk/mast_fore_berm
+rig|Junk|SE|69|foremast bermuda|1||SE_parts_junk/mast_fore_berm
 seat|Junk|SE|69|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5261065464663091568|SE_parts_junk/winches/winch_angle_foreberm_left|-0.791000,1.471000,2.784000|-0.706507,0.029126,-0.029126,0.706507
 seat|Junk|SE|69|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:9141688759754268501|SE_parts_junk/winches/winch_angle_foreberm_right|-0.791000,1.470000,-2.804000|-0.706507,0.029126,-0.029126,0.706507
 seat|Junk|SE|69|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4657378066780281918|SE_parts_junk/winches/winch_reef_forestay_mid|-2.423149,2.298000,-2.727714|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|70|main mast bermuda|-1||SE_parts_junk/mast_main_berm
+rig|Junk|SE|70|main mast bermuda|2||SE_parts_junk/mast_main_berm
 seat|Junk|SE|70|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7849973153926118523|SE_parts_junk/winches/winch_angle_midstay0_left (1)|-8.795674,2.767000,1.737000|-0.724546,0.157316,0.103970,0.662930
 seat|Junk|SE|70|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8214088380203598260|SE_parts_junk/winches/winch_angle_midstay0_right (1)|-8.843000,2.762000,-1.726000|-0.639684,0.147073,0.111965,0.746081
 seat|Junk|SE|70|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5832187707496775068|SE_parts_junk/winches/winch_reef_main|-3.745089,2.528795,1.594582|-0.684865,-0.046774,0.069202,0.723867
-rig|Junk|SE|71|mizzen bermuda|-1||SE_parts_junk/mast_miz_berm
+rig|Junk|SE|71|mizzen bermuda|3||SE_parts_junk/mast_miz_berm
 seat|Junk|SE|71|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8353086008125359236|SE_parts_junk/winches/winch_angle_mizzen_left (1)|-10.396252,2.781000,1.261210|-0.725420,0.131825,0.129365,0.663063
 seat|Junk|SE|71|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9152985903488410486|SE_parts_junk/winches/winch_angle_mizzen_right (1)|-10.412831,2.795000,-1.256379|-0.639684,0.147073,0.111965,0.746081
 seat|Junk|SE|71|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5102579227298239197|SE_parts_junk/mast_miz_berm/winch_reef_back (2)|-0.006000,0.275000,-16.822001|-0.004048,-0.706346,-0.707599,-0.019065
-rig|Junk|SE|72|bermuda forestay|-1|bowsprit 2,foremast bermuda|SE_parts_junk/stays/forestay_1 (2)
+rig|Junk|SE|72|bermuda forestay|4|bowsprit 2,foremast bermuda|SE_parts_junk/stays/forestay_1 (2)
 seat|Junk|SE|72|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:341971857525856910|SE_parts_junk/winches/winch_angle_forestay1_left (2)|6.562257,1.510000,2.530345|-0.700751,0.053309,0.084558,0.706368
 seat|Junk|SE|72|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5914356556957819035|SE_parts_junk/winches/winch_angle_forestay1_left (3)|6.129403,1.500000,2.558252|-0.682755,0.074636,0.065173,0.723897
 seat|Junk|SE|72|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4666377918334192630|SE_parts_junk/winches/winch_angle_forestay1_right (2)|6.509925,1.510000,-2.508570|-0.705456,-0.008502,0.023118,0.708325
 seat|Junk|SE|72|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:1236223078687927164|SE_parts_junk/winches/winch_angle_forestay1_right (3)|6.088833,1.500000,-2.549210|-0.685838,0.011215,0.005377,0.727648
 seat|Junk|SE|72|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5007255428899026813|SE_parts_junk/winches/winch_reef_forestay|-1.418675,2.115000,-2.793108|-0.711236,-0.014298,0.018415,0.702566
 seat|Junk|SE|72|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6081628272848381044|SE_parts_junk/winches/winch_reef_forestay (1)|-1.974302,2.174000,-2.743750|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|73|forestay 1 bermuda|-1|bowsprit 2,main mast bermuda|SE_parts_junk/stays/forestay_0 (2)
+rig|Junk|SE|73|forestay 1 bermuda|4|bowsprit 2,main mast bermuda,(no foremast)|SE_parts_junk/stays/forestay_0 (2)
 seat|Junk|SE|73|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3833576703782275470|SE_parts_junk/winches/winch_angle_forestay0_left|3.360969,1.435224,2.722563|-0.723230,0.050546,0.086238,0.683335
 seat|Junk|SE|73|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4579933883225053036|SE_parts_junk/winches/winch_angle_forestay0_left (1)|2.944946,1.434624,2.745788|-0.717001,0.064896,0.072186,0.690281
 seat|Junk|SE|73|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8407377141695631821|SE_parts_junk/winches/winch_angle_forestay0_right|3.328713,1.438453,-2.713593|-0.699953,-0.008323,0.023183,0.713764
 seat|Junk|SE|73|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:3963588051910203468|SE_parts_junk/winches/winch_angle_forestay0_right (1)|2.871341,1.440500,-2.747770|-0.696072,-0.001492,0.016375,0.717784
 seat|Junk|SE|73|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5007255428899026813|SE_parts_junk/winches/winch_reef_forestay|-1.418675,2.115000,-2.793108|-0.711236,-0.014298,0.018415,0.702566
 seat|Junk|SE|73|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6081628272848381044|SE_parts_junk/winches/winch_reef_forestay (1)|-1.974302,2.174000,-2.743750|-0.703574,0.108279,-0.105735,0.694320
-rig|Junk|SE|74|inner forestay bermuda|-1|main mast bermuda|SE_parts_junk/stays/forestay_0_mid (2)
+rig|Junk|SE|74|inner forestay bermuda|5|main mast bermuda,(no foremast)|SE_parts_junk/stays/forestay_0_mid (2)
 seat|Junk|SE|74|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8471568872004597196|SE_parts_junk/winches/winch_angle_forestay0mid_left|2.525746,1.427379,2.777150|-0.727264,0.070355,0.069773,0.679168
 seat|Junk|SE|74|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6445074420616290027|SE_parts_junk/winches/winch_angle_forestay0mid_right|2.435758,1.433700,-2.775315|-0.685838,0.011215,0.005377,0.727648
 seat|Junk|SE|74|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4657378066780281918|SE_parts_junk/winches/winch_reef_forestay_mid|-2.423149,2.298000,-2.727714|-0.703574,0.108279,-0.105735,0.694320
@@ -581,7 +581,7 @@ rig|Junk|native|16|foremast stay|5|foremast,main mast 1|_shifting world/BOAT jun
 seat|Junk|native|16|leftAngleWinch|0|level24:177501|_shifting world/BOAT junk medium (80)/junk medium (actual)/winch_angle_forestay0mid_left|2.525746,1.427379,2.777150|-0.727264,0.070355,0.069773,0.679168
 seat|Junk|native|16|rightAngleWinch|0|level24:175920|_shifting world/BOAT junk medium (80)/junk medium (actual)/winch_angle_forestay0mid_right|2.433300,1.433700,-2.775700|-0.685838,0.011214,0.005377,0.727648
 seat|Junk|native|16|reefWinch|0|level24:176614|_shifting world/BOAT junk medium (80)/junk medium (actual)/winch_reef_forestay_mid|-2.423000,2.298000,-2.727000|-0.703574,0.108279,-0.105735,0.694320
-rig|Jong|SE|51|main mast 1 fore|-1||SE_parts_jong/mast_main_1_f
+rig|Jong|SE|51|main mast 1 fore|2||SE_parts_jong/mast_main_1_f
 seat|Jong|SE|51|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:521384464012894106|SE_parts_jong/winches/winch_angle_main_front_left|-1.418942,4.158000,3.208445|0.504611,0.495701,0.502625,-0.497008
 seat|Jong|SE|51|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7720571313401904167|SE_parts_jong/winches/winch_angle_main_front_right|-1.434682,4.156000,-3.229767|0.488113,-0.510865,-0.518662,-0.481407
 seat|Jong|SE|51|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3470905747254440464|SE_parts_jong/winches/winch_angle_main_front_angle|-6.036643,3.799000,-2.743381|-0.040130,-0.037365,-0.710978,-0.701073
@@ -592,7 +592,7 @@ seat|Jong|SE|51|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:879430455247291
 seat|Jong|SE|51|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5916846739305483336|SE_parts_jong/winches/winch_reef_main_front (1)|7.075000,4.808000,0.382000|-0.019011,-0.002345,-0.999684,0.016289
 seat|Jong|SE|51|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:6230087396213678716|SE_parts_jong/winches/winch_reef_main_front (2)|6.749000,5.254000,0.237000|0.416519,-0.009179,-0.908978,0.013659
 seat|Jong|SE|51|reefWinch|3|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3247594390494413984|SE_parts_jong/winches/winch_reef_main_front (3)|6.749000,4.809000,0.237000|0.416519,-0.009179,-0.908978,0.013659
-rig|Jong|SE|52|main mast 2 fore|-1||SE_parts_jong/mast_main_2_f
+rig|Jong|SE|52|main mast 2 fore|3||SE_parts_jong/mast_main_2_f
 seat|Jong|SE|52|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3834913445612740993|SE_parts_jong/winches/winch_angle_main_back_left|-8.948358,4.157000,2.605394|0.480630,0.518331,0.525603,-0.473359
 seat|Jong|SE|52|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8789752767563627415|SE_parts_jong/winches/winch_angle_main_back_right|-8.989694,4.158000,-2.605546|0.474345,-0.523313,-0.531283,-0.467846
 seat|Jong|SE|52|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2358629853454721847|SE_parts_jong/winches/winch_angle_main_back (0)|-11.312049,3.951000,-2.116660|-0.096832,-0.037418,-0.699391,-0.707160
@@ -603,7 +603,7 @@ seat|Jong|SE|52|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-22989624239226
 seat|Jong|SE|52|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5120208084214400130|SE_parts_jong/winches/winch_reef_main_back (1)|-1.692349,4.369155,0.356694|0.300907,-0.007419,-0.953511,0.014690
 seat|Jong|SE|52|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:9000493780970534306|SE_parts_jong/winches/winch_reef_main_back (2)|-1.714067,3.915000,0.360766|0.300907,-0.007419,-0.953511,0.014690
 seat|Jong|SE|52|reefWinch|3|CAB-027b2b1c061051d0fa7aa2e47cc92195:8083305843070597456|SE_parts_jong/winches/winch_reef_main_back (3)|-1.855000,4.607000,-0.002000|0.709337,0.000252,-0.704677,0.016455
-rig|Jong|SE|53|mizzen mast 2|-1||SE_parts_jong/mast_back
+rig|Jong|SE|53|mizzen mast 2|4||SE_parts_jong/mast_back
 seat|Jong|SE|53|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3616190163820639967|SE_parts_jong/winches/winch_angle_mizzen_left|-14.972329,2.519000,1.420748|0.529931,0.562318,0.475854,-0.420160
 seat|Jong|SE|53|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5904456009380262884|SE_parts_jong/winches/winch_angle_mizzen_right|-14.863029,2.522000,-1.450777|0.430324,-0.484210,-0.567526,-0.508209
 seat|Jong|SE|53|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:318058844619143229|SE_parts_jong/winches/winch_angle_mizzen|-10.545531,3.946000,2.255722|-0.706552,-0.700962,-0.045258,-0.085960
@@ -612,31 +612,31 @@ seat|Jong|SE|53|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3517633485
 seat|Jong|SE|53|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7205078712353674357|SE_parts_jong/winches/winch_reef_mizzen|-8.439799,4.837155,0.229486|0.319735,-0.019665,0.947245,-0.010506
 seat|Jong|SE|53|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5356114727358444718|SE_parts_jong/winches/winch_reef_mizzen (1)|-8.439799,4.381000,0.229486|0.319735,-0.019665,0.947245,-0.010506
 seat|Jong|SE|53|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3380939355847170440|SE_parts_jong/winches/winch_reef_mizzen (2)|-8.439799,3.907000,0.229486|0.319735,-0.019665,0.947245,-0.010506
-rig|Jong|SE|54|middle stay lower 2-2|-1|main mast 2 fore,main mast 1 fore|SE_parts_jong/stays/mid_stay_lower
+rig|Jong|SE|54|middle stay lower 2-2|10|main mast 2 fore,main mast 1 fore|SE_parts_jong/stays/mid_stay_lower
 seat|Jong|SE|54|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9073658421907523985|SE_parts_jong/winches/winch_stay_mid_left (1)|-4.913013,4.159000,3.016356|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|54|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-435807405159449897|SE_parts_jong/winches/winch_stay_mid_right (1)|-4.913218,4.144000,-3.001822|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|54|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5784691742770174463|SE_parts_jong/winches/winch_stay_mid_reef low|-1.687526,4.369155,-0.314463|0.948846,-0.016250,-0.315309,0.002603
-rig|Jong|SE|55|middle stay 2-2|-1|main mast 2 fore,main mast 1 fore|SE_parts_jong/stays/mid_stay_upper
+rig|Jong|SE|55|middle stay 2-2|9|main mast 2 fore,main mast 1 fore|SE_parts_jong/stays/mid_stay_upper
 seat|Jong|SE|55|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5708563052168530360|SE_parts_jong/winches/winch_stay_mid_left|-4.521993,4.162000,3.025935|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|55|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8701863953634536601|SE_parts_jong/winches/winch_stay_mid_right|-4.521521,4.144000,-3.048576|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|55|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1604776471543353189|SE_parts_jong/winches/winch_stay_mid_reef|-1.688459,4.837155,-0.326934|0.948647,-0.010593,-0.315549,0.019618
-rig|Jong|SE|56|mizzen stay 2-2|-1|mizzen mast 2,main mast 2 fore|SE_parts_jong/stays/back_stay_lower_001
+rig|Jong|SE|56|mizzen stay 2-2|11|mizzen mast 2,main mast 2 fore|SE_parts_jong/stays/back_stay_lower_001
 seat|Jong|SE|56|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7822307934748173751|SE_parts_jong/winches/winch_stay_back_left (1)|-11.735391,4.351000,2.182361|0.497975,0.502367,0.490281,-0.509188
 seat|Jong|SE|56|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3847029479610717874|SE_parts_jong/winches/winch_stay_back_right (1)|-11.732761,4.365000,-2.179688|0.508738,0.491465,0.501194,-0.498451
 seat|Jong|SE|56|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6002200216515305242|SE_parts_jong/winches/winch_stay_back_reef|-8.413593,4.837155,-0.237719|0.944721,-0.020346,0.327116,0.009117
-rig|Jong|SE|57|mizzen stay lower 2-2|-1|mizzen mast 2,main mast 2 fore|SE_parts_jong/stays/back_stay_lower
+rig|Jong|SE|57|mizzen stay lower 2-2|12|mizzen mast 2,main mast 2 fore|SE_parts_jong/stays/back_stay_lower
 seat|Jong|SE|57|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4422008203015845908|SE_parts_jong/winches/winch_stay_back_left|-12.105883,4.351000,2.087436|0.497975,0.502367,0.490281,-0.509188
 seat|Jong|SE|57|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1271232330865755132|SE_parts_jong/winches/winch_stay_back_right|-12.105456,4.344000,-2.091533|0.508738,0.491465,0.501194,-0.498451
 seat|Jong|SE|57|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8289944520320159357|SE_parts_jong/winches/winch_stay_back_reef low|-8.419108,4.369155,-0.229659|0.944733,-0.014477,0.327428,-0.007827
-rig|Jong|SE|58|middle stay 1-2|-1|main mast 1 fore|SE_parts_jong/stays/mid_stay_upper (1)
+rig|Jong|SE|58|middle stay 1-2|9|main mast 1 fore,main mast 2|SE_parts_jong/stays/mid_stay_upper (1)
 seat|Jong|SE|58|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5708563052168530360|SE_parts_jong/winches/winch_stay_mid_left|-4.521993,4.162000,3.025935|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|58|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8701863953634536601|SE_parts_jong/winches/winch_stay_mid_right|-4.521521,4.144000,-3.048576|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|58|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8371767230805029493|SE_parts_jong/winches/winch_stay_mid_reef (1)|-5.725407,4.837155,-0.334319|0.948647,-0.010593,-0.315549,0.019618
-rig|Jong|SE|59|middle stay lower 1-2|-1|main mast 1 fore|SE_parts_jong/stays/mid_stay_lower (1)
+rig|Jong|SE|59|middle stay lower 1-2|10|main mast 1 fore,main mast 2|SE_parts_jong/stays/mid_stay_lower (1)
 seat|Jong|SE|59|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9073658421907523985|SE_parts_jong/winches/winch_stay_mid_left (1)|-4.913013,4.159000,3.016356|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|59|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-435807405159449897|SE_parts_jong/winches/winch_stay_mid_right (1)|-4.913218,4.144000,-3.001822|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|59|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3919236848628103887|SE_parts_jong/winches/winch_stay_mid_reef low (1)|-5.724473,4.369155,-0.321847|0.948847,-0.016250,-0.315309,0.002603
-rig|Jong|SE|60|main stay 3|-1|main mast 1 fore|SE_parts_jong/stays/front_stay_mainmast-bowsprit
+rig|Jong|SE|60|main stay 3|7|main mast 1 fore,(no foremast),bowsprit|SE_parts_jong/stays/front_stay_mainmast-bowsprit
 seat|Jong|SE|60|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7905268818288174155|SE_parts_jong/winches/winch_stay_front_left|4.073234,4.139000,3.025848|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|60|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8308467781923933187|SE_parts_jong/winches/winch_stay_front_left (3)|4.487000,4.233000,3.017000|-0.424287,-0.573858,-0.406123,0.570728
 seat|Jong|SE|60|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7451931743649900139|SE_parts_jong/winches/winch_stay_front_right|4.072604,4.139000,-3.047050|-0.504214,-0.507304,-0.486715,0.501516
@@ -650,23 +650,23 @@ seat|Jong|SE|61|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:745193174
 seat|Jong|SE|61|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:7204159462090362376|SE_parts_jong/winches/winch_stay_front_right (3)|4.533191,4.252000,-3.056137|-0.427322,-0.571687,-0.409175,0.568460
 seat|Jong|SE|61|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7148415968342433006|SE_parts_jong/winches/winch_stay_front_reef|7.035312,5.236000,-0.382767|-0.999565,0.015945,0.019298,-0.015583
 seat|Jong|SE|61|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:6530380890825582452|SE_parts_jong/winches/winch_stay_front_reef (1)|6.726000,5.241000,-0.216000|-0.856000,0.021600,0.516495,-0.005522
-rig|Jong|SE|62|middle forestay 1|-1|main mast 1 fore|SE_parts_jong/stays/front_stay_mid_0
+rig|Jong|SE|62|middle forestay 1|20|main mast 1 fore,(no foremast)|SE_parts_jong/stays/front_stay_mid_0
 seat|Jong|SE|62|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3539528406656949091|SE_parts_jong/winches/winch_stay_front_left (2)|3.298045,4.132000,3.035352|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|62|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7903677331867614673|SE_parts_jong/winches/winch_stay_front_right (2)|3.298517,4.132000,-3.039158|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|62|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1698499454889919741|SE_parts_jong/winches/winch_stay_front_reef low|7.041759,4.779000,-0.378356|-0.999684,0.016289,0.019008,0.002345
-rig|Jong|SE|64|middle forestay 2|-1|main mast 1 fore|SE_parts_jong/stays/front_stay_mid_2
+rig|Jong|SE|64|middle forestay 2|20|main mast 1 fore,(no foremast),bowsprit|SE_parts_jong/stays/front_stay_mid_2
 seat|Jong|SE|64|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3539528406656949091|SE_parts_jong/winches/winch_stay_front_left (2)|3.298045,4.132000,3.035352|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|64|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7903677331867614673|SE_parts_jong/winches/winch_stay_front_right (2)|3.298517,4.132000,-3.039158|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|64|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1698499454889919741|SE_parts_jong/winches/winch_stay_front_reef low|7.041759,4.779000,-0.378356|-0.999684,0.016289,0.019008,0.002345
-rig|Jong|SE|65|main stay lower 3|-1||SE_parts_jong/stays/front_stay_mainmast-hull (3)
+rig|Jong|SE|65|main stay lower 3|20|main mast 1,(no foremast)|SE_parts_jong/stays/front_stay_mainmast-hull (3)
 seat|Jong|SE|65|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3539528406656949091|SE_parts_jong/winches/winch_stay_front_left (2)|3.298045,4.132000,3.035352|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|65|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7903677331867614673|SE_parts_jong/winches/winch_stay_front_right (2)|3.298517,4.132000,-3.039158|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|65|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5167834503648049335|SE_parts_jong/winches/winch_stay_front_reef low (2)|3.188812,4.381000,-0.371741|-0.970540,0.015127,-0.240376,0.006481
-rig|Jong|SE|66|main stay lower 2|-1|main mast 1 fore|SE_parts_jong/stays/forestay_lower
+rig|Jong|SE|66|main stay lower 2|8|main mast 1 fore,(no foremast)|SE_parts_jong/stays/forestay_lower
 seat|Jong|SE|66|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7265131921895373762|SE_parts_jong/winches/winch_stay_front_left (1)|3.689234,4.132000,3.030849|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|66|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6383504138112536371|SE_parts_jong/winches/winch_stay_front_right (1)|3.688604,4.132000,-3.042050|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|66|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:744311490899949695|SE_parts_jong/winches/winch_stay_front_reef low (1)|6.726000,4.787000,-0.216000|-0.856000,0.021600,0.516495,-0.005522
-rig|Jong|SE|67|raked foremast|-1||SE_parts_jong/mast_front
+rig|Jong|SE|67|raked foremast|1||SE_parts_jong/mast_front
 seat|Jong|SE|67|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2117398203209620508|SE_parts_jong/winches/winch_angle_foremast_left|10.800220,2.322000,2.242146|0.478649,0.520650,0.476733,-0.522057
 seat|Jong|SE|67|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4709174979282024527|SE_parts_jong/winches/winch_angle_foremast_right|10.800132,2.321000,-2.254286|0.499070,-0.498786,-0.530288,-0.470038
 seat|Jong|SE|67|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4945062879155098399|SE_parts_jong/winches/winch_angle_foremast|5.946294,4.456000,2.958449|-0.504214,-0.507305,-0.486715,0.501516
@@ -675,7 +675,7 @@ seat|Jong|SE|67|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3887219637
 seat|Jong|SE|67|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5487509792166868702|SE_parts_jong/winches/winch_reef_foremast|13.412523,2.557003,0.222620|0.362541,-0.039869,-0.925482,-0.102263
 seat|Jong|SE|67|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:6034222238171357757|SE_parts_jong/winches/winch_reef_foremast (1)|13.299957,2.125259,0.230257|0.360649,-0.056459,-0.924618,-0.108748
 seat|Jong|SE|67|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:7699849558682685446|SE_parts_jong/winches/winch_reef_foremast (2)|13.181065,1.691246,0.245953|0.360649,-0.056459,-0.924618,-0.108748
-rig|Jong|SE|68|middle forestay 4|-1||SE_parts_jong/stays/front_stay_mainmast-hull (4)
+rig|Jong|SE|68|middle forestay 4|20|main mast 1,bowsprit|SE_parts_jong/stays/front_stay_mainmast-hull (4)
 seat|Jong|SE|68|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3539528406656949091|SE_parts_jong/winches/winch_stay_front_left (2)|3.298045,4.132000,3.035352|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|68|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6863678936512453528|SE_parts_jong/winches/winch_stay_front_left (4)|2.886000,4.123000,3.045000|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|68|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7903677331867614673|SE_parts_jong/winches/winch_stay_front_right (2)|3.298517,4.132000,-3.039158|-0.504214,-0.507305,-0.486715,0.501516
@@ -685,35 +685,35 @@ rig|Jong|SE|69|main stay mid|-1||SE_parts_jong/stays/front_stay_mid
 seat|Jong|SE|69|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6863678936512453528|SE_parts_jong/winches/winch_stay_front_left (4)|2.886000,4.123000,3.045000|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|69|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5712686405391752532|SE_parts_jong/winches/winch_stay_front_right (4)|2.885609,4.123000,-3.030581|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|69|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1646381719768677302|SE_parts_jong/winches/winch_stay_front_reef low (3)|3.389000,4.357000,-0.016000|-0.720325,0.016341,-0.693442,-0.001951
-rig|Jong|SE|70|mizzen stay lower 1-2|-1|main mast 2 fore|SE_parts_jong/stays/back_stay_lower (1)
+rig|Jong|SE|70|mizzen stay lower 1-2|12|main mast 2 fore,mizzen mast|SE_parts_jong/stays/back_stay_lower (1)
 seat|Jong|SE|70|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7822307934748173751|SE_parts_jong/winches/winch_stay_back_left (1)|-11.735391,4.351000,2.182361|0.497975,0.502367,0.490281,-0.509188
 seat|Jong|SE|70|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3847029479610717874|SE_parts_jong/winches/winch_stay_back_right (1)|-11.732761,4.365000,-2.179688|0.508738,0.491465,0.501194,-0.498451
 seat|Jong|SE|70|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2500373254385674357|SE_parts_jong/winches/winch_stay_back_reef low (1)|-12.459365,4.369155,-0.232207|0.944733,-0.014477,0.327428,-0.007827
-rig|Jong|SE|71|mizzen stay 1-2|-1|main mast 2 fore|SE_parts_jong/stays/back_stay_upper (1)
+rig|Jong|SE|71|mizzen stay 1-2|11|main mast 2 fore,mizzen mast|SE_parts_jong/stays/back_stay_upper (1)
 seat|Jong|SE|71|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4422008203015845908|SE_parts_jong/winches/winch_stay_back_left|-12.105883,4.351000,2.087436|0.497975,0.502367,0.490281,-0.509188
 seat|Jong|SE|71|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1271232330865755132|SE_parts_jong/winches/winch_stay_back_right|-12.105456,4.344000,-2.091533|0.508738,0.491465,0.501194,-0.498451
 seat|Jong|SE|71|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5669542614240594289|SE_parts_jong/winches/winch_stay_back_reef (1)|-12.453851,4.837155,-0.240268|0.944721,-0.020346,0.327116,0.009117
-rig|Jong|SE|72|lower main stay 3|-1||SE_parts_jong/stays/forestay_lower (2)
+rig|Jong|SE|72|lower main stay 3|8|main mast 1,(no foremast)|SE_parts_jong/stays/forestay_lower (2)
 seat|Jong|SE|72|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7265131921895373762|SE_parts_jong/winches/winch_stay_front_left (1)|3.689234,4.132000,3.030849|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|72|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6383504138112536371|SE_parts_jong/winches/winch_stay_front_right (1)|3.688604,4.132000,-3.042050|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|72|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5167834503648049335|SE_parts_jong/winches/winch_stay_front_reef low (2)|3.188812,4.381000,-0.371741|-0.970540,0.015127,-0.240376,0.006481
-rig|Jong|SE|73|middle stay 2-f|-1|main mast 2 fore|SE_parts_jong/stays/mid_stay_upper (2)
+rig|Jong|SE|73|middle stay 2-f|9|main mast 2 fore,foremast,(no main mast 1)|SE_parts_jong/stays/mid_stay_upper (2)
 seat|Jong|SE|73|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5708563052168530360|SE_parts_jong/winches/winch_stay_mid_left|-4.521993,4.162000,3.025935|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|73|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8701863953634536601|SE_parts_jong/winches/winch_stay_mid_right|-4.521521,4.144000,-3.048576|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|73|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1604776471543353189|SE_parts_jong/winches/winch_stay_mid_reef|-1.688459,4.837155,-0.326934|0.948647,-0.010593,-0.315549,0.019618
-rig|Jong|SE|74|middle stay lower 2-f|-1|main mast 2 fore|SE_parts_jong/stays/mid_stay_lower (2)
+rig|Jong|SE|74|middle stay lower 2-f|10|main mast 2 fore,foremast,(no main mast 1)|SE_parts_jong/stays/mid_stay_lower (2)
 seat|Jong|SE|74|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9073658421907523985|SE_parts_jong/winches/winch_stay_mid_left (1)|-4.913013,4.159000,3.016356|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|74|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-435807405159449897|SE_parts_jong/winches/winch_stay_mid_right (1)|-4.913218,4.144000,-3.001822|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|74|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5784691742770174463|SE_parts_jong/winches/winch_stay_mid_reef low|-1.687526,4.369155,-0.314463|0.948846,-0.016250,-0.315309,0.002603
-rig|Jong|SE|75|mizzen stay 2-f|-1|mizzen mast 2|SE_parts_jong/stays/back_stay_lower_001 (1)
+rig|Jong|SE|75|mizzen stay 2-f|11|mizzen mast 2,main mast 1,(no main mast 2)|SE_parts_jong/stays/back_stay_lower_001 (1)
 seat|Jong|SE|75|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7822307934748173751|SE_parts_jong/winches/winch_stay_back_left (1)|-11.735391,4.351000,2.182361|0.497975,0.502367,0.490281,-0.509188
 seat|Jong|SE|75|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3847029479610717874|SE_parts_jong/winches/winch_stay_back_right (1)|-11.732761,4.365000,-2.179688|0.508738,0.491465,0.501194,-0.498451
 seat|Jong|SE|75|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6002200216515305242|SE_parts_jong/winches/winch_stay_back_reef|-8.413593,4.837155,-0.237719|0.944721,-0.020346,0.327116,0.009117
-rig|Jong|SE|76|mizzen stay lower 2-f|-1|mizzen mast 2|SE_parts_jong/stays/back_stay_lower (2)
+rig|Jong|SE|76|mizzen stay lower 2-f|12|mizzen mast 2,main mast 1,(no main mast 2)|SE_parts_jong/stays/back_stay_lower (2)
 seat|Jong|SE|76|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4422008203015845908|SE_parts_jong/winches/winch_stay_back_left|-12.105883,4.351000,2.087436|0.497975,0.502367,0.490281,-0.509188
 seat|Jong|SE|76|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1271232330865755132|SE_parts_jong/winches/winch_stay_back_right|-12.105456,4.344000,-2.091533|0.508738,0.491465,0.501194,-0.498451
 seat|Jong|SE|76|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8289944520320159357|SE_parts_jong/winches/winch_stay_back_reef low|-8.419108,4.369155,-0.229659|0.944733,-0.014477,0.327428,-0.007827
-rig|Jong|SE|77|main mast 2 bermuda|-1||SE_parts_jong/mast_main_2_berm
+rig|Jong|SE|77|main mast 2 bermuda|3||SE_parts_jong/mast_main_2_berm
 seat|Jong|SE|77|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4422008203015845908|SE_parts_jong/winches/winch_stay_back_left|-12.105883,4.351000,2.087436|0.497975,0.502367,0.490281,-0.509188
 seat|Jong|SE|77|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7822307934748173751|SE_parts_jong/winches/winch_stay_back_left (1)|-11.735391,4.351000,2.182361|0.497975,0.502367,0.490281,-0.509188
 seat|Jong|SE|77|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1271232330865755132|SE_parts_jong/winches/winch_stay_back_right|-12.105456,4.344000,-2.091533|0.508738,0.491465,0.501194,-0.498451
@@ -724,7 +724,7 @@ seat|Jong|SE|77|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:47195328348
 seat|Jong|SE|77|midAngleWinch|3|CAB-027b2b1c061051d0fa7aa2e47cc92195:7609308916586927039|SE_parts_jong/winches/winch_angle_main_back (3)|-11.691000,3.952000,-2.047000|-0.096832,-0.037418,-0.699391,-0.707160
 seat|Jong|SE|77|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6645642185848341774|SE_parts_jong/winches/winch_stay_mid_reef low (2)|-0.528000,4.375351,-0.291000|0.945355,0.082928,-0.313313,0.035517
 seat|Jong|SE|77|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2294180552522914589|SE_parts_jong/winches/winch_stay_mid_reef (2)|-0.617127,4.832950,-0.291471|0.944566,0.088534,-0.311775,0.052464
-rig|Jong|SE|78|main mast 1 bermuda|-1||SE_parts_jong/mast_main_1_berm
+rig|Jong|SE|78|main mast 1 bermuda|2||SE_parts_jong/mast_main_1_berm
 seat|Jong|SE|78|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3834913445612740993|SE_parts_jong/winches/winch_angle_main_back_left|-8.948358,4.157000,2.605394|0.480630,0.518331,0.525603,-0.473359
 seat|Jong|SE|78|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8789752767563627415|SE_parts_jong/winches/winch_angle_main_back_right|-8.989694,4.158000,-2.605546|0.474345,-0.523313,-0.531283,-0.467846
 seat|Jong|SE|78|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3470905747254440464|SE_parts_jong/winches/winch_angle_main_front_angle|-6.036643,3.799000,-2.743381|-0.040130,-0.037365,-0.710978,-0.701073
@@ -733,14 +733,14 @@ seat|Jong|SE|78|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2020617298
 seat|Jong|SE|78|midAngleWinch|3|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4996947601185196489|SE_parts_jong/winches/winch_angle_main_front (3)|-7.066000,3.784000,-2.636000|-0.040130,-0.037365,-0.710978,-0.701073
 seat|Jong|SE|78|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7011800684209675858|SE_parts_jong/winches/winch_reef_main_front (4)|6.705029,4.829608,0.382000|-0.018538,-0.004825,-0.988861,0.147604
 seat|Jong|SE|78|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6002425296921665073|SE_parts_jong/winches/winch_reef_main_front (5)|6.582526,5.258503,0.377589|-0.021182,0.012909,-0.988789,0.147248
-rig|Jong|SE|79|foremast bermuda|-1||SE_parts_jong/mast_front_berm
+rig|Jong|SE|79|foremast bermuda|1||SE_parts_jong/mast_front_berm
 seat|Jong|SE|79|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2117398203209620508|SE_parts_jong/winches/winch_angle_foremast_left|10.800220,2.322000,2.242146|0.478649,0.520650,0.476733,-0.522057
 seat|Jong|SE|79|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4709174979282024527|SE_parts_jong/winches/winch_angle_foremast_right|10.800132,2.321000,-2.254286|0.499070,-0.498786,-0.530288,-0.470038
 seat|Jong|SE|79|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4945062879155098399|SE_parts_jong/winches/winch_angle_foremast|5.946294,4.456000,2.958449|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|79|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:250939936376517175|SE_parts_jong/winches/winch_angle_foremast (1)|5.542040,4.456000,2.968214|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|79|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3887219637267360195|SE_parts_jong/winches/winch_angle_foremast (2)|5.137446,4.456000,3.006145|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|79|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:347250310644718477|SE_parts_jong/winches/winch_reef_foremast (3)|14.740000,3.466000,0.225000|0.401671,0.049093,-0.896655,0.179612
-rig|Jong|SE|80|mizzen mast bermuda|-1||SE_parts_jong/mast_back_berm
+rig|Jong|SE|80|mizzen mast bermuda|4||SE_parts_jong/mast_back_berm
 seat|Jong|SE|80|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3616190163820639967|SE_parts_jong/winches/winch_angle_mizzen_left|-14.972329,2.519000,1.420748|0.529931,0.562318,0.475854,-0.420160
 seat|Jong|SE|80|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5904456009380262884|SE_parts_jong/winches/winch_angle_mizzen_right|-14.863029,2.522000,-1.450777|0.430324,-0.484210,-0.567526,-0.508209
 seat|Jong|SE|80|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:318058844619143229|SE_parts_jong/winches/winch_angle_mizzen|-10.545531,3.946000,2.255722|-0.706552,-0.700962,-0.045258,-0.085960
@@ -748,25 +748,25 @@ seat|Jong|SE|80|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:41424110117
 seat|Jong|SE|80|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3517633485083368027|SE_parts_jong/winches/winch_angle_mizzen (2)|-11.309842,3.951000,2.113804|-0.706873,-0.702505,-0.034362,-0.075081
 seat|Jong|SE|80|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-390257863161443065|SE_parts_jong/winches/winch_stay_back_reef low (2)|-7.581709,4.360449,-0.291000|0.996910,0.072402,0.023186,-0.019756
 seat|Jong|SE|80|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5725880043814472892|SE_parts_jong/winches/winch_stay_back_reef (2)|-7.664791,4.821105,-0.287131|0.997104,0.071974,0.024481,-0.001875
-rig|Jong|SE|81|forestay bermuda|-1|foremast bermuda|SE_parts_jong/stays/front_stay_berm
+rig|Jong|SE|81|forestay bermuda|5|foremast bermuda,bowsprit|SE_parts_jong/stays/front_stay_berm
 seat|Jong|SE|81|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7905268818288174155|SE_parts_jong/winches/winch_stay_front_left|4.073234,4.139000,3.025848|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|81|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8308467781923933187|SE_parts_jong/winches/winch_stay_front_left (3)|4.487000,4.233000,3.017000|-0.424287,-0.573858,-0.406123,0.570728
 seat|Jong|SE|81|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7451931743649900139|SE_parts_jong/winches/winch_stay_front_right|4.072604,4.139000,-3.047050|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|81|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:7204159462090362376|SE_parts_jong/winches/winch_stay_front_right (3)|4.533191,4.252000,-3.056137|-0.427322,-0.571687,-0.409175,0.568460
 seat|Jong|SE|81|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4697363718232958792|SE_parts_jong/winches/winch_reef_foremast (4)|14.618763,3.898161,0.218773|0.436366,0.072471,-0.877515,0.185205
 seat|Jong|SE|81|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:227271467813125113|SE_parts_jong/winches/winch_reef_foremast (5)|14.483000,4.304000,0.197000|0.436366,0.072471,-0.877515,0.185205
-rig|Jong|SE|82|low forestay bermuda|-1|main mast 1 bermuda|SE_parts_jong/stays/front_stay_low_berm
+rig|Jong|SE|82|low forestay bermuda|8|main mast 1 bermuda,(no foremast)|SE_parts_jong/stays/front_stay_low_berm
 seat|Jong|SE|82|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7265131921895373762|SE_parts_jong/winches/winch_stay_front_left (1)|3.689234,4.132000,3.030849|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|82|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:6383504138112536371|SE_parts_jong/winches/winch_stay_front_right (1)|3.688604,4.132000,-3.042050|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|82|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3497764095572290534|SE_parts_jong/winches/winch_stay_front_reef low (6)|6.609250,4.520000,0.965614|-0.272180,0.654404,0.644167,0.287613
-rig|Jong|SE|83|main stay bermuda|-1|main mast 1 bermuda|SE_parts_jong/stays/front_stay_mainmast-berm
+rig|Jong|SE|83|main stay bermuda|7|main mast 1 bermuda,bowsprit,(no foremast)|SE_parts_jong/stays/front_stay_mainmast-berm
 seat|Jong|SE|83|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7905268818288174155|SE_parts_jong/winches/winch_stay_front_left|4.073234,4.139000,3.025848|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|83|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8308467781923933187|SE_parts_jong/winches/winch_stay_front_left (3)|4.487000,4.233000,3.017000|-0.424287,-0.573858,-0.406123,0.570728
 seat|Jong|SE|83|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7451931743649900139|SE_parts_jong/winches/winch_stay_front_right|4.072604,4.139000,-3.047050|-0.504214,-0.507304,-0.486715,0.501516
 seat|Jong|SE|83|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:7204159462090362376|SE_parts_jong/winches/winch_stay_front_right (3)|4.533191,4.252000,-3.056137|-0.427322,-0.571687,-0.409175,0.568460
 seat|Jong|SE|83|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3829882971508701887|SE_parts_jong/winches/winch_stay_front_reef low (4)|6.656799,4.788856,-0.362000|-0.996531,-0.080988,0.019146,0.000486
 seat|Jong|SE|83|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:4087875580563340009|SE_parts_jong/winches/winch_stay_front_reef (2)|6.562026,5.235967,-0.366411|-0.996380,-0.081318,0.017691,-0.017385
-rig|Jong|SE|84|middle forestay bermuda|-1|main mast 1 bermuda|SE_parts_jong/stays/front_stay_bermain_mid
+rig|Jong|SE|84|middle forestay bermuda|20|main mast 1 bermuda,bowsprit,(no foremast)|SE_parts_jong/stays/front_stay_bermain_mid
 seat|Jong|SE|84|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3539528406656949091|SE_parts_jong/winches/winch_stay_front_left (2)|3.298045,4.132000,3.035352|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|84|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6863678936512453528|SE_parts_jong/winches/winch_stay_front_left (4)|2.886000,4.123000,3.045000|-0.504214,-0.507305,-0.486715,0.501516
 seat|Jong|SE|84|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7903677331867614673|SE_parts_jong/winches/winch_stay_front_right (2)|3.298517,4.132000,-3.039158|-0.504214,-0.507305,-0.486715,0.501516
@@ -853,7 +853,7 @@ rig|Jong|native|14|mizzen stay lower|12|mizzen mast,main mast 2|_shifting world/
 seat|Jong|native|14|leftAngleWinch|0|level24:175136|_shifting world/BOAT junk large (70)/winch_stay_back_left (1)|-2.183000,4.351000,-11.732906|0.005440,0.715278,0.698803,-0.004824
 seat|Jong|native|14|rightAngleWinch|0|level24:177420|_shifting world/BOAT junk large (70)/winch_stay_back_right (1)|2.181000,4.365000,-11.733000|0.005334,0.699976,0.714129,-0.004940
 seat|Jong|native|14|reefWinch|0|level24:177002|_shifting world/BOAT junk large (70)/winch_stay_back_reef low|0.231000,4.369155,-12.457000|0.436500,-0.004702,0.899554,-0.015771
-rig|Sanbuq|SE|51|foremast 1|-1||SE_parts_sanbuq/foremast_1
+rig|Sanbuq|SE|51|foremast 1|15||SE_parts_sanbuq/foremast_1
 seat|Sanbuq|SE|51|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2664965687543619025|SE_parts_sanbuq/winches/rope_winch_front_angle_left|-2.029076,2.088438,2.460890|-0.656011,0.301490,-0.323308,0.611740
 seat|Sanbuq|SE|51|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3763126966385515273|SE_parts_sanbuq/winches/rope_winch_front_angle_right|-1.992941,2.070434,-2.467745|-0.623956,0.287315,-0.342209,0.641110
 seat|Sanbuq|SE|51|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7097815517767802848|SE_parts_sanbuq/winches/rope_winch_front_angle (4)|-2.072000,2.478000,0.841000|-0.704099,-0.000000,-0.000000,0.710102
@@ -862,22 +862,22 @@ seat|Sanbuq|SE|51|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-72302510
 seat|Sanbuq|SE|51|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1712435932837384922|SE_parts_sanbuq/winches/rope_winch_fore_reef (3)|7.778457,1.937876,0.006919|0.500000,-0.500000,-0.500000,0.500000
 seat|Sanbuq|SE|51|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:7159473954745407026|SE_parts_sanbuq/winches/rope_winch_fore_reef (4)|8.205462,2.149643,0.425441|0.002868,-0.002868,-0.707101,0.707101
 seat|Sanbuq|SE|51|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8513399550140151371|SE_parts_sanbuq/winches/rope_winch_fore_reef (5)|8.211782,2.150000,-0.412066|0.707080,-0.707080,-0.006171,-0.006171
-rig|Sanbuq|SE|52|foremast forestay|-1|foremast 1|SE_parts_sanbuq/stays/forestay_foremast
+rig|Sanbuq|SE|52|foremast forestay|3|foremast 1,long bowsprit|SE_parts_sanbuq/stays/forestay_foremast
 seat|Sanbuq|SE|52|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8495189401038974099|SE_parts_sanbuq/winches/rope_winch_jib_angle_left_forem1|8.299657,2.256000,1.644858|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|52|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4391168789864803638|SE_parts_sanbuq/winches/rope_winch_jib_angle_left_forem2|8.991000,2.318000,1.433000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|52|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-475876201547498093|SE_parts_sanbuq/winches/rope_winch_jib_angle_right_forem1|8.297405,2.246000,-1.645901|-0.696923,0.000000,-0.000000,0.717146
 seat|Sanbuq|SE|52|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1614547008590238130|SE_parts_sanbuq/winches/rope_winch_jib_angle_right_forem2|8.993000,2.326000,-1.436000|-0.696923,0.000000,-0.000000,0.717146
 seat|Sanbuq|SE|52|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8914274882457412309|SE_parts_sanbuq/winches/rope_winch_jib_reef_fore1|8.526496,2.604000,0.240885|-0.353553,0.353554,-0.612373,0.612372
 seat|Sanbuq|SE|52|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:7757253603857738206|SE_parts_sanbuq/winches/rope_winch_jib_reef_fore2|8.559707,2.600000,-0.230910|-0.612372,0.612373,-0.353553,0.353553
-rig|Sanbuq|SE|53|lower foremast forestay|-1|foremast 1|SE_parts_sanbuq/stays/forestay_0_short_inner
+rig|Sanbuq|SE|53|lower foremast forestay|4|foremast 1|SE_parts_sanbuq/stays/forestay_0_short_inner
 seat|Sanbuq|SE|53|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3140536442114771523|SE_parts_sanbuq/winches/winch_jib_angle_left_forem3|7.892251,2.236000,1.740000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|53|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5306273520647566275|SE_parts_sanbuq/winches/winch_jib_angle_right_forem3|7.890000,2.225000,-1.731000|-0.696923,0.000000,-0.000000,0.717146
 seat|Sanbuq|SE|53|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8083524233641436411|SE_parts_sanbuq/winches/rope_winch_jib_reef_fore|8.573968,2.266000,0.011235|-0.500000,0.500000,-0.500000,0.500000
-rig|Sanbuq|SE|54|mizzen stay 1-2|-1|mizzen mast 2|SE_parts_sanbuq/stays/part_stay_miz_1-2
+rig|Sanbuq|SE|54|mizzen stay 1-2|8|mizzen mast 2,mast 1|SE_parts_sanbuq/stays/part_stay_miz_1-2
 seat|Sanbuq|SE|54|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8369488417320322994|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left|-8.451689,2.510145,2.124827|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|54|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2471146936876168011|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right|-8.460350,2.519894,-2.130691|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|54|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8509023433706512873|SE_parts_sanbuq/winches/rope_winch_jib_reef (mz2)|-7.580000,2.900000,0.230000|-0.353553,0.353554,-0.612373,0.612372
-rig|Sanbuq|SE|55|mizzen mast 2|-1||SE_parts_sanbuq/mizzen_mast2
+rig|Sanbuq|SE|55|mizzen mast 2|1||SE_parts_sanbuq/mizzen_mast2
 seat|Sanbuq|SE|55|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-516836432156378698|SE_parts_sanbuq/winches/rope_winch_back_angle_left (2)|-11.357000,2.798000,1.988000|-0.997019,0.054393,-0.040353,-0.036966
 seat|Sanbuq|SE|55|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2628186092450280855|SE_parts_sanbuq/winches/rope_winch_back_angle_right (2)|-11.349000,2.802000,-1.994000|0.021193,0.036177,-0.065063,0.997000
 seat|Sanbuq|SE|55|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5937840905114224017|SE_parts_sanbuq/winches/rope_winch_back_angle (1)|-4.122773,2.436000,1.107709|-0.698841,0.000000,-0.000000,0.715277
@@ -886,34 +886,34 @@ seat|Sanbuq|SE|55|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:657242240
 seat|Sanbuq|SE|55|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1948169511896433715|SE_parts_sanbuq/winches/rope_winch_main_reef (mz2)|-8.335447,2.230000,-0.001512|0.500000,-0.500000,-0.500000,0.500000
 seat|Sanbuq|SE|55|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7510092633583961540|SE_parts_sanbuq/winches/rope_winch_main_reef (mz2)|-7.901597,2.445643,0.414544|0.000000,0.000000,-0.707107,0.707107
 seat|Sanbuq|SE|55|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:2107723799361826684|SE_parts_sanbuq/winches/rope_winch_main_reef (mz2)|-7.894714,2.446000,-0.422951|0.707107,-0.707107,-0.000000,0.000000
-rig|Sanbuq|SE|56|middle stay 2-1|-1||SE_parts_sanbuq/stays/part_stay_miz_1-0
+rig|Sanbuq|SE|56|middle stay 2-1|8|mast 2,mizzen mast|SE_parts_sanbuq/stays/part_stay_miz_1-0
 seat|Sanbuq|SE|56|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3646059799280312431|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left (1)|-8.863000,2.553000,2.113000|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|56|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9000567047307902381|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right (1)|-8.854436,2.548927,-2.115547|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|56|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3826083336800068601|SE_parts_sanbuq/winches/rope_winch_midstay_reef_back|-8.688879,2.593000,0.002086|-0.030089,0.706466,0.030089,0.706467
-rig|Sanbuq|SE|57|middle stay f-2|-1|foremast 1|SE_parts_sanbuq/stays/part_stay_main
+rig|Sanbuq|SE|57|middle stay f-2|22|foremast 1,mast 2|SE_parts_sanbuq/stays/part_stay_main
 seat|Sanbuq|SE|57|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8085300271954825748|SE_parts_sanbuq/winches/rope_winch_jib_angle_left (m1) (1)|-0.106889,1.835000,2.413466|-0.731209,-0.013589,0.014572,0.681863
 seat|Sanbuq|SE|57|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3661283906913135107|SE_parts_sanbuq/winches/rope_winch_jib_angle_right (m1) (1)|-0.106814,1.828000,-2.412726|-0.696848,-0.010529,0.010233,0.717068
 seat|Sanbuq|SE|57|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1542332050520833134|SE_parts_sanbuq/winches/rope_winch_jib_reef (m1) (2)|0.349038,2.293000,0.234275|-0.353553,0.353554,-0.612373,0.612372
-rig|Sanbuq|SE|58|main topstay 1|-1|foremast 1|SE_parts_sanbuq/stays/part_stay_main_top
+rig|Sanbuq|SE|58|main topstay 1|21|foremast 1,topmast 2|SE_parts_sanbuq/stays/part_stay_main_top
 seat|Sanbuq|SE|58|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1370218724177473327|SE_parts_sanbuq/winches/rope_winch_jib_angle_left (m0) (1)|0.234050,1.849000,2.411786|-0.731209,-0.013589,0.014572,0.681863
 seat|Sanbuq|SE|58|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-176911751428594274|SE_parts_sanbuq/winches/rope_winch_jib_angle_right (m0) (1)|0.235350,1.838000,-2.410697|-0.696848,-0.010529,0.010233,0.717068
 seat|Sanbuq|SE|58|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-249682807754159416|SE_parts_sanbuq/winches/rope_winch_jib_reef (m2) (2)|0.382249,2.289000,-0.237520|-0.612372,0.612373,-0.353553,0.353553
-rig|Sanbuq|SE|59|mizzen topmast 1|-1|mizzen mast 2|SE_parts_sanbuq/mizzen_topmast2
+rig|Sanbuq|SE|59|mizzen topmast 1|18|mizzen mast 2|SE_parts_sanbuq/mizzen_topmast2
 seat|Sanbuq|SE|59|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5228646327793773750|SE_parts_sanbuq/winches/rope_winch_back_angle_left (1)|-11.007195,2.761716,2.011432|-0.997019,0.054393,-0.040353,-0.036966
 seat|Sanbuq|SE|59|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8148987124118522103|SE_parts_sanbuq/winches/rope_winch_back_angle_right (1)|-10.990469,2.760505,-2.005620|0.021193,0.036177,-0.065063,0.997000
 seat|Sanbuq|SE|59|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8338528581040410885|SE_parts_sanbuq/winches/rope_winch_back_angle|-3.540000,2.457000,-1.026000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|59|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:8338528581040410885|SE_parts_sanbuq/winches/rope_winch_back_angle|-3.540000,2.457000,-1.026000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|59|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8307248719108026694|SE_parts_sanbuq/winches/rope_winch_extension1_reef(mz2)|-8.241600,2.823000,0.245389|0.353554,-0.353554,-0.612372,0.612372
 seat|Sanbuq|SE|59|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:3900891494942630561|SE_parts_sanbuq/winches/rope_winch_extension1_reef(mz2) (1)|-8.241600,2.823000,-0.245389|0.614002,-0.614002,-0.350716,0.350716
-rig|Sanbuq|SE|60|mizzen topstay 1-2|-1|mizzen topmast 1|SE_parts_sanbuq/stays/part_stay_miz_top_1-2
+rig|Sanbuq|SE|60|mizzen topstay 1-2|19|mizzen topmast 1,mast 1|SE_parts_sanbuq/stays/part_stay_miz_top_1-2
 seat|Sanbuq|SE|60|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3646059799280312431|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left (1)|-8.863000,2.553000,2.113000|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|60|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9000567047307902381|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right (1)|-8.854436,2.548927,-2.115547|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|60|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1091266672510829641|SE_parts_sanbuq/winches/rope_winch_jib_reef (mz2) (4)|-7.599000,2.887000,-0.197000|-0.612372,0.612373,-0.353553,0.353553
-rig|Sanbuq|SE|61|mizzen stay 1-3|-1|mizzen mast 3|SE_parts_sanbuq/stays/part_stay_miz_0-2
+rig|Sanbuq|SE|61|mizzen stay 1-3|8|mizzen mast 3,mast 1|SE_parts_sanbuq/stays/part_stay_miz_0-2
 seat|Sanbuq|SE|61|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8369488417320322994|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left|-8.451689,2.510145,2.124827|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|61|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2471146936876168011|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right|-8.460350,2.519894,-2.130691|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|61|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3617501268079047111|SE_parts_sanbuq/winches/rope_winch_jib_reef (mz1) (3)|-4.578403,2.903000,0.235456|-0.353553,0.353554,-0.612373,0.612372
-rig|Sanbuq|SE|62|raked foremast|-1||SE_parts_sanbuq/raked_foremast
+rig|Sanbuq|SE|62|raked foremast|15||SE_parts_sanbuq/raked_foremast
 seat|Sanbuq|SE|62|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2664965687543619025|SE_parts_sanbuq/winches/rope_winch_front_angle_left|-2.029076,2.088438,2.460890|-0.656011,0.301490,-0.323308,0.611740
 seat|Sanbuq|SE|62|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3763126966385515273|SE_parts_sanbuq/winches/rope_winch_front_angle_right|-1.992941,2.070434,-2.467745|-0.623956,0.287315,-0.342209,0.641110
 seat|Sanbuq|SE|62|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7097815517767802848|SE_parts_sanbuq/winches/rope_winch_front_angle (4)|-2.072000,2.478000,0.841000|-0.704099,-0.000000,-0.000000,0.710102
@@ -922,37 +922,37 @@ seat|Sanbuq|SE|62|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-72302510
 seat|Sanbuq|SE|62|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4392160088757539438|SE_parts_sanbuq/winches/rope_winch_main_reef (6)|8.191250,2.048335,0.003999|0.415627,-0.572061,-0.572061,0.415627
 seat|Sanbuq|SE|62|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-47276155683453251|SE_parts_sanbuq/winches/rope_winch_main_reef (7)|8.662145,2.117188,0.422001|0.002410,-0.003317,-0.809010,0.587780
 seat|Sanbuq|SE|62|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1528375680601273110|SE_parts_sanbuq/winches/rope_winch_main_reef (8)|8.667985,2.115283,-0.415001|0.587784,-0.809016,0.001669,-0.001213
-rig|Sanbuq|SE|63|foremast forestay 2|-1|raked foremast|SE_parts_sanbuq/stays/forestay_foremast_raked
+rig|Sanbuq|SE|63|foremast forestay 2|3|raked foremast,long bowsprit|SE_parts_sanbuq/stays/forestay_foremast_raked
 seat|Sanbuq|SE|63|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8686723946134556114|SE_parts_sanbuq/winches/rope_winch_jib_angle_left_forem|8.651000,2.280000,1.537000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|63|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6755576018594553823|SE_parts_sanbuq/winches/rope_winch_jib_angle_right_forem|8.652000,2.287000,-1.520000|-0.696923,0.000000,-0.000000,0.717146
 seat|Sanbuq|SE|63|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8709633754649412664|SE_parts_sanbuq/raked_foremast/rope_winch_extension0_reef (2)|-0.437000,-0.014000,-13.046000|0.707107,0.000000,-0.707107,0.000000
-rig|Sanbuq|SE|64|fore topmast|-1|foremast 1|SE_parts_sanbuq/fore_topmast
+rig|Sanbuq|SE|64|fore topmast|16|foremast 1|SE_parts_sanbuq/fore_topmast
 seat|Sanbuq|SE|64|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1967937198134220095|SE_parts_sanbuq/winches/rope_winch_fore_topmast_angle_left|-2.262000,2.373000,2.439000|-0.656011,0.301490,-0.323308,0.611740
 seat|Sanbuq|SE|64|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2864740848216273323|SE_parts_sanbuq/winches/rope_winch_fore_topmast_angle_right|-2.249000,2.357000,-2.457000|-0.623956,0.287315,-0.342209,0.641110
 seat|Sanbuq|SE|64|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2749779173670171731|SE_parts_sanbuq/winches/rope_winch_front_angle (7)|-1.852000,2.517000,0.509000|-0.695132,0.000000,-0.000000,0.718882
 seat|Sanbuq|SE|64|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:2749779173670171731|SE_parts_sanbuq/winches/rope_winch_front_angle (7)|-1.852000,2.517000,0.509000|-0.695132,0.000000,-0.000000,0.718882
 seat|Sanbuq|SE|64|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3500573261398003481|SE_parts_sanbuq/winches/rope_winch_fore_topmast|7.778466,2.527000,0.006919|0.499563,-0.500436,-0.500436,0.499563
 seat|Sanbuq|SE|64|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:4699560452908864331|SE_parts_sanbuq/winches/rope_winch_fore_topmast (1)|7.778466,3.045000,0.007000|0.499564,-0.499563,-0.500436,0.500436
-rig|Sanbuq|SE|65|topmast forestay 3|-1|fore topmast|SE_parts_sanbuq/stays/forestay_0_extension_long
+rig|Sanbuq|SE|65|topmast forestay 3|13|fore topmast|SE_parts_sanbuq/stays/forestay_0_extension_long
 seat|Sanbuq|SE|65|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1154555158870956287|SE_parts_sanbuq/winches/rope_winch_jib_angle_left|5.401298,1.836307,1.998385|-0.998304,0.001627,0.046588,-0.034862
 seat|Sanbuq|SE|65|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:7944727545418194022|SE_parts_sanbuq/winches/rope_winch_jib_angle_left (1)|5.065980,1.840677,2.018542|-0.998304,0.001627,0.046588,-0.034862
 seat|Sanbuq|SE|65|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:998110172173930532|SE_parts_sanbuq/winches/rope_winch_jib_angle_right|5.391953,1.860000,-1.985000|0.014298,-0.011347,-0.000162,0.999833
 seat|Sanbuq|SE|65|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5696486480504848722|SE_parts_sanbuq/winches/rope_winch_jib_angle_right (1)|5.069233,1.858623,-2.013859|0.014298,-0.011945,-0.000171,0.999826
 seat|Sanbuq|SE|65|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1340480543074341368|SE_parts_sanbuq/winches/rope_winch_jib_reef_fore3|8.004999,2.610000,0.368000|-0.183012,0.183013,0.683013,-0.683013
 seat|Sanbuq|SE|65|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:6298504794002540565|SE_parts_sanbuq/winches/rope_winch_jib_reef_fore4|8.011000,2.614000,-0.349000|-0.683013,0.683013,0.183012,-0.183013
-rig|Sanbuq|SE|66|mizzen stay 2-2|-1|mizzen mast 2|SE_parts_sanbuq/stays/part_stay_miz_1-1
+rig|Sanbuq|SE|66|mizzen stay 2-2|8|mizzen mast 2,mast 2|SE_parts_sanbuq/stays/part_stay_miz_1-1
 seat|Sanbuq|SE|66|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8369488417320322994|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left|-8.451689,2.510145,2.124827|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|66|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2471146936876168011|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right|-8.460350,2.519894,-2.130691|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|66|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8509023433706512873|SE_parts_sanbuq/winches/rope_winch_jib_reef (mz2)|-7.580000,2.900000,0.230000|-0.353553,0.353554,-0.612373,0.612372
-rig|Sanbuq|SE|67|mizzen topstay 1|-1|mizzen topmast 1|SE_parts_sanbuq/stays/part_stay_miz_top_1-1
+rig|Sanbuq|SE|67|mizzen topstay 1|19|mizzen topmast 1,mast 2|SE_parts_sanbuq/stays/part_stay_miz_top_1-1
 seat|Sanbuq|SE|67|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3646059799280312431|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left (1)|-8.863000,2.553000,2.113000|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|67|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9000567047307902381|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right (1)|-8.854436,2.548927,-2.115547|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|67|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1091266672510829641|SE_parts_sanbuq/winches/rope_winch_jib_reef (mz2) (4)|-7.599000,2.887000,-0.197000|-0.612372,0.612373,-0.353553,0.353553
-rig|Sanbuq|SE|68|main topstay 2|-1|raked foremast|SE_parts_sanbuq/stays/part_stay_main_top_1
+rig|Sanbuq|SE|68|main topstay 2|21|raked foremast,topmast 2|SE_parts_sanbuq/stays/part_stay_main_top_1
 seat|Sanbuq|SE|68|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1370218724177473327|SE_parts_sanbuq/winches/rope_winch_jib_angle_left (m0) (1)|0.234050,1.849000,2.411786|-0.731209,-0.013589,0.014572,0.681863
 seat|Sanbuq|SE|68|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-176911751428594274|SE_parts_sanbuq/winches/rope_winch_jib_angle_right (m0) (1)|0.235350,1.838000,-2.410697|-0.696848,-0.010529,0.010233,0.717068
 seat|Sanbuq|SE|68|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-249682807754159416|SE_parts_sanbuq/winches/rope_winch_jib_reef (m2) (2)|0.382249,2.289000,-0.237520|-0.612372,0.612373,-0.353553,0.353553
-rig|Sanbuq|SE|69|mizzen mast 3|-1||SE_parts_sanbuq/mizzen_mast
+rig|Sanbuq|SE|69|mizzen mast 3|1||SE_parts_sanbuq/mizzen_mast
 seat|Sanbuq|SE|69|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-516836432156378698|SE_parts_sanbuq/winches/rope_winch_back_angle_left (2)|-11.357000,2.798000,1.988000|-0.997019,0.054393,-0.040353,-0.036966
 seat|Sanbuq|SE|69|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2628186092450280855|SE_parts_sanbuq/winches/rope_winch_back_angle_right (2)|-11.349000,2.802000,-1.994000|0.021193,0.036177,-0.065063,0.997000
 seat|Sanbuq|SE|69|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5937840905114224017|SE_parts_sanbuq/winches/rope_winch_back_angle (1)|-4.122773,2.436000,1.107709|-0.698841,0.000000,-0.000000,0.715277
@@ -961,73 +961,73 @@ seat|Sanbuq|SE|69|midAngleWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:657242240
 seat|Sanbuq|SE|69|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3744291732535404025|SE_parts_sanbuq/winches/rope_winch_main_reef (mz1) (1)|-5.333850,2.233000,0.003944|0.500000,-0.500000,-0.500000,0.500000
 seat|Sanbuq|SE|69|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:8703431248479487806|SE_parts_sanbuq/winches/rope_winch_main_reef (mz1) (1)|-4.900000,2.448643,0.420000|0.000000,0.000000,-0.707107,0.707107
 seat|Sanbuq|SE|69|reefWinch|2|CAB-027b2b1c061051d0fa7aa2e47cc92195:3728958362330654670|SE_parts_sanbuq/winches/rope_winch_main_reef (mz1) (1)|-4.893117,2.449000,-0.417495|0.707107,-0.707107,-0.000000,0.000000
-rig|Sanbuq|SE|70|mizzen topmast 2|-1|mizzen mast 3|SE_parts_sanbuq/mizzen_topmast (1)
+rig|Sanbuq|SE|70|mizzen topmast 2|18|mizzen mast 3|SE_parts_sanbuq/mizzen_topmast (1)
 seat|Sanbuq|SE|70|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5228646327793773750|SE_parts_sanbuq/winches/rope_winch_back_angle_left (1)|-11.007195,2.761716,2.011432|-0.997019,0.054393,-0.040353,-0.036966
 seat|Sanbuq|SE|70|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8148987124118522103|SE_parts_sanbuq/winches/rope_winch_back_angle_right (1)|-10.990469,2.760505,-2.005620|0.021193,0.036177,-0.065063,0.997000
 seat|Sanbuq|SE|70|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8338528581040410885|SE_parts_sanbuq/winches/rope_winch_back_angle|-3.540000,2.457000,-1.026000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|70|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:8338528581040410885|SE_parts_sanbuq/winches/rope_winch_back_angle|-3.540000,2.457000,-1.026000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|70|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2799727038429201180|SE_parts_sanbuq/winches/rope_winch_extension1_reef(mz1) (1)|-5.237000,2.826000,0.240020|0.353554,-0.353554,-0.612372,0.612372
 seat|Sanbuq|SE|70|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-719495248077926408|SE_parts_sanbuq/winches/rope_winch_extension1_reef(mz1) (2)|-5.237000,2.826000,-0.240020|0.612373,-0.612373,-0.353553,0.353553
-rig|Sanbuq|SE|71|mizzen topstay 2|-1|mizzen topmast 2|SE_parts_sanbuq/stays/part_stay_miz_top_0-2
+rig|Sanbuq|SE|71|mizzen topstay 2|19|mizzen topmast 2,mast 1|SE_parts_sanbuq/stays/part_stay_miz_top_0-2
 seat|Sanbuq|SE|71|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3646059799280312431|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left (1)|-8.863000,2.553000,2.113000|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|71|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9000567047307902381|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right (1)|-8.854436,2.548927,-2.115547|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|71|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6702336201426402100|SE_parts_sanbuq/winches/rope_winch_jib_reef (mz1) (4)|-4.602000,2.887000,-0.197000|-0.612372,0.612373,-0.353553,0.353553
-rig|Sanbuq|SE|72|flying forestay 2|-1|fore topmast|SE_parts_sanbuq/stays/forestay_0_extension_long (2)
+rig|Sanbuq|SE|72|flying forestay 2|23|fore topmast,long bowsprit|SE_parts_sanbuq/stays/forestay_0_extension_long (2)
 seat|Sanbuq|SE|72|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2464676903841328624|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_left (2)|6.079000,1.830000,1.900000|-0.994769,0.003353,0.096005,-0.034739
 seat|Sanbuq|SE|72|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6966668200334222296|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_left (3)|5.747352,1.836680,1.953171|-0.994769,0.003353,0.096005,-0.034739
 seat|Sanbuq|SE|72|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8130060917951082846|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_right (2)|6.065000,1.858000,-1.898000|0.014268,-0.065820,-0.000941,0.997729
 seat|Sanbuq|SE|72|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5386538327568345440|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_right (3)|5.747209,1.857612,-1.961423|0.014268,-0.065820,-0.000941,0.997729
 seat|Sanbuq|SE|72|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6589105912442434300|SE_parts_sanbuq/winches/rope_winch_jib_reef_fore3 (1)|8.017000,3.188000,0.346000|-0.183013,0.183013,0.683013,-0.683013
 seat|Sanbuq|SE|72|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8021538316437133496|SE_parts_sanbuq/winches/rope_winch_jib_reef_fore4 (1)|8.027000,3.192000,-0.320000|-0.683013,0.683013,0.183013,-0.183013
-rig|Sanbuq|SE|73|flying forestay 1|-1||SE_parts_sanbuq/stays/forestay_0_extension_long (3)
+rig|Sanbuq|SE|73|flying forestay 1|23|long bowsprit,topmast 1|SE_parts_sanbuq/stays/forestay_0_extension_long (3)
 seat|Sanbuq|SE|73|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2464676903841328624|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_left (2)|6.079000,1.830000,1.900000|-0.994769,0.003353,0.096005,-0.034739
 seat|Sanbuq|SE|73|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6966668200334222296|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_left (3)|5.747352,1.836680,1.953171|-0.994769,0.003353,0.096005,-0.034739
 seat|Sanbuq|SE|73|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8130060917951082846|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_right (2)|6.065000,1.858000,-1.898000|0.014268,-0.065820,-0.000941,0.997729
 seat|Sanbuq|SE|73|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5386538327568345440|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_right (3)|5.747209,1.857612,-1.961423|0.014268,-0.065820,-0.000941,0.997729
 seat|Sanbuq|SE|73|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8500795871599098308|SE_parts_sanbuq/winches/rope_winch_main_reef (ts)|4.865984,2.506000,0.418922|0.000000,0.000000,-0.707107,0.707107
 seat|Sanbuq|SE|73|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:8658378007286996815|SE_parts_sanbuq/winches/rope_winch_main_reef (ts2)|4.872867,2.506357,-0.418574|0.707107,-0.707107,-0.000000,0.000000
-rig|Sanbuq|SE|74|bermuda mizzen mast|-1||SE_parts_sanbuq/bermuda_mast_miz
+rig|Sanbuq|SE|74|bermuda mizzen mast|1||SE_parts_sanbuq/bermuda_mast_miz
 seat|Sanbuq|SE|74|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-516836432156378698|SE_parts_sanbuq/winches/rope_winch_back_angle_left (2)|-11.357000,2.798000,1.988000|-0.997019,0.054393,-0.040353,-0.036966
 seat|Sanbuq|SE|74|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2628186092450280855|SE_parts_sanbuq/winches/rope_winch_back_angle_right (2)|-11.349000,2.802000,-1.994000|0.021193,0.036177,-0.065063,0.997000
 seat|Sanbuq|SE|74|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-999086561009781370|SE_parts_sanbuq/bermuda_mast_miz/rope_winch_main_reef (mz1) (1)|0.007000,0.408000,-23.166000|0.495618,-0.495618,-0.504344,-0.504344
-rig|Sanbuq|SE|75|bermuda main mast|-1||SE_parts_sanbuq/bermuda_mast_main
+rig|Sanbuq|SE|75|bermuda main mast|0||SE_parts_sanbuq/bermuda_mast_main
 seat|Sanbuq|SE|75|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8369488417320322994|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left|-8.451689,2.510145,2.124827|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|75|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2471146936876168011|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right|-8.460350,2.519894,-2.130691|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|75|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7132064076132193592|SE_parts_sanbuq/bermuda_mast_main/rope_winch_main_reef (b)|0.007000,0.409000,-23.666000|0.495618,-0.495618,-0.504344,-0.504344
-rig|Sanbuq|SE|76|bermuda forestay short|-1|bermuda main mast,(no foremast)|SE_parts_sanbuq/stays/forestay_bermuda_short
+rig|Sanbuq|SE|76|bermuda forestay short|3|bermuda main mast,(no foremast)|SE_parts_sanbuq/stays/forestay_bermuda_short
 seat|Sanbuq|SE|76|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1154555158870956287|SE_parts_sanbuq/winches/rope_winch_jib_angle_left|5.401298,1.836307,1.998385|-0.998304,0.001627,0.046588,-0.034862
 seat|Sanbuq|SE|76|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:7944727545418194022|SE_parts_sanbuq/winches/rope_winch_jib_angle_left (1)|5.065980,1.840677,2.018542|-0.998304,0.001627,0.046588,-0.034862
 seat|Sanbuq|SE|76|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:998110172173930532|SE_parts_sanbuq/winches/rope_winch_jib_angle_right|5.391953,1.860000,-1.985000|0.014298,-0.011347,-0.000162,0.999833
 seat|Sanbuq|SE|76|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5696486480504848722|SE_parts_sanbuq/winches/rope_winch_jib_angle_right (1)|5.069233,1.858623,-2.013859|0.014298,-0.011945,-0.000171,0.999826
 seat|Sanbuq|SE|76|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4822359804373986041|SE_parts_sanbuq/bermuda_mast_main/rope_winch_forestay_reef (b) (2)|0.410000,-0.012000,-23.993999|-0.006230,-0.700323,0.007212,-0.713762
 seat|Sanbuq|SE|76|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:3241863748341071265|SE_parts_sanbuq/bermuda_mast_main/rope_winch_forestay_reef (b) (3)|0.422000,-0.011000,-23.337999|-0.006230,-0.700323,0.007212,-0.713762
-rig|Sanbuq|SE|77|bermuda forestay long|-1|bermuda main mast,(no foremast)|SE_parts_sanbuq/stays/forestay_bermuda_long
+rig|Sanbuq|SE|77|bermuda forestay long|13|bermuda main mast,(no foremast),long bowsprit|SE_parts_sanbuq/stays/forestay_bermuda_long
 seat|Sanbuq|SE|77|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2464676903841328624|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_left (2)|6.079000,1.830000,1.900000|-0.994769,0.003353,0.096005,-0.034739
 seat|Sanbuq|SE|77|leftAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6966668200334222296|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_left (3)|5.747352,1.836680,1.953171|-0.994769,0.003353,0.096005,-0.034739
 seat|Sanbuq|SE|77|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8130060917951082846|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_right (2)|6.065000,1.858000,-1.898000|0.014268,-0.065820,-0.000941,0.997729
 seat|Sanbuq|SE|77|rightAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5386538327568345440|SE_parts_sanbuq/winches/rope_winch_Fjib_angle_right (3)|5.747209,1.857612,-1.961423|0.014268,-0.065820,-0.000941,0.997729
 seat|Sanbuq|SE|77|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8251263872341929180|SE_parts_sanbuq/bermuda_mast_main/rope_winch_forestay_reef (b)|0.004000,-0.449000,-24.334000|-0.509111,-0.490104,0.500302,-0.500302
 seat|Sanbuq|SE|77|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4594163385198678912|SE_parts_sanbuq/bermuda_mast_main/rope_winch_forestay_reef (b) (1)|-0.008000,-0.448000,-23.677999|-0.509111,-0.490104,0.500302,-0.500302
-rig|Sanbuq|SE|78|foremast forestay 3|-1|raked foremast|SE_parts_sanbuq/stays/forestay_foremast_raked (1)
+rig|Sanbuq|SE|78|foremast forestay 3|3|raked foremast,long bowsprit|SE_parts_sanbuq/stays/forestay_foremast_raked (1)
 seat|Sanbuq|SE|78|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8686723946134556114|SE_parts_sanbuq/winches/rope_winch_jib_angle_left_forem|8.651000,2.280000,1.537000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|78|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6755576018594553823|SE_parts_sanbuq/winches/rope_winch_jib_angle_right_forem|8.652000,2.287000,-1.520000|-0.696923,0.000000,-0.000000,0.717146
 seat|Sanbuq|SE|78|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8709633754649412664|SE_parts_sanbuq/raked_foremast/rope_winch_extension0_reef (2)|-0.437000,-0.014000,-13.046000|0.707107,0.000000,-0.707107,0.000000
-rig|Sanbuq|SE|79|main topstay 2|-1|foremast 1|SE_parts_sanbuq/stays/part_stay_main_top (1)
+rig|Sanbuq|SE|79|main topstay 2|-1|foremast 1,topmast 2|SE_parts_sanbuq/stays/part_stay_main_top (1)
 seat|Sanbuq|SE|79|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1370218724177473327|SE_parts_sanbuq/winches/rope_winch_jib_angle_left (m0) (1)|0.234050,1.849000,2.411786|-0.731209,-0.013589,0.014572,0.681863
 seat|Sanbuq|SE|79|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-176911751428594274|SE_parts_sanbuq/winches/rope_winch_jib_angle_right (m0) (1)|0.235350,1.838000,-2.410697|-0.696848,-0.010529,0.010233,0.717068
 seat|Sanbuq|SE|79|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-249682807754159416|SE_parts_sanbuq/winches/rope_winch_jib_reef (m2) (2)|0.382249,2.289000,-0.237520|-0.612372,0.612373,-0.353553,0.353553
-rig|Sanbuq|SE|80|mizzen topmast 3|-1||SE_parts_sanbuq/mizzen_topmast3
+rig|Sanbuq|SE|80|mizzen topmast 3|18|mizzen mast|SE_parts_sanbuq/mizzen_topmast3
 seat|Sanbuq|SE|80|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5228646327793773750|SE_parts_sanbuq/winches/rope_winch_back_angle_left (1)|-11.007195,2.761716,2.011432|-0.997019,0.054393,-0.040353,-0.036966
 seat|Sanbuq|SE|80|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-8148987124118522103|SE_parts_sanbuq/winches/rope_winch_back_angle_right (1)|-10.990469,2.760505,-2.005620|0.021193,0.036177,-0.065063,0.997000
 seat|Sanbuq|SE|80|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8338528581040410885|SE_parts_sanbuq/winches/rope_winch_back_angle|-3.540000,2.457000,-1.026000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|80|midAngleWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:8338528581040410885|SE_parts_sanbuq/winches/rope_winch_back_angle|-3.540000,2.457000,-1.026000|-0.731354,-0.000000,-0.000000,0.681998
 seat|Sanbuq|SE|80|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1754343607977732475|SE_parts_sanbuq/winches/rope_winch_extension1_reef(mz2)|-8.850291,2.962000,-0.227227|-0.680798,0.613772,-0.267670,0.296900
 seat|Sanbuq|SE|80|reefWinch|1|CAB-027b2b1c061051d0fa7aa2e47cc92195:5650178035327042138|SE_parts_sanbuq/winches/rope_winch_extension1_reef(mz2) (1)|-8.858000,2.962000,0.211000|-0.318208,0.286879,-0.605033,0.671103
-rig|Sanbuq|SE|81|mizzen topstay 1-3|-1|mizzen topmast 3|SE_parts_sanbuq/stays/part_stay_miz_top_1-1 (2)
+rig|Sanbuq|SE|81|mizzen topstay 1-3|19|mizzen topmast 3,mast 2|SE_parts_sanbuq/stays/part_stay_miz_top_1-1 (2)
 seat|Sanbuq|SE|81|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3646059799280312431|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left (1)|-8.863000,2.553000,2.113000|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|81|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9000567047307902381|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right (1)|-8.854436,2.548927,-2.115547|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|81|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5650178035327042138|SE_parts_sanbuq/winches/rope_winch_extension1_reef(mz2) (1)|-8.858000,2.962000,0.211000|-0.318208,0.286879,-0.605033,0.671103
-rig|Sanbuq|SE|82|mizzen topstay 2-3|-1|mizzen topmast 3|SE_parts_sanbuq/stays/part_stay_miz_top_1-2 (2)
+rig|Sanbuq|SE|82|mizzen topstay 2-3|19|mizzen topmast 3,mast 1|SE_parts_sanbuq/stays/part_stay_miz_top_1-2 (2)
 seat|Sanbuq|SE|82|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:3646059799280312431|SE_parts_sanbuq/winches/rope_winch_midstay_angle_left (1)|-8.863000,2.553000,2.113000|-0.997642,0.055149,-0.019623,-0.035827
 seat|Sanbuq|SE|82|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-9000567047307902381|SE_parts_sanbuq/winches/rope_winch_midstay_angle_right (1)|-8.854436,2.548927,-2.115547|0.022361,0.038457,-0.039702,0.998221
 seat|Sanbuq|SE|82|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:5650178035327042138|SE_parts_sanbuq/winches/rope_winch_extension1_reef(mz2) (1)|-8.858000,2.962000,0.211000|-0.318208,0.286879,-0.605033,0.671103
@@ -1131,86 +1131,86 @@ seat|Sanbuq|native|17|rightAngleWinch|0|level24:177213|_shifting world/BOAT dhow
 seat|Sanbuq|native|17|rightAngleWinch|1|level24:177048|_shifting world/BOAT dhow medium (20)/dhow medium new/rope_winch_jib_angle_right (m1)|-0.106814,1.828000,-2.412726|-0.696848,-0.010529,0.010233,0.717068
 seat|Sanbuq|native|17|reefWinch|0|level24:177774|_shifting world/BOAT dhow medium (20)/dhow medium new/rope_winch_jib_reef (m0)|0.396000,1.955000,0.004000|-0.500000,0.500000,-0.500000,0.500000
 seat|Sanbuq|native|17|reefWinch|1|level24:176894|_shifting world/BOAT dhow medium (20)/dhow medium new/rope_winch_jib_reef (m1)|0.350000,2.293000,0.234000|-0.353553,0.353554,-0.612373,0.612372
-rig|Cog|SE|51|midstay 2-1|-1||SE_parts_cog/cog_stays/midstay_front_miz1
+rig|Cog|SE|51|midstay 2-1|6|main mast 2,mizzen mast|SE_parts_cog/cog_stays/midstay_front_miz1
 seat|Cog|SE|51|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8519578425672075907|SE_parts_cog/winches/winch_angle_midstay_left|-4.773455,1.710000,1.830742|-0.734305,0.035460,-0.031348,0.677168
 seat|Cog|SE|51|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2153211583916123566|SE_parts_cog/winches/winch_angle_midstay_right|-4.782207,1.709000,-1.825602|-0.669194,0.023476,-0.024202,0.742322
 seat|Cog|SE|51|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2369144663786855484|SE_parts_cog/winches/winch_reef_midstay1|-5.575000,1.377000,-0.224000|-0.707081,-0.707081,0.006025,-0.006025
-rig|Cog|SE|52|long bowsprit|-1||SE_parts_cog/longsprit
+rig|Cog|SE|52|long bowsprit|7||SE_parts_cog/longsprit
 seat|Cog|SE|52|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6601287264598170847|SE_parts_cog/winches/winch_angle_bowsprit left|5.904149,1.734000,0.798743|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|52|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-1288420757683596468|SE_parts_cog/winches/winch_angle_bowsprit right|5.905274,1.733000,-0.798439|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|52|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3003892490893047352|SE_parts_cog/winches/winch_reef_bowsprit|7.333415,1.962000,0.005269|-0.183013,0.683013,0.683013,-0.183013
-rig|Cog|SE|53|forestay 2 long|-1|long bowsprit|SE_parts_cog/cog_stays/forestay_front_mast_long
+rig|Cog|SE|53|forestay 2 long|1|long bowsprit,main mast 2|SE_parts_cog/cog_stays/forestay_front_mast_long
 seat|Cog|SE|53|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6439947431078771521|SE_parts_cog/winches/winch_angle_jib_left|-0.874454,1.188000,1.979636|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|53|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4636619300860629615|SE_parts_cog/winches/winch_angle_jib_right|-0.874646,1.188000,-1.978153|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|53|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6946597701967321397|SE_parts_cog/winches/winch_reef_jib_front|4.249600,1.300900,0.010800|0.501725,0.498263,0.497006,0.502982
-rig|Cog|SE|54|lower forestay|-1||SE_parts_cog/cog_stays/forestay_main_inner
+rig|Cog|SE|54|lower forestay|11|main mast 1|SE_parts_cog/cog_stays/forestay_main_inner
 seat|Cog|SE|54|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4833618668302266481|SE_parts_cog/winches/winch_angle_jib_left (1)|-1.315000,1.193000,1.980511|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|54|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7296278805227582230|SE_parts_cog/winches/winch_angle_jib_right (1)|-1.315130,1.193000,-1.977000|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|54|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:9081233349588886279|SE_parts_cog/winches/winch_reef_jib_main_2|0.231000,1.911000,0.008000|0.501725,0.498263,0.497006,0.502982
-rig|Cog|SE|55|forestay 1 long|-1|long bowsprit|SE_parts_cog/cog_stays/forestay_main_long
+rig|Cog|SE|55|forestay 1 long|1|long bowsprit,main mast 1|SE_parts_cog/cog_stays/forestay_main_long
 seat|Cog|SE|55|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6439947431078771521|SE_parts_cog/winches/winch_angle_jib_left|-0.874454,1.188000,1.979636|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|55|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4636619300860629615|SE_parts_cog/winches/winch_angle_jib_right|-0.874646,1.188000,-1.978153|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|55|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-431012812030425588|SE_parts_cog/winches/winch_reef_jib_main|0.225009,1.291000,0.009126|0.501725,0.498263,0.497006,0.502982
-rig|Cog|SE|56|raked foremast|-1||SE_parts_cog/foremast
+rig|Cog|SE|56|raked foremast|8||SE_parts_cog/foremast
 seat|Cog|SE|56|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4833618668302266481|SE_parts_cog/winches/winch_angle_jib_left (1)|-1.315000,1.193000,1.980511|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|56|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7296278805227582230|SE_parts_cog/winches/winch_angle_jib_right (1)|-1.315130,1.193000,-1.977000|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|56|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8079396311562365463|SE_parts_cog/winches/winch_angle_rake|-0.239000,0.981000,1.782000|-0.999240,0.002608,-0.025650,0.029249
 seat|Cog|SE|56|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2225316619643213410|SE_parts_cog/foremast/winch_reef_mizzen|-0.210000,0.027000,-9.252000|0.011262,-0.707017,-0.011262,0.707017
-rig|Cog|SE|57|mizzen mast 2|-1||SE_parts_cog/mast_mizzen_2
+rig|Cog|SE|57|mizzen mast 2|2||SE_parts_cog/mast_mizzen_2
 seat|Cog|SE|57|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1474232872549815858|SE_parts_cog/winches/winch_angle_mizzen_left (2)|-5.916926,1.801000,1.751589|-0.734305,0.035460,-0.031348,0.677168
 seat|Cog|SE|57|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2610256340793685421|SE_parts_cog/winches/winch_angle_mizzen_right (2)|-5.932097,1.802000,-1.708992|-0.686651,0.024045,-0.023637,0.726205
 seat|Cog|SE|57|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:719858030751552052|SE_parts_cog/winches/winch_angle_mizzen_middle|-5.546030,1.550000,1.535450|-0.997499,0.070512,0.001216,-0.004698
 seat|Cog|SE|57|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-85147941520122759|SE_parts_cog/winches/winch_reef_mizzen2|-4.089109,1.329000,0.237345|0.005829,-0.005829,0.707083,0.707083
-rig|Cog|SE|58|midstay 2-2|-1|mizzen mast 2|SE_parts_cog/cog_stays/midstay_front_miz2
+rig|Cog|SE|58|midstay 2-2|6|mizzen mast 2,main mast 2|SE_parts_cog/cog_stays/midstay_front_miz2
 seat|Cog|SE|58|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8519578425672075907|SE_parts_cog/winches/winch_angle_midstay_left|-4.773455,1.710000,1.830742|-0.734305,0.035460,-0.031348,0.677168
 seat|Cog|SE|58|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2153211583916123566|SE_parts_cog/winches/winch_angle_midstay_right|-4.782207,1.709000,-1.825602|-0.669194,0.023476,-0.024202,0.742322
 seat|Cog|SE|58|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5906517574564831097|SE_parts_cog/winches/winch_reef_midstay2|-4.084006,1.330000,-0.224887|-0.707081,-0.707081,0.006025,-0.006025
-rig|Cog|SE|59|bermuda mast 1|-1||SE_parts_cog/mast_staysail
+rig|Cog|SE|59|bermuda mast 1|0||SE_parts_cog/mast_staysail
 seat|Cog|SE|59|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8519578425672075907|SE_parts_cog/winches/winch_angle_midstay_left|-4.773455,1.710000,1.830742|-0.734305,0.035460,-0.031348,0.677168
 seat|Cog|SE|59|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2153211583916123566|SE_parts_cog/winches/winch_angle_midstay_right|-4.782207,1.709000,-1.825602|-0.669194,0.023476,-0.024202,0.742322
 seat|Cog|SE|59|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7109731268320617171|SE_parts_cog/mast_staysail/winch_reef_staysl|0.019000,0.285000,-13.235000|-0.702872,0.000000,-0.000000,0.711316
-rig|Cog|SE|60|lower forestay 3|-1|bermuda mast 1|SE_parts_cog/cog_stays/forestay_main_inner (2)
+rig|Cog|SE|60|lower forestay 3|11|bermuda mast 1|SE_parts_cog/cog_stays/forestay_main_inner (2)
 seat|Cog|SE|60|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4833618668302266481|SE_parts_cog/winches/winch_angle_jib_left (1)|-1.315000,1.193000,1.980511|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|60|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7296278805227582230|SE_parts_cog/winches/winch_angle_jib_right (1)|-1.315130,1.193000,-1.977000|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|60|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3693164342893846448|SE_parts_cog/mast_staysail/winch_reef_staysl (2)|0.247000,0.006000,-13.252000|0.497006,-0.502977,0.497006,-0.502977
-rig|Cog|SE|61|forestay 3|-1|bermuda mast 2,long bowsprit|SE_parts_cog/cog_stays/forestay_berm
+rig|Cog|SE|61|forestay 3|1|bermuda mast 2,long bowsprit|SE_parts_cog/cog_stays/forestay_berm
 seat|Cog|SE|61|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4833618668302266481|SE_parts_cog/winches/winch_angle_jib_left (1)|-1.315000,1.193000,1.980511|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|61|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7296278805227582230|SE_parts_cog/winches/winch_angle_jib_right (1)|-1.315130,1.193000,-1.977000|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|61|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:897583654369413463|SE_parts_cog/winches/winch_reef_staysl (1)|6.110000,1.885000,0.259000|0.001047,-0.005878,0.984472,-0.175438
-rig|Cog|SE|62|lower forestay 2|-1||SE_parts_cog/cog_stays/forestay_front_inner
+rig|Cog|SE|62|lower forestay 2|11|main mast 2|SE_parts_cog/cog_stays/forestay_front_inner
 seat|Cog|SE|62|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4833618668302266481|SE_parts_cog/winches/winch_angle_jib_left (1)|-1.315000,1.193000,1.980511|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|62|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7296278805227582230|SE_parts_cog/winches/winch_angle_jib_right (1)|-1.315130,1.193000,-1.977000|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|62|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-5156704693311386684|SE_parts_cog/winches/winch_reef_jib_front (1)|4.183000,1.918000,0.009000|0.501725,0.498263,0.497006,0.502982
-rig|Cog|SE|63|bermuda mast 2|-1||SE_parts_cog/mast_staysail (1)
+rig|Cog|SE|63|bermuda mast 2|0||SE_parts_cog/mast_staysail (1)
 seat|Cog|SE|63|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8519578425672075907|SE_parts_cog/winches/winch_angle_midstay_left|-4.773455,1.710000,1.830742|-0.734305,0.035460,-0.031348,0.677168
 seat|Cog|SE|63|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2153211583916123566|SE_parts_cog/winches/winch_angle_midstay_right|-4.782207,1.709000,-1.825602|-0.669194,0.023476,-0.024202,0.742322
 seat|Cog|SE|63|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4390617753336778723|SE_parts_cog/winches/winch_reef_staysl|6.107000,1.891000,-0.260000|-0.984472,-0.175438,0.001047,0.005878
-rig|Cog|SE|64|forestay 4|-1|long bowsprit,bermuda mast 1|SE_parts_cog/cog_stays/forestay_main_long (2)
+rig|Cog|SE|64|forestay 4|1|long bowsprit,bermuda mast 1|SE_parts_cog/cog_stays/forestay_main_long (2)
 seat|Cog|SE|64|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6439947431078771521|SE_parts_cog/winches/winch_angle_jib_left|-0.874454,1.188000,1.979636|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|64|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4636619300860629615|SE_parts_cog/winches/winch_angle_jib_right|-0.874646,1.188000,-1.978153|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|64|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8140100972052388952|SE_parts_cog/mast_staysail/winch_reef_staysl2 (1)|0.019000,-0.278000,-13.242000|-0.000000,-0.711316,0.702872,0.000000
-rig|Cog|SE|65|midstay 1-1|-1||SE_parts_cog/cog_stays/midstay_main_miz1
+rig|Cog|SE|65|midstay 1-1|6|main mast 1,mizzen mast|SE_parts_cog/cog_stays/midstay_main_miz1
 seat|Cog|SE|65|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8519578425672075907|SE_parts_cog/winches/winch_angle_midstay_left|-4.773455,1.710000,1.830742|-0.734305,0.035460,-0.031348,0.677168
 seat|Cog|SE|65|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:2153211583916123566|SE_parts_cog/winches/winch_angle_midstay_right|-4.782207,1.709000,-1.825602|-0.669194,0.023476,-0.024202,0.742322
 seat|Cog|SE|65|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2369144663786855484|SE_parts_cog/winches/winch_reef_midstay1|-5.575000,1.377000,-0.224000|-0.707081,-0.707081,0.006025,-0.006025
-rig|Cog|SE|66|mizzen bermuda mast|-1||SE_parts_cog/bermast_miz
+rig|Cog|SE|66|mizzen bermuda mast|2||SE_parts_cog/bermast_miz
 seat|Cog|SE|66|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1474232872549815858|SE_parts_cog/winches/winch_angle_mizzen_left (2)|-5.916926,1.801000,1.751589|-0.734305,0.035460,-0.031348,0.677168
 seat|Cog|SE|66|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-2610256340793685421|SE_parts_cog/winches/winch_angle_mizzen_right (2)|-5.932097,1.802000,-1.708992|-0.686651,0.024045,-0.023637,0.726205
 seat|Cog|SE|66|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3148577386209716534|SE_parts_cog/bermast_miz/winch_reef_bermizzen|0.228000,-0.010000,-11.151000|0.705866,-0.007489,0.708297,-0.003444
-rig|Cog|SE|67|outer forestay|-1|long bowsprit|SE_parts_cog/cog_stays/forestay_front_mast_long (1)
+rig|Cog|SE|67|outer forestay|13|long bowsprit,main mast 2|SE_parts_cog/cog_stays/forestay_front_mast_long (1)
 seat|Cog|SE|67|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7154482277033995020|SE_parts_cog/winches/winch_angle_jib_left (2)|-0.454870,1.185000,1.980511|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|67|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1811284482126850861|SE_parts_cog/winches/winch_angle_jib_right (2)|-0.455000,1.185000,-1.977000|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|67|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:969897643392298859|SE_parts_cog/winches/winch_reef_jib_front (2)|3.862000,1.920000,-0.271000|0.710435,0.703762,-0.000890,0.000889
-rig|Cog|SE|68|foremast|-1||SE_parts_cog/foremast (2)
+rig|Cog|SE|68|foremast|8||SE_parts_cog/foremast (2)
 seat|Cog|SE|68|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4833618668302266481|SE_parts_cog/winches/winch_angle_jib_left (1)|-1.315000,1.193000,1.980511|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|68|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7296278805227582230|SE_parts_cog/winches/winch_angle_jib_right (1)|-1.315130,1.193000,-1.977000|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|68|midAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:8079396311562365463|SE_parts_cog/winches/winch_angle_rake|-0.239000,0.981000,1.782000|-0.999240,0.002608,-0.025650,0.029249
 seat|Cog|SE|68|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-3972920022002396916|SE_parts_cog/foremast (2)/winch_reef_mizzen|-0.224000,-0.006000,-9.719000|0.011262,-0.707017,-0.011262,0.707017
-rig|Cog|SE|69|outer foremast forestay|-1|long bowsprit,foremast|SE_parts_cog/cog_stays/forestay_front_mast_long (3)
+rig|Cog|SE|69|outer foremast forestay|13|long bowsprit,foremast|SE_parts_cog/cog_stays/forestay_front_mast_long (3)
 seat|Cog|SE|69|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:7154482277033995020|SE_parts_cog/winches/winch_angle_jib_left (2)|-0.454870,1.185000,1.980511|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|69|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1811284482126850861|SE_parts_cog/winches/winch_angle_jib_right (2)|-0.455000,1.185000,-1.977000|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|69|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:897583654369413463|SE_parts_cog/winches/winch_reef_staysl (1)|6.110000,1.885000,0.259000|0.001047,-0.005878,0.984472,-0.175438
-rig|Cog|SE|70|foremast forestay|-1|long bowsprit,foremast|SE_parts_cog/cog_stays/forestay_foremast
+rig|Cog|SE|70|foremast forestay|1|long bowsprit,foremast|SE_parts_cog/cog_stays/forestay_foremast
 seat|Cog|SE|70|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-6439947431078771521|SE_parts_cog/winches/winch_angle_jib_left|-0.874454,1.188000,1.979636|-0.707103,0.002342,-0.002342,0.707103
 seat|Cog|SE|70|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:4636619300860629615|SE_parts_cog/winches/winch_angle_jib_right|-0.874646,1.188000,-1.978153|-0.707099,0.003329,-0.003330,0.707099
 seat|Cog|SE|70|reefWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-4390617753336778723|SE_parts_cog/winches/winch_reef_staysl|6.107000,1.891000,-0.260000|-0.984472,-0.175438,0.001047,0.005878

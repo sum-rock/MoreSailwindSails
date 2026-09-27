@@ -61,8 +61,16 @@ namespace MoreSailwindSails.Stays.FishermansStay
             Mount.startingSailColor = source.startingSailColor;
             Mount.leftAngleWinch = CloneWinches(source, WinchRole.Left, "Port sheet");
             Mount.rightAngleWinch = CloneWinches(source, WinchRole.Right, "Starboard sheet");
-            Mount.midAngleWinch = CloneWinches(source, WinchRole.Mid, "Sheet");
+            // Audited stay donors use paired sheets; centre controls are not pair candidates.
+            Mount.midAngleWinch = Array.Empty<GPButtonRopeWinch>();
             Mount.reefWinch = CloneWinches(references.Aft, WinchRole.Reef, "Halyard");
+            FishermanWinchControls.Configure(
+                boat,
+                Mount.gameObject,
+                references.Fore,
+                references.Aft,
+                Mount
+            );
             if (
                 Mount.reefWinch.Length == 0
                 || (

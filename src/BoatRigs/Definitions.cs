@@ -129,154 +129,13 @@ namespace MoreSailwindSails.BoatRigs
         Mid,
     }
 
-    internal sealed class WinchMountDefinition
-    {
-        internal readonly int Mast;
-        internal readonly WinchRole Role;
-        internal readonly Vector3 Direction;
-        internal readonly bool OnMast;
-        internal readonly int Support;
-
-        // -1 retains the first usable native control. An authored index selects
-        // an exact fitting when another row provides the measured mounting space.
-        internal readonly int SourceIndex;
-
-        // -1 uses Mast. A different native mast can supply controls without
-        // changing the stay's geometry donor or its saved mounting identity.
-        internal readonly int SourceMast;
-        internal readonly WinchSurfaceSegment[] SurfaceSegments;
-        internal readonly WinchSurfacePoint? FixedSurfacePoint;
-        internal readonly string[] PinNames;
-        internal readonly float PinRadius;
-        internal readonly Vector3 SourceNormal;
-        internal readonly float BaseOffset;
-
-        internal WinchMountDefinition(
-            int mast,
-            WinchRole role,
-            Vector3 direction,
-            bool onMast,
-            int support,
-            int sourceIndex = -1,
-            int sourceMast = -1
-        )
-        {
-            if (sourceIndex < -1)
-                throw new ArgumentOutOfRangeException(nameof(sourceIndex));
-            if (sourceMast < -1)
-                throw new ArgumentOutOfRangeException(nameof(sourceMast));
-            Mast = mast;
-            Role = role;
-            Direction = direction.normalized;
-            OnMast = onMast;
-            Support = support;
-            SourceIndex = sourceIndex;
-            SourceMast = sourceMast;
-        }
-
-        internal WinchMountDefinition(
-            int mast,
-            WinchRole role,
-            Vector3 sourceNormal,
-            float baseOffset,
-            params WinchSurfaceSegment[] railSegments
-        )
-            : this(mast, role, sourceNormal, baseOffset, -1, railSegments) { }
-
-        internal WinchMountDefinition(
-            int mast,
-            WinchRole role,
-            Vector3 sourceNormal,
-            float baseOffset,
-            int sourceMast,
-            params WinchSurfaceSegment[] railSegments
-        )
-            : this(
-                mast,
-                role,
-                railSegments[0].End - railSegments[0].Start,
-                false,
-                -1,
-                -1,
-                sourceMast
-            )
-        {
-            SurfaceSegments = railSegments;
-            SourceNormal = sourceNormal.normalized;
-            BaseOffset = baseOffset;
-        }
-
-        internal WinchMountDefinition(
-            int mast,
-            WinchRole role,
-            Vector3 sourceNormal,
-            float baseOffset,
-            WinchSurfacePoint point
-        )
-            : this(mast, role, Vector3.zero, false, -1)
-        {
-            FixedSurfacePoint = point;
-            SourceNormal = sourceNormal.normalized;
-            BaseOffset = baseOffset;
-        }
-
-        // Existing native coils mark real pin seats; hidden controls can lend
-        // their positions to custom halyards without moving the native fitting.
-        internal WinchMountDefinition(
-            int mast,
-            WinchRole role,
-            float pinRadius,
-            params string[] pins
-        )
-            : this(mast, role, Vector3.zero, false, -1)
-        {
-            if (pinRadius <= 0f || pins == null || pins.Length == 0)
-                throw new ArgumentException("A pin bank needs positions and positive clearance.");
-            PinNames = pins;
-            PinRadius = pinRadius;
-        }
-    }
-
-    // An explicitly measured contact point, independent of the control donor.
-    internal readonly struct WinchSurfacePoint
-    {
-        internal readonly Vector3 Position,
-            Normal;
-
-        internal WinchSurfacePoint(Vector3 position, Vector3 normal)
-        {
-            Position = position;
-            Normal = normal.normalized;
-        }
-    }
-
-    // Solid mounting-surface centerlines in boat space. Ends are physical bounds,
-    // not permitted winch centers; placement leaves room for the fitting at each end.
-    internal readonly struct WinchSurfaceSegment
-    {
-        internal readonly Vector3 Start,
-            End,
-            Normal;
-
-        internal WinchSurfaceSegment(Vector3 start, Vector3 end)
-            : this(start, end, Vector3.Cross(Vector3.right, end - start)) { }
-
-        internal WinchSurfaceSegment(Vector3 start, Vector3 end, Vector3 normal)
-        {
-            Start = start;
-            End = end;
-            normal = normal.normalized;
-            Normal = normal.y < 0f ? -normal : normal;
-        }
-    }
-
     internal sealed class BoatRigDefinition
     {
         internal readonly string BoatName;
         internal readonly MastSupportDefinition[] Supports;
         internal readonly FishermansStayGroupDefinition[] Stays;
         internal readonly IReadOnlyDictionary<int, int> MastParents;
-        internal readonly WinchMountDefinition[] WinchMounts;
+        internal readonly IReadOnlyDictionary<string, float> WinchClearances;
         internal readonly SheetWinchCategory[] SheetCategories;
 
         internal BoatRigDefinition(
@@ -284,8 +143,8 @@ namespace MoreSailwindSails.BoatRigs
             MastSupportDefinition[] supports,
             FishermansStayGroupDefinition[] stays,
             IReadOnlyDictionary<int, int> mastParents,
-            WinchMountDefinition[] winchMounts,
-            SheetWinchCategory[] sheetCategories = null
+            SheetWinchCategory[] sheetCategories = null,
+            IReadOnlyDictionary<string, float> winchClearances = null
         )
         {
             if (
@@ -296,8 +155,6 @@ namespace MoreSailwindSails.BoatRigs
             var mounts = stays.SelectMany(g => g.Variants).Select(v => v.MountIndex).ToArray();
             if (mounts.Distinct().Count() != mounts.Length)
                 throw new ArgumentException("Duplicate Fisherman's Stay mount ID.");
-            if (winchMounts.GroupBy(w => new { w.Mast, w.Role }).Any(g => g.Count() != 1))
-                throw new ArgumentException("Duplicate winch mount definition.");
             if (
                 mastParents.Any(p =>
                     p.Key < 0 || p.Value < -1 || (p.Value >= 0 && !mastParents.ContainsKey(p.Value))
@@ -310,7 +167,7 @@ namespace MoreSailwindSails.BoatRigs
             MastParents = new ReadOnlyDictionary<int, int>(
                 mastParents.ToDictionary(p => p.Key, p => p.Value)
             );
-            WinchMounts = winchMounts;
+            WinchClearances = winchClearances ?? new Dictionary<string, float>();
             SheetCategories = sheetCategories ?? Array.Empty<SheetWinchCategory>();
             if (
                 SheetCategories
@@ -351,12 +208,6 @@ namespace MoreSailwindSails.BoatRigs
             int physical = MastParents.ContainsKey(mast) ? Base(mast) : mast;
             return SheetCategories.FirstOrDefault(c => c.PhysicalMasts.Contains(physical));
         }
-
-        internal WinchMountDefinition WinchMount(int mast, WinchRole role) =>
-            WinchMounts.FirstOrDefault(w => w.Mast == mast && w.Role == role)
-            ?? throw new InvalidOperationException(
-                $"No authored winch mounting direction: {BoatName}/{mast}/{role}."
-            );
     }
 
     internal static class BoatRigCatalog
