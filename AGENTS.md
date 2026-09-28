@@ -17,10 +17,10 @@ instructions take precedence over historical design choices.
   Sail and staysail mechanics independently editable; future families need not
   follow either design. Shared-helper extraction remains
   [deferred](docs/CLEANUP.md); existing shared winch controls remain in use.
-- The native winch placement redesign is accepted as valid and complete. Remaining
-  improvements are tracked in
-  [WINCH_PLACEMENT_REDESIGN_CLEANUP.md](docs/WINCH_PLACEMENT_REDESIGN_CLEANUP.md);
-  do not treat that follow-up work as incomplete original implementation.
+- The native winch placement redesign is accepted as valid and complete, and its
+  follow-up architecture cleanup is implemented. Current behavior and validation
+  limits are recorded in [Winch placement](docs/DEVELOPMENT.md#winch-placement);
+  do not treat cleanup regression checks as incomplete original implementation.
 - Implementation requests authorize editing, building and checking. Do not
   commit, push, alter saves or replace installed game files as part of a build.
   **Never execute files from `scripts/` or use it as the working directory.**

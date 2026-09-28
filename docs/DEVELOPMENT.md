@@ -321,9 +321,10 @@ slope; aft guide heights and save IDs stay unchanged.
 The **0.2.1** native winch placement redesign is **accepted as valid and complete**
 on Brig, Junk, Jong, Sanbuq, Cog, Leopard, Shroud and large dhow. It applies to
 Flying Sails, all three staysail cuts and native sails fitted to Fisherman's
-Stays. This section owns the current behavior; the completed implementation plan
-has been retired. The follow-up architecture cleanup is recorded separately
-in [WINCH_PLACEMENT_REDESIGN_CLEANUP.md](WINCH_PLACEMENT_REDESIGN_CLEANUP.md).
+Stays. This section owns the current behavior, including the completed follow-up
+architecture cleanup. The implementation plan and cleanup checklist have been
+retired; [runtime validation](#runtime-validation) records the checks and remaining
+in-game uncertainty.
 
 ### Placement and ownership
 
@@ -555,9 +556,9 @@ runtime accessibility, rendered support contact or Unity lifecycle behavior.
 ### Runtime validation
 
 The user accepted the native placement work as valid and complete on
-**2026-09-27**, version **0.2.1**. Follow-up review changes are recorded
-in [the cleanup checklist](WINCH_PLACEMENT_REDESIGN_CLEANUP.md), with their
-separate validation status below.
+**2026-09-27**, version **0.2.1**. The subsequent architecture cleanup is
+implemented; its automated results and separate runtime validation limits are
+recorded below.
 
 Evidence for this accepted baseline:
 
@@ -593,9 +594,13 @@ not an outstanding acceptance gate for the completed redesign.
 
 Cleanup implementation on **2026-09-27**, still **0.2.1**:
 
-- WC-1 through WC-7 are implemented. Release build passed with zero warnings and
-  errors; GeometryChecks, AssemblyChecks (62 Harmony targets), CSharpier `check`
-  and `git diff --check` passed. No README, installed game files or saves changed.
+- Completed changes include cached native discovery and stable claims, shared
+  bootstrap-template selection, matching-index sheet pairs, boolean reservation
+  acquisition, immutable definitions, support-aware coincident-seat selection and
+  removal of obsolete control branches.
+- Release build passed with zero warnings and errors; GeometryChecks,
+  AssemblyChecks (62 Harmony targets), CSharpier `check` and `git diff --check`
+  passed. No README, installed game files or saves changed.
 - New executed checks cover defensive copies and read-only wrappers across all
   eight profiles/111 stays; later-source and fallback bootstrap pairs; inactive
   versus active coincident references; retained claims and failed transactions;
