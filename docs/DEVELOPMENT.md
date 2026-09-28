@@ -866,6 +866,22 @@ Read both logs; Unity warnings may be absent from BepInEx output:
 /home/august/.local/share/Steam/steamapps/compatdata/1764530/pfx/drive_c/users/steamuser/AppData/LocalLow/Raw Lion Workshop/Sailwind/Player.log
 ```
 
+To watch the logs live, run these manual commands from the repository root in
+separate terminals:
+
+```sh
+./scripts/tail-player-log.sh
+```
+
+```sh
+./scripts/tail-bepinex-log.sh
+```
+
+Each script shows the latest **50 lines**, then follows new output with `tail -F`,
+including when a game restart truncates or replaces the log. Missing files are
+retried. Paths use the default Steam installation beneath `$HOME`. Press
+**Ctrl+C** to stop. These commands only display logs; they do not archive them.
+
 Capture logs before restarting a freeze. Distinguish other mods' exceptions and
 suspected causes from confirmed evidence. Prefer `rg`/`rg --files`; inspect
 screenshots with the local image viewer. Temporary tools may exist at
