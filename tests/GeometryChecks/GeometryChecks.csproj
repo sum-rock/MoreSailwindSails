@@ -24,6 +24,11 @@
     />
     <Compile Include="../../src/Controls/WinchSeat.cs" Link="Controls/WinchSeat.cs" />
     <None Update="FishermansStay/NativeWinchSeats.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Compile Include="../../src/Utils/WinchMountStatus.cs" Link="Utils/WinchMountStatus.cs" />
+    <Compile
+      Include="../../src/Utils/WinchMountOverlayGeometry.cs"
+      Link="Utils/WinchMountOverlayGeometry.cs"
+    />
     <Compile
       Include="../../src/Utils/WinchCaptureGeometry.cs"
       Link="Utils/WinchCaptureGeometry.cs"

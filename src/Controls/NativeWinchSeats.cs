@@ -205,7 +205,7 @@ namespace MoreSailwindSails.Controls
                 });
         }
 
-        private bool Mounted(GPButtonRopeWinch c)
+        internal bool Mounted(GPButtonRopeWinch c)
         {
             if (!c || !c.transform.parent || !c.transform.parent.gameObject.activeInHierarchy)
                 return false;

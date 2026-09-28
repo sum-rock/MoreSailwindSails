@@ -17,6 +17,9 @@ namespace MoreSailwindSails
 
         internal static ManualLogSource Log { get; private set; }
         private ConfigEntry<KeyboardShortcut> captureWinchPosition;
+        private ConfigEntry<bool> enableWinchMountOverlay;
+        private ConfigEntry<KeyboardShortcut> toggleWinchMountOverlay;
+        private Utils.WinchMountOverlay winchMountOverlay;
 
         private void Awake()
         {
@@ -26,6 +29,18 @@ namespace MoreSailwindSails
                 "CaptureWinchPosition",
                 new KeyboardShortcut(KeyCode.F9),
                 "Aim at a boat surface and press this key to log its boat-relative position and normal. Set to None to disable."
+            );
+            enableWinchMountOverlay = Config.Bind(
+                section: "Diagnostics",
+                key: "EnableWinchMountOverlay",
+                defaultValue: false,
+                description: "Enable the winch mount diagnostic tool. Use its shortcut to select a boat and toggle wireframes."
+            );
+            toggleWinchMountOverlay = Config.Bind(
+                section: "Diagnostics",
+                key: "ToggleWinchMountOverlay",
+                defaultValue: new KeyboardShortcut(KeyCode.F8),
+                description: "Aim at a boat within 10 metres and press to show its winch locations; press again to hide. Requires EnableWinchMountOverlay. Set to None to disable the shortcut."
             );
             var harmony = new Harmony(PluginGuid);
             harmony.PatchAll(typeof(Plugin).Assembly);
@@ -37,6 +52,26 @@ namespace MoreSailwindSails
         {
             if (captureWinchPosition.Value.IsDown())
                 Utils.LogFallbackWinchPlacement.Capture();
+            if (!enableWinchMountOverlay.Value)
+            {
+                RemoveOverlay();
+                return;
+            }
+            if (!winchMountOverlay)
+                winchMountOverlay = gameObject.AddComponent<Utils.WinchMountOverlay>();
+            if (toggleWinchMountOverlay.Value.IsDown())
+                winchMountOverlay.Toggle();
+        }
+
+        private void OnDisable() => RemoveOverlay();
+
+        private void RemoveOverlay()
+        {
+            if (!winchMountOverlay)
+                return;
+            winchMountOverlay.enabled = false;
+            Destroy(winchMountOverlay);
+            winchMountOverlay = null;
         }
     }
 }
