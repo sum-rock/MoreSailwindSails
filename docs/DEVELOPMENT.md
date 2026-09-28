@@ -99,6 +99,7 @@ feature's `Patches/` directory and `.Patches` namespace.
 | `src/Stays/FishermansStay/`       | Independent mounts, registration, previews, controls and save compatibility                                                         |
 | `src/BoatRigs/`                   | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks |
 | `src/Controls/`                   | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning                                                          |
+| `src/Utils/`                      | Optional, read-only in-game diagnostic tools and their geometry helpers |
 
 Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
 with one type per file. They retain the `MoreSailwindSails.BoatRigs` namespace.
@@ -487,7 +488,9 @@ identify the fallback name and missing/invalid side.
 
 ### Capturing proposed winch positions
 
-Version **0.2.1** includes an on-demand capture tool, **F9** by default. Load the
+Version **0.2.1** includes **LogFallbackWinchPlacement**, an on-demand capture
+tool in `src/Utils`, **F9** by default. The existing `CaptureWinchPosition`
+config key, capture numbering and log format are retained for compatibility. Load the
 boat, close menus, aim the centre of the screen at bare mounting structure within
 **10 m**, and press the key once. An on-screen notification confirms the numbered
 capture. `BepInEx/LogOutput.log` records `Winch position capture #N` with boat

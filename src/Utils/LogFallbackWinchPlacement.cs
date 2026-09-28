@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Utils
 {
     // Read-only, on-demand diagnostics. Capturing does not reserve or move a winch.
-    internal static class WinchPositionCapture
+    internal static class LogFallbackWinchPlacement
     {
         // Installed GoPointer.DoRaycast mask for ordinary world obstructions.
         // Boat walking colliders are queried separately in their displaced frame.

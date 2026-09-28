@@ -36,7 +36,7 @@ namespace MoreSailwindSails
         private void LateUpdate()
         {
             if (captureWinchPosition.Value.IsDown())
-                Controls.WinchPositionCapture.Capture();
+                Utils.LogFallbackWinchPlacement.Capture();
         }
     }
 }
