@@ -24,11 +24,11 @@ internal static class NativeSeatProfileChecks
             foreach (var category in boat.SheetCategories)
             {
                 Check(
-                    category.PhysicalMasts.Distinct().Count() == category.PhysicalMasts.Length,
+                    category.PhysicalMasts.Distinct().Count() == category.PhysicalMasts.Count,
                     "Duplicate category member."
                 );
                 Check(
-                    category.Sources.Distinct().Count() == category.Sources.Length,
+                    category.Sources.Distinct().Count() == category.Sources.Count,
                     "Duplicate source rig."
                 );
                 Check(
@@ -95,7 +95,7 @@ internal static class NativeSeatProfileChecks
             "Shroud",
             "LargeDhow",
         };
-        for (int b = 0; b < BoatRigCatalog.All.Length; b++)
+        for (int b = 0; b < BoatRigCatalog.All.Count; b++)
         {
             var profile = BoatRigCatalog.All[b];
             foreach (var category in profile.SheetCategories)

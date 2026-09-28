@@ -30,7 +30,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
             if (!boat || !parts || parts.availableParts == null)
                 return;
             var profile = BoatRigCatalog.Find(boat.name);
-            if (profile == null || profile.Stays.Length == 0)
+            if (profile == null || profile.Stays.Count == 0)
                 return;
             var registry =
                 boat.GetComponent<FishermansStayRegistry>()

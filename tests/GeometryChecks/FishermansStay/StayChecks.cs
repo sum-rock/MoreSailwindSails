@@ -92,7 +92,7 @@ internal static class StayChecks
         int variants = 0,
             fallback = 0;
         int[] counts = { 24, 9, 9, 26, 3, 18, 8, 14 };
-        for (int boatIndex = 0; boatIndex < BoatRigCatalog.All.Length; boatIndex++)
+        for (int boatIndex = 0; boatIndex < BoatRigCatalog.All.Count; boatIndex++)
         {
             var boat = BoatRigCatalog.All[boatIndex];
             var masts = measurements[boat.BoatName];
