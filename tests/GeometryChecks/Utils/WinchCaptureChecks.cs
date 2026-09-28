@@ -1,8 +1,8 @@
 using System;
-using MoreSailwindSails.Controls;
+using MoreSailwindSails.Utils;
 using UnityEngine;
 
-namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
+namespace MoreSailwindSails.Tests.GeometryChecks.Utils;
 
 internal static class WinchCaptureChecks
 {

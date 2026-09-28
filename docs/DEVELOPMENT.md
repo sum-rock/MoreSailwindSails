@@ -99,6 +99,7 @@ feature's `Patches/` directory and `.Patches` namespace.
 | `src/Stays/FishermansStay/`       | Independent mounts, registration, previews, controls and save compatibility                                                         |
 | `src/BoatRigs/`                   | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks |
 | `src/Controls/`                   | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning                                                          |
+| `src/Utils/`                      | Optional, read-only in-game diagnostic tools and their geometry helpers |
 
 Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
 with one type per file. They retain the `MoreSailwindSails.BoatRigs` namespace.
@@ -487,7 +488,9 @@ identify the fallback name and missing/invalid side.
 
 ### Capturing proposed winch positions
 
-Version **0.2.1** includes an on-demand capture tool, **F9** by default. Load the
+Version **0.2.1** includes **LogFallbackWinchPlacement**, an on-demand capture
+tool in `src/Utils`, **F9** by default. The existing `CaptureWinchPosition`
+config key, capture numbering and log format are retained for compatibility. Load the
 boat, close menus, aim the centre of the screen at bare mounting structure within
 **10 m**, and press the key once. An on-screen notification confirms the numbered
 capture. `BepInEx/LogOutput.log` records `Winch position capture #N` with boat
@@ -515,6 +518,105 @@ Captures describe **collision surfaces**, which can differ from visible rail
 geometry. Check the reported object and compare against installed meshes or a
 screenshot before authoring a position. Winch orientation and mounting offset
 still need authoring; a captured surface point is not automatically a winch pivot.
+
+### Viewing winch mounting points
+
+Version **0.2.1** includes **WinchMountOverlay**, an optional diagnostic utility
+in `src/Utils`, alongside **LogFallbackWinchPlacement**. Enable it with the game
+closed in `BepInEx/config/com.august.moresailwindsails.cfg`:
+
+```ini
+[Diagnostics]
+EnableWinchMountOverlay = true
+ToggleWinchMountOverlay = F8
+CaptureWinchPosition = F9
+```
+
+`EnableWinchMountOverlay` defaults to **false**. With it enabled, load a boat,
+close menus, aim at a boat surface within **10 m**, and press **F8**. The overlay
+stays attached to that boat as you move around. Press **F8** again to hide it;
+to inspect a different boat, hide it first, then aim and toggle again. The shortcut
+is configurable; `None` disables the shortcut. Setting the enable option back to
+false removes the overlay. Normal BepInEx config loading applies; editing the file
+outside the game is not a live-reload mechanism.
+
+Wireframes show through the hull and deck, including winches on inactive rig
+variants. A small legend identifies the selected boat and grouped location count:
+
+| Color | Meaning |
+| --- | --- |
+| Green | Unused native location on fitted supports. |
+| Red | Occupied location: native bound rope, active renderer/collider, or visible custom winch. A bound native rope counts even when hidden. |
+| Cyan | Unused native location on unfitted supports. |
+
+Coincident locations are grouped using the native inventory's **1 mm**
+boat-relative tolerance. Occupied aliases take priority, then unused fitted
+supports, then unfitted supports. Hidden spare custom winches are excluded.
+**Green does not guarantee allocation:** source category, pairing, support and
+reservation requirements still govern actual placement. These traces describe
+existing winches, not newly authored fallback definitions or a clearance test.
+
+Use the overlay to avoid existing fittings, then aim at bare structure and press
+**F9** to capture a proposed fallback contact point. F9 retains the
+`CaptureWinchPosition` config key, existing notifications, capture numbering and
+`Winch position capture #N` log format. The new utility name does not require
+changing an existing shortcut. Mount orientation, offset, support requirements
+and reachability still need authoring and confirmation.
+
+The overlay and capture tool share the same read-only boat-surface picker,
+including displaced walking-model ray conversion and world obstruction checks.
+A separate diagnostic inventory includes inactive controls without requiring
+custom sails or participating in placement reservations. Discovery and cached
+shape selection refresh once per second while shown; current transforms and
+occupancy are read at camera rendering time. Native meshes supply cached triangle
+edges; unreadable or empty meshes use their local bounds, and skinned renderers
+use local bounds. These boxes indicate extents, not an exact silhouette.
+
+Only the main camera draws the overlay. Its owned material uses
+`Hidden/Internal-Colored` with depth testing/writing disabled; an unavailable
+shader or failed material pass leaves the overlay off and reports a diagnostic.
+Native materials, renderers, colliders, outlines, bindings and activation states
+remain untouched. Menus hide the display; loading, leaving play, losing the boat
+or disabling the utility releases the selected boat and drawing resources.
+Select the boat again after loading. Camera replacement needs no reattachment.
+Disabled/hidden overlays do not scan the boat or draw.
+
+#### Overlay validation (updated 2026-09-28)
+
+- Pinned CSharpier check, Release build, GeometryChecks, AssemblyChecks and
+  `git diff --check` passed. The build reported **zero warnings and errors**.
+- Executed geometry checks cover hidden native bound-rope precedence, hidden
+  custom-clone exclusion, coincident groups, changing occupancy and positions,
+  mesh edge deduplication and the twelve-edge bounds fallback. Existing capture
+  checks still cover displaced, rotated/scaled walking frames and visual-world
+  distance comparison.
+- Assembly checks guard the diagnostic boundary against native game-field writes,
+  transform/rendering/physics setters, activation/cloning/binding and seat
+  reservations, and verify reuse of native occupancy rules. These are structural
+  checks, not execution of Unity lifecycle or rendering.
+- The user reports that the overlay works in game, but occupied amber/yellow
+  locations were too difficult to distinguish from green. Occupied traces and
+  their legend now use red. **The new red color still needs visual confirmation.**
+  Detailed runtime checks remain: start on Brig and confirm green/red/cyan
+  traces, through-hull visibility, movement tracking,
+  unchanged interaction outlines, F9 captures, and repeated toggling. Then check
+  rig swaps, camera changes, loading/boat removal, and a modded boat with different
+  winch geometry. Confirm bounds fallback readability and acceptable frame time.
+- Built DLL: `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`, version
+  **0.2.1**. No installed game files or saves were replaced during this work.
+
+#### Material constructor review follow-up (2026-09-28)
+
+[PR #27 review](https://github.com/sum-rock/MoreSailwindSails/pull/27#discussion_r4118192217)
+flagged the overlay's named material-constructor argument. Inspection of the
+installed Unity assembly confirms `Material(Shader shader)` and
+`Material(Material source)`; the original code also passed a forced Release
+rebuild with zero warnings/errors. The reported compilation failure was not
+reproduced. The overlay now passes its shader positionally, avoiding dependence
+on the constructor parameter name while preserving overload selection and behavior.
+CSharpier, the updated Release build (zero warnings/errors), GeometryChecks,
+AssemblyChecks and `git diff --check` passed. Version remains **0.2.1**; live
+rendering has not been revalidated, and no installed DLL or save was changed.
 
 ### Asset provenance and measurement fixtures
 
@@ -641,7 +743,8 @@ remains unchanged under the repository's explicit-edit policy.
 
 For placement diagnostics and F9 instructions, see
 [Placement logging](#placement-logging) and
-[Capturing proposed winch positions](#capturing-proposed-winch-positions).
+[Capturing proposed winch positions](#capturing-proposed-winch-positions), and
+[Viewing winch mounting points](#viewing-winch-mounting-points).
 
 ### Installed references and logs
 

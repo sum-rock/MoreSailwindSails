@@ -1,30 +1,26 @@
-using System.Collections.Generic;
-using System.Globalization;
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Utils
 {
-    // Read-only, on-demand diagnostics. Capturing does not reserve or move a winch.
-    internal static class WinchPositionCapture
+    // Finds visible boat surfaces across the world and displaced walking colliders.
+    internal static class BoatSurfacePicker
     {
         // Installed GoPointer.DoRaycast mask for ordinary world obstructions.
-        // Boat walking colliders are queried separately in their displaced frame.
         private const int PointerMask = -604165;
         private const float Range = 10f;
-        private static int captureNumber;
 
-        internal static void Capture()
+        internal static bool CanInspect =>
+            GameState.playing && !GameState.currentlyLoading && !GameState.inCursorMenu;
+
+        internal static bool TryPick(out BoatSurfaceHit surface, out string error)
         {
-            if (!GameState.playing || GameState.currentlyLoading || GameState.inCursorMenu)
-            {
-                Report("Close menus and aim at a boat surface during normal play.");
-                return;
-            }
+            surface = null;
+            error = null;
             var camera = Camera.main;
             if (!camera)
             {
-                Report("No active game camera; nothing captured.");
-                return;
+                error = "No active game camera; nothing captured.";
+                return false;
             }
             var ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
             var boats = Object.FindObjectsOfType<BoatRefs>();
@@ -72,31 +68,27 @@ namespace MoreSailwindSails.Controls
             }
             if (!found)
             {
-                Report(
-                    "No solid surface within 10 metres, including boat walking models; aim again."
-                );
-                return;
+                error =
+                    "No solid surface within 10 metres, including boat walking models; aim again.";
+                return false;
             }
-            var target = hit.collider.transform;
             if (!boat)
             {
-                Report("Hit " + target.name + ", which is not a recognised boat surface.");
-                return;
+                error =
+                    "Hit "
+                    + hit.collider.transform.name
+                    + ", which is not a recognised boat surface.";
+                return false;
             }
-
-            var hitToBoat = boat.transform.worldToLocalMatrix * hitToWorld;
-            var position = hitToBoat.MultiplyPoint3x4(hit.point);
-            // Normals are covectors: inverse-transpose also handles scaled roots.
-            var normal = hitToBoat.inverse.transpose.MultiplyVector(hit.normal).normalized;
-            int number = ++captureNumber;
-            Plugin.Log.LogInfo(
-                $"Winch position capture #{number}; boat={boat.name}#{boat.GetInstanceID()}, "
-                    + $"position={Vector(position)}, normal={Vector(normal)}, "
-                    + $"hitModel={(walkingModel ? "walk" : "boat")}, object={Path(target)}, "
-                    + $"collider={hit.collider.GetType().Name}#{hit.collider.GetInstanceID()}, "
-                    + $"distance={distance.ToString("F4", CultureInfo.InvariantCulture)}."
-            );
-            Notify($"Winch point #{number} captured on {target.name}. See LogOutput.log.");
+            surface = new BoatSurfaceHit
+            {
+                Boat = boat,
+                Hit = hit,
+                HitToWorld = hitToWorld,
+                WalkingModel = walkingModel,
+                Distance = distance,
+            };
+            return true;
         }
 
         private static BoatRefs FindBoat(Transform target, BoatRefs[] boats)
@@ -111,35 +103,6 @@ namespace MoreSailwindSails.Controls
                 )
                     return boat;
             return null;
-        }
-
-        private static string Vector(Vector3 vector) =>
-            string.Format(
-                CultureInfo.InvariantCulture,
-                "({0:F6}, {1:F6}, {2:F6})",
-                vector.x,
-                vector.y,
-                vector.z
-            );
-
-        private static string Path(Transform target)
-        {
-            var names = new Stack<string>();
-            for (var node = target; node; node = node.parent)
-                names.Push(node.name);
-            return string.Join("/", names);
-        }
-
-        private static void Report(string message)
-        {
-            Plugin.Log.LogInfo("Winch position capture: " + message);
-            Notify(message);
-        }
-
-        private static void Notify(string message)
-        {
-            if (NotificationUi.instance)
-                NotificationUi.instance.ShowNotification(message);
         }
     }
 }
