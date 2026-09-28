@@ -137,8 +137,7 @@ namespace MoreSailwindSails.Controls
                     null,
                     d.Contact + d.Normal.normalized * d.Offset,
                     Quaternion.FromToRotation(d.SourceNormal, d.Normal)
-                        * native.Rotation(templates[i]),
-                    native.Radius(templates[i])
+                        * native.Rotation(templates[i])
                 );
                 supported &= d.Supports.All(id => native.ActiveSupport(native.Mast(id)));
             }
@@ -150,7 +149,8 @@ namespace MoreSailwindSails.Controls
                 Templates = templates,
                 Seats = seats,
                 Supported = supported,
-                Vacant = seats.All(s => native.Clear(s, false)),
+                // Authored fallbacks are chosen to avoid native fittings; the ledger prevents reuse.
+                Vacant = true,
             };
         }
     }

@@ -1,11 +1,9 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace MoreSailwindSails.Controls
 {
-    // Pure allocation policy. Positions and radii are in the boat's local frame.
+    // Boat-owned allocation by seat identity and aliases, without geometric clearance.
     internal sealed class WinchReservations
     {
         private sealed class Reservation
@@ -58,8 +56,5 @@ namespace MoreSailwindSails.Controls
 
         internal void Release(object owner) =>
             entries.RemoveAll(e => ReferenceEquals(e.Owner, owner));
-
-        internal static bool Overlap(Vector3 a, float ar, Vector3 b, float br) =>
-            (a - b).sqrMagnitude < (ar + br) * (ar + br);
     }
 }

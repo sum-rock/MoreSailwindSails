@@ -10,8 +10,7 @@ namespace MoreSailwindSails.BoatRigs
             supports: Supports(),
             stays: Stays(),
             mastParents: MastParents(),
-            sheetCategories: SheetCategories(),
-            winchClearances: PinClearances()
+            sheetCategories: SheetCategories()
         );
 
         // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
@@ -59,36 +58,6 @@ namespace MoreSailwindSails.BoatRigs
                     templateIndex: 0
                 )
             );
-
-        // Measured side-pin pitch affects clearance only, never seat eligibility.
-        private static Dictionary<string, float> PinClearances() =>
-            new Dictionary<string, float>
-            {
-                { "Coil_Mainmast_Reef_1", 0.14f },
-                { "Coil_Mainmast_Reef_2", 0.14f },
-                { "Coil_Mainmast_Reef_3", 0.14f },
-                { "Coil_Mainmast_Reef_4", 0.14f },
-                { "Coil_Mainmast_Reef_5", 0.14f },
-                { "Coil_Mainmast_Reef_6", 0.14f },
-                { "Coil_Mainmast_Jib_Reef_1", 0.14f },
-                { "Coil_Mainmast_Jib_Reef_2", 0.14f },
-                { "Coil_Mainmast_Jib_Reef_3", 0.14f },
-                { "Coil_Mainmast_Jib_Reef_4", 0.14f },
-                { "Coil_Mainmast_Jib_Reef_5", 0.14f },
-                { "Coil_Mainmast_Jib_Reef_6", 0.14f },
-                { "Coil_Mizzenmast_Reef_1", 0.14f },
-                { "Coil_Mizzenmast_Reef_2", 0.14f },
-                { "Coil_Mizzenmast_Reef_3", 0.14f },
-                { "Coil_Mizzenmast_Reef_4", 0.14f },
-                { "Coil_Mizzenmast_Reef_5", 0.14f },
-                { "Coil_Mizzenmast_Reef_7", 0.14f },
-                { "Coil_Mizzenmast_Jib_Reef_1", 0.14f },
-                { "Coil_Mizzenmast_Jib_Reef_2", 0.14f },
-                { "Coil_Mizzenmast_Jib_Reef_3", 0.14f },
-                { "Coil_Mizzenmast_Jib_Reef_4", 0.14f },
-                { "Coil_Mizzenmast_Jib_Reef_5", 0.14f },
-                { "Coil_Mizzenmast_Jib_Reef_6", 0.14f },
-            };
 
         private static MastSupportDefinition[] Supports() =>
             new[]

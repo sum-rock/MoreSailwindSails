@@ -131,17 +131,6 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            Shroud.Definition.WinchClearances.Count == 24
-                && Shroud.Definition.WinchClearances.Values.All(r => r == 0.14f),
-            "Measured Shroud clearance changed."
-        );
-        Check(
-            BoatRigCatalog
-                .All.Where(b => b != Shroud.Definition)
-                .All(b => b.WinchClearances.Count == 0),
-            "Pin clearance leaked to another boat."
-        );
-        Check(
             rows.Count(r => r[1] == "Shroud" && r[3] == "7" && r[4] == "reefWinch") == 7
                 && rows.Count(r => r[1] == "Shroud" && r[3] == "8" && r[4] == "reefWinch") == 5,
             "Re-audit active Shroud mast pin capacity."

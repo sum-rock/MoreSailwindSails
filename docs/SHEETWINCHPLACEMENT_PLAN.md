@@ -13,8 +13,10 @@ build instructions are in [DEVELOPMENT.md](DEVELOPMENT.md#winch-placement).
   other fallbacks are explicitly unrecorded.
 - Release build and both automated suites pass. Native visibility/binding and
   lifecycle wiring are checked against installed assemblies.
-- In-game acceptance remains pending on every boat. No installation, save changes
-  or remote publication were performed. See the
+- User testing on Brig found mainmast halyard exhaustion. The subsequent approved
+  policy removes geometric clearance for native seats and fallbacks; a Brig
+  retest and full in-game acceptance remain pending. Implementation work did not
+  install files, alter saves or publish remotely. See the
   [runtime checklist](DEVELOPMENT.md#runtime-validation).
 
 ## Goal and viability
@@ -96,9 +98,10 @@ resolver activates native options or changes registration/save ordering.
 
 Extend `WinchReservations` with atomic pair acquisition/release using the same
 boat-owned allocation ledger as individual halyards on every boat. Claim actual
-native identities as well as physical space; two aliases
-or different donors must not claim the same seat. A failed pair acquisition must
-leave no partial reservation. Candidate list offsets alone are not seat identities.
+seat identities and aliases; different donors must not claim the same native
+seat, and different owners must not claim the same authored fallback seat.
+Do not reject distinct seats based on distance, collider radii or mesh bounds.
+A failed pair acquisition must leave no partial reservation. Candidate list offsets alone are not seat identities.
 
 ### Sheet selection
 
@@ -138,10 +141,11 @@ wheel-local input rotation. Never attach the custom rope to a native control.
 
 A bound native `rope` reference blocks borrowing even during visibility changes.
 An active native renderer or collider also blocks it. Check all aliases of a
-seat and nearby native fittings, not just the source mast currently being queried.
-Unused eligible native seats may be borrowed; this does not make every hidden
-fitting on the boat available. Preserve collision protection for other fittings
-and existing interaction colliders. Do not globally reduce clearance.
+seat, not just the source mast currently being queried. Unused eligible native
+seats may be borrowed; this does not make every hidden fitting on the boat
+available. Trust native placement geometry and authored fallback positions.
+Neither native seats nor fallbacks require runtime geometric clearance checks;
+fallback authors choose positions that avoid existing fittings.
 
 Register both custom sheet bindings before attempting the pair claim. Custom
 stay variants created at startup remain unclaimed until their controls are needed;
@@ -173,10 +177,9 @@ Manual sheet fallbacks do not provide a halyard fallback.
 Apply these rules to Shroud's belaying pins in the first pass. Audit which native
 pin controls belong to the requested active mast and use those existing seats
 through the common resolver. Do not retain the old pooled pin-bank lookup if it
-would admit seats from a different mast. Keep any measured pin-specific clearance
-in Shroud's profile without changing other boats' clearance. Verify actual pin
-capacity and native reclaim in game rather than assuming the previous twelve-seat
-pool remains eligible under the new rules.
+would admit seats from a different mast. Do not retain pin-specific clearance
+settings. Verify actual pin capacity and native reclaim in game rather than
+assuming the previous twelve-seat pool remains eligible under the new rules.
 
 ## Manual fallbacks, migration and diagnostics
 
@@ -273,7 +276,9 @@ startup with an incomplete live mast array; controller-preserving template
 replacement; and cleanup on shipyard cancellation/removal. Halyard tests must
 prove an empty seat on an inactive alternative mast is never used, and that a
 native seat on the current mast is used without an invented offset. Include Shroud
-pin references, measured clearance, occupancy and native reclaim in these checks.
+pin references, occupancy and native reclaim in these checks. Verify that nearby
+distinct native seats and authored fallbacks remain allocatable, while duplicate
+identities and aliases still reject the whole pair.
 
 In game, start on Brig, then test every migrated boat. Fit each sail family alone
 and together, occupy/free native pairs with native sails, exercise halyards,

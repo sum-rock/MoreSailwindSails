@@ -42,19 +42,12 @@ internal static class NativeSeatPolicyChecks
                 Fallback = fallback,
                 Seats = new[]
                 {
-                    new WinchSeat(
-                        id + "/L",
-                        null,
-                        new Vector3(x, 0, 1),
-                        Quaternion.identity,
-                        0.15f
-                    ),
+                    new WinchSeat(id + "/L", null, new Vector3(x, 0, 1), Quaternion.identity),
                     new WinchSeat(
                         id + "/R",
                         null,
                         new Vector3(x + 4, 0.3f, -2),
-                        Quaternion.identity,
-                        0.15f
+                        Quaternion.identity
                     ),
                 },
             };
@@ -115,6 +108,21 @@ internal static class NativeSeatPolicyChecks
         Check(
             WinchPlacementPolicy.Resolve(ledger, other, null, new[] { moved }).Reserved == 1,
             "Custom reservation failure not classified."
+        );
+        // Fallbacks trust authored geometry, even near an existing native reservation.
+        var nearbyFallback = Pair("nearbyFallback", 30.01f, true);
+        var fallbackOwner = new object();
+        Check(
+            WinchPlacementPolicy
+                .Resolve(ledger, fallbackOwner, null, new[] { moved }, nearbyFallback)
+                .Candidate == nearbyFallback,
+            "Native reservation proximity blocked an authored fallback."
+        );
+        Check(
+            WinchPlacementPolicy
+                .Resolve(ledger, new object(), null, Array.Empty<WinchCandidate>(), nearbyFallback)
+                .FallbackBlocked == 1,
+            "Another sail reused the same fallback seats."
         );
         var invalidSeat = new SheetFallbackSeat(
             new Vector3(float.NaN, 0, 0),

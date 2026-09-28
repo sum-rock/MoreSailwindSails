@@ -11,7 +11,6 @@ namespace MoreSailwindSails.BoatRigs
         internal readonly MastSupportDefinition[] Supports;
         internal readonly FishermansStayGroupDefinition[] Stays;
         internal readonly IReadOnlyDictionary<int, int> MastParents;
-        internal readonly IReadOnlyDictionary<string, float> WinchClearances;
         internal readonly SheetWinchCategory[] SheetCategories;
 
         internal BoatRigDefinition(
@@ -19,8 +18,7 @@ namespace MoreSailwindSails.BoatRigs
             MastSupportDefinition[] supports,
             FishermansStayGroupDefinition[] stays,
             IReadOnlyDictionary<int, int> mastParents,
-            SheetWinchCategory[] sheetCategories = null,
-            IReadOnlyDictionary<string, float> winchClearances = null
+            SheetWinchCategory[] sheetCategories = null
         )
         {
             if (
@@ -43,7 +41,6 @@ namespace MoreSailwindSails.BoatRigs
             MastParents = new ReadOnlyDictionary<int, int>(
                 mastParents.ToDictionary(p => p.Key, p => p.Value)
             );
-            WinchClearances = winchClearances ?? new Dictionary<string, float>();
             SheetCategories = sheetCategories ?? Array.Empty<SheetWinchCategory>();
             if (
                 SheetCategories

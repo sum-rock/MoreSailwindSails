@@ -82,27 +82,6 @@ namespace MoreSailwindSails.Controls
                 * local;
         }
 
-        internal float Radius(GPButtonRopeWinch c)
-        {
-            // Only previously measured Shroud side pins get the pin-pitch radius.
-            if (Profile != null && Profile.WinchClearances.TryGetValue(c.name, out var clearance))
-                return clearance;
-            var scale = c.transform.lossyScale;
-            var bs = Boat.transform.lossyScale;
-            float largest = Math.Max(
-                Math.Abs(scale.x),
-                Math.Max(Math.Abs(scale.y), Math.Abs(scale.z))
-            );
-            float smallest = Math.Min(Math.Abs(bs.x), Math.Min(Math.Abs(bs.y), Math.Abs(bs.z)));
-            var sphere = c.GetComponent<SphereCollider>();
-            if (sphere)
-                return sphere.radius * largest / smallest + 0.01f;
-            var mesh = c.GetComponent<MeshFilter>();
-            return mesh && mesh.sharedMesh
-                ? Vector3.Scale(mesh.sharedMesh.bounds.extents, scale).magnitude / smallest + 0.01f
-                : 0.16f;
-        }
-
         internal bool ActiveSupport(Mast mast)
         {
             if (!mast || !mast.gameObject.activeInHierarchy)
@@ -136,33 +115,12 @@ namespace MoreSailwindSails.Controls
                 .Where(c => (Position(c) - position).sqrMagnitude <= 0.000001f)
                 .Select(c => (object)c.GetInstanceID())
                 .ToArray();
-            return new WinchSeat(
-                template.GetInstanceID(),
-                aliases,
-                position,
-                Rotation(template),
-                Radius(template)
-            );
+            return new WinchSeat(template.GetInstanceID(), aliases, position, Rotation(template));
         }
 
-        internal bool Clear(WinchSeat seat, bool borrow)
-        {
-            foreach (var c in Controls)
-            {
-                bool alias = seat.Aliases.Contains((object)c.GetInstanceID());
-                if (borrow && alias)
-                {
-                    if (Occupied(c))
-                        return false;
-                    continue;
-                }
-                if (!c.gameObject.activeInHierarchy && !c.rope)
-                    continue;
-                if (WinchReservations.Overlap(seat.Position, seat.Radius, Position(c), Radius(c)))
-                    return false;
-            }
-            return true;
-        }
+        // Native layouts are trusted. Only the seat itself and its aliases can block borrowing.
+        internal bool Available(WinchSeat seat) =>
+            !Controls.Any(c => seat.Aliases.Contains((object)c.GetInstanceID()) && Occupied(c));
 
         internal NativeWinchCandidate Candidate(
             string id,
@@ -180,7 +138,7 @@ namespace MoreSailwindSails.Controls
                 Templates = templates,
                 Seats = seats,
                 Supported = templates.All(Mounted),
-                Vacant = seats.All(s => Clear(s, true)),
+                Vacant = seats.All(Available),
             };
         }
 
