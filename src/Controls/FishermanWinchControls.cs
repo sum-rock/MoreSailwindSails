@@ -79,6 +79,7 @@ namespace MoreSailwindSails.Controls
         {
             var manager = For(boat);
             var group = manager.Group(owner);
+            manager.native.Prepare();
             if (
                 !new WinchBootstrapTemplates(native: manager.native).TryGet(
                     forward: group.Forward,
@@ -113,7 +114,7 @@ namespace MoreSailwindSails.Controls
         internal static bool BootstrapReady(BoatRefs boat, Mast forward, Mast halyard)
         {
             var manager = For(boat);
-            manager.native.Refresh();
+            manager.native.Prepare();
             if (
                 new WinchBootstrapTemplates(native: manager.native).TryGet(
                     forward: forward,
@@ -185,17 +186,26 @@ namespace MoreSailwindSails.Controls
 
         private void LateUpdate()
         {
-            if (!boat)
+            if (!boat || controls.Count == 0)
                 return;
-            native.Refresh();
             foreach (var control in controls.ToArray())
                 if (!control.Owner || !control.Winch)
                     control.Dispose();
+            if (controls.Count == 0)
+                return;
+            native.Prepare();
             // Release inactive owners before anyone competes for their seats.
             foreach (var group in groups.ToArray())
                 group.ReleaseUnused();
             foreach (var group in groups.ToArray())
                 group.Refresh();
+        }
+
+        internal static void InvalidateInventory(Component component)
+        {
+            var boat = component ? component.GetComponentInParent<BoatRefs>() : null;
+            if (boat)
+                boat.GetComponent<FishermanWinchControls>()?.native?.Invalidate();
         }
 
         private void OnDestroy()
@@ -211,9 +221,23 @@ namespace MoreSailwindSails.Controls
             internal Mast Forward,
                 HalyardMast,
                 NativeMount;
-            private OwnedWinch port,
-                starboard,
-                reef;
+            private readonly OwnedWinch[] sheetFittings = new OwnedWinch[2];
+            private readonly OwnedWinch[] halyardFittings = new OwnedWinch[1];
+            private OwnedWinch port
+            {
+                get => sheetFittings[0];
+                set => sheetFittings[0] = value;
+            }
+            private OwnedWinch starboard
+            {
+                get => sheetFittings[1];
+                set => sheetFittings[1] = value;
+            }
+            private OwnedWinch reef
+            {
+                get => halyardFittings[0];
+                set => halyardFittings[0] = value;
+            }
             private readonly PlacementState sheetState = new PlacementState();
             private readonly PlacementState halyardState = new PlacementState();
 
@@ -254,15 +278,15 @@ namespace MoreSailwindSails.Controls
             internal void ReleaseUnused()
             {
                 if (!SheetWanted)
-                    Release(sheetState, port, starboard);
+                    Release(state: sheetState, fittings: sheetFittings);
                 if (!HalyardWanted)
-                    Release(halyardState, reef);
+                    Release(state: halyardState, fittings: halyardFittings);
             }
 
             internal void Suspend()
             {
-                Release(sheetState, port, starboard);
-                Release(halyardState, reef);
+                Release(state: sheetState, fittings: sheetFittings);
+                Release(state: halyardState, fittings: halyardFittings);
             }
 
             internal void Dirty()
@@ -283,8 +307,11 @@ namespace MoreSailwindSails.Controls
                     manager.groups.Remove(this);
             }
 
-            private void Release(PlacementState state, params OwnedWinch[] fittings)
+            private void Release(PlacementState state, OwnedWinch[] fittings)
             {
+                if (state.Released)
+                    return;
+                state.Released = true;
                 manager.reservations.Release(state);
                 state.Current = null;
                 state.RetryAfter = 0f;
@@ -295,9 +322,9 @@ namespace MoreSailwindSails.Controls
             internal void Refresh()
             {
                 if (SheetWanted)
-                    Refresh(sheetState, true, new[] { port, starboard });
+                    Refresh(state: sheetState, pair: true, fittings: sheetFittings);
                 if (HalyardWanted)
-                    Refresh(halyardState, false, new[] { reef });
+                    Refresh(state: halyardState, pair: false, fittings: halyardFittings);
             }
 
             private void Refresh(PlacementState state, bool pair, OwnedWinch[] fittings)
@@ -306,6 +333,33 @@ namespace MoreSailwindSails.Controls
                     return;
                 try
                 {
+                    if (
+                        WinchPlacementPolicy.TryRetain(
+                            ledger: manager.reservations,
+                            owner: state,
+                            current: state.Current,
+                            valid: pair
+                                ? manager.sheets.ValidateCurrent(
+                                    forward: Forward,
+                                    current: state.Current
+                                )
+                                : manager.halyards.ValidateCurrent(
+                                    requested: HalyardMast,
+                                    current: state.Current
+                                )
+                        )
+                    )
+                    {
+                        // Boat/support motion still updates the mounting frame, without
+                        // enumerating seats, replacing clones or touching the ledger.
+                        for (int i = 0; i < fittings.Length; i++)
+                        {
+                            fittings[i].Position(state.Current.Seats[i]);
+                            fittings[i].Show();
+                        }
+                        return;
+                    }
+                    state.Released = false;
                     var result = pair
                         ? manager.sheets.Resolve(state, Owner, Forward, state.Current)
                         : manager.halyards.Resolve(state, HalyardMast, state.Current);
@@ -388,6 +442,7 @@ namespace MoreSailwindSails.Controls
             {
                 internal NativeWinchCandidate Current;
                 internal float RetryAfter;
+                internal bool Released = true;
                 internal bool Logged,
                     Warned,
                     Failed;
@@ -558,8 +613,13 @@ namespace MoreSailwindSails.Controls
 
             internal void Show()
             {
-                clone.Mount.gameObject.SetActive(true);
-                Winch.ShowWinch(true);
+                if (!clone.Mount.gameObject.activeSelf)
+                    clone.Mount.gameObject.SetActive(true);
+                if (
+                    !Winch.GetComponent<Renderer>().enabled
+                    || !Winch.GetComponent<Collider>().enabled
+                )
+                    Winch.ShowWinch(true);
             }
 
             internal void Suspend()

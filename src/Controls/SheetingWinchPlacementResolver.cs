@@ -17,6 +17,74 @@ namespace MoreSailwindSails.Controls
             this.ledger = ledger;
         }
 
+        internal bool ValidateCurrent(Mast forward, NativeWinchCandidate current)
+        {
+            if (current == null || !native.ActiveSupport(forward))
+                return false;
+            var category = native.Profile?.SheetCategory(forward.orderIndex);
+            if (category == null)
+                return false;
+            if (current.Fallback)
+            {
+                if (
+                    category.Fallback == null
+                    || category.Fallback.InvalidSide != null
+                    || current.Id != category.FallbackName
+                )
+                    return false;
+                return ValidFallbackSide(
+                        definition: category.Fallback.Port,
+                        current: current,
+                        index: 0
+                    )
+                    && ValidFallbackSide(
+                        definition: category.Fallback.Starboard,
+                        current: current,
+                        index: 1
+                    );
+            }
+            var mast = current.SourceMast;
+            int index = current.SourceIndex;
+            return mast
+                && category.Sources.Contains(mast.orderIndex)
+                && native.Mast(mast.orderIndex) == mast
+                && mast.leftAngleWinch != null
+                && mast.rightAngleWinch != null
+                && index < mast.leftAngleWinch.Length
+                && index < mast.rightAngleWinch.Length
+                && mast.leftAngleWinch[index] == current.Templates[0]
+                && mast.rightAngleWinch[index] == current.Templates[1]
+                && native.Current(current);
+        }
+
+        private bool ValidFallbackSide(
+            SheetFallbackSeat definition,
+            NativeWinchCandidate current,
+            int index
+        )
+        {
+            var controls = NativeWinchSeats.Sources(
+                mast: native.Mast(definition.TemplateMast),
+                role: definition.TemplateRole
+            );
+            var template = current.Templates[index];
+            return controls != null
+                && definition.TemplateIndex < controls.Length
+                && controls[definition.TemplateIndex] == template
+                && native.TemplateUsable(template)
+                && definition.Supports.All(id => native.ActiveSupport(native.Mast(id)))
+                && current
+                    .Seats[index]
+                    .MatchesPose(
+                        position: definition.Contact
+                            + definition.Normal.normalized * definition.Offset,
+                        rotation: Quaternion.FromToRotation(
+                            definition.SourceNormal,
+                            definition.Normal
+                        ) * native.Rotation(template)
+                    );
+        }
+
         internal WinchResolution Resolve(
             object owner,
             GameObject ownerObject,
@@ -64,6 +132,8 @@ namespace MoreSailwindSails.Controls
                     );
                     if (candidate == null)
                         continue;
+                    candidate.SourceMast = mast;
+                    candidate.SourceIndex = index[0];
                     candidate.Supported &= native.ActiveSupport(forward);
                     WinchPlacementPolicy.AddSupportedRepresentative(
                         candidates: pairs,

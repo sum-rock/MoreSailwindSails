@@ -126,6 +126,18 @@ internal static class WinchChecks
                 .Any(m => m.DeclaringType == bootstrap && m.Name == "TryGet"),
             "Owned startup clones bypass shared bootstrap selection."
         );
+        var createCalls = CalledMethods(manager.GetMethod("Create", all)).ToArray();
+        Check(
+            Array.FindIndex(
+                createCalls,
+                m => m.Name == "Prepare" && m.DeclaringType.Name == "NativeWinchSeats"
+            ) >= 0
+                && Array.FindIndex(
+                    createCalls,
+                    m => m.Name == "Prepare" && m.DeclaringType.Name == "NativeWinchSeats"
+                ) < Array.FindIndex(createCalls, m => m.Name == "TryGet"),
+            "Startup clones select templates before inventory discovery."
+        );
         foreach (string family in new[] { "FishermansFlyingSail", "FishermansStaysail" })
         {
             var type = assembly.GetType($"MoreSailwindSails.Sails.{family}.{family}Rigging", true);

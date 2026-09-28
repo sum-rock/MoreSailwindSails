@@ -1,8 +1,10 @@
 # Winch placement redesign cleanup
 
-Status: **planned, not implemented**. Created 2026-09-27 from the architecture
-review of boat definitions and winch placement. This document is intended to be
-usable without the original conversation.
+Status: **WC-1 through WC-7 implemented**, 2026-09-27, version **0.2.1**.
+Release and both automated suites pass. Cleanup-specific in-game regression and
+runtime profiling remain unperformed; the fixed-fixture counts below are not
+Unity measurements. Created from the architecture review of boat definitions and
+winch placement; retained as the implementation and acceptance checklist.
 
 ## Baseline and accepted behavior
 
@@ -42,16 +44,39 @@ Keep Flying Sail and staysail mechanics independently editable; the unrelated
 ## Evidence and validation status
 
 The review found no critical blocker in the current boat data. The redesign is
-accepted as complete; this plan's improvements remain **not implemented**.
+accepted as complete; this follow-up cleanup is now implemented.
 [Runtime validation](DEVELOPMENT.md#runtime-validation) owns the automated results
 and successful Brig/Jong retest observations. Refer there instead of treating
 historical failures or earlier retest-pending notes as current status.
 
 Those observations are the baseline for cleanup regressions, not evidence that
-these planned changes work. Neither existing suite executes Unity object
+the cleanup changes work in game. Neither existing suite executes Unity object
 lifecycles or measures in-game frame time. Logs can be overwritten on game launch;
 paths and installed-assembly inspection instructions are in
 [Local investigation](DEVELOPMENT.md#local-investigation).
+
+## Implementation record
+
+Work was structured into five local commits, with no push:
+
+1. WC-3/WC-4/WC-7: matching-index pairs, boolean/idempotent atomic acquisition,
+   explicit supported roles and removal of obsolete centre-control branches.
+2. WC-5: defensive copies, read-only collections and a cached catalog, with
+   mutation checks over every authored definition.
+3. WC-6: support-aware whole-pair/halyard deduplication and coincident-reference
+   regression checks; alias occupancy/reservations remain enforced.
+4. WC-2: shared bootstrap selection across both sail families and custom stays,
+   using later sources/fallback templates independently of geometry donors.
+5. WC-1: shared inventory/alias caches, live current-placement validation,
+   inspected lifecycle invalidation, periodic discovery recovery and stable claims.
+
+[Runtime validation](DEVELOPMENT.md#runtime-validation) records the final checks
+and their limits. The 600-frame, one-pair synthetic fixture reduced hierarchy-scan
+requests from 1,200 to 20, candidate constructions from 600 to 1 and reservation
+entry creations from 1,200 to 2. The baseline follows the inspected old control
+flow; the new fixture executes the production schedule and allocation policy.
+Actual Unity hierarchy scans, frame-time impact and cleanup game behavior remain
+to be measured in the prescribed Brig/Jong-first regression sessions.
 
 ## Work items
 
@@ -220,10 +245,10 @@ reintroduce geometric clearance.
 
 ## Execution order, checks and handoff
 
-Suggested reviewable work units: (1) WC-3/WC-4/WC-7 API cleanup; (2) WC-5 immutable
+Implemented reviewable work units: (1) WC-3/WC-4/WC-7 API cleanup; (2) WC-5 immutable
 data; (3) WC-6 deduplication regression; (4) WC-2 bootstrap integration; (5) WC-1
 steady-state optimization. Add behavior-focused tests with their corresponding
-change. This sequence does not authorize commits or implementation by itself.
+change. The user's execution request explicitly authorized local commits, without a push.
 
 Read [AGENTS.md](../AGENTS.md), README, `src/Plugin.cs`, the relevant
 [development guidance](DEVELOPMENT.md) and actual source before editing. Preserve

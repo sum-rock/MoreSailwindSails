@@ -15,6 +15,7 @@ internal static class Program
         Controls.NativeSeatProfileChecks.Run();
         Controls.NativeSeatAllocationChecks.Run();
         Controls.NativeSeatPolicyChecks.Run();
+        Controls.WinchRefreshChecks.Run();
         OrderTextChecks.Run();
         FlyingSailChecks.Run();
         RopeChecks.Run();

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -21,66 +22,85 @@ internal static class HarmonySignatureChecks
                 | BindingFlags.Static
                 | BindingFlags.Public
                 | BindingFlags.NonPublic;
-            MethodBase target =
-                info.methodType == MethodType.Constructor
-                    ? info.declaringType.GetConstructor(all, null, Type.EmptyTypes, null)
-                    : info.declaringType.GetMethod(info.methodName, all);
-            if (target == null)
-                throw new Exception("Missing Harmony target: " + type.Name);
-            foreach (
-                var patch in type.GetMethods(
-                    BindingFlags.Static
-                        | BindingFlags.NonPublic
-                        | BindingFlags.Public
-                        | BindingFlags.DeclaredOnly
-                )
-            )
+            var targets =
+                info.declaringType == null
+                    ? (IEnumerable<MethodBase>)
+                        type.GetMethod("TargetMethods", all).Invoke(null, null)
+                    : new[]
+                    {
+                        info.methodType == MethodType.Constructor
+                            ? (MethodBase)
+                                info.declaringType.GetConstructor(all, null, Type.EmptyTypes, null)
+                            : info.declaringType.GetMethod(info.methodName, all),
+                    };
+            foreach (var target in targets)
             {
-                if (
-                    !patch.IsDefined(typeof(HarmonyPrefix))
-                    && !patch.IsDefined(typeof(HarmonyPostfix))
-                    && !patch.IsDefined(typeof(HarmonyFinalizer))
+                if (target == null)
+                    throw new Exception("Missing Harmony target: " + type.Name);
+                foreach (
+                    var patch in type.GetMethods(
+                        BindingFlags.Static
+                            | BindingFlags.NonPublic
+                            | BindingFlags.Public
+                            | BindingFlags.DeclaredOnly
+                    )
                 )
-                    continue;
-                foreach (var parameter in patch.GetParameters())
                 {
-                    Type actual = null;
-                    if (parameter.Name.StartsWith("___"))
-                        actual = info
-                            .declaringType.GetField(parameter.Name.Substring(3), all)
-                            ?.FieldType;
-                    else if (parameter.Name == "__instance")
-                        actual = info.declaringType;
-                    else if (parameter.Name == "__result")
-                        actual = (target as MethodInfo)?.ReturnType;
-                    else if (parameter.Name == "__exception")
-                        actual = typeof(Exception);
-                    else if (parameter.Name == "__state")
-                        actual = type.GetMethods(all)
-                            .Single(m => m.IsDefined(typeof(HarmonyPrefix)))
-                            .GetParameters()
-                            .Single(p => p.Name == "__state")
-                            .ParameterType;
-                    else
-                        actual = target
-                            .GetParameters()
-                            .SingleOrDefault(p => p.Name == parameter.Name)
-                            ?.ParameterType;
-                    var expected = parameter.ParameterType;
-                    if (expected.IsByRef)
-                        expected = expected.GetElementType();
-                    if (actual != null && actual.IsByRef)
-                        actual = actual.GetElementType();
-                    if (actual == null || actual != expected)
-                        throw new Exception(
-                            $"Invalid injection: {type.Name}.{patch.Name}({parameter.Name})."
-                        );
+                    if (
+                        !patch.IsDefined(typeof(HarmonyPrefix))
+                        && !patch.IsDefined(typeof(HarmonyPostfix))
+                        && !patch.IsDefined(typeof(HarmonyFinalizer))
+                    )
+                        continue;
+                    foreach (var parameter in patch.GetParameters())
+                    {
+                        Type actual = null;
+                        if (parameter.Name.StartsWith("___"))
+                            actual = target
+                                .DeclaringType.GetField(parameter.Name.Substring(3), all)
+                                ?.FieldType;
+                        else if (parameter.Name == "__instance")
+                            actual = target.DeclaringType;
+                        else if (parameter.Name == "__result")
+                            actual = (target as MethodInfo)?.ReturnType;
+                        else if (parameter.Name == "__exception")
+                            actual = typeof(Exception);
+                        else if (parameter.Name == "__state")
+                            actual = type.GetMethods(all)
+                                .Single(m => m.IsDefined(typeof(HarmonyPrefix)))
+                                .GetParameters()
+                                .Single(p => p.Name == "__state")
+                                .ParameterType;
+                        else
+                            actual = target
+                                .GetParameters()
+                                .SingleOrDefault(p => p.Name == parameter.Name)
+                                ?.ParameterType;
+                        var expected = parameter.ParameterType;
+                        if (expected.IsByRef)
+                            expected = expected.GetElementType();
+                        if (actual != null && actual.IsByRef)
+                            actual = actual.GetElementType();
+                        if (
+                            actual == null
+                            || (
+                                actual != expected
+                                && !(
+                                    parameter.Name == "__instance"
+                                    && expected.IsAssignableFrom(actual)
+                                )
+                            )
+                        )
+                            throw new Exception(
+                                $"Invalid injection: {type.Name}.{patch.Name}({parameter.Name})."
+                            );
+                    }
                 }
+                count++;
             }
-            count++;
         }
-        if (count != 56)
-            throw new Exception($"Expected all 56 patch classes, found {count}.");
+        if (count != 62)
+            throw new Exception($"Expected all 62 patch targets, found {count}.");
 
         Console.WriteLine($"PASS: {count} Harmony targets and injected argument types.");
     }

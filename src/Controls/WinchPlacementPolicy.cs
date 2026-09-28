@@ -55,6 +55,13 @@ namespace MoreSailwindSails.Controls
             candidates.Add(candidate);
         }
 
+        internal static bool TryRetain(
+            WinchReservations ledger,
+            object owner,
+            WinchCandidate current,
+            bool valid
+        ) => current != null && valid && ledger.HoldsSeats(owner: owner, seats: current.Seats);
+
         internal static WinchResolution Resolve(
             WinchReservations ledger,
             object owner,

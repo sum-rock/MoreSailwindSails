@@ -6,12 +6,6 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Controls
 {
-    internal sealed class NativeWinchCandidate : WinchCandidate
-    {
-        internal GPButtonRopeWinch[] Templates;
-        internal string Context;
-    }
-
     // One inventory per coordinator. Never activate source rigs or register masts.
     internal sealed class NativeWinchSeats
     {
@@ -21,30 +15,129 @@ namespace MoreSailwindSails.Controls
         private readonly Dictionary<int, Quaternion> wheelFrames =
             new Dictionary<int, Quaternion>();
         private readonly HashSet<string> diagnostics = new HashSet<string>();
-        internal Mast[] Masts { get; private set; }
-        internal GPButtonRopeWinch[] Controls { get; private set; }
+        private readonly WinchDiscoverySchedule discovery = new WinchDiscoverySchedule();
+        private readonly Dictionary<int, Mast> mastsById = new Dictionary<int, Mast>();
+        private readonly Dictionary<int, GPButtonRopeWinch> controlsById =
+            new Dictionary<int, GPButtonRopeWinch>();
+        private readonly Dictionary<int, WinchSeat> seatsById = new Dictionary<int, WinchSeat>();
+        private readonly Dictionary<Mast, GPButtonRopeWinch[][]> arrays =
+            new Dictionary<Mast, GPButtonRopeWinch[][]>();
+        private int liveFrame = -1;
+        internal long HierarchyScans { get; private set; }
+        internal long CandidateBuilds { get; private set; }
+        internal Mast[] Masts { get; private set; } = Array.Empty<Mast>();
+        internal GPButtonRopeWinch[] Controls { get; private set; } =
+            Array.Empty<GPButtonRopeWinch>();
 
         internal NativeWinchSeats(BoatRefs boat, Func<GPButtonRopeWinch, bool> owned)
         {
             Boat = boat;
             Profile = BoatRigCatalog.Find(boat.name);
             this.owned = owned;
-            Refresh();
+        }
+
+        internal void Invalidate() => discovery.Invalidate();
+
+        // The coordinator calls this only while it owns controls. Bootstrap calls
+        // it explicitly because native binding needs arrays before the first tick.
+        internal void Prepare()
+        {
+            if (ArraysChanged() || Controls.Any(c => !c))
+                discovery.Invalidate();
+            if (discovery.Due(now: Time.unscaledTime))
+                Refresh();
+            if (liveFrame == Time.frameCount)
+                return;
+            liveFrame = Time.frameCount;
+            if (
+                Controls.Any(c =>
+                    !c
+                    || !seatsById.TryGetValue(c.GetInstanceID(), out var seat)
+                    || !seat.MatchesPose(position: Position(c), rotation: Rotation(c))
+                )
+            )
+                RebuildSeats();
         }
 
         internal void Refresh()
         {
+            HierarchyScans += 2;
             Masts = Boat.GetComponentsInChildren<Mast>(true)
                 .Where(m => m && m.orderIndex < 128)
                 .ToArray();
             Controls = Boat.GetComponentsInChildren<GPButtonRopeWinch>(true)
                 .Where(c => c && !owned(c))
                 .ToArray();
+            mastsById.Clear();
+            foreach (var mast in Masts)
+                if (
+                    !mastsById.TryGetValue(mast.orderIndex, out var previous)
+                    || (
+                        !previous.GetComponent<BoatPartOption>()
+                        && mast.GetComponent<BoatPartOption>()
+                    )
+                )
+                    mastsById[mast.orderIndex] = mast;
+            controlsById.Clear();
+            foreach (var control in Controls)
+                controlsById[control.GetInstanceID()] = control;
+            arrays.Clear();
+            foreach (var mast in Masts)
+                arrays[mast] = new[]
+                {
+                    Copy(mast.reefWinch),
+                    Copy(mast.leftAngleWinch),
+                    Copy(mast.rightAngleWinch),
+                    Copy(mast.midAngleWinch),
+                };
+            foreach (
+                int id in wheelFrames.Keys.Where(id => !controlsById.ContainsKey(id)).ToArray()
+            )
+                wheelFrames.Remove(id);
+            RebuildSeats();
+            liveFrame = Time.frameCount;
+            discovery.Discovered(now: Time.unscaledTime);
         }
 
-        internal Mast Mast(int id) =>
-            Masts.FirstOrDefault(m => m.orderIndex == id && m.GetComponent<BoatPartOption>())
-            ?? Masts.FirstOrDefault(m => m.orderIndex == id);
+        private static GPButtonRopeWinch[] Copy(GPButtonRopeWinch[] controls) =>
+            controls?.ToArray() ?? Array.Empty<GPButtonRopeWinch>();
+
+        private static bool SameArray(GPButtonRopeWinch[] live, GPButtonRopeWinch[] snapshot) =>
+            live == null ? snapshot.Length == 0 : live.SequenceEqual(snapshot);
+
+        private bool ArraysChanged() =>
+            arrays.Any(entry =>
+                !entry.Key
+                || !SameArray(entry.Key.reefWinch, entry.Value[0])
+                || !SameArray(entry.Key.leftAngleWinch, entry.Value[1])
+                || !SameArray(entry.Key.rightAngleWinch, entry.Value[2])
+                || !SameArray(entry.Key.midAngleWinch, entry.Value[3])
+            );
+
+        private void RebuildSeats()
+        {
+            seatsById.Clear();
+            var positions = Controls.Where(c => c).ToDictionary(c => c.GetInstanceID(), Position);
+            foreach (var control in Controls)
+            {
+                if (!control)
+                    continue;
+                int id = control.GetInstanceID();
+                var position = positions[id];
+                var aliases = positions
+                    .Where(p => (p.Value - position).sqrMagnitude <= 0.000001f)
+                    .Select(p => (object)p.Key)
+                    .ToArray();
+                seatsById[id] = new WinchSeat(
+                    identity: id,
+                    aliases: aliases,
+                    position: position,
+                    rotation: Rotation(control)
+                );
+            }
+        }
+
+        internal Mast Mast(int id) => mastsById.TryGetValue(id, out var mast) ? mast : null;
 
         internal static GPButtonRopeWinch[] Sources(Mast mast, WinchRole role)
         {
@@ -123,19 +216,40 @@ namespace MoreSailwindSails.Controls
             return !option || option.gameObject.activeInHierarchy;
         }
 
-        internal WinchSeat Seat(GPButtonRopeWinch template)
+        internal WinchSeat Seat(GPButtonRopeWinch template) =>
+            template && seatsById.TryGetValue(template.GetInstanceID(), out var seat) ? seat : null;
+
+        // Look up aliases directly; do not scan the full inventory for every owner.
+        internal bool Available(WinchSeat seat)
         {
-            var position = Position(template);
-            var aliases = Controls
-                .Where(c => (Position(c) - position).sqrMagnitude <= 0.000001f)
-                .Select(c => (object)c.GetInstanceID())
-                .ToArray();
-            return new WinchSeat(template.GetInstanceID(), aliases, position, Rotation(template));
+            foreach (var alias in seat.Aliases)
+                if (
+                    alias is int id
+                    && controlsById.TryGetValue(id, out var control)
+                    && Occupied(control)
+                )
+                    return false;
+            return true;
         }
 
-        // Native layouts are trusted. Only the seat itself and its aliases can block borrowing.
-        internal bool Available(WinchSeat seat) =>
-            !Controls.Any(c => seat.Aliases.Contains((object)c.GetInstanceID()) && Occupied(c));
+        internal bool Current(NativeWinchCandidate candidate)
+        {
+            for (int i = 0; i < candidate.Templates.Length; i++)
+            {
+                var template = candidate.Templates[i];
+                if (!TemplateUsable(template) || !Mounted(template))
+                    return false;
+                var seat = Seat(template);
+                if (
+                    seat == null
+                    || !seat.SamePose(candidate.Seats[i])
+                    || !seat.Aliases.SequenceEqual(candidate.Seats[i].Aliases)
+                    || !Available(seat)
+                )
+                    return false;
+            }
+            return true;
+        }
 
         internal NativeWinchCandidate Candidate(
             string id,
@@ -143,7 +257,8 @@ namespace MoreSailwindSails.Controls
             params GPButtonRopeWinch[] templates
         )
         {
-            if (templates.Any(t => !Usable(t) || owned(t)))
+            CandidateBuilds++;
+            if (templates.Any(t => !TemplateUsable(t) || Seat(t) == null))
                 return null;
             var seats = templates.Select(Seat).ToArray();
             return new NativeWinchCandidate
