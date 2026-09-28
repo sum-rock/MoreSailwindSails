@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MoreSailwindSails.Controls
@@ -30,6 +31,30 @@ namespace MoreSailwindSails.Controls
 
     internal static class WinchPlacementPolicy
     {
+        // Deduplicate whole placements only after considering their live support.
+        // Seat aliases remain intact, so an occupied equivalent still blocks use.
+        internal static void AddSupportedRepresentative<T>(List<T> candidates, T candidate)
+            where T : WinchCandidate
+        {
+            if (candidate == null)
+                return;
+            var coincident = candidates.FirstOrDefault(c =>
+                c.Seats.Length == candidate.Seats.Length
+                && c.Seats.Select(
+                        (seat, i) =>
+                            (seat.Position - candidate.Seats[i].Position).sqrMagnitude <= 0.000001f
+                    )
+                    .All(same => same)
+            );
+            if (coincident != null)
+            {
+                if (coincident.Supported || !candidate.Supported)
+                    return;
+                candidates.Remove(coincident);
+            }
+            candidates.Add(candidate);
+        }
+
         internal static WinchResolution Resolve(
             WinchReservations ledger,
             object owner,

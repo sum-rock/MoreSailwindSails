@@ -29,14 +29,10 @@ namespace MoreSailwindSails.Controls
                         $"requestedMast={requested.orderIndex}, index={i}",
                         control
                     );
-                    if (
-                        candidate != null
-                        && !candidates.Any(c =>
-                            (c.Seats[0].Position - candidate.Seats[0].Position).sqrMagnitude
-                            <= 0.000001f
-                        )
-                    )
-                        candidates.Add(candidate);
+                    WinchPlacementPolicy.AddSupportedRepresentative(
+                        candidates: candidates,
+                        candidate: candidate
+                    );
                 }
             var result = WinchPlacementPolicy.Resolve(ledger, owner, current, candidates.ToArray());
             if (!native.ActiveSupport(requested))

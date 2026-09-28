@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Controls;
@@ -44,6 +45,69 @@ internal static class NativeSeatPolicyChecks
                     ),
                 },
             };
+        // Distinct coincident references: inactive first, active second. Test a
+        // whole sheet pair and a single halyard without mixing their identities.
+        foreach (int count in new[] { 1, 2 })
+        {
+            var inactive = Pair("inactive", 0);
+            var active = Pair("active", 0);
+            inactive.Supported = false;
+            inactive.Seats = inactive.Seats.Take(count).ToArray();
+            active.Seats = active
+                .Seats.Take(count)
+                .Select(
+                    (seat, i) =>
+                        new WinchSeat(
+                            identity: seat.Identity,
+                            aliases: new[] { inactive.Seats[i].Identity },
+                            position: seat.Position,
+                            rotation: seat.Rotation
+                        )
+                )
+                .ToArray();
+            var representatives = new List<WinchCandidate>();
+            WinchPlacementPolicy.AddSupportedRepresentative(
+                candidates: representatives,
+                candidate: inactive
+            );
+            WinchPlacementPolicy.AddSupportedRepresentative(
+                candidates: representatives,
+                candidate: active
+            );
+            Check(
+                representatives.Count == 1 && representatives[0] == active,
+                "Inactive coincident representative hid active controls."
+            );
+            var localLedger = new WinchReservations();
+            Check(
+                WinchPlacementPolicy
+                    .Resolve(
+                        ledger: localLedger,
+                        owner: owner,
+                        current: null,
+                        native: representatives.ToArray()
+                    )
+                    .Candidate == active,
+                "Supported equivalent was not selected."
+            );
+            Check(
+                !localLedger.TryAcquireSeats(owner: new object(), seats: inactive.Seats),
+                "Coincident references allowed duplicate reservations."
+            );
+            active.Vacant = false; // live occupancy includes every alias, even inactive references
+            Check(
+                WinchPlacementPolicy
+                    .Resolve(
+                        ledger: localLedger,
+                        owner: owner,
+                        current: active,
+                        native: representatives.ToArray()
+                    )
+                    .Candidate == null
+                    && localLedger.Count == 0,
+                "Occupied alias allowed borrowing or retained a claim."
+            );
+        }
         var a = Pair("a", 0);
         var b = Pair("b", 10);
         var fallback = Pair("fallback", 20, true);

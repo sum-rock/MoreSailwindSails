@@ -65,19 +65,10 @@ namespace MoreSailwindSails.Controls
                     if (candidate == null)
                         continue;
                     candidate.Supported &= native.ActiveSupport(forward);
-                    // Aliases are already collected across the complete boat inventory.
-                    if (
-                        pairs.Any(c =>
-                            c.Seats.Select(
-                                    (seat, i) =>
-                                        (seat.Position - candidate.Seats[i].Position).sqrMagnitude
-                                        <= 0.000001f
-                                )
-                                .All(same => same)
-                        )
-                    )
-                        continue;
-                    pairs.Add(candidate);
+                    WinchPlacementPolicy.AddSupportedRepresentative(
+                        candidates: pairs,
+                        candidate: candidate
+                    );
                 }
             }
             var fallback = Fallback(category, forward, out var invalid);
