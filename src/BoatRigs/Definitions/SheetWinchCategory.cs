@@ -8,7 +8,7 @@ namespace MoreSailwindSails.BoatRigs
     {
         internal readonly string Name;
         internal readonly int[] PhysicalMasts;
-        internal readonly NativeSheetSource[] Sources;
+        internal readonly int[] Sources;
         internal readonly string FallbackName;
         internal readonly SheetFallbackPair Fallback;
 
@@ -21,7 +21,7 @@ namespace MoreSailwindSails.BoatRigs
         {
             Name = name;
             PhysicalMasts = physicalMasts;
-            Sources = sources.Select(id => new NativeSheetSource(id)).ToArray();
+            Sources = sources;
             FallbackName = name + "Fallback";
             Fallback = fallback;
         }

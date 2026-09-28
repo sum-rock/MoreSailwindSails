@@ -73,22 +73,17 @@ namespace MoreSailwindSails.Stays.FishermansStay
             );
             if (
                 Mount.reefWinch.Length == 0
-                || (
-                    Mount.midAngleWinch.Length == 0
-                    && (Mount.leftAngleWinch.Length == 0 || Mount.rightAngleWinch.Length == 0)
-                )
+                || Mount.leftAngleWinch.Length == 0
+                || Mount.rightAngleWinch.Length == 0
             )
             {
                 var missing = new List<string>();
                 if (Mount.reefWinch.Length == 0)
                     missing.Add("halyard");
-                if (Mount.midAngleWinch.Length == 0)
-                {
-                    if (Mount.leftAngleWinch.Length == 0)
-                        missing.Add("port sheet");
-                    if (Mount.rightAngleWinch.Length == 0)
-                        missing.Add("starboard sheet");
-                }
+                if (Mount.leftAngleWinch.Length == 0)
+                    missing.Add("port sheet");
+                if (Mount.rightAngleWinch.Length == 0)
+                    missing.Add("starboard sheet");
                 throw new InvalidOperationException(
                     $"Incomplete controls for Fisherman's Stay mount {definition.MountIndex} ({definition.Label}): missing {string.Join(", ", missing)}; sheet mapping={source.orderIndex}, halyard mapping={references.Aft.orderIndex}."
                 );
@@ -236,7 +231,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
 
         private GPButtonRopeWinch[] CloneWinches(Mast donor, WinchRole role, string label)
         {
-            var sourceWinch = FishermanWinchControls.Source(boat, donor, role);
+            var sourceWinch = FishermanWinchControls.Source(donor, role);
             if (!sourceWinch)
                 return new GPButtonRopeWinch[0];
             var control = FishermanWinchControls.Create(

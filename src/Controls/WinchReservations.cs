@@ -15,21 +15,9 @@ namespace MoreSailwindSails.Controls
         private readonly List<Reservation> entries = new List<Reservation>();
         internal int Count => entries.Count;
 
-        internal sealed class Claim
-        {
-            internal readonly object Owner;
-            internal readonly WinchSeat[] Seats;
-
-            internal Claim(object owner, WinchSeat[] seats)
-            {
-                Owner = owner;
-                Seats = seats;
-            }
-        }
-
         // Check the whole transaction before touching the ledger. A failed
         // acquisition cannot leave half a pair or consume another owner's seat.
-        internal Claim AcquireSeats(object owner, WinchSeat[] seats)
+        internal bool TryAcquireSeats(object owner, WinchSeat[] seats)
         {
             if (
                 owner == null
@@ -37,21 +25,32 @@ namespace MoreSailwindSails.Controls
                 || seats.Length == 0
                 || seats.Any(s => s == null || !s.Valid)
             )
-                return null;
+                return false;
             for (int i = 0; i < seats.Length; i++)
             {
                 for (int j = 0; j < i; j++)
                     if (seats[i].Conflicts(seats[j]))
-                        return null;
+                        return false;
                 if (
                     entries.Any(e => !ReferenceEquals(e.Owner, owner) && seats[i].Conflicts(e.Seat))
                 )
-                    return null;
+                    return false;
             }
+            if (
+                entries.Count(e => ReferenceEquals(e.Owner, owner)) == seats.Length
+                && seats.All(s =>
+                    entries.Any(e =>
+                        ReferenceEquals(e.Owner, owner)
+                        && e.Seat.SamePose(s)
+                        && e.Seat.Aliases.SequenceEqual(s.Aliases)
+                    )
+                )
+            )
+                return true;
             Release(owner);
             foreach (var seat in seats)
                 entries.Add(new Reservation { Owner = owner, Seat = seat });
-            return new Claim(owner, seats.ToArray());
+            return true;
         }
 
         internal void Release(object owner) =>

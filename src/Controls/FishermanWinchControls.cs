@@ -78,7 +78,7 @@ namespace MoreSailwindSails.Controls
         )
         {
             var manager = For(boat);
-            var source = Source(boat, donorMast, role);
+            var source = Source(donorMast, role);
             if (!source)
                 throw new InvalidOperationException("No usable source winch: " + label);
             var control = new OwnedWinch(
@@ -97,7 +97,7 @@ namespace MoreSailwindSails.Controls
 
         // This supplies an initial hidden clone for native startup binding only.
         // The selected seat later supplies its own exact clone template.
-        internal static GPButtonRopeWinch Source(BoatRefs boat, Mast mast, WinchRole role) =>
+        internal static GPButtonRopeWinch Source(Mast mast, WinchRole role) =>
             NativeWinchSeats.Sources(mast, role)?.FirstOrDefault(NativeWinchSeats.Usable);
 
         internal static void Reconcile(

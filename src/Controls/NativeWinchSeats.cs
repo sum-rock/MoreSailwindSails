@@ -46,12 +46,24 @@ namespace MoreSailwindSails.Controls
             Masts.FirstOrDefault(m => m.orderIndex == id && m.GetComponent<BoatPartOption>())
             ?? Masts.FirstOrDefault(m => m.orderIndex == id);
 
-        internal static GPButtonRopeWinch[] Sources(Mast mast, WinchRole role) =>
-            !mast ? null
-            : role == WinchRole.Reef ? mast.reefWinch
-            : role == WinchRole.Left ? mast.leftAngleWinch
-            : role == WinchRole.Right ? mast.rightAngleWinch
-            : mast.midAngleWinch;
+        internal static GPButtonRopeWinch[] Sources(Mast mast, WinchRole role)
+        {
+            switch (role)
+            {
+                case WinchRole.Reef:
+                    return mast ? mast.reefWinch : null;
+                case WinchRole.Left:
+                    return mast ? mast.leftAngleWinch : null;
+                case WinchRole.Right:
+                    return mast ? mast.rightAngleWinch : null;
+                default:
+                    throw new ArgumentOutOfRangeException(
+                        nameof(role),
+                        role,
+                        "Unsupported winch role."
+                    );
+            }
+        }
 
         internal static bool Usable(GPButtonRopeWinch c) =>
             c && c.GetComponent<Renderer>() && c.GetComponent<Collider>();

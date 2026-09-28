@@ -37,7 +37,7 @@ namespace MoreSailwindSails.Controls
             var pairs = new List<NativeWinchCandidate>();
             foreach (var source in category.Sources)
             {
-                var mast = native.Mast(source.Mast);
+                var mast = native.Mast(source);
                 if (!mast)
                     continue;
                 var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
@@ -45,12 +45,11 @@ namespace MoreSailwindSails.Controls
                 var indices = NativeSheetPairing.Indices(
                     left,
                     right,
-                    source.Pairs,
                     NativeWinchSeats.Usable,
                     index =>
                         native.Diagnose(
-                            $"pair/{source.Mast}/{index}",
-                            $"Unmatched native sheet pair: boat={native.Boat.name}, category={category.Name}, source={source.Mast}, indices={index}."
+                            $"pair/{source}/{index}",
+                            $"Unmatched native sheet pair: boat={native.Boat.name}, category={category.Name}, source={source}, indices={index}."
                         )
                 );
                 foreach (var index in indices)
@@ -59,7 +58,7 @@ namespace MoreSailwindSails.Controls
                     var s = right[index[1]];
                     var candidate = native.Candidate(
                         $"native/{p.GetInstanceID()}/{s.GetInstanceID()}",
-                        $"category={category.Name}, sourceRig={source.Mast}, indices={index[0]}/{index[1]}",
+                        $"category={category.Name}, sourceRig={source}, indices={index[0]}/{index[1]}",
                         p,
                         s
                     );

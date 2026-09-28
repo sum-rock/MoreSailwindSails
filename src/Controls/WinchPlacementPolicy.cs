@@ -21,7 +21,6 @@ namespace MoreSailwindSails.Controls
     internal sealed class WinchResolution
     {
         internal WinchCandidate Candidate;
-        internal WinchReservations.Claim Claim;
         internal int NativeUnavailable,
             Reserved,
             MissingSupports,
@@ -46,8 +45,7 @@ namespace MoreSailwindSails.Controls
             var stable = candidates.FirstOrDefault(c => c.SamePlacement(current));
             if (stable != null && stable.Supported && stable.Vacant)
             {
-                result.Claim = ledger.AcquireSeats(owner, stable.Seats);
-                if (result.Claim != null)
+                if (ledger.TryAcquireSeats(owner: owner, seats: stable.Seats))
                 {
                     result.Candidate = stable;
                     return result;
@@ -67,11 +65,9 @@ namespace MoreSailwindSails.Controls
                 }
                 else
                 {
-                    var claim = ledger.AcquireSeats(owner, candidate.Seats);
-                    if (claim != null)
+                    if (ledger.TryAcquireSeats(owner: owner, seats: candidate.Seats))
                     {
                         result.Candidate = candidate;
-                        result.Claim = claim;
                         return result;
                     }
                     if (candidate.Fallback)

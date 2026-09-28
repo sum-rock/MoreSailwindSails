@@ -14,22 +14,15 @@ internal static class NativeSeatPolicyChecks
         var right = new[] { new object(), new object() };
         int unmatched = 0;
         var indices = NativeSheetPairing
-            .Indices(left, right, null, o => o != null, _ => unmatched++)
+            .Indices(left, right, o => o != null, _ => unmatched++)
             .ToArray();
         Check(
             indices.Length == 1 && indices[0][0] == 0 && indices[0][1] == 0 && unmatched == 2,
             "Unequal/null arrays synthesized a pair or missed diagnostics."
         );
         Check(
-            !NativeSheetPairing.Indices(left, null, null, o => o != null, _ => { }).Any(),
+            !NativeSheetPairing.Indices(left, null, o => o != null, _ => { }).Any(),
             "Missing right array produced a partial pair."
-        );
-        indices = NativeSheetPairing
-            .Indices(left, right, new[] { new[] { 2, 1 } }, o => o != null, _ => { })
-            .ToArray();
-        Check(
-            indices.Length == 1 && indices[0][0] == 2 && indices[0][1] == 1,
-            "Explicit native correspondence was discarded."
         );
         var ledger = new WinchReservations();
         var owner = new object();

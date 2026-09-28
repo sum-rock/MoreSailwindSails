@@ -5,6 +5,5 @@ namespace MoreSailwindSails.BoatRigs
         Reef,
         Left,
         Right,
-        Mid,
     }
 }

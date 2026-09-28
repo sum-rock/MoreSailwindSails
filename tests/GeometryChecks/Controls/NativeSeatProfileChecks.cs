@@ -28,12 +28,11 @@ internal static class NativeSeatProfileChecks
                     "Duplicate category member."
                 );
                 Check(
-                    category.Sources.Select(s => s.Mast).Distinct().Count()
-                        == category.Sources.Length,
+                    category.Sources.Distinct().Count() == category.Sources.Length,
                     "Duplicate source rig."
                 );
                 Check(
-                    category.PhysicalMasts.All(m => category.Sources.Any(s => s.Mast == m)),
+                    category.PhysicalMasts.All(m => category.Sources.Any(s => s == m)),
                     "Physical variants missing from source pool."
                 );
                 Check(
@@ -113,8 +112,8 @@ internal static class NativeSeatProfileChecks
                 );
                 foreach (var source in category.Sources)
                     Check(
-                        rigs.Any(r => r[1] == names[b] && r[3] == source.Mast.ToString()),
-                        "Missing audited source: " + names[b] + "/" + source.Mast
+                        rigs.Any(r => r[1] == names[b] && r[3] == source.ToString()),
+                        "Missing audited source: " + names[b] + "/" + source
                     );
             }
             foreach (
