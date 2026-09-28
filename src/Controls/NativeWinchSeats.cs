@@ -68,6 +68,9 @@ namespace MoreSailwindSails.Controls
         internal static bool Usable(GPButtonRopeWinch c) =>
             c && c.GetComponent<Renderer>() && c.GetComponent<Collider>();
 
+        internal bool TemplateUsable(GPButtonRopeWinch control) =>
+            Usable(control) && !owned(control);
+
         internal static bool Occupied(GPButtonRopeWinch c) =>
             c
             && (

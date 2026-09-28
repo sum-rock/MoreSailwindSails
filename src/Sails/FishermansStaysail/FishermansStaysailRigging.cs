@@ -81,9 +81,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 || !aftBase.gameObject.activeInHierarchy
                 || !refs.Guide
                 || !refs.Guide.gameObject.activeInHierarchy
-                || !FirstControl(aftBase.reefWinch)
-                || !FirstControl(refs.Donor.leftAngleWinch)
-                || !FirstControl(refs.Donor.rightAngleWinch)
+                || !FishermanWinchControls.BootstrapReady(
+                    boat: boat,
+                    forward: refs.Fore,
+                    halyard: aftBase
+                )
             )
                 return false;
             pair = new MountPair
@@ -101,11 +103,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             };
             return true;
         }
-
-        private static GPButtonRopeWinch FirstControl(GPButtonRopeWinch[] winches) =>
-            winches?.FirstOrDefault(w =>
-                w && w.GetComponent<Renderer>() && w.GetComponent<Collider>()
-            );
 
         internal bool Bind(Mast mast)
         {

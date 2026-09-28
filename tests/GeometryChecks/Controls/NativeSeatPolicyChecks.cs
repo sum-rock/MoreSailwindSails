@@ -25,6 +25,38 @@ internal static class NativeSeatPolicyChecks
             !NativeSheetPairing.Indices(left, null, o => o != null, _ => { }).Any(),
             "Missing right array produced a partial pair."
         );
+        var laterLeft = new object();
+        var laterRight = new object();
+        object[] Bootstrap(object[] manual = null) =>
+            WinchBootstrapPolicy.Sheets(
+                sources: new[] { 0, 1 },
+                port: id => id == 0 ? left : new[] { laterLeft },
+                starboard: id => id == 0 ? null : new[] { laterRight },
+                usable: o => o != null,
+                fallback: () => manual
+            );
+        Check(
+            Bootstrap().SequenceEqual(new[] { laterLeft, laterRight }),
+            "Missing original donor blocked a complete later template pair."
+        );
+        var manualPair = new[] { new object(), new object() };
+        object[] FallbackBootstrap(object[] manual) =>
+            WinchBootstrapPolicy.Sheets<object>(
+                sources: new[] { 0 },
+                port: _ => left,
+                starboard: _ => null,
+                usable: o => o != null,
+                fallback: () => manual
+            );
+        Check(
+            FallbackBootstrap(manualPair).SequenceEqual(manualPair),
+            "Fallback templates cannot bootstrap."
+        );
+        Check(
+            FallbackBootstrap(null) == null
+                && FallbackBootstrap(new[] { new object(), null }) == null,
+            "Unavailable templates produced partial controls."
+        );
         var ledger = new WinchReservations();
         var owner = new object();
         WinchCandidate Pair(string id, float x, bool fallback = false) =>

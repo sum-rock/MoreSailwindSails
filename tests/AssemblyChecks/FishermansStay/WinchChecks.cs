@@ -117,6 +117,32 @@ internal static class WinchChecks
             assembly.GetType("MoreSailwindSails.Controls.WinchPlacementGeometry") == null,
             "Generated placement remains in the plugin."
         );
+        var bootstrap = assembly.GetType(
+            "MoreSailwindSails.Controls.WinchBootstrapTemplates",
+            true
+        );
+        Check(
+            CalledMethods(manager.GetMethod("Create", all))
+                .Any(m => m.DeclaringType == bootstrap && m.Name == "TryGet"),
+            "Owned startup clones bypass shared bootstrap selection."
+        );
+        foreach (string family in new[] { "FishermansFlyingSail", "FishermansStaysail" })
+        {
+            var type = assembly.GetType($"MoreSailwindSails.Sails.{family}.{family}Rigging", true);
+            Check(
+                CalledMethods(type.GetMethod("TryResolve", all))
+                    .Any(m => m.DeclaringType == manager && m.Name == "BootstrapReady"),
+                family + " readiness bypasses shared template policy."
+            );
+        }
+        foreach (var method in bootstrap.GetMethods(all).Where(m => m.DeclaringType == bootstrap))
+            Check(
+                !CalledMethods(method)
+                    .Any(m =>
+                        m.Name is "TryAcquireSeats" or "Occupied" or "Available" or "ActiveSupport"
+                    ),
+                "Bootstrap templates depend on placement vacancy or reserve native seats."
+            );
         var native = assembly.GetType("MoreSailwindSails.Controls.NativeWinchSeats", true);
         var usable = native.GetMethod("Usable", all);
         var show = usable.GetParameters()[0].ParameterType.GetMethod("ShowWinch", all);

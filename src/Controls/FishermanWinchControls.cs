@@ -78,9 +78,24 @@ namespace MoreSailwindSails.Controls
         )
         {
             var manager = For(boat);
-            var source = Source(donorMast, role);
-            if (!source)
-                throw new InvalidOperationException("No usable source winch: " + label);
+            var group = manager.Group(owner);
+            if (
+                !new WinchBootstrapTemplates(native: manager.native).TryGet(
+                    forward: group.Forward,
+                    halyard: group.HalyardMast,
+                    templates: out var templates,
+                    failure: out var failure
+                )
+            )
+                throw new InvalidOperationException(
+                    $"Winch bootstrap template unavailable: {label}; {failure}."
+                );
+            int index =
+                role == WinchRole.Reef ? 0
+                : role == WinchRole.Left ? 1
+                : role == WinchRole.Right ? 2
+                : throw new ArgumentOutOfRangeException(nameof(role));
+            var source = templates[index];
             var control = new OwnedWinch(
                 manager,
                 manager.Group(owner),
@@ -95,10 +110,25 @@ namespace MoreSailwindSails.Controls
             return control;
         }
 
-        // This supplies an initial hidden clone for native startup binding only.
-        // The selected seat later supplies its own exact clone template.
-        internal static GPButtonRopeWinch Source(Mast mast, WinchRole role) =>
-            NativeWinchSeats.Sources(mast, role)?.FirstOrDefault(NativeWinchSeats.Usable);
+        internal static bool BootstrapReady(BoatRefs boat, Mast forward, Mast halyard)
+        {
+            var manager = For(boat);
+            manager.native.Refresh();
+            if (
+                new WinchBootstrapTemplates(native: manager.native).TryGet(
+                    forward: forward,
+                    halyard: halyard,
+                    templates: out _,
+                    failure: out var failure
+                )
+            )
+                return true;
+            manager.native.Diagnose(
+                key: "bootstrap/" + failure,
+                message: $"Winch bootstrap template unavailable: boat={boat.name}; {failure}."
+            );
+            return false;
+        }
 
         internal static void Reconcile(
             ref OwnedWinch[] current,

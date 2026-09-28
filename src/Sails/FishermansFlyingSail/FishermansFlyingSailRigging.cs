@@ -81,10 +81,15 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 var donor = group
                     .Where(v => masts.ContainsKey(v.SheetControlSource))
                     .Select(v => masts[v.SheetControlSource])
-                    .FirstOrDefault(m =>
-                        FirstControl(m.leftAngleWinch) && FirstControl(m.rightAngleWinch)
-                    );
-                if (!donor || !FirstControl(fore.reefWinch))
+                    .FirstOrDefault();
+                if (
+                    !donor
+                    || !FishermanWinchControls.BootstrapReady(
+                        boat: boat,
+                        forward: fore,
+                        halyard: fore
+                    )
+                )
                     continue;
                 var foreSections = group
                     .SelectMany(v => v.ForeSections)
