@@ -57,6 +57,7 @@ internal static class NativeSeatPolicyChecks
                 && FallbackBootstrap(new[] { new object(), null }) == null,
             "Unavailable templates produced partial controls."
         );
+        CogHalyard();
         var ledger = new WinchReservations();
         var owner = new object();
         WinchCandidate Pair(string id, float x, bool fallback = false) =>
@@ -241,6 +242,70 @@ internal static class NativeSeatPolicyChecks
         );
         Console.WriteLine(
             "PASS: native-first pairs, stable fallback, native reclaim, support loss, missing-data recovery and asymmetric poses."
+        );
+    }
+
+    // Exercise the Cog's authored order through the production reservation policy.
+    private static void CogHalyard()
+    {
+        var ledger = new WinchReservations();
+        var owner = new object();
+        var candidates = Cog
+            .Definition.HalyardSources(mast: 57)
+            .Select(id => new WinchCandidate
+            {
+                Id = "halyard/" + id,
+                Supported = true,
+                Vacant = true,
+                Seats = new[]
+                {
+                    new WinchSeat(
+                        identity: id,
+                        aliases: null,
+                        position: new Vector3(id, 0, 0),
+                        rotation: Quaternion.identity
+                    ),
+                },
+            })
+            .ToArray();
+        WinchResolution Resolve(WinchCandidate current = null) =>
+            WinchPlacementPolicy.Resolve(
+                ledger: ledger,
+                owner: owner,
+                current: current,
+                native: candidates
+            );
+        Check(Resolve().Candidate == candidates[0], "Cog did not prefer its own mast seat.");
+        candidates[0].Vacant = false;
+        Check(
+            Resolve(current: candidates[0]).Candidate == candidates[1] && ledger.Count == 1,
+            "Occupied Cog mizzen seat did not yield to its authored additional seat."
+        );
+        candidates[0].Vacant = true;
+        Check(
+            Resolve(current: candidates[1]).Candidate == candidates[1],
+            "Cog's valid additional seat moved when the primary seat became free."
+        );
+        candidates[0].Vacant = false;
+        candidates[1].Vacant = false;
+        Check(
+            Resolve(current: candidates[1]).Candidate == null && ledger.Count == 0,
+            "Native reclaim retained the additional halyard seat."
+        );
+        candidates[1].Vacant = true;
+        candidates[1].Supported = false;
+        Check(Resolve().Candidate == null, "Unmounted additional halyard seat was allocated.");
+        candidates[1].Supported = true;
+        var other = new object();
+        Check(
+            ledger.TryAcquireSeats(owner: other, seats: candidates[1].Seats)
+                && Resolve().Reserved == 1,
+            "Cog additional halyard ignored another owner's reservation."
+        );
+        ledger.Release(owner: other);
+        Check(Resolve().Candidate == candidates[1], "Cog did not recover a freed additional seat.");
+        Console.WriteLine(
+            "PASS: Cog halyard source priority, stable additional seat, native reclaim, support loss, reservations and retry recovery."
         );
     }
 

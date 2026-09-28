@@ -10,7 +10,10 @@ namespace MoreSailwindSails.BoatRigs
             supports: Supports(),
             stays: Stays(),
             mastParents: MastParents(),
-            sheetCategories: SheetCategories()
+            sheetCategories: SheetCategories(),
+            // Midstay 2-2's reef seat is physically on mizzen mast 2. The stay
+            // need not be fitted; live mounting support and occupancy still apply.
+            halyardGroups: new[] { new HalyardWinchGroup(mast: 57, sources: new[] { 57, 58 }) }
         );
 
         // Audited native/SE option groups and paired references: NativeWinchSeats.txt.

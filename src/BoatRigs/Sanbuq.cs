@@ -10,8 +10,35 @@ namespace MoreSailwindSails.BoatRigs
             supports: Supports(),
             stays: Stays(),
             mastParents: MastParents(),
-            sheetCategories: SheetCategories()
+            sheetCategories: SheetCategories(),
+            halyardGroups: HalyardGroups()
         );
+
+        // Installed rig identities and support audit: Controls/HalyardMounts.txt.
+        private static HalyardWinchGroup[] HalyardGroups() =>
+            new[]
+            {
+                // Mainmast 1; jib and flying forestay controls on its lower support.
+                new HalyardWinchGroup(mast: 10, sources: new[] { 10, 2, 4, 6, 7, 15, 73 }),
+                new HalyardWinchGroup(mast: 13, sources: new[] { 13, 2, 4, 6, 7, 15, 73 }),
+                // Mainmast 2; jib and fore-to-main stay controls.
+                new HalyardWinchGroup(mast: 11, sources: new[] { 11, 3, 5, 8, 16, 17, 57, 58, 68 }),
+                new HalyardWinchGroup(mast: 14, sources: new[] { 14, 3, 5, 8, 16, 17, 57, 58, 68 }),
+                // Original mizzen; midstay and matching topmast-stay controls.
+                new HalyardWinchGroup(mast: 12, sources: new[] { 12, 9, 56, 81, 82 }),
+                new HalyardWinchGroup(mast: 80, sources: new[] { 80, 9, 56, 81, 82 }),
+                // Mizzenmast 2; mz2 stays.
+                new HalyardWinchGroup(mast: 55, sources: new[] { 55, 54, 60, 66, 67 }),
+                new HalyardWinchGroup(mast: 59, sources: new[] { 59, 54, 60, 66, 67 }),
+                // Mizzenmast 3; mz1 stays.
+                new HalyardWinchGroup(mast: 69, sources: new[] { 69, 61, 71 }),
+                new HalyardWinchGroup(mast: 70, sources: new[] { 70, 61, 71 }),
+                // Upright foremast; lower, topmast and flying forestay controls.
+                new HalyardWinchGroup(mast: 51, sources: new[] { 51, 52, 53, 65, 72 }),
+                new HalyardWinchGroup(mast: 64, sources: new[] { 64, 52, 53, 65, 72 }),
+                // Raked foremast; reef seat parented to raked_foremast.
+                new HalyardWinchGroup(mast: 62, sources: new[] { 62, 63, 78 }),
+            };
 
         // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
         private static SheetWinchCategory[] SheetCategories() =>

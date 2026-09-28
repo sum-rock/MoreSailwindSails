@@ -103,8 +103,24 @@ internal static class NativeResolverChecks
             "Halyard array not inspected."
         );
         Check(
-            !CalledMethods(halyard).Any(m => m.Name is "SheetCategory" or "Mast"),
-            "Halyard substitutes another mast."
+            CalledMethods(halyard).Any(m => m.Name == "HalyardSources")
+                && CalledMethods(halyard).Any(m => m.Name == "ActiveSupport")
+                && !CalledMethods(halyard).Any(m => m.Name == "SheetCategory"),
+            "Halyard bypasses authored sources or requested active support."
+        );
+        var halyardValidate = Type("HalyardWinchPlacementResolver")
+            .GetMethod("ValidateCurrent", flags);
+        Check(
+            CalledMethods(halyardValidate).Any(m => m.Name == "HalyardSources")
+                && CalledMethods(halyardValidate).Any(m => m.Name == "ActiveSupport")
+                && Instructions(halyardValidate)
+                    .Any(i => i.Operand is FieldInfo f && f.Name == "reefWinch"),
+            "Retained halyard does not validate permitted sources, active mast and source array."
+        );
+        Check(
+            CalledMethods(Type("WinchBootstrapTemplates").GetMethod("TryGet", flags))
+                .Any(m => m.Name == "HalyardSources"),
+            "Bootstrap does not use the same authored halyard sources."
         );
         foreach (
             var type in new[]
@@ -133,7 +149,7 @@ internal static class NativeResolverChecks
             "Sheet resolver bypasses atomic allocation policy."
         );
         Console.WriteLine(
-            "PASS (structural): native rope/visibility occupancy, inactive hierarchy lookup, mast-local halyards and non-mutating resolvers."
+            "PASS (structural): native rope/visibility occupancy, inactive hierarchy lookup, authored halyard sources with active requested support and non-mutating resolvers."
         );
     }
 

@@ -13,13 +13,15 @@ namespace MoreSailwindSails.BoatRigs
         internal readonly IReadOnlyList<FishermansStayGroupDefinition> Stays;
         internal readonly IReadOnlyDictionary<int, int> MastParents;
         internal readonly IReadOnlyList<SheetWinchCategory> SheetCategories;
+        internal readonly IReadOnlyList<HalyardWinchGroup> HalyardGroups;
 
         internal BoatRigDefinition(
             string boatName,
             IEnumerable<MastSupportDefinition> supports,
             IEnumerable<FishermansStayGroupDefinition> stays,
             IReadOnlyDictionary<int, int> mastParents,
-            IEnumerable<SheetWinchCategory> sheetCategories = null
+            IEnumerable<SheetWinchCategory> sheetCategories = null,
+            IEnumerable<HalyardWinchGroup> halyardGroups = null
         )
         {
             var supportsCopy = (supports ?? Array.Empty<MastSupportDefinition>()).ToArray();
@@ -27,6 +29,7 @@ namespace MoreSailwindSails.BoatRigs
             var sheetCategoriesCopy = (
                 sheetCategories ?? Array.Empty<SheetWinchCategory>()
             ).ToArray();
+            var halyardGroupsCopy = (halyardGroups ?? Array.Empty<HalyardWinchGroup>()).ToArray();
             if (
                 supportsCopy.Length == 0
                 || supportsCopy.Select(s => s.SheetControlSource).Distinct().Count()
@@ -49,6 +52,12 @@ namespace MoreSailwindSails.BoatRigs
                 mastParents.ToDictionary(p => p.Key, p => p.Value)
             );
             SheetCategories = Array.AsReadOnly(sheetCategoriesCopy);
+            HalyardGroups = Array.AsReadOnly(halyardGroupsCopy);
+            if (
+                HalyardGroups.Any(g => g == null || !MastParents.ContainsKey(g.Mast))
+                || HalyardGroups.Select(g => g.Mast).Distinct().Count() != HalyardGroups.Count
+            )
+                throw new ArgumentException("Unknown or duplicate halyard group mast.");
             if (
                 SheetCategories
                     .SelectMany(c => c.PhysicalMasts)
@@ -67,6 +76,11 @@ namespace MoreSailwindSails.BoatRigs
                 .GroupBy(s => s.AftSections.Last());
 
         internal int Base(int section) => Sections(section).Last();
+
+        // Groups define the complete ordered list. Unconfigured masts retain
+        // their own reef array; never inherit a group from another mast variant.
+        internal IEnumerable<int> HalyardSources(int mast) =>
+            HalyardGroups.FirstOrDefault(g => g.Mast == mast)?.Sources ?? new[] { mast };
 
         internal int[] Sections(int section)
         {

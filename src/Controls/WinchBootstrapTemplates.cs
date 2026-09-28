@@ -35,9 +35,13 @@ namespace MoreSailwindSails.Controls
                         usable: native.TemplateUsable,
                         fallback: () => Fallback(category: category)
                     );
-            var reef = NativeWinchSeats
-                .Sources(mast: halyard, role: WinchRole.Reef)
-                ?.FirstOrDefault(native.TemplateUsable);
+            var reef = native
+                .HalyardSources(requested: halyard)
+                .SelectMany(mast =>
+                    NativeWinchSeats.Sources(mast: mast, role: WinchRole.Reef)
+                    ?? Array.Empty<GPButtonRopeWinch>()
+                )
+                .FirstOrDefault(native.TemplateUsable);
             failure =
                 pair == null
                     ? $"sheet template pair unavailable: category={category?.Name ?? "missing"}, forward={(forward ? forward.orderIndex : -1)}; ordered native sources and fallback exhausted"

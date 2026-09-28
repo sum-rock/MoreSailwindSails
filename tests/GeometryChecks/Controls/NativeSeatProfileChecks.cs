@@ -57,6 +57,19 @@ internal static class NativeSeatProfileChecks
             Shroud.Definition.SheetCategory(6).Fallback != null,
             "Shroud measured fallback lost."
         );
+        var ordered = new BoatRigDefinition(
+            boatName: Cog.Definition.BoatName,
+            supports: Cog.Definition.Supports,
+            stays: Cog.Definition.Stays,
+            mastParents: Cog.Definition.MastParents,
+            sheetCategories: Cog.Definition.SheetCategories,
+            halyardGroups: new[] { new HalyardWinchGroup(mast: 57, sources: new[] { 58, 57 }) }
+        );
+        Check(
+            ordered.HalyardSources(mast: 57).SequenceEqual(new[] { 58, 57 })
+                && ordered.HalyardSources(mast: 8).SequenceEqual(new[] { 8 }),
+            "Halyard group order was overridden or shared with another mizzen variant."
+        );
         var rows = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
             )
@@ -133,6 +146,11 @@ internal static class NativeSeatProfileChecks
             rows.Count(r => r[1] == "Shroud" && r[3] == "7" && r[4] == "reefWinch") == 7
                 && rows.Count(r => r[1] == "Shroud" && r[3] == "8" && r[4] == "reefWinch") == 5,
             "Re-audit active Shroud mast pin capacity."
+        );
+        Check(
+            rows.Single(r => r[1] == "Cog" && r[3] == "58" && r[4] == "reefWinch")[7]
+                == "SE_parts_cog/winches/winch_reef_midstay2",
+            "Re-audit Cog's additional mizzen halyard seat."
         );
         string Seat(string boat, int mast, string role, int index) =>
             rows.Single(r =>

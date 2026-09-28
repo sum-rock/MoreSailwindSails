@@ -16,6 +16,8 @@ internal static class ProfileChecks
             CheckCopies(boat);
             foreach (var support in boat.Supports)
                 CheckCopies(support);
+            foreach (var group in boat.HalyardGroups)
+                CheckCopies(group);
             foreach (var group in boat.Stays)
             {
                 CheckCopies(group);
@@ -98,8 +100,24 @@ internal static class ProfileChecks
             throw new Exception("Caller mutation corrupted validated mast ancestry.");
         var sample = Brig.Definition.SheetCategories[0];
         Reject<ArgumentException>(() => Profile(new Dictionary<int, int>(), sample, sample));
+        BoatRigDefinition HalyardProfile(params HalyardWinchGroup[] groups) =>
+            new BoatRigDefinition(
+                boatName: "test",
+                supports: Cog.Definition.Supports,
+                stays: Cog.Definition.Stays,
+                mastParents: Cog.Definition.MastParents,
+                halyardGroups: groups
+            );
+        var halyard = new HalyardWinchGroup(mast: 57, sources: new[] { 57, 58 });
+        Reject<ArgumentException>(() => HalyardProfile(halyard, halyard));
+        Reject<ArgumentException>(() =>
+            HalyardProfile(new HalyardWinchGroup(mast: 127, sources: new[] { 127 }))
+        );
+        Reject<ArgumentException>(() => new HalyardWinchGroup(mast: 57, sources: null));
+        Reject<ArgumentException>(() => new HalyardWinchGroup(mast: 57, sources: new[] { 58, 58 }));
+        Reject<ArgumentException>(() => new HalyardWinchGroup(mast: 57, sources: new[] { 128 }));
         Console.WriteLine(
-            "PASS: complete boat-profile lookup, ordered mast ancestry, missing entries, duplicate categories and cyclic/missing-parent rejection."
+            "PASS: immutable boat profiles and halyard groups, ordered mast ancestry, missing entries, duplicate groups/categories and invalid-source/cyclic-parent rejection."
         );
     }
 

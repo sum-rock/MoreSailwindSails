@@ -369,10 +369,48 @@ allocation, excludes all owned clones from native discovery and keeps unused
 startup variants unclaimed. Native-control suppression prevents custom-stay
 mount controls and sail-owned controls from competing for the same sail.
 
+Boat profiles may define `HalyardWinchGroup(mast, sources)` entries through
+`halyardGroups`. Each group maps one exact requested mast ID to a complete ordered
+list of native rigs whose reef arrays supply seats. Lookup does not inherit groups
+across mast variants or ancestry, and there is no category-wide or proximity search.
+An unconfigured mast uses only its own reef array. All authored groups search the
+requested mast first, then verified associated native stay sources. For example,
+**Cog mast 57 (mizzen mast 2)** uses sources **[57, 58]**: its own seats first, then
+**58 (midstay 2-2)**, whose `winch_reef_midstay2` is mounted beside the mizzen's own
+reef winch. The source stay need not be installed, but the
+requested physical mast and the selected winch's mounting support must be active.
+Existing native occupancy, aliases, reservations and stable-placement rules apply.
+Startup, allocation and retained-placement validation share this source mapping;
+source-array changes and native reclaim still invalidate a borrowed seat.
+
+The installed support audit is recorded in
+`tests/GeometryChecks/Controls/HalyardMounts.txt`; native identities and parent-local
+poses remain in `FishermansStay/NativeWinchSeats.txt` under the same test project.
+Groups are authored separately for each exact requested section, including native
+stay controls on lower supports used by matching topmasts. They do not borrow the
+ordinary reef arrays of other physical mast variants or topmasts. Shared stay-seat
+references are intentional and use the existing identity/alias reservations.
+
+| Boat | Halyard groups |
+| --- | ---: |
+| Brig | 14 |
+| Junk | 9 |
+| Jong | 7 |
+| Sanbuq | 13 |
+| Cog | 1 |
+| Leopard | 9 |
+| Shroud | 6 |
+| Large dhow | 9 |
+
+Unlisted masts retain their original lookup, including Jong's raked foremast and
+unsupported bermuda variants. Cog retains the user-tested group without additional
+expansion. The other seven profiles now cover their audited stay reef seats.
+
 Startup uses a complete usable pair from the forward category's ordered native
 sources, then its valid fallback templates. All three ownership paths use this
 policy, independently of geometry donors. Template selection ignores occupancy
-and does not reserve seats; halyard templates come only from the requested mast.
+and does not reserve seats; halyard templates follow the requested mast's authored
+group order, or use that mast alone when no group is configured.
 A missing template reports its category or requested mast and preserves the
 existing registration rollback. Native startup still receives initialized control
 arrays: installed `Mast.UpdateControllerAttachments` indexes them directly and
@@ -429,18 +467,20 @@ frame-time or total managed-allocation measurements.
 
 ### Halyards and Shroud belaying pins
 
-`HalyardWinchPlacementResolver` uses only the concrete requested active mast's
-`reefWinch` array, in native order. Flying Sails request their mounting mast;
+`HalyardWinchPlacementResolver` uses the concrete requested active mast's authored
+group, preserving native array order within each source. Flying Sails request their mounting mast;
 Mk.A/B/C request the aft base; native sails on custom stays request that stay's
 existing aft halyard source. Topmast seats on an active lower support retain their
-native association. There is no alternative-mast search, generated offset or
+native association. There is no inferred alternative-mast search, generated offset or
 manual halyard fallback.
 
-Shroud uses these same resolvers. Its short mainmast has **five** reef entries and
-its tall mainmast **seven**; eligibility comes from the requested array, not the
-former twelve-pin pool. Native reclaim and stable reservations follow the same
-rules as on every other boat; capacity depends on the requested array and which
-seats are occupied.
+Shroud uses these same resolvers. Its short mainmast has **five** ordinary reef
+entries and its tall mainmast **seven**. Each keeps its own ordinary array first,
+then adds sources **16/17/24** from the mainmast's separate jib reef coils. Foremast
+and mizzen groups likewise add only their associated stay coils. This does not
+restore the former twelve-pin pool across physical variants. Native reclaim and
+stable reservations follow the same rules as on every other boat; capacity depends
+on the authored sources, their live mounting support and occupancy.
 
 ### Manual sheet fallbacks
 
@@ -480,7 +520,8 @@ Read `BepInEx/LogOutput.log`; paths are under [Local investigation](#local-inves
 
 Sheet messages identify boat and owner instances, forward mast, category, selected
 source rig and array indices, pair identity, origin, both poses and both templates.
-Halyard messages identify the requested active mast and native array index.
+Halyard placement messages identify the requested active mast, source rig and
+native array index.
 Exhaustion separates `nativeUnavailable`, `reserved`, `missingSupports` and
 `fallbackBlocked`. Success is reported after placement and showing both controls;
 routine refreshes and repeated failed retries remain silent. Missing-data errors
@@ -656,6 +697,69 @@ native reclaim and active-mast resolver contracts. Neither suite establishes
 runtime accessibility, rendered support contact or Unity lifecycle behavior.
 
 ### Runtime validation
+
+#### Cog halyard group (2026-09-28)
+
+Version remains **0.2.1**. The reported Cog Mk.A failure requested the correct
+aft mast, **57**, but its only reef seat was occupied by the native gaff sail.
+Installed SE assets confirm the adjacent `winch_reef_midstay2` belongs to source
+**58**, outside the previous search. Cog now defines an explicit halyard group
+for mast 57 with ordered sources `[57, 58]`, including when the native midstay is
+absent. This replaces the earlier additional-source dictionary while preserving
+the Cog's seat selection. No fallback positions or native arrays were changed.
+
+- CSharpier check, Release build (zero warnings/errors), GeometryChecks,
+  AssemblyChecks and `git diff --check` passed. Executed checks cover source
+  order and scope across all profiles, defensive copies, invalid/duplicate groups,
+  exact mast matching, explicit source ordering, primary-seat priority,
+  retained additional seats, native reclaim, support loss, reservation conflicts
+  and retry recovery. Assembly checks cover shared startup/placement source
+  lookup and active-mast/source-array validation; they do not execute Unity.
+- The user tested the Cog change and reported that it **works perfectly** on
+  2026-09-28. The requested test was the reported configuration with midstay2 absent
+  and the gaff occupying the primary reef winch. This confirms the reported
+  placement/routing issue is resolved in that test; no fresh log was independently
+  inspected, and it does not establish every reclaim/support/reload scenario.
+- The separate rope-at-boat-origin behavior during complete seat exhaustion
+  remains unchanged. Built DLL: `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`.
+  No installed game files or saves were replaced.
+
+#### Halyard groups on the remaining boats (2026-09-28)
+
+Version remains **0.2.1**. The same source-group strategy now covers Brig, Junk,
+Jong, Sanbuq, Leopard, Shroud and large dhow: **68 groups total**, including the
+unchanged Cog group. Sources were checked against all **305** recorded native/SE/
+boat-mod rig objects in the installed assets, including reef-array identities,
+guide hierarchies, prerequisites and mounting paths. No native arrays or geometry
+were modified, and the resolver and reservation behavior remain unchanged.
+
+The earlier reported Brig fixture discrepancy was an audit lookup error: registered
+source **70** and unregistered source **74** have the same hierarchy path but are
+distinct serialized objects. Source 70 really has mainmast **B1** reef seats; source
+74 really has foremast **F1** seats. `NativeWinchSeats.txt` already records both
+correctly. The new mainmast groups use 70 and exclude 74; the fixture now explains
+this distinction, and a regression check guards it. Audit lookup used asset,
+hierarchy and order index to select the exact serialized object. No speculative
+index replacement was made to game assets or existing sheet categories.
+
+CSharpier check, Release build (zero warnings/errors), GeometryChecks,
+AssemblyChecks and `git diff --check` passed. New executed fixture checks cover
+all 68 groups, exact mast/section source order, requested-mast-only behavior for
+unlisted masts, registered reef references, distinct added seat identities and
+Brig's 70/74 distinction. Existing checks still cover reservation aliases, native
+reclaim, stability and retry recovery. Built DLL:
+`src/bin/Release/netstandard2.0/MoreSailwindSails.dll`. No installed game files or
+saves were replaced.
+
+The new boats still require in-game confirmation. Start on Brig and Jong, then
+the other affected boats. Occupy the requested mast's own seats with native sails
+and leave associated stays absent; confirm a free stay seat is claimed, correct
+halyard routing and usable controls. Include both Jong mainmast positions, mast
+variants/topmasts, Shroud's separate stay coils, native reclaim, support changes,
+order completion/cancellation and save reloads. Neither suite simulates Unity
+Cloth or executes the complete native binding lifecycle.
+
+#### Accepted placement baseline and cleanup
 
 The user accepted the native placement work as valid and complete on
 **2026-09-27**, version **0.2.1**. The subsequent architecture cleanup is

@@ -10,8 +10,24 @@ namespace MoreSailwindSails.BoatRigs
             supports: Supports(),
             stays: Stays(),
             mastParents: MastParents(),
-            sheetCategories: SheetCategories()
+            sheetCategories: SheetCategories(),
+            halyardGroups: HalyardGroups()
         );
+
+        // Installed rig identities and support audit: Controls/HalyardMounts.txt.
+        private static HalyardWinchGroup[] HalyardGroups() =>
+            new[]
+            {
+                // Both foremast variants; Foremast Reef Coils/Jib Reefs only.
+                new HalyardWinchGroup(mast: 5, sources: new[] { 5, 13, 14, 15, 20, 21, 22, 23 }),
+                new HalyardWinchGroup(mast: 6, sources: new[] { 6, 13, 14, 15, 20, 21, 22, 23 }),
+                // Both mainmast variants; Mainmast Reef Coils/Jib Reefs only.
+                new HalyardWinchGroup(mast: 7, sources: new[] { 7, 16, 17, 24 }),
+                new HalyardWinchGroup(mast: 8, sources: new[] { 8, 16, 17, 24 }),
+                // Both mizzen variants; Mizzenmast Reef Coils/Jib Reef only.
+                new HalyardWinchGroup(mast: 9, sources: new[] { 9, 18, 19, 25 }),
+                new HalyardWinchGroup(mast: 10, sources: new[] { 10, 18, 19, 25 }),
+            };
 
         // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
         private static SheetWinchCategory[] SheetCategories() =>
