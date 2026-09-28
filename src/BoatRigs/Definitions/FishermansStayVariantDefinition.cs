@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace MoreSailwindSails.BoatRigs
 {
+    // Immutable authored FishermansStayVariantDefinition data, copied at the definition boundary.
     internal sealed class FishermansStayVariantDefinition
     {
         internal readonly int MountIndex,
@@ -15,7 +17,7 @@ namespace MoreSailwindSails.BoatRigs
         internal readonly Vector3 ForePoint,
             AftPoint;
         internal readonly bool ExtendedGuide;
-        internal readonly int[] Required,
+        internal readonly IReadOnlyList<int> Required,
             Forbidden;
 
         internal FishermansStayVariantDefinition(
@@ -28,10 +30,12 @@ namespace MoreSailwindSails.BoatRigs
             Vector3 aftPoint,
             bool extendedGuide,
             int guideIndex,
-            int[] required,
-            int[] forbidden
+            IEnumerable<int> required,
+            IEnumerable<int> forbidden
         )
         {
+            var requiredCopy = (required ?? Array.Empty<int>()).ToArray();
+            var forbiddenCopy = (forbidden ?? Array.Empty<int>()).ToArray();
             if (
                 mountIndex < 128
                 || mountIndex >= 256
@@ -42,12 +46,12 @@ namespace MoreSailwindSails.BoatRigs
                 || string.IsNullOrEmpty(label)
                 || !Finite(forePoint)
                 || !Finite(aftPoint)
-                || !required.Contains(fore)
-                || !required.Contains(aft)
-                || required.Concat(forbidden).Any(i => i < 0 || i >= 128)
-                || required.Distinct().Count() != required.Length
-                || forbidden.Distinct().Count() != forbidden.Length
-                || required.Intersect(forbidden).Any()
+                || !requiredCopy.Contains(fore)
+                || !requiredCopy.Contains(aft)
+                || requiredCopy.Concat(forbiddenCopy).Any(i => i < 0 || i >= 128)
+                || requiredCopy.Distinct().Count() != requiredCopy.Length
+                || forbiddenCopy.Distinct().Count() != forbiddenCopy.Length
+                || requiredCopy.Intersect(forbiddenCopy).Any()
             )
                 throw new ArgumentException("Invalid Fisherman's Stay reference or mount ID.");
             MountIndex = mountIndex;
@@ -59,8 +63,8 @@ namespace MoreSailwindSails.BoatRigs
             AftPoint = aftPoint;
             ExtendedGuide = extendedGuide;
             GuideIndex = guideIndex;
-            Required = required;
-            Forbidden = forbidden;
+            Required = Array.AsReadOnly(requiredCopy);
+            Forbidden = Array.AsReadOnly(forbiddenCopy);
         }
 
         private static bool Finite(Vector3 point) =>

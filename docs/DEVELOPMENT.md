@@ -321,21 +321,26 @@ slope; aft guide heights and save IDs stay unchanged.
 The **0.2.1** native winch placement redesign is **accepted as valid and complete**
 on Brig, Junk, Jong, Sanbuq, Cog, Leopard, Shroud and large dhow. It applies to
 Flying Sails, all three staysail cuts and native sails fitted to Fisherman's
-Stays. This section owns the current behavior; the completed implementation plan
-has been retired. Architecture and code-review improvements remain separate work
-in [WINCH_PLACEMENT_REDESIGN_CLEANUP.md](WINCH_PLACEMENT_REDESIGN_CLEANUP.md).
+Stays. This section owns the current behavior, including the completed follow-up
+architecture cleanup. The implementation plan and cleanup checklist have been
+retired; [runtime validation](#runtime-validation) records the checks and remaining
+in-game uncertainty.
 
 ### Placement and ownership
 
-Family rigging remains separate; only placement, cloning and allocation are
-shared. Boat profiles provide authored data, native inventory discovers controls,
+Family rigging remains separate; placement, bootstrap-template selection, cloning
+and allocation are shared. Boat profiles provide authored data, native inventory
+discovers controls,
 separate sheet/halyard resolvers select seats, and the boat-owned reservation
 ledger and clone coordinator manage allocation and control lifetime.
 
 Each boat profile authors physical mast categories separately from ordered native
 sheet-source rigs. Sources include physical variants, their topmasts and verified
 associated native stays. Lookup uses IDs and authored ancestry, never display-name
-parsing. Native and installed SE shipyard group metadata distinguishes variants
+parsing. Definitions defensively copy collection inputs into read-only wrappers;
+the catalog is cached. Categories store ordered source IDs directly, with pairing
+only at matching native array indices. Native and installed SE shipyard group
+metadata distinguishes variants
 from simultaneous mast positions: Jong has separate `MainmastA`/`MainmastB`
 categories; Cog's raked foremast belongs to its separate foremast group.
 
@@ -347,8 +352,10 @@ relying on the startup `BoatRefs.masts` array. Missing or unmatched array entrie
 are skipped with a diagnostic. Centre sheets never become pair candidates.
 
 Native poses preserve both sides' position, orientation and asymmetry. Shared
-references and coincident seats are deduplicated; all aliases participate in
-occupancy checks. A bound native rope blocks borrowing even while hidden, as does
+references and coincident seats are deduplicated; the first supported whole pair
+or halyard wins over an earlier unsupported equivalent. All aliases still
+participate in occupancy checks. A bound native rope blocks borrowing even while
+hidden, as does
 an active renderer or collider. Mounting ancestors and requested physical supports
 must be active. Native poses and manually authored fallback positions are trusted:
 there are no radius, proximity or geometric clearance checks. Authors must choose
@@ -361,19 +368,63 @@ allocation, excludes all owned clones from native discovery and keeps unused
 startup variants unclaimed. Native-control suppression prevents custom-stay
 mount controls and sail-owned controls from competing for the same sail.
 
-The selected native controls supply clone templates. Clones initialize inactive
+Startup uses a complete usable pair from the forward category's ordered native
+sources, then its valid fallback templates. All three ownership paths use this
+policy, independently of geometry donors. Template selection ignores occupancy
+and does not reserve seats; halyard templates come only from the requested mast.
+A missing template reports its category or requested mast and preserves the
+existing registration rollback. Native startup still receives initialized control
+arrays: installed `Mast.UpdateControllerAttachments` indexes them directly and
+calls `GPButtonRopeWinch.AttachToController`.
+
+The selected placement later supplies its exact clone templates. Clones initialize
+inactive
 with owned handles and fresh outlines; native objects and bindings remain untouched.
 Template changes prepare both replacement sheet clones before retiring either
 old clone, retain sail-owned controllers and update custom-mount winch arrays.
 Placement moves the parent mount and preserves wheel-local input rotation.
 
-Recheck occupied claims during the coordinator refresh. Native reclaim, lost
-support or a changed boat-relative pose invalidates the entire pair. Keep a valid
+Validate current source-array slots, mounting support, native occupancy, aliases
+and poses before constructing alternatives. A valid placement retains its ledger
+entries and clones; parent mounting poses and visibility still update. Native
+reclaim, lost support or a changed boat-relative pose invalidates the entire pair.
+Keep a valid
 current pair stable, including a fallback when native seats later free. Exhaustion
 hides both sheets, preserves controllers and retries every **one second**; it does
 not roll back stays or remove saved sails. Removal and inactive owners release
 claims. All placement state is transient; GUID, prefab/stay IDs, save ordering and
 saved geometry are unchanged.
+
+### Inventory lifetime and inspection counters
+
+The coordinator owns one native inventory, mast lookup and seat/alias lookup per
+boat. Its empty `LateUpdate` returns without discovery. Groups already released
+skip repeated suspension. Alternative searches run only on first allocation,
+invalidation or the existing one-second exhaustion retry.
+
+Discovery includes inactive hierarchy objects and does not rely on
+`BoatRefs.masts`. The installed-assembly inspection established these hooks:
+
+- `Mast.Awake` registers masts; `OnEnable` and `OnDisable` update winch visibility.
+- `BoatCustomParts.RefreshParts` and `RefreshPartsWithOrder` call
+  `BoatPart.SetOptionEnabled` for ordinary and previewed options.
+- SE's `Patch.PartsPatch.Adder` runs during `SaveableBoatCustomization.Awake`,
+  expands the native mast array and dispatches boat-specific part installation.
+
+Postfixes invalidate discovery at those six native methods, with ordering after
+Shipyard Expansion. Native control-array contents are also compared with snapshots,
+including in-place edits. A one-second discovery sweep catches delayed/inactive
+parts that missed lifecycle hooks and incomplete startup inventories. Dirty
+inventory refreshes before allocation. Native rope/renderer/collider occupancy and
+support activation remain live checks; boat-relative pose changes rebuild the
+shared seat/alias lookup. Wheel-local input rotation remains separate from the
+cached mounting frame.
+
+For runtime inspection, `NativeWinchSeats.HierarchyScans` counts hierarchy API
+calls, `CandidateBuilds` counts native candidate-construction attempts, and
+`WinchReservations.EntriesCreated` counts newly allocated ledger entries. These
+internal counters are per boat and do not log every frame. They are not elapsed
+frame-time or total managed-allocation measurements.
 
 ### Halyards and Shroud belaying pins
 
@@ -505,8 +556,9 @@ runtime accessibility, rendered support contact or Unity lifecycle behavior.
 ### Runtime validation
 
 The user accepted the native placement work as valid and complete on
-**2026-09-27**, version **0.2.1**. The remaining review improvements are tracked
-only in [the cleanup plan](WINCH_PLACEMENT_REDESIGN_CLEANUP.md).
+**2026-09-27**, version **0.2.1**. The subsequent architecture cleanup is
+implemented; its automated results and separate runtime validation limits are
+recorded below.
 
 Evidence for this accepted baseline:
 
@@ -539,6 +591,42 @@ sheets, paired movement/recovery, stable fallbacks and working halyards/rope
 routing. Include Shroud's fallback and mast-local pins when affected. Record new
 observations separately from automated results; this is a regression checklist,
 not an outstanding acceptance gate for the completed redesign.
+
+Cleanup implementation on **2026-09-27**, still **0.2.1**:
+
+- Completed changes include cached native discovery and stable claims, shared
+  bootstrap-template selection, matching-index sheet pairs, boolean reservation
+  acquisition, immutable definitions, support-aware coincident-seat selection and
+  removal of obsolete control branches.
+- Release build passed with zero warnings and errors; GeometryChecks,
+  AssemblyChecks (62 Harmony targets), CSharpier `check` and `git diff --check`
+  passed. No README, installed game files or saves changed.
+- New executed checks cover defensive copies and read-only wrappers across all
+  eight profiles/111 stays; later-source and fallback bootstrap pairs; inactive
+  versus active coincident references; retained claims and failed transactions;
+  and the production discovery schedule/retention policy. IL checks cover shared
+  bootstrap readiness, discovery before startup cloning, live validation, empty
+  coordinator guards, controller retention and native mount-array updates.
+- A fixed synthetic fixture uses one available pair for **600 frames at 60 Hz**.
+  The inspection-derived baseline models the previous per-frame refresh/search
+  and reservation recreation. The new side executes the production schedule,
+  retention policy and reservation ledger under the same setup:
+
+  | Operation | Previous model | Cleanup fixture |
+  | --- | ---: | ---: |
+  | Hierarchy-scan requests | 1,200 | 20 |
+  | Candidate constructions | 600 | 1 |
+  | Reservation entries created | 1,200 | 2 |
+
+  Scan requests in this fixture invoke counters, not Unity hierarchy APIs. These
+  results establish scheduling/allocation behavior, **not in-game performance**.
+  Actual runtime counter comparison and frame-time profiling remain unmeasured.
+- No new game session was run for the cleanup. The accepted Brig/Jong observations
+  above belong to the earlier redesign. Retest cleanup on Brig and Jong first,
+  then affected boats including Shroud; exercise missing donor templates, mixed
+  Flying/Mk.A/B/C/native stay sails, native reclaim, support/array changes,
+  complete/cancel, removal/recreation and repeated reloads. Neither suite
+  simulates Unity Cloth or proves lifecycle behavior in game.
 
 Built DLL: `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`. This is local
 development at **0.2.1**, not a release. README's pre-existing 0.2.0 version text

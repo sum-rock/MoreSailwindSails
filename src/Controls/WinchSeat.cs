@@ -44,8 +44,11 @@ namespace MoreSailwindSails.Controls
 
         internal bool SamePose(WinchSeat other) =>
             Equals(Identity, other.Identity)
-            && (Position - other.Position).sqrMagnitude <= 0.000001f
-            && Math.Abs(Quaternion.Dot(Rotation, other.Rotation)) >= 0.999999f;
+            && MatchesPose(position: other.Position, rotation: other.Rotation);
+
+        internal bool MatchesPose(Vector3 position, Quaternion rotation) =>
+            (Position - position).sqrMagnitude <= 0.000001f
+            && Math.Abs(Quaternion.Dot(Rotation, rotation)) >= 0.999999f;
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
     }

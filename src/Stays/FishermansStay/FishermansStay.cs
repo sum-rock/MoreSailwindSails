@@ -59,11 +59,6 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 .Where(c => c)
                 .ToArray();
             Mount.startingSailColor = source.startingSailColor;
-            Mount.leftAngleWinch = CloneWinches(source, WinchRole.Left, "Port sheet");
-            Mount.rightAngleWinch = CloneWinches(source, WinchRole.Right, "Starboard sheet");
-            // Audited stay donors use paired sheets; centre controls are not pair candidates.
-            Mount.midAngleWinch = Array.Empty<GPButtonRopeWinch>();
-            Mount.reefWinch = CloneWinches(references.Aft, WinchRole.Reef, "Halyard");
             FishermanWinchControls.Configure(
                 boat,
                 Mount.gameObject,
@@ -71,24 +66,24 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 references.Aft,
                 Mount
             );
+            Mount.leftAngleWinch = CloneWinches(source, WinchRole.Left, "Port sheet");
+            Mount.rightAngleWinch = CloneWinches(source, WinchRole.Right, "Starboard sheet");
+            // Audited stay donors use paired sheets; centre controls are not pair candidates.
+            Mount.midAngleWinch = Array.Empty<GPButtonRopeWinch>();
+            Mount.reefWinch = CloneWinches(references.Aft, WinchRole.Reef, "Halyard");
             if (
                 Mount.reefWinch.Length == 0
-                || (
-                    Mount.midAngleWinch.Length == 0
-                    && (Mount.leftAngleWinch.Length == 0 || Mount.rightAngleWinch.Length == 0)
-                )
+                || Mount.leftAngleWinch.Length == 0
+                || Mount.rightAngleWinch.Length == 0
             )
             {
                 var missing = new List<string>();
                 if (Mount.reefWinch.Length == 0)
                     missing.Add("halyard");
-                if (Mount.midAngleWinch.Length == 0)
-                {
-                    if (Mount.leftAngleWinch.Length == 0)
-                        missing.Add("port sheet");
-                    if (Mount.rightAngleWinch.Length == 0)
-                        missing.Add("starboard sheet");
-                }
+                if (Mount.leftAngleWinch.Length == 0)
+                    missing.Add("port sheet");
+                if (Mount.rightAngleWinch.Length == 0)
+                    missing.Add("starboard sheet");
                 throw new InvalidOperationException(
                     $"Incomplete controls for Fisherman's Stay mount {definition.MountIndex} ({definition.Label}): missing {string.Join(", ", missing)}; sheet mapping={source.orderIndex}, halyard mapping={references.Aft.orderIndex}."
                 );
@@ -236,9 +231,6 @@ namespace MoreSailwindSails.Stays.FishermansStay
 
         private GPButtonRopeWinch[] CloneWinches(Mast donor, WinchRole role, string label)
         {
-            var sourceWinch = FishermanWinchControls.Source(boat, donor, role);
-            if (!sourceWinch)
-                return new GPButtonRopeWinch[0];
             var control = FishermanWinchControls.Create(
                 boat,
                 Mount.gameObject,

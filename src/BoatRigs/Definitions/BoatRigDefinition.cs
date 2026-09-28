@@ -5,28 +5,35 @@ using System.Linq;
 
 namespace MoreSailwindSails.BoatRigs
 {
+    // Immutable authored BoatRigDefinition data, copied at the definition boundary.
     internal sealed class BoatRigDefinition
     {
         internal readonly string BoatName;
-        internal readonly MastSupportDefinition[] Supports;
-        internal readonly FishermansStayGroupDefinition[] Stays;
+        internal readonly IReadOnlyList<MastSupportDefinition> Supports;
+        internal readonly IReadOnlyList<FishermansStayGroupDefinition> Stays;
         internal readonly IReadOnlyDictionary<int, int> MastParents;
-        internal readonly SheetWinchCategory[] SheetCategories;
+        internal readonly IReadOnlyList<SheetWinchCategory> SheetCategories;
 
         internal BoatRigDefinition(
             string boatName,
-            MastSupportDefinition[] supports,
-            FishermansStayGroupDefinition[] stays,
+            IEnumerable<MastSupportDefinition> supports,
+            IEnumerable<FishermansStayGroupDefinition> stays,
             IReadOnlyDictionary<int, int> mastParents,
-            SheetWinchCategory[] sheetCategories = null
+            IEnumerable<SheetWinchCategory> sheetCategories = null
         )
         {
+            var supportsCopy = (supports ?? Array.Empty<MastSupportDefinition>()).ToArray();
+            var staysCopy = (stays ?? Array.Empty<FishermansStayGroupDefinition>()).ToArray();
+            var sheetCategoriesCopy = (
+                sheetCategories ?? Array.Empty<SheetWinchCategory>()
+            ).ToArray();
             if (
-                supports.Length == 0
-                || supports.Select(s => s.SheetControlSource).Distinct().Count() != supports.Length
+                supportsCopy.Length == 0
+                || supportsCopy.Select(s => s.SheetControlSource).Distinct().Count()
+                    != supportsCopy.Length
             )
-                throw new ArgumentException("Empty mast supports or duplicate control source.");
-            var mounts = stays.SelectMany(g => g.Variants).Select(v => v.MountIndex).ToArray();
+                throw new ArgumentException("Empty mast supportsCopy or duplicate control source.");
+            var mounts = staysCopy.SelectMany(g => g.Variants).Select(v => v.MountIndex).ToArray();
             if (mounts.Distinct().Count() != mounts.Length)
                 throw new ArgumentException("Duplicate Fisherman's Stay mount ID.");
             if (
@@ -36,12 +43,12 @@ namespace MoreSailwindSails.BoatRigs
             )
                 throw new ArgumentException("Invalid authored mast ancestry.");
             BoatName = boatName;
-            Supports = supports;
-            Stays = stays;
+            Supports = Array.AsReadOnly(supportsCopy);
+            Stays = Array.AsReadOnly(staysCopy);
             MastParents = new ReadOnlyDictionary<int, int>(
                 mastParents.ToDictionary(p => p.Key, p => p.Value)
             );
-            SheetCategories = sheetCategories ?? Array.Empty<SheetWinchCategory>();
+            SheetCategories = Array.AsReadOnly(sheetCategoriesCopy);
             if (
                 SheetCategories
                     .SelectMany(c => c.PhysicalMasts)

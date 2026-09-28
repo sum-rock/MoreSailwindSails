@@ -1,6 +1,8 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using MoreSailwindSails.BoatRigs;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
@@ -9,6 +11,30 @@ internal static class ProfileChecks
 {
     internal static void Run()
     {
+        foreach (var boat in BoatRigCatalog.All)
+        {
+            CheckCopies(boat);
+            foreach (var support in boat.Supports)
+                CheckCopies(support);
+            foreach (var group in boat.Stays)
+            {
+                CheckCopies(group);
+                foreach (var variant in group.Variants)
+                    CheckCopies(variant);
+            }
+            foreach (var category in boat.SheetCategories)
+            {
+                CheckCopies(category);
+                if (category.Fallback != null)
+                {
+                    CheckCopies(category.Fallback.Port);
+                    CheckCopies(category.Fallback.Starboard);
+                }
+            }
+        }
+        CheckReadOnly(BoatRigCatalog.All);
+        if (!ReferenceEquals(BoatRigCatalog.All, BoatRigCatalog.All))
+            throw new Exception("Catalog is rebuilt on access.");
         var leopard = Leopard.Definition;
         if (
             !ReferenceEquals(BoatRigCatalog.Find("BOAT LEOPARD (207)(Clone)(Clone)"), leopard)
@@ -75,6 +101,54 @@ internal static class ProfileChecks
         Console.WriteLine(
             "PASS: complete boat-profile lookup, ordered mast ancestry, missing entries, duplicate categories and cyclic/missing-parent rejection."
         );
+    }
+
+    // Reconstruct every authored definition using mutable arrays, then mutate all
+    // inputs and try the exposed IList setters. Covers nested collections too.
+    private static void CheckCopies(object original)
+    {
+        const BindingFlags flags =
+            BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+        var type = original.GetType();
+        var constructor = type.GetConstructors(flags).Single();
+        var fields = constructor
+            .GetParameters()
+            .Select(p =>
+                type.GetFields(flags)
+                    .Single(f => string.Equals(f.Name, p.Name, StringComparison.OrdinalIgnoreCase))
+            )
+            .ToArray();
+        var arguments = fields.Select(f => f.GetValue(original)).ToArray();
+        for (int i = 0; i < arguments.Length; i++)
+            if (arguments[i] is IList list)
+            {
+                var element = fields[i].FieldType.GetGenericArguments().Single();
+                var copy = Array.CreateInstance(element, list.Count);
+                list.CopyTo(copy, 0);
+                arguments[i] = copy;
+            }
+        var rebuilt = constructor.Invoke(arguments);
+        for (int i = 0; i < arguments.Length; i++)
+            if (arguments[i] is Array input)
+            {
+                var exposed = (IList)fields[i].GetValue(rebuilt);
+                var expected = exposed.Cast<object>().ToArray();
+                for (int j = 0; j < input.Length; j++)
+                    input.SetValue(null, j);
+                if (!exposed.Cast<object>().SequenceEqual(expected))
+                    throw new Exception(
+                        "Mutable definition input: " + type.Name + "." + fields[i].Name
+                    );
+                CheckReadOnly(exposed);
+            }
+    }
+
+    private static void CheckReadOnly(object collection)
+    {
+        if (collection is Array || collection is not IList list || !list.IsReadOnly)
+            throw new Exception("Definition collection exposes mutable storage.");
+        if (list.Count > 0)
+            Reject<NotSupportedException>(() => list[0] = list[0]);
     }
 
     private static void Reject<T>(Action action)

@@ -36,6 +36,67 @@ internal static class NativeResolverChecks
             CalledMethods(refresh).Any(m => m.Name == "GetComponentsInChildren"),
             "Inactive hierarchy discovery missing."
         );
+        var prepare = native.GetMethod("Prepare", flags);
+        Check(
+            CalledMethods(prepare).Any(m => m.Name == "ArraysChanged")
+                && CalledMethods(prepare).Any(m => m.Name == "Due")
+                && CalledMethods(prepare).Any(m => m.Name == "Refresh"),
+            "Discovery no longer watches native arrays or periodic/lifecycle invalidation."
+        );
+        var current = native.GetMethod("Current", flags);
+        foreach (string check in new[] { "Mounted", "SamePose", "SequenceEqual", "Available" })
+            Check(
+                CalledMethods(current).Any(m => m.Name == check),
+                "Current placement misses live " + check
+            );
+        Check(
+            CalledMethods(native.GetMethod("Available", flags)).Any(m => m.Name == "Occupied"),
+            "Alias occupancy is frozen between discovery scans."
+        );
+        foreach (
+            string resolver in new[]
+            {
+                "SheetingWinchPlacementResolver",
+                "HalyardWinchPlacementResolver",
+            }
+        )
+        {
+            var validate = Type(resolver).GetMethod("ValidateCurrent", flags);
+            Check(
+                CalledMethods(validate).Any(m => m.Name == "Current")
+                    && !CalledMethods(validate).Any(m => m.Name is "Candidate" or "Resolve"),
+                "Current-placement validation searches alternatives or skips live seats."
+            );
+        }
+        var manager = Type("FishermanWinchControls");
+        var tick = manager.GetMethod("LateUpdate", flags);
+        var instructions = Instructions(tick).ToArray();
+        int firstReturn = Array.FindIndex(
+            instructions,
+            i => i.Code == System.Reflection.Emit.OpCodes.Ret
+        );
+        int inventoryWork = Array.FindIndex(
+            instructions,
+            i => i.Operand is MethodInfo m && m.Name == "Prepare"
+        );
+        Check(
+            firstReturn >= 0
+                && firstReturn < inventoryWork
+                && instructions
+                    .Take(firstReturn)
+                    .Any(i => i.Operand is MethodInfo m && m.Name == "get_Count"),
+            "Empty manager cannot skip inventory work."
+        );
+        var group = manager.GetNestedType("ControlGroup", BindingFlags.NonPublic);
+        var groupRefresh = group
+            .GetMethods(flags)
+            .Single(m => m.Name == "Refresh" && m.GetParameters().Length == 3);
+        var groupCalls = CalledMethods(groupRefresh).ToArray();
+        Check(
+            Array.FindIndex(groupCalls, m => m.Name == "TryRetain")
+                < Array.FindIndex(groupCalls, m => m.Name == "Resolve"),
+            "Stable claims search before validation."
+        );
         var halyard = Type("HalyardWinchPlacementResolver").GetMethod("Resolve", flags);
         Check(
             Instructions(halyard).Any(i => i.Operand is FieldInfo f && f.Name == "reefWinch"),

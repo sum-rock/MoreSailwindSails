@@ -7,6 +7,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Controls/WinchDiscoverySchedule.cs"
+      Link="Controls/WinchDiscoverySchedule.cs"
+    />
+    <Compile
+      Include="../../src/Controls/WinchBootstrapPolicy.cs"
+      Link="Controls/WinchBootstrapPolicy.cs"
+    />
+    <Compile
       Include="../../src/Controls/NativeSheetPairing.cs"
       Link="Controls/NativeSheetPairing.cs"
     />

@@ -1,11 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MoreSailwindSails.BoatRigs
 {
     internal static class BoatRigCatalog
     {
-        internal static BoatRigDefinition[] All =>
+        internal static readonly IReadOnlyList<BoatRigDefinition> All = Array.AsReadOnly(
             new[]
             {
                 Brig.Definition,
@@ -16,7 +17,8 @@ namespace MoreSailwindSails.BoatRigs
                 Leopard.Definition,
                 Shroud.Definition,
                 LargeDhow.Definition,
-            };
+            }
+        );
 
         internal static BoatRigDefinition Find(string boatName)
         {

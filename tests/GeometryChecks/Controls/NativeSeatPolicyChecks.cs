@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Controls;
@@ -14,22 +15,47 @@ internal static class NativeSeatPolicyChecks
         var right = new[] { new object(), new object() };
         int unmatched = 0;
         var indices = NativeSheetPairing
-            .Indices(left, right, null, o => o != null, _ => unmatched++)
+            .Indices(left, right, o => o != null, _ => unmatched++)
             .ToArray();
         Check(
             indices.Length == 1 && indices[0][0] == 0 && indices[0][1] == 0 && unmatched == 2,
             "Unequal/null arrays synthesized a pair or missed diagnostics."
         );
         Check(
-            !NativeSheetPairing.Indices(left, null, null, o => o != null, _ => { }).Any(),
+            !NativeSheetPairing.Indices(left, null, o => o != null, _ => { }).Any(),
             "Missing right array produced a partial pair."
         );
-        indices = NativeSheetPairing
-            .Indices(left, right, new[] { new[] { 2, 1 } }, o => o != null, _ => { })
-            .ToArray();
+        var laterLeft = new object();
+        var laterRight = new object();
+        object[] Bootstrap(object[] manual = null) =>
+            WinchBootstrapPolicy.Sheets(
+                sources: new[] { 0, 1 },
+                port: id => id == 0 ? left : new[] { laterLeft },
+                starboard: id => id == 0 ? null : new[] { laterRight },
+                usable: o => o != null,
+                fallback: () => manual
+            );
         Check(
-            indices.Length == 1 && indices[0][0] == 2 && indices[0][1] == 1,
-            "Explicit native correspondence was discarded."
+            Bootstrap().SequenceEqual(new[] { laterLeft, laterRight }),
+            "Missing original donor blocked a complete later template pair."
+        );
+        var manualPair = new[] { new object(), new object() };
+        object[] FallbackBootstrap(object[] manual) =>
+            WinchBootstrapPolicy.Sheets<object>(
+                sources: new[] { 0 },
+                port: _ => left,
+                starboard: _ => null,
+                usable: o => o != null,
+                fallback: () => manual
+            );
+        Check(
+            FallbackBootstrap(manualPair).SequenceEqual(manualPair),
+            "Fallback templates cannot bootstrap."
+        );
+        Check(
+            FallbackBootstrap(null) == null
+                && FallbackBootstrap(new[] { new object(), null }) == null,
+            "Unavailable templates produced partial controls."
         );
         var ledger = new WinchReservations();
         var owner = new object();
@@ -51,6 +77,69 @@ internal static class NativeSeatPolicyChecks
                     ),
                 },
             };
+        // Distinct coincident references: inactive first, active second. Test a
+        // whole sheet pair and a single halyard without mixing their identities.
+        foreach (int count in new[] { 1, 2 })
+        {
+            var inactive = Pair("inactive", 0);
+            var active = Pair("active", 0);
+            inactive.Supported = false;
+            inactive.Seats = inactive.Seats.Take(count).ToArray();
+            active.Seats = active
+                .Seats.Take(count)
+                .Select(
+                    (seat, i) =>
+                        new WinchSeat(
+                            identity: seat.Identity,
+                            aliases: new[] { inactive.Seats[i].Identity },
+                            position: seat.Position,
+                            rotation: seat.Rotation
+                        )
+                )
+                .ToArray();
+            var representatives = new List<WinchCandidate>();
+            WinchPlacementPolicy.AddSupportedRepresentative(
+                candidates: representatives,
+                candidate: inactive
+            );
+            WinchPlacementPolicy.AddSupportedRepresentative(
+                candidates: representatives,
+                candidate: active
+            );
+            Check(
+                representatives.Count == 1 && representatives[0] == active,
+                "Inactive coincident representative hid active controls."
+            );
+            var localLedger = new WinchReservations();
+            Check(
+                WinchPlacementPolicy
+                    .Resolve(
+                        ledger: localLedger,
+                        owner: owner,
+                        current: null,
+                        native: representatives.ToArray()
+                    )
+                    .Candidate == active,
+                "Supported equivalent was not selected."
+            );
+            Check(
+                !localLedger.TryAcquireSeats(owner: new object(), seats: inactive.Seats),
+                "Coincident references allowed duplicate reservations."
+            );
+            active.Vacant = false; // live occupancy includes every alias, even inactive references
+            Check(
+                WinchPlacementPolicy
+                    .Resolve(
+                        ledger: localLedger,
+                        owner: owner,
+                        current: active,
+                        native: representatives.ToArray()
+                    )
+                    .Candidate == null
+                    && localLedger.Count == 0,
+                "Occupied alias allowed borrowing or retained a claim."
+            );
+        }
         var a = Pair("a", 0);
         var b = Pair("b", 10);
         var fallback = Pair("fallback", 20, true);

@@ -14,6 +14,15 @@ namespace MoreSailwindSails.Controls
             this.ledger = ledger;
         }
 
+        internal bool ValidateCurrent(Mast requested, NativeWinchCandidate current) =>
+            current != null
+            && native.ActiveSupport(requested)
+            && current.SourceMast == requested
+            && requested.reefWinch != null
+            && current.SourceIndex < requested.reefWinch.Length
+            && requested.reefWinch[current.SourceIndex] == current.Templates[0]
+            && native.Current(current);
+
         internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
         {
             var candidates = new List<NativeWinchCandidate>();
@@ -29,14 +38,15 @@ namespace MoreSailwindSails.Controls
                         $"requestedMast={requested.orderIndex}, index={i}",
                         control
                     );
-                    if (
-                        candidate != null
-                        && !candidates.Any(c =>
-                            (c.Seats[0].Position - candidate.Seats[0].Position).sqrMagnitude
-                            <= 0.000001f
-                        )
-                    )
-                        candidates.Add(candidate);
+                    if (candidate != null)
+                    {
+                        candidate.SourceMast = requested;
+                        candidate.SourceIndex = i;
+                    }
+                    WinchPlacementPolicy.AddSupportedRepresentative(
+                        candidates: candidates,
+                        candidate: candidate
+                    );
                 }
             var result = WinchPlacementPolicy.Resolve(ledger, owner, current, candidates.ToArray());
             if (!native.ActiveSupport(requested))

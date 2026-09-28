@@ -32,7 +32,7 @@ internal static class RigChecks
             "25:7>9",
             "20:0>3,2;23:1>3,2;26:0>5,4;29:1>5,4;32:3,2>6;34:5,4>6;36:3,2>7;38:5,4>7;40:3,2>8;42:5,4>8",
         };
-        Assert(BoatRigCatalog.All.Length == names.Length, "Missing boat mapping coverage.");
+        Assert(BoatRigCatalog.All.Count == names.Length, "Missing boat mapping coverage.");
         for (int i = 0; i < names.Length; i++)
         {
             var profile = BoatRigCatalog.Find(names[i]);

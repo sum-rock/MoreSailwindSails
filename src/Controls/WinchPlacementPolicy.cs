@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace MoreSailwindSails.Controls
@@ -21,7 +22,6 @@ namespace MoreSailwindSails.Controls
     internal sealed class WinchResolution
     {
         internal WinchCandidate Candidate;
-        internal WinchReservations.Claim Claim;
         internal int NativeUnavailable,
             Reserved,
             MissingSupports,
@@ -31,6 +31,37 @@ namespace MoreSailwindSails.Controls
 
     internal static class WinchPlacementPolicy
     {
+        // Deduplicate whole placements only after considering their live support.
+        // Seat aliases remain intact, so an occupied equivalent still blocks use.
+        internal static void AddSupportedRepresentative<T>(List<T> candidates, T candidate)
+            where T : WinchCandidate
+        {
+            if (candidate == null)
+                return;
+            var coincident = candidates.FirstOrDefault(c =>
+                c.Seats.Length == candidate.Seats.Length
+                && c.Seats.Select(
+                        (seat, i) =>
+                            (seat.Position - candidate.Seats[i].Position).sqrMagnitude <= 0.000001f
+                    )
+                    .All(same => same)
+            );
+            if (coincident != null)
+            {
+                if (coincident.Supported || !candidate.Supported)
+                    return;
+                candidates.Remove(coincident);
+            }
+            candidates.Add(candidate);
+        }
+
+        internal static bool TryRetain(
+            WinchReservations ledger,
+            object owner,
+            WinchCandidate current,
+            bool valid
+        ) => current != null && valid && ledger.HoldsSeats(owner: owner, seats: current.Seats);
+
         internal static WinchResolution Resolve(
             WinchReservations ledger,
             object owner,
@@ -46,8 +77,7 @@ namespace MoreSailwindSails.Controls
             var stable = candidates.FirstOrDefault(c => c.SamePlacement(current));
             if (stable != null && stable.Supported && stable.Vacant)
             {
-                result.Claim = ledger.AcquireSeats(owner, stable.Seats);
-                if (result.Claim != null)
+                if (ledger.TryAcquireSeats(owner: owner, seats: stable.Seats))
                 {
                     result.Candidate = stable;
                     return result;
@@ -67,11 +97,9 @@ namespace MoreSailwindSails.Controls
                 }
                 else
                 {
-                    var claim = ledger.AcquireSeats(owner, candidate.Seats);
-                    if (claim != null)
+                    if (ledger.TryAcquireSeats(owner: owner, seats: candidate.Seats))
                     {
                         result.Candidate = candidate;
-                        result.Claim = claim;
                         return result;
                     }
                     if (candidate.Fallback)

@@ -14,22 +14,32 @@ namespace MoreSailwindSails.Controls
 
         private readonly List<Reservation> entries = new List<Reservation>();
         internal int Count => entries.Count;
+        internal long EntriesCreated { get; private set; }
 
-        internal sealed class Claim
+        internal bool HoldsSeats(object owner, WinchSeat[] seats)
         {
-            internal readonly object Owner;
-            internal readonly WinchSeat[] Seats;
-
-            internal Claim(object owner, WinchSeat[] seats)
+            int count = 0;
+            foreach (var entry in entries)
             {
-                Owner = owner;
-                Seats = seats;
+                if (!ReferenceEquals(entry.Owner, owner))
+                    continue;
+                bool found = false;
+                foreach (var seat in seats)
+                    if (entry.Seat.SamePose(seat) && entry.Seat.Aliases.SequenceEqual(seat.Aliases))
+                    {
+                        found = true;
+                        break;
+                    }
+                if (!found)
+                    return false;
+                count++;
             }
+            return count == seats.Length;
         }
 
         // Check the whole transaction before touching the ledger. A failed
         // acquisition cannot leave half a pair or consume another owner's seat.
-        internal Claim AcquireSeats(object owner, WinchSeat[] seats)
+        internal bool TryAcquireSeats(object owner, WinchSeat[] seats)
         {
             if (
                 owner == null
@@ -37,21 +47,35 @@ namespace MoreSailwindSails.Controls
                 || seats.Length == 0
                 || seats.Any(s => s == null || !s.Valid)
             )
-                return null;
+                return false;
             for (int i = 0; i < seats.Length; i++)
             {
                 for (int j = 0; j < i; j++)
                     if (seats[i].Conflicts(seats[j]))
-                        return null;
+                        return false;
                 if (
                     entries.Any(e => !ReferenceEquals(e.Owner, owner) && seats[i].Conflicts(e.Seat))
                 )
-                    return null;
+                    return false;
             }
+            if (
+                entries.Count(e => ReferenceEquals(e.Owner, owner)) == seats.Length
+                && seats.All(s =>
+                    entries.Any(e =>
+                        ReferenceEquals(e.Owner, owner)
+                        && e.Seat.SamePose(s)
+                        && e.Seat.Aliases.SequenceEqual(s.Aliases)
+                    )
+                )
+            )
+                return true;
             Release(owner);
             foreach (var seat in seats)
+            {
                 entries.Add(new Reservation { Owner = owner, Seat = seat });
-            return new Claim(owner, seats.ToArray());
+                EntriesCreated++;
+            }
+            return true;
         }
 
         internal void Release(object owner) =>

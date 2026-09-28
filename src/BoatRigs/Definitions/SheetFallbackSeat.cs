@@ -1,7 +1,11 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace MoreSailwindSails.BoatRigs
 {
+    // Immutable authored SheetFallbackSeat data, copied at the definition boundary.
     internal sealed class SheetFallbackSeat
     {
         internal readonly Vector3 Contact,
@@ -11,7 +15,7 @@ namespace MoreSailwindSails.BoatRigs
         internal readonly int TemplateMast,
             TemplateIndex;
         internal readonly WinchRole TemplateRole;
-        internal readonly int[] Supports;
+        internal readonly IReadOnlyList<int> Supports;
 
         internal SheetFallbackSeat(
             Vector3 contact,
@@ -21,9 +25,10 @@ namespace MoreSailwindSails.BoatRigs
             int templateMast,
             WinchRole templateRole,
             int templateIndex,
-            params int[] supports
+            IEnumerable<int> supports = null
         )
         {
+            var supportsCopy = (supports ?? Array.Empty<int>()).ToArray();
             Contact = contact;
             Normal = normal;
             SourceNormal = sourceNormal;
@@ -31,7 +36,7 @@ namespace MoreSailwindSails.BoatRigs
             TemplateMast = templateMast;
             TemplateRole = templateRole;
             TemplateIndex = templateIndex;
-            Supports = supports;
+            Supports = Array.AsReadOnly(supportsCopy);
         }
 
         internal bool Valid =>
