@@ -4,6 +4,9 @@
 # seat|boat|asset|orderIndex|role|array index|asset object identity|hierarchy|local xyz|local quaternion xyzw
 # Physical categories and source order are authored in each boat profile. Left/right indices correspond in this inventory.
 # Native source support must also be checked live; inactive rig data alone never establishes support.
+# Rechecked against installed assets 2026-09-28: Brig SE rigs 70 and 74 share a hierarchy
+# name but are distinct objects. Registered 70 references B1 reef seats; unregistered 74
+# references F1 reef seats. Resolve by serialized identity/index, never by hierarchy name alone.
 rig|Brig|SE|51|lower forestay 3|5|main mast 2,(no foremast)|SE_parts_brig/stays/SE_mainstay_bottom_0
 seat|Brig|SE|51|leftAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:1301084926921181442|SE_parts_brig/winches/rope_winch_megastay_angle_left (3)|-2.191500,2.707700,3.078400|0.726434,0.687074,-0.014921,0.000469
 seat|Brig|SE|51|rightAngleWinch|0|CAB-027b2b1c061051d0fa7aa2e47cc92195:-7137631769137879831|SE_parts_brig/winches/rope_winch_megastay_angle_right (3)|-2.205000,2.724000,-3.047000|0.002808,0.000224,0.727364,-0.686246

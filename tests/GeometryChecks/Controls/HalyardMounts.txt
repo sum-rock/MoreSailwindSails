@@ -1,0 +1,53 @@
+# Installed Sailwind 0.39 / SE 0.11.1 / Leopard / Shroud halyard support audit, 2026-09-28.
+# boat|exact requested mast IDs|associated stay source IDs|installed support/guide evidence
+# Own mast reef array is always first. Each listed mast gets its own group, not variant inheritance.
+# Stay sources can be inactive; the requested mast and actual mounting support must be active.
+# Duplicate seat references across stay variants are intentional; runtime aliases prevent double claims.
+# Unlisted masts retain their own reef array. Cog retains its user-confirmed 57 -> [57,58] scope.
+# Brig 70 and 74 have identical hierarchy names but different object identities. 70 is registered
+# and has B1 reef seats; 74 is unregistered and has F1 reef seats. NativeWinchSeats.txt is correct.
+# Associations were checked using serialized object identities, reef arrays, guide paths, prerequisites
+# and mounting hierarchies. No runtime spatial search or native array edits are involved.
+Brig|3,55|8,9,10,11,68,72,75,77|Foremast 1; F0 jib seats and matching topmast stays
+Brig|2,57|12,13,26,69,76,78|Foremast 2; F1 jib seats; excludes unregistered duplicate 74
+Brig|5,56|14,15,17,18,61,63|Mainmast 1; B0 stays and matching topmast stays
+Brig|4,58|16,19,20,25,51,52,62,64,70,71,73|Mainmast 2; B1 stays; registered 70 has B1 reef seats
+Brig|7,59|21,22,65|Mizzenmast 1; mizzen0 jib and topmast stay seats
+Brig|6,60|23,24,66|Mizzenmast 2; mizzen1 jib and topmast stay seats
+Brig|67|80|Raked foremast 1; F2 jib seat
+Brig|79|81|Raked foremast 2; F3 jib seats
+Junk|9,62|14,54,67|Foremast and its topmast; native and long-sprit forestay controls
+Junk|58|60|Raked foremast; corresponding forestay control
+Junk|10|0,1,2,15,16,63,64|Mainmast 1; forestays and fore-to-main stays
+Junk|11|3,4,55,56,61,68|Mainmast 2; forestays and fore-to-main stay
+Junk|12,53|5,6,65,66|Mizzenmast 1; mast_mizzen_0 midstay and matching topmast stay controls
+Junk|13|7|Mizzenmast 2; mast_mizzen_1 midstay control
+Junk|57|52|Mizzenmast 3; mast_miz_2 midstay control
+Jong|1|5,6|Upright foremast; upper and lower native forestay controls
+Jong|2|7,8,9,10,65,68,72|Mainmast 1 aft position; front-stay controls at that position
+Jong|51|60,62,64,66|Mainmast 1 forward position; front-stay controls at that position
+Jong|3|11,12,58,59|Mainmast 2 aft position; middle-stay controls at that position
+Jong|52|54,55,73,74|Mainmast 2 forward position; middle-stay controls at that position
+Jong|4|13,14,70,71|Mizzenmast 1; back-stay controls at the aft position
+Jong|53|56,57,75,76|Mizzenmast 2; back-stay controls at the forward position
+Sanbuq|10,13|2,4,6,7,15,73|Mainmast 1; jib and flying forestay controls on its lower support
+Sanbuq|11,14|3,5,8,16,17,57,58,68|Mainmast 2; jib and fore-to-main stay controls
+Sanbuq|12,80|9,56,81,82|Original mizzen; midstay and matching topmast-stay controls
+Sanbuq|55,59|54,60,66,67|Mizzenmast 2; mz2 stays
+Sanbuq|69,70|61,71|Mizzenmast 3; mz1 stays
+Sanbuq|51,64|52,53,65,72|Upright foremast; lower, topmast and flying forestay controls
+Sanbuq|62|63,78|Raked foremast; reef seat parented to raked_foremast
+Cog|57|58|User-confirmed mizzen mast 2; winch_reef_midstay2
+Leopard|4,5,6|0,1,2,3|Foremast sections; FORESTAYS/ROPES controls and foremast guides
+Leopard|7,8,9|13,14,15,16|Mainmast sections; MAINSTAYS/ROPES controls and mainmast guides
+Leopard|10,11,12|17,18,19|Mizzen sections; MIZZENSTAYS/ROPES controls and mizzen guides
+Shroud|5,6|13,14,15,20,21,22,23|Both foremast variants; Foremast Reef Coils/Jib Reefs only
+Shroud|7,8|16,17,24|Both mainmast variants; Mainmast Reef Coils/Jib Reefs only
+Shroud|9,10|18,19,25|Both mizzen variants; Mizzenmast Reef Coils/Jib Reef only
+LargeDhow|0|10|Foremast 1; stay reef seat parented to mast_fore_0
+LargeDhow|1|11|Foremast 2; stay reef seat parented to mast_fore_1__raked_
+LargeDhow|2,3|12,13,14,15,20,21,22,23,24,25|Mainmast 1 and topmast; stay seats parented to mast_main_0
+LargeDhow|4,5|16,17,18,19,26,27,28,29,30,31|Mainmast 2 and topmast; stay seats parented to mast_main_1
+LargeDhow|6|32,33,34,35|Mizzenmast 1; stay seat parented to mast_mizzen_0
+LargeDhow|7|36,37,38,39|Mizzenmast 2; stay seat parented to mast_mizzen_1__raked
+LargeDhow|8|40,41,42,43|Mizzenmast 3; stay seat parented to mast_mizzen_2
