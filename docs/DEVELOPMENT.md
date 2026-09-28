@@ -97,8 +97,11 @@ feature's `Patches/` directory and `.Patches` namespace.
 | `src/Sails/FishermansFlyingSail/` | Mast-mounted sail registration, rig, geometry, tension, billow and aerodynamics                                                     |
 | `src/Sails/FishermansStaysail/`   | Family prefab builder, rig, fixed head, edge fitting and reefing; `MkA/`, `MkB/`, `MkC/` supply cuts and identities                 |
 | `src/Stays/FishermansStay/`       | Independent mounts, registration, previews, controls and save compatibility                                                         |
-| `src/BoatRigs/`                   | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks; shared definitions validate the catalog |
+| `src/BoatRigs/`                   | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks |
 | `src/Controls/`                   | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning                                                          |
+
+Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
+with one type per file. They retain the `MoreSailwindSails.BoatRigs` namespace.
 
 In boat profile files, use named arguments for every supplied domain constructor
 argument, including explicit null fallbacks and boolean flags. Keep conventional
