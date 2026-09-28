@@ -546,7 +546,7 @@ variants. A small legend identifies the selected boat and grouped location count
 | Color | Meaning |
 | --- | --- |
 | Green | Unused native location on fitted supports. |
-| Amber | Occupied location: native bound rope, active renderer/collider, or visible custom winch. A bound native rope counts even when hidden. |
+| Red | Occupied location: native bound rope, active renderer/collider, or visible custom winch. A bound native rope counts even when hidden. |
 | Cyan | Unused native location on unfitted supports. |
 
 Coincident locations are grouped using the native inventory's **1 mm**
@@ -581,7 +581,7 @@ or disabling the utility releases the selected boat and drawing resources.
 Select the boat again after loading. Camera replacement needs no reattachment.
 Disabled/hidden overlays do not scan the boat or draw.
 
-#### Overlay validation (2026-09-27)
+#### Overlay validation (updated 2026-09-28)
 
 - Pinned CSharpier check, Release build, GeometryChecks, AssemblyChecks and
   `git diff --check` passed. The build reported **zero warnings and errors**.
@@ -594,8 +594,11 @@ Disabled/hidden overlays do not scan the boat or draw.
   transform/rendering/physics setters, activation/cloning/binding and seat
   reservations, and verify reuse of native occupancy rules. These are structural
   checks, not execution of Unity lifecycle or rendering.
-- **In-game validation has not been performed for this overlay.** Start on Brig:
-  confirm green/amber/cyan traces, through-hull visibility, movement tracking,
+- The user reports that the overlay works in game, but occupied amber/yellow
+  locations were too difficult to distinguish from green. Occupied traces and
+  their legend now use red. **The new red color still needs visual confirmation.**
+  Detailed runtime checks remain: start on Brig and confirm green/red/cyan
+  traces, through-hull visibility, movement tracking,
   unchanged interaction outlines, F9 captures, and repeated toggling. Then check
   rig swaps, camera changes, loading/boat removal, and a modded boat with different
   winch geometry. Confirm bounds fallback readability and acceptable frame time.

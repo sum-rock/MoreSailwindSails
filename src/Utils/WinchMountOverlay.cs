@@ -261,7 +261,7 @@ namespace MoreSailwindSails.Utils
                 Legend(
                     y: 64f,
                     state: WinchMountStatus.Occupied,
-                    text: "Amber: occupied (including hidden bound ropes)"
+                    text: "Red: occupied (including hidden bound ropes)"
                 );
                 Legend(
                     y: 86f,
@@ -287,7 +287,7 @@ namespace MoreSailwindSails.Utils
         }
 
         private static Color ColorFor(WinchMountStatus state) =>
-            state == WinchMountStatus.Occupied ? new Color(1f, 0.65f, 0f, 1f)
+            state == WinchMountStatus.Occupied ? Color.red
             : state == WinchMountStatus.Unused ? Color.green
             : Color.cyan;
 
