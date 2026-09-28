@@ -7,6 +7,16 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Controls/NativeSheetPairing.cs"
+      Link="Controls/NativeSheetPairing.cs"
+    />
+    <Compile
+      Include="../../src/Controls/WinchPlacementPolicy.cs"
+      Link="Controls/WinchPlacementPolicy.cs"
+    />
+    <Compile Include="../../src/Controls/WinchSeat.cs" Link="Controls/WinchSeat.cs" />
+    <None Update="FishermansStay/NativeWinchSeats.txt" CopyToOutputDirectory="PreserveNewest" />
+    <Compile
       Include="../../src/Controls/WinchCaptureGeometry.cs"
       Link="Controls/WinchCaptureGeometry.cs"
     />
@@ -21,10 +31,6 @@
     <Compile
       Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailRopeGeometry.cs"
       Link="FishermansFlyingSail/FishermansFlyingSailRopeGeometry.cs"
-    />
-    <Compile
-      Include="../../src/Controls/WinchPlacementGeometry.cs"
-      Link="FishermansStay/WinchPlacementGeometry.cs"
     />
     <Compile
       Include="../../src/Controls/WinchReservations.cs"

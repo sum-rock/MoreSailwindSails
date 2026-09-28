@@ -49,51 +49,16 @@ internal static class ProfileChecks
 
         Reject<ArgumentException>(() => leopard.Sections(127));
         Reject<ArgumentException>(() => leopard.Base(127));
-        Reject<InvalidOperationException>(() => leopard.WinchMount(127, WinchRole.Reef));
-        foreach (var boat in BoatRigCatalog.All)
-        foreach (var winch in boat.WinchMounts)
-        {
-            if (!ReferenceEquals(boat.WinchMount(winch.Mast, winch.Role), winch))
-                throw new Exception("Winch lookup escaped its containing boat profile.");
-            bool upperDhowRow =
-                ReferenceEquals(boat, largeDhow)
-                && winch.Role == WinchRole.Reef
-                && new[] { 0, 1, 2, 4 }.Contains(winch.Mast);
-            if (winch.SourceIndex != (upperDhowRow ? 2 : -1))
-                throw new Exception(
-                    "Authored winch source selection changed outside large-dhow stacked rows."
-                );
-            bool jongForeSheet =
-                ReferenceEquals(boat, Jong.Definition)
-                && winch.Mast == 10
-                && winch.Role is WinchRole.Left or WinchRole.Right;
-            if (winch.SourceMast != (jongForeSheet ? 7 : -1))
-                throw new Exception("Unexpected native mast override outside Jong fore sheets.");
-        }
-        Reject<ArgumentOutOfRangeException>(() =>
-            new WinchMountDefinition(0, WinchRole.Reef, UnityEngine.Vector3.up, true, 0, -2)
-        );
-        Reject<ArgumentOutOfRangeException>(() =>
-            new WinchMountDefinition(
-                0,
-                WinchRole.Left,
-                UnityEngine.Vector3.up,
-                0.05f,
-                -2,
-                new WinchSurfaceSegment(UnityEngine.Vector3.zero, UnityEngine.Vector3.forward)
-            )
-        );
-
         BoatRigDefinition Profile(
             IReadOnlyDictionary<int, int> parents,
-            params WinchMountDefinition[] winches
+            params SheetWinchCategory[] categories
         ) =>
             new BoatRigDefinition(
                 "test",
                 Brig.Definition.Supports,
                 Array.Empty<FishermansStayGroupDefinition>(),
                 parents,
-                winches
+                categories
             );
 
         Reject<ArgumentException>(() => Profile(new Dictionary<int, int> { { 0, 1 } }));
@@ -105,10 +70,10 @@ internal static class ProfileChecks
         parents[0] = 0;
         if (!profile.Sections(0).SequenceEqual(new[] { 0 }))
             throw new Exception("Caller mutation corrupted validated mast ancestry.");
-        var sample = Brig.Definition.WinchMounts[0];
+        var sample = Brig.Definition.SheetCategories[0];
         Reject<ArgumentException>(() => Profile(new Dictionary<int, int>(), sample, sample));
         Console.WriteLine(
-            "PASS: complete boat-profile lookup, ordered mast ancestry, missing entries, duplicate winches and cyclic/missing-parent rejection."
+            "PASS: complete boat-profile lookup, ordered mast ancestry, missing entries, duplicate categories and cyclic/missing-parent rejection."
         );
     }
 

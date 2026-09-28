@@ -11,8 +11,10 @@ internal static class Program
         RigChecks.Run();
         ProfileChecks.Run();
         StayChecks.Run();
-        WinchChecks.Run();
         Controls.WinchCaptureChecks.Run();
+        Controls.NativeSeatProfileChecks.Run();
+        Controls.NativeSeatAllocationChecks.Run();
+        Controls.NativeSeatPolicyChecks.Run();
         OrderTextChecks.Run();
         FlyingSailChecks.Run();
         RopeChecks.Run();

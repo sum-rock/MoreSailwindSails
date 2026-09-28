@@ -6,19 +6,55 @@ namespace MoreSailwindSails.BoatRigs
     internal static class Cog
     {
         internal static readonly BoatRigDefinition Definition = new BoatRigDefinition(
-            "BOAT medi small (40)",
-            Supports(),
-            Stays(),
-            MastParents(),
-            WinchMounts()
+            boatName: "BOAT medi small (40)",
+            supports: Supports(),
+            stays: Stays(),
+            mastParents: MastParents(),
+            sheetCategories: SheetCategories()
         );
+
+        // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
+        private static SheetWinchCategory[] SheetCategories() =>
+            new[]
+            {
+                new SheetWinchCategory(
+                    name: "Mainmast",
+                    physicalMasts: new[] { 6, 5, 59, 63 },
+                    sources: new[] { 6, 5, 59, 63, 58, 3, 4, 53, 54, 55, 60, 61, 62, 64, 67 },
+                    fallback: null
+                ),
+                new SheetWinchCategory(
+                    name: "Foremast",
+                    physicalMasts: new[] { 56, 68 },
+                    sources: new[] { 56, 68, 69, 70 },
+                    fallback: null
+                ),
+                new SheetWinchCategory(
+                    name: "Mizzenmast",
+                    physicalMasts: new[] { 8, 57, 66 },
+                    sources: new[] { 8, 57, 66, 51, 65 },
+                    fallback: null
+                ),
+            };
 
         private static MastSupportDefinition[] Supports() =>
             new[]
             {
-                new MastSupportDefinition(51, new[] { 8 }, new[] { 5 }),
-                new MastSupportDefinition(58, new[] { 5 }, new[] { 57 }),
-                new MastSupportDefinition(65, new[] { 8 }, new[] { 6 }),
+                new MastSupportDefinition(
+                    sheetControlSource: 51,
+                    foreSections: new[] { 8 },
+                    aftSections: new[] { 5 }
+                ),
+                new MastSupportDefinition(
+                    sheetControlSource: 58,
+                    foreSections: new[] { 5 },
+                    aftSections: new[] { 57 }
+                ),
+                new MastSupportDefinition(
+                    sheetControlSource: 65,
+                    foreSections: new[] { 8 },
+                    aftSections: new[] { 6 }
+                ),
             };
 
         // Installed mast ancestry: -1 marks a physical base section.
@@ -33,148 +69,55 @@ namespace MoreSailwindSails.BoatRigs
                 { 68, -1 },
             };
 
-        // Installed donor directions in boat space; provenance and numeric fixtures
-        // are documented in docs/DEVELOPMENT.md under shared winch placement.
-        private static WinchMountDefinition[] WinchMounts() =>
-            new[]
-            {
-                new WinchMountDefinition(5, WinchRole.Reef, new Vector3(0f, 1f, 0f), true, 5),
-                new WinchMountDefinition(8, WinchRole.Reef, new Vector3(0f, 1f, 0f), true, 8),
-                new WinchMountDefinition(
-                    51,
-                    WinchRole.Left,
-                    new Vector3(0.080921f, 0.992272f, 0.094062f),
-                    0.057454f,
-                    AftRail(WinchRole.Left)
-                ),
-                new WinchMountDefinition(
-                    51,
-                    WinchRole.Right,
-                    new Vector3(-0.103256f, 0.992379f, 0.067245f),
-                    0.057454f,
-                    AftRail(WinchRole.Right)
-                ),
-                new WinchMountDefinition(57, WinchRole.Reef, new Vector3(0f, 1f, 0f), true, 57),
-                new WinchMountDefinition(
-                    58,
-                    WinchRole.Left,
-                    new Vector3(0.080921f, 0.992272f, 0.094062f),
-                    0.057454f,
-                    AftRail(WinchRole.Left)
-                ),
-                new WinchMountDefinition(
-                    58,
-                    WinchRole.Right,
-                    new Vector3(-0.103256f, 0.992379f, 0.067245f),
-                    0.057454f,
-                    AftRail(WinchRole.Right)
-                ),
-                new WinchMountDefinition(
-                    65,
-                    WinchRole.Left,
-                    new Vector3(0.080921f, 0.992272f, 0.094062f),
-                    0.057454f,
-                    AftRail(WinchRole.Left)
-                ),
-                new WinchMountDefinition(
-                    65,
-                    WinchRole.Right,
-                    new Vector3(-0.103256f, 0.992379f, 0.067245f),
-                    0.057454f,
-                    AftRail(WinchRole.Right)
-                ),
-            };
-
-        // Measured solid support: trim_001.
-        private static WinchSurfaceSegment[] AftRail(WinchRole role) =>
-            role == WinchRole.Left
-                ? new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(-1.938420f, 2.440695f, -2.586095f),
-                        new Vector3(-1.899160f, 2.540430f, -3.484050f),
-                        new Vector3(0.002328f, 0.993874f, 0.110490f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-1.896715f, 2.544770f, -3.530110f),
-                        new Vector3(-1.793510f, 2.672010f, -5.174305f),
-                        new Vector3(0.066976f, 0.994448f, 0.081162f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(-1.790820f, 2.675890f, -5.220275f),
-                        new Vector3(-1.727715f, 2.782630f, -6.387575f),
-                        new Vector3(0.145756f, 0.984465f, 0.097901f)
-                    ),
-                }
-                : new[]
-                {
-                    new WinchSurfaceSegment(
-                        new Vector3(1.938420f, 2.440695f, -2.586095f),
-                        new Vector3(1.899160f, 2.540430f, -3.484050f),
-                        new Vector3(-0.002328f, 0.993874f, 0.110490f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(1.896715f, 2.544770f, -3.530110f),
-                        new Vector3(1.793510f, 2.672010f, -5.174305f),
-                        new Vector3(-0.066976f, 0.994448f, 0.081162f)
-                    ),
-                    new WinchSurfaceSegment(
-                        new Vector3(1.790825f, 2.675890f, -5.220275f),
-                        new Vector3(1.727715f, 2.782630f, -6.387575f),
-                        new Vector3(-0.145758f, 0.984464f, 0.097902f)
-                    ),
-                };
-
-        // Authored from installed Cog and Shipyard Expansion assets.
-        // Endpoint vectors are local to the named physical mast section.
+        // Authored from installed native and boat-mod assets.
         private static FishermansStayGroupDefinition[] Stays() =>
             new[]
             {
                 new FishermansStayGroupDefinition(
-                    "Mainmast / mizzenmast",
-                    new[]
+                    label: "Mainmast / mizzenmast",
+                    variants: new[]
                     {
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            128,
-                            51,
-                            "main mast 2 / mizzen mast",
-                            5,
-                            new Vector3(-0.00000f, 0.00000f, -4.77700f),
-                            8,
-                            new Vector3(-0.00000f, -0.00391f, 1.14600f),
-                            false,
-                            0,
-                            new[] { 5, 8 },
-                            new int[0]
+                            mountIndex: 128,
+                            donor: 51,
+                            label: "main mast 2 / mizzen mast",
+                            fore: 5,
+                            forePoint: new Vector3(-0.00000f, 0.00000f, -4.77700f),
+                            aft: 8,
+                            aftPoint: new Vector3(-0.00000f, -0.00391f, 1.14600f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 5, 8 },
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            129,
-                            65,
-                            "main mast 1 / mizzen mast",
-                            6,
-                            new Vector3(-0.00000f, 0.00000f, -3.33567f),
-                            8,
-                            new Vector3(-0.00000f, -0.00391f, 1.14600f),
-                            false,
-                            0,
-                            new[] { 6, 8 },
-                            new int[0]
+                            mountIndex: 129,
+                            donor: 65,
+                            label: "main mast 1 / mizzen mast",
+                            fore: 6,
+                            forePoint: new Vector3(-0.00000f, 0.00000f, -3.33567f),
+                            aft: 8,
+                            aftPoint: new Vector3(-0.00000f, -0.00391f, 1.14600f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 6, 8 },
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
-                            130,
-                            58,
-                            "main mast 2 / mizzen mast 2",
-                            5,
-                            new Vector3(0.00000f, 0.00000f, -4.25708f),
-                            57,
-                            new Vector3(-0.00000f, -0.00391f, 1.14600f),
-                            false,
-                            0,
-                            new[] { 5, 57 },
-                            new int[0]
+                            mountIndex: 130,
+                            donor: 58,
+                            label: "main mast 2 / mizzen mast 2",
+                            fore: 5,
+                            forePoint: new Vector3(0.00000f, 0.00000f, -4.25708f),
+                            aft: 57,
+                            aftPoint: new Vector3(-0.00000f, -0.00391f, 1.14600f),
+                            extendedGuide: false,
+                            guideIndex: 0,
+                            required: new[] { 5, 57 },
+                            forbidden: new int[0]
                         ),
                     }
                 ),

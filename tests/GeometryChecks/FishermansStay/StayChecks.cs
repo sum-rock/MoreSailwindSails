@@ -226,7 +226,7 @@ internal static class StayChecks
                 Brig.Definition.Supports,
                 new[] { new FishermansStayGroupDefinition("test", new[] { sample, sample }) },
                 Brig.Definition.MastParents,
-                Brig.Definition.WinchMounts
+                Brig.Definition.SheetCategories
             )
         );
         foreach (

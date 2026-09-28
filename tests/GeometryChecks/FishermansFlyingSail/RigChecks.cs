@@ -84,7 +84,7 @@ internal static class RigChecks
                 new[] { brig[0], brig[0] },
                 Brig.Definition.Stays,
                 Brig.Definition.MastParents,
-                Brig.Definition.WinchMounts
+                Brig.Definition.SheetCategories
             )
         );
         Reject(() =>
@@ -93,7 +93,7 @@ internal static class RigChecks
                 Array.Empty<MastSupportDefinition>(),
                 Brig.Definition.Stays,
                 Brig.Definition.MastParents,
-                Brig.Definition.WinchMounts
+                Brig.Definition.SheetCategories
             )
         );
         Reject(() => new MastSupportDefinition(1, new[] { 2 }, new[] { 2 }));
