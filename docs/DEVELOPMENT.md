@@ -602,6 +602,19 @@ Disabled/hidden overlays do not scan the boat or draw.
 - Built DLL: `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`, version
   **0.2.1**. No installed game files or saves were replaced during this work.
 
+#### Material constructor review follow-up (2026-09-28)
+
+[PR #27 review](https://github.com/sum-rock/MoreSailwindSails/pull/27#discussion_r4118192217)
+flagged the overlay's named material-constructor argument. Inspection of the
+installed Unity assembly confirms `Material(Shader shader)` and
+`Material(Material source)`; the original code also passed a forced Release
+rebuild with zero warnings/errors. The reported compilation failure was not
+reproduced. The overlay now passes its shader positionally, avoiding dependence
+on the constructor parameter name while preserving overload selection and behavior.
+CSharpier, the updated Release build (zero warnings/errors), GeometryChecks,
+AssemblyChecks and `git diff --check` passed. Version remains **0.2.1**; live
+rendering has not been revalidated, and no installed DLL or save was changed.
+
 ### Asset provenance and measurement fixtures
 
 The support table below is retained as measurement provenance for manual fallback

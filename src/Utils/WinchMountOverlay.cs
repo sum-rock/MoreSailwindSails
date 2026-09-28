@@ -54,7 +54,7 @@ namespace MoreSailwindSails.Utils
                 Notify(message: "Winch mount overlay shader unavailable; overlay remains off.");
                 return;
             }
-            material = new Material(shader: shader) { hideFlags = HideFlags.HideAndDontSave };
+            material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
             material.SetInt(name: "_SrcBlend", value: (int)BlendMode.SrcAlpha);
             material.SetInt(name: "_DstBlend", value: (int)BlendMode.OneMinusSrcAlpha);
             material.SetInt(name: "_Cull", value: (int)CullMode.Off);
