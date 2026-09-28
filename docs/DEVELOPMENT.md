@@ -316,18 +316,21 @@ The capsule tip at z **2.29** is 6.7 cm higher and produced the reported floatin
 attachment. All eight fore/main variants use the corrected, slightly steeper
 slope; aft guide heights and save IDs stay unchanged.
 
-Halyards now search the requested active mast's `reefWinch` array in native
-order, including all available rows. The former fixed donor-row overrides and
-generated mast offsets are removed.
-
 ## Winch placement
+
+The **0.2.1** native winch placement redesign is **accepted as valid and complete**
+on Brig, Junk, Jong, Sanbuq, Cog, Leopard, Shroud and large dhow. It applies to
+Flying Sails, all three staysail cuts and native sails fitted to Fisherman's
+Stays. This section owns the current behavior; the completed implementation plan
+has been retired. Architecture and code-review improvements remain separate work
+in [WINCH_PLACEMENT_REDESIGN_CLEANUP.md](WINCH_PLACEMENT_REDESIGN_CLEANUP.md).
 
 ### Placement and ownership
 
-Version **0.2.1** uses the native-seat policy on Brig, Junk, Jong, Sanbuq, Cog,
-Leopard, Shroud and large dhow. It applies to Flying Sails, all three staysail
-cuts and native sails fitted to Fisherman's Stays. Family rigging remains separate;
-only placement, cloning and allocation are shared.
+Family rigging remains separate; only placement, cloning and allocation are
+shared. Boat profiles provide authored data, native inventory discovers controls,
+separate sheet/halyard resolvers select seats, and the boat-owned reservation
+ledger and clone coordinator manage allocation and control lifetime.
 
 Each boat profile authors physical mast categories separately from ordered native
 sheet-source rigs. Sources include physical variants, their topmasts and verified
@@ -383,9 +386,9 @@ manual halyard fallback.
 
 Shroud uses these same resolvers. Its short mainmast has **five** reef entries and
 its tall mainmast **seven**; eligibility comes from the requested array, not the
-former twelve-pin pool. There are no pin-specific clearance settings. Native
-reclaim and stable reservations follow the same rules as on every other boat.
-Actual simultaneous pin capacity still needs in-game validation.
+former twelve-pin pool. Native reclaim and stable reservations follow the same
+rules as on every other boat; capacity depends on the requested array and which
+seats are occupied.
 
 ### Manual sheet fallbacks
 
@@ -397,9 +400,10 @@ generate positions along a rail or mast.
 
 Only **Shroud / ForemastFallback** is currently populated, using its previously
 measured forward trim pair. All other category fallbacks remain explicitly null,
-including Jong's separate mainmast fallbacks. They need labeled F9 captures and
-visual/reachability confirmation before authoring. Missing vectors do not block
-native placement or the first-pass rollout.
+including Jong's separate mainmast fallbacks. This is supported configuration,
+not unfinished redesign work. Any future fallback additions require labeled F9
+captures and visual/reachability confirmation before authoring. Missing vectors
+do not block native placement.
 
 Null, incomplete or non-finite fallbacks are unavailable as a whole. When native
 pairs exhaust, missing fallback data produces one contextual error per definition
@@ -500,58 +504,45 @@ runtime accessibility, rendered support contact or Unity lifecycle behavior.
 
 ### Runtime validation
 
-Implementation validation on **2026-09-27**, version **0.2.1**:
+The user accepted the native placement work as valid and complete on
+**2026-09-27**, version **0.2.1**. The remaining review improvements are tracked
+only in [the cleanup plan](WINCH_PLACEMENT_REDESIGN_CLEANUP.md).
 
-- Release build: passed with zero warnings/errors after restoring the existing
-  pinned dependencies. The initial baseline build had stale framework references;
-  no dependency versions were changed.
-- GeometryChecks and AssemblyChecks: passed. Assembly checks inspect installed
-  signatures/IL and plugin wiring; they do not execute Unity object lifecycles.
-- CSharpier and diff checks: passed for the implementation commits.
-- Built DLL: `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`.
-- The implementation checks did not install the DLL or alter saves. Subsequent
-  user testing on Brig is recorded below; observations of the old placement
-  strategy do not validate this replacement.
+Evidence for this accepted baseline:
 
-User Brig test reviewed on **2026-09-27**, version **0.2.1**:
+- Release build passed with zero warnings/errors. GeometryChecks, AssemblyChecks,
+  CSharpier and diff checks passed. Automated checks cover profile membership,
+  identity/alias reservations, atomic pairs, fallback behavior and native wiring;
+  they do not execute Unity object lifecycles or measure frame-time cost.
+- After geometric clearance was removed, user testing on **Brig** confirmed both
+  sheets and the mainmast halyard for Mk.C, using reef index 1
+  (`rope_winch_mastB1_reef (1)`). The native sail on custom stay 144 also received
+  both sheets and its mizzen halyard. The earlier observed halyard placement
+  failure did not recur in this retest.
+- On **Jong**, all eight logged owner instances across fitting/recreation received
+  both sheets and a halyard. The final recreated configuration contained a Flying
+  Sail and two Mk.B staysails; the eight instances were not eight simultaneous sails.
+- BepInEx and Unity logs agreed, with no placement exhaustion or binding/placement
+  failures for either boat in that session. Installed and local DLL hashes matched.
+  All those placements used native seats. The user installed and tested the build;
+  automated builds do not install files or modify saves.
 
-- At log review, the installed plugin and local Release DLL had matching SHA-256
-  hashes.
-  Both BepInEx and Unity player logs confirm mainmast halyard exhaustion for
-  Mk.B, Mk.C and a Flying Sail. Mk.C's latest warning is at BepInEx log line 1849:
-  `requestedMast=4, nativeUnavailable=4, reserved=0, missingSupports=0`.
-- The four mainmast candidates were found with active supports, but all failed
-  native occupancy/clearance checks. Custom reservations did not exhaust them.
-  The corresponding sheet placements succeeded; no later mainmast halyard
-  success was logged in this session. A native sail on custom stay 144 also
-  exhausted the mizzen's three halyard candidates (`requestedMast=7`).
-- The tested build did not identify individual blocking controls. Its clearance
-  check treated nearby active GameObjects as obstacles even when their
-  renderer/collider was disabled and no rope was bound. This was a possible
-  source of false rejection, not a confirmed explanation of these failures.
-- Following this report, the placement policy was simplified at the user's
-  request: geometric clearance checks were removed for native seats and manual
-  fallbacks, including reservation radii and Shroud pin-clearance overrides.
-  Native occupancy/alias checks, active supports and atomic identity reservations
-  remain. The updated build still needs a Brig retest; the observed failure is
-  not yet confirmed resolved.
-- Simplified-policy verification: Release build passed with zero warnings/errors;
-  GeometryChecks, AssemblyChecks, CSharpier and diff checks passed. Regression
-  cases cover nearby distinct seats, native/fallback proximity, duplicate fallback
-  claims and atomic alias conflicts. The rebuilt DLL has not been installed.
+Acceptance applies to the implemented redesign. The recorded runtime evidence
+covers the configurations above; it does not claim exhaustive testing of every
+boat, fallback or lifecycle transition.
 
-Start manual validation on **Brig**, then Junk, Jong, Sanbuq, Cog, Leopard, Shroud
-and large dhow. On each boat fit Flying Sails, Mk.A/B/C and native staysails on
-custom stays alone and together; occupy/free native seats; change mast options;
-complete/cancel orders; remove sails; and reload a save. Confirm both sheets are
-reachable and independently usable, move/recover together, keep valid fallbacks
-stable, and retain working halyards and rope routing. Check Shroud's native-first
-sheets and mast-local pin eligibility. Exercise missing fallbacks without losing
-stays or controllers. Record per-boat observations here; Brig has the failures
-above, and full validation remains pending on all eight boats.
+For **future placement changes**, start regression testing on Brig and Jong, then
+other affected boats. Fit Flying Sails, Mk.A/B/C and native sails on custom stays
+alone and together; occupy/free native seats; change mast options; complete/cancel
+orders; remove/recreate sails; and reload saves. Confirm reachable independent
+sheets, paired movement/recovery, stable fallbacks and working halyards/rope
+routing. Include Shroud's fallback and mast-local pins when affected. Record new
+observations separately from automated results; this is a regression checklist,
+not an outstanding acceptance gate for the completed redesign.
 
-This is local development at 0.2.1, not a release. README's pre-existing 0.2.0
-version text remains unchanged under the repository's explicit-edit policy.
+Built DLL: `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`. This is local
+development at **0.2.1**, not a release. README's pre-existing 0.2.0 version text
+remains unchanged under the repository's explicit-edit policy.
 
 ### Related issues
 
