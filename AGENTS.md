@@ -66,8 +66,9 @@ sections before changing a feature:
 - Preserve Flying Sail **85%** upper sheeting and fixed ties; staysails use
   **14° × clamped currentUnroll**, independent lower sheets and upward reefing.
 - Sheets reserve complete native pairs atomically by identity and aliases,
-  then try the category's explicit manual fallback. Halyards use only the requested
-  active mast's native seats. Native bindings take priority. Move the parent mount,
+  then try the category's explicit manual fallback. Halyards use the requested
+  active mast's authored source group, or its own native seats if unconfigured.
+  Native bindings take priority. Move the parent mount,
   never the input wheel; exhaustion hides/retries while retaining controllers.
   Trust native and authored fallback positions: do not add geometric clearance,
   radius or proximity checks. Never restore generated rail/mast offsets or pooled
