@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace MoreSailwindSails.Controls
 {
+    // Allocates halyards from the active requested mast's authored source group.
     internal sealed class HalyardWinchPlacementResolver
     {
         private readonly NativeWinchSeats native;
@@ -16,40 +17,52 @@ namespace MoreSailwindSails.Controls
 
         internal bool ValidateCurrent(Mast requested, NativeWinchCandidate current) =>
             current != null
-            && native.ActiveSupport(requested)
-            && current.SourceMast == requested
-            && requested.reefWinch != null
-            && current.SourceIndex < requested.reefWinch.Length
-            && requested.reefWinch[current.SourceIndex] == current.Templates[0]
-            && native.Current(current);
+            && native.ActiveSupport(mast: requested)
+            && native.HalyardSources(requested: requested).Contains(current.SourceMast)
+            && current.SourceMast.reefWinch != null
+            && current.SourceIndex >= 0
+            && current.SourceIndex < current.SourceMast.reefWinch.Length
+            && current.SourceMast.reefWinch[current.SourceIndex] == current.Templates[0]
+            && native.Current(candidate: current);
 
         internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
         {
             var candidates = new List<NativeWinchCandidate>();
-            // Never substitute an inactive variant or another mast in the category.
-            if (native.ActiveSupport(requested) && requested.reefWinch != null)
-                for (int i = 0; i < requested.reefWinch.Length; i++)
+            // Source rigs may be unfitted; Candidate checks the actual mounting
+            // support. Never broaden this to a category or nearby-mast search.
+            if (native.ActiveSupport(mast: requested))
+                foreach (var source in native.HalyardSources(requested: requested))
                 {
-                    var control = requested.reefWinch[i];
-                    if (!NativeWinchSeats.Usable(control))
+                    if (source.reefWinch == null)
                         continue;
-                    var candidate = native.Candidate(
-                        "halyard/" + control.GetInstanceID(),
-                        $"requestedMast={requested.orderIndex}, index={i}",
-                        control
-                    );
-                    if (candidate != null)
+                    for (int i = 0; i < source.reefWinch.Length; i++)
                     {
-                        candidate.SourceMast = requested;
-                        candidate.SourceIndex = i;
+                        var control = source.reefWinch[i];
+                        if (!NativeWinchSeats.Usable(c: control))
+                            continue;
+                        var candidate = native.Candidate(
+                            id: "halyard/" + control.GetInstanceID(),
+                            context: $"requestedMast={requested.orderIndex}, sourceRig={source.orderIndex}, index={i}",
+                            templates: control
+                        );
+                        if (candidate != null)
+                        {
+                            candidate.SourceMast = source;
+                            candidate.SourceIndex = i;
+                        }
+                        WinchPlacementPolicy.AddSupportedRepresentative(
+                            candidates: candidates,
+                            candidate: candidate
+                        );
                     }
-                    WinchPlacementPolicy.AddSupportedRepresentative(
-                        candidates: candidates,
-                        candidate: candidate
-                    );
                 }
-            var result = WinchPlacementPolicy.Resolve(ledger, owner, current, candidates.ToArray());
-            if (!native.ActiveSupport(requested))
+            var result = WinchPlacementPolicy.Resolve(
+                ledger: ledger,
+                owner: owner,
+                current: current,
+                native: candidates.ToArray()
+            );
+            if (!native.ActiveSupport(mast: requested))
                 result.MissingSupports++;
             return result;
         }

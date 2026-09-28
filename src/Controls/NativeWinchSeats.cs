@@ -139,6 +139,21 @@ namespace MoreSailwindSails.Controls
 
         internal Mast Mast(int id) => mastsById.TryGetValue(id, out var mast) ? mast : null;
 
+        internal IEnumerable<Mast> HalyardSources(Mast requested)
+        {
+            if (!requested)
+                yield break;
+            var ids =
+                Profile?.HalyardSources(mast: requested.orderIndex)
+                ?? new[] { requested.orderIndex };
+            foreach (int id in ids)
+            {
+                var source = id == requested.orderIndex ? requested : Mast(id: id);
+                if (source)
+                    yield return source;
+            }
+        }
+
         internal static GPButtonRopeWinch[] Sources(Mast mast, WinchRole role)
         {
             switch (role)
