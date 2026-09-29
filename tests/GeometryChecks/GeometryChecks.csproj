@@ -39,6 +39,10 @@
       Link="Compatibility/TextureCatalogOrder.cs"
     />
     <Compile
+      Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailKnotChannels.cs"
+      Link="FishermansFlyingSail/FishermansFlyingSailKnotChannels.cs"
+    />
+    <Compile
       Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailKnotGeometry.cs"
       Link="FishermansFlyingSail/FishermansFlyingSailKnotGeometry.cs"
     />

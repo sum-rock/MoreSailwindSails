@@ -7,6 +7,7 @@ using static MoreSailwindSails.Tests.AssemblyChecks.Shared.IlReader;
 
 namespace MoreSailwindSails.Tests.AssemblyChecks.FishermansFlyingSail;
 
+// Guards the boundary between decorative Flying Sail visuals and native rope/cloth state.
 internal static class SheetVisualChecks
 {
     internal static void Run(Assembly assembly)
@@ -136,6 +137,75 @@ internal static class SheetVisualChecks
             throw new Exception(
                 "Knot appearance must come from the installed native jib-sheet prefab."
             );
+        var channels = assembly.GetType(prefix + "FishermansFlyingSailKnotChannels", true);
+        var creationIL = Instructions(create).ToList();
+        int bounds = creationIL.FindIndex(i =>
+            i.Operand is MethodBase m && m.Name == "RecalculateBounds"
+        );
+        int applyUVs = creationIL.FindIndex(i =>
+            i.Operand is MethodBase m && m.DeclaringType == knots && m.Name == "ApplyUVs"
+        );
+        var uvCalls = CalledMethods(knots.GetMethod("ApplyUVs", methods)).ToArray();
+        if (
+            !creationCalls.Any(m => m.DeclaringType == channels && m.Name == "Validate")
+            || !creationCalls.Any(m => m.DeclaringType == channels && m.Name == "Remap")
+            || bounds < 0
+            || applyUVs <= bounds
+            || !creationIL
+                .Skip(bounds + 1)
+                .Take(applyUVs - bounds - 1)
+                .Any(i => i.Code.FlowControl == FlowControl.Cond_Branch)
+            || creationCalls.Any(m =>
+                m.Name
+                    is "set_uv"
+                        or "set_tangents"
+                        or "RecalculateTangents"
+                        or "RecalculateNormals"
+            )
+            || !uvCalls.Any(m => m.DeclaringType == channels && m.Name == "Remap")
+            || !uvCalls.Any(m => m.Name == "set_uv")
+            || !uvCalls.Any(m => m.Name == "RecalculateTangents")
+        )
+            throw new Exception(
+                "Knot UV assignment and tangent generation must be conditional on validated UVs; native normals must be preserved."
+            );
+        var materialCalls = CalledMethods(knots.GetMethod("HasAssignedTextures", methods))
+            .ToArray();
+        if (
+            !materialCalls.Any(m => m.Name == "GetTexturePropertyNames")
+            || !materialCalls.Any(m => m.Name == "GetTexture")
+            || !creationCalls.Any(m => m.Name == "get_shader")
+            || !creationCalls.Any(m => m.DeclaringType == knots && m.Name == "HasAssignedTextures")
+        )
+            throw new Exception(
+                "UV-less knot compatibility must inspect the native shader and all assigned textures."
+            );
+        int inactive = creationCalls.FindIndex(m => m.Name == "get_activeInHierarchy");
+        int instantiate = creationCalls.FindIndex(m => m.Name == "Instantiate");
+        if (
+            inactive < 0
+            || instantiate <= inactive
+            || creationCalls.Count(m => m.Name == "DestroyImmediate") != 4
+            || knots.GetMethods(methods).SelectMany(CalledMethods).Any(m => m.Name == "SetActive")
+        )
+            throw new Exception(
+                "Knot construction must retain the inactive-parent guard, temporary/failed asset cleanup, and never activate its donor."
+            );
+        foreach (
+            string getter in new[]
+            {
+                "get_vertexCount",
+                "get_isReadable",
+                "get_vertices",
+                "get_normals",
+                "get_uv",
+                "get_tangents",
+            }
+        )
+            if (!creationCalls.Any(m => m.Name == getter))
+                throw new Exception(
+                    "Knot diagnostics must retain source metadata and each baked channel count."
+                );
         foreach (var method in knots.GetMethods(methods).Where(m => !m.IsStatic))
         foreach (var called in CalledMethods(method))
             if (
@@ -152,7 +222,7 @@ internal static class SheetVisualChecks
                     "Live knot callbacks must only pose/hide independent visuals; instances do not own meshes or rope physics."
                 );
         Console.WriteLine(
-            "PASS (IL): scoped native sheet suppression, direct external spans, private native-knot baking, material reuse and knot lifecycle; live cloth and rope physics preserved. Rendering remains a runtime check."
+            "PASS (IL): scoped native sheet suppression, direct external spans, private native-knot baking, conditional UV/tangents, material compatibility, cleanup and knot lifecycle; live cloth and rope physics preserved. Baking/rendering remain runtime checks."
         );
     }
 }
