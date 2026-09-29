@@ -1,10 +1,12 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using static MoreSailwindSails.Tests.AssemblyChecks.Shared.IlReader;
 
 namespace MoreSailwindSails.Tests.AssemblyChecks.FishermansStay;
 
+// Checks winch ownership and controller lifetime contracts without running Unity.
 internal static class WinchChecks
 {
     internal static void Run(Assembly assembly)
@@ -34,23 +36,61 @@ internal static class WinchChecks
                 ),
             "Placement overwrites wheel input rotation."
         );
+        var suspend = Instructions(owned.GetMethod("Suspend", all)).ToArray();
         Check(
-            CalledMethods(owned.GetMethod("Suspend", all)).Any(m => m.Name == "Detach"),
-            "Hiding controls can disable their controllers."
+            suspend[0].Code == OpCodes.Ldarg_1
+                && (suspend[1].Code == OpCodes.Brfalse_S || suspend[1].Code == OpCodes.Brfalse)
+                && suspend.Any(i => i.Operand is MethodInfo m && m.Name == "Detach"),
+            "Suspension must gate controller detachment on the preservation argument."
         );
         Check(
             CalledMethods(clone.GetMethod("Detach", all)).Any(m => m.Name == "SetParent"),
             "Controllers are not preserved outside destroyed mounts."
         );
         Check(
-            CalledMethods(clone.GetMethod("Destroy", all)).Any(m => m.Name == "Detach"),
-            "Clone destruction loses controllers."
+            !CalledMethods(clone.GetMethod("Destroy", all))
+                .Any(m => m.Name is "Detach" or "SetParent"),
+            "Final clone destruction must not reparent controllers into a dying boat."
         );
+        var disposeCalls = CalledMethods(owned.GetMethod("Dispose", all)).ToArray();
         Check(
-            CalledMethods(owned.GetMethod("Dispose", all)).Any(m => m.Name == "Remove"),
+            disposeCalls.Any(m => m.Name == "Remove")
+                && disposeCalls.Any(m => m.DeclaringType == clone && m.Name == "Destroy")
+                && !disposeCalls.Any(m => m.Name is "Detach" or "Retire" or "SetParent"),
             "Disposal bypasses group claim cleanup."
         );
+        CheckLastArgument(group.GetMethod("Remove", all), "Suspend", OpCodes.Ldc_I4_0, 1);
+        CheckLastArgument(group.GetMethod("Suspend", all), "Release", OpCodes.Ldarg_1, 2);
+        CheckLastArgument(group.GetMethod("Release", all), "Suspend", OpCodes.Ldarg_3, 1);
+        var retire = owned.GetMethod("Retire", all);
+        CheckLastArgument(retire, "Suspend", OpCodes.Ldc_I4_1, 1);
+        CheckOrderedCalls(retire, "Suspend", "Detach", "Dispose");
+        foreach (string method in new[] { "Dispose", "Retire" })
+        {
+            var instructions = Instructions(owned.GetMethod(method, all)).ToArray();
+            Check(
+                instructions.Take(4).Any(i => i.Code == OpCodes.Ret)
+                    && instructions
+                        .Take(4)
+                        .Any(i => i.Operand is FieldInfo f && f.Name == "disposed"),
+                method + " no longer returns early for already disposed controls."
+            );
+        }
+        var reconcileCalls = CalledMethods(manager.GetMethod("Reconcile", all)).ToArray();
+        Check(
+            reconcileCalls.Count(m => m.DeclaringType == owned && m.Name == "Retire") == 2
+                && !reconcileCalls.Any(m => m.DeclaringType == owned && m.Name == "Dispose")
+                && reconcileCalls.Any(m => m.DeclaringType == group && m.Name == "Set"),
+            "Reconciliation replacement/rollback must preserve controllers and restore group slots."
+        );
+        var cleanupCalls = CalledMethods(manager.GetMethod("LateUpdate", all)).ToArray();
+        Check(
+            cleanupCalls.Any(m => m.DeclaringType == owned && m.Name == "Dispose")
+                && cleanupCalls.Any(m => m.DeclaringType == owned && m.Name == "Retire"),
+            "Stale-control cleanup must distinguish lost owners from broken live controls."
+        );
         var adopt = owned.GetMethod("Adopt", all);
+        CheckOrderedCalls(adopt, "Detach", "Destroy", "Bind");
         foreach (string field in new[] { "reefWinch", "leftAngleWinch", "rightAngleWinch" })
             Check(
                 Instructions(adopt).Any(i => i.Operand is FieldInfo f && f.Name == field),
@@ -98,11 +138,25 @@ internal static class WinchChecks
             );
             Check(
                 CalledMethods(type.GetMethod("OnDestroy", all))
-                    .Any(m => m.DeclaringType == owned && m.Name == "Dispose"),
+                    .Any(m => m.DeclaringType == owned && m.Name == "Dispose")
+                    && !CalledMethods(type.GetMethod("OnDestroy", all))
+                        .Any(m => m.Name == "Retire"),
                 family + " bypasses control cleanup."
             );
         }
         var stay = assembly.GetType("MoreSailwindSails.Stays.FishermansStay.FishermansStay", true);
+        foreach (
+            var cleanup in new[]
+            {
+                manager.GetMethod("OnDestroy", all),
+                stay.GetMethod("Destroy", all),
+            }
+        )
+            Check(
+                CalledMethods(cleanup).Any(m => m.DeclaringType == owned && m.Name == "Dispose")
+                    && !CalledMethods(cleanup).Any(m => m.Name == "Retire"),
+                cleanup.DeclaringType.Name + " must use final disposal during destruction."
+            );
         Check(
             CalledMethods(stay.GetMethod("Create", all))
                 .Any(m => m.DeclaringType == manager && m.Name == "Configure"),
@@ -165,8 +219,42 @@ internal static class WinchChecks
                 "Installed ShowWinch visibility contract changed."
             );
         Console.WriteLine(
-            "PASS (structural): paired binding, controller-preserving template replacement, native mount references, all ownership paths and generated-search removal. Unity lifecycle remains unexecuted."
+            "PASS (structural): paired binding, controller-preserving retirement/replacement, final disposal without rope reparenting, native mount references, all ownership paths and generated-search removal. Unity lifecycle remains unexecuted."
         );
+    }
+
+    private static void CheckLastArgument(
+        MethodInfo method,
+        string callee,
+        OpCode argument,
+        int count
+    )
+    {
+        var instructions = Instructions(method).ToArray();
+        var calls = Enumerable
+            .Range(1, instructions.Length - 1)
+            .Where(i => instructions[i].Operand is MethodInfo m && m.Name == callee)
+            .ToArray();
+        Check(
+            calls.Length == count && calls.All(i => instructions[i - 1].Code == argument),
+            method.DeclaringType.Name
+                + "."
+                + method.Name
+                + " loses the preservation policy at "
+                + callee
+        );
+    }
+
+    private static void CheckOrderedCalls(MethodInfo method, params string[] names)
+    {
+        var calls = CalledMethods(method).ToArray();
+        int previous = -1;
+        foreach (string name in names)
+        {
+            int index = Array.FindIndex(calls, m => m.Name == name);
+            Check(index > previous, method.Name + " must call " + string.Join(" before ", names));
+            previous = index;
+        }
     }
 
     private static void Check(bool valid, string message)

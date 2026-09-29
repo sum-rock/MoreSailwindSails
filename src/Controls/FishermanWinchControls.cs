@@ -10,6 +10,7 @@ namespace MoreSailwindSails.Controls
 {
     internal sealed class FishermanOwnedWinchMarker : MonoBehaviour { }
 
+    // Owns boat-local winch allocation, live replacement and final control cleanup.
     internal sealed class FishermanWinchControls : MonoBehaviour
     {
         private readonly WinchReservations reservations = new WinchReservations();
@@ -159,7 +160,7 @@ namespace MoreSailwindSails.Controls
             {
                 foreach (var control in next)
                     if (control != null && (current == null || !current.Contains(control)))
-                        control.Dispose();
+                        control.Retire();
                 if (current != null)
                     foreach (var control in current)
                         control.Group.Set(control);
@@ -168,7 +169,7 @@ namespace MoreSailwindSails.Controls
             if (current != null)
                 foreach (var control in current)
                     if (!next.Contains(control))
-                        control.Dispose();
+                        control.Retire();
             current = next;
         }
 
@@ -189,8 +190,10 @@ namespace MoreSailwindSails.Controls
             if (!boat || controls.Count == 0)
                 return;
             foreach (var control in controls.ToArray())
-                if (!control.Owner || !control.Winch)
+                if (!control.Owner)
                     control.Dispose();
+                else if (!control.Winch)
+                    control.Retire();
             if (controls.Count == 0)
                 return;
             native.Prepare();
@@ -283,10 +286,18 @@ namespace MoreSailwindSails.Controls
                     Release(state: halyardState, fittings: halyardFittings);
             }
 
-            internal void Suspend()
+            internal void Suspend(bool preserveControllers = true)
             {
-                Release(state: sheetState, fittings: sheetFittings);
-                Release(state: halyardState, fittings: halyardFittings);
+                Release(
+                    state: sheetState,
+                    fittings: sheetFittings,
+                    preserveControllers: preserveControllers
+                );
+                Release(
+                    state: halyardState,
+                    fittings: halyardFittings,
+                    preserveControllers: preserveControllers
+                );
             }
 
             internal void Dirty()
@@ -296,7 +307,8 @@ namespace MoreSailwindSails.Controls
 
             internal void Remove(OwnedWinch control)
             {
-                Suspend();
+                // Destruction can start at any owner; never rescue sibling ropes here.
+                Suspend(preserveControllers: false);
                 if (port == control)
                     port = null;
                 if (starboard == control)
@@ -307,7 +319,11 @@ namespace MoreSailwindSails.Controls
                     manager.groups.Remove(this);
             }
 
-            private void Release(PlacementState state, OwnedWinch[] fittings)
+            private void Release(
+                PlacementState state,
+                OwnedWinch[] fittings,
+                bool preserveControllers = true
+            )
             {
                 if (state.Released)
                     return;
@@ -316,7 +332,7 @@ namespace MoreSailwindSails.Controls
                 state.Current = null;
                 state.RetryAfter = 0f;
                 foreach (var fitting in fittings)
-                    fitting?.Suspend();
+                    fitting?.Suspend(preserveControllers: preserveControllers);
             }
 
             internal void Refresh()
@@ -395,7 +411,7 @@ namespace MoreSailwindSails.Controls
                     finally
                     {
                         foreach (var replacement in replacements)
-                            replacement?.Destroy(manager.boat);
+                            replacement?.Destroy();
                     }
                     for (int i = 0; i < fittings.Length; i++)
                         fittings[i].Position(selected.Seats[i]);
@@ -461,9 +477,8 @@ namespace MoreSailwindSails.Controls
                     Winch.rope.transform.SetParent(boat.transform, true);
             }
 
-            internal void Destroy(BoatRefs boat)
+            internal void Destroy()
             {
-                Detach(boat);
                 if (Winch)
                 {
                     Winch.rope = null;
@@ -572,7 +587,7 @@ namespace MoreSailwindSails.Controls
                     else if (Role == WinchRole.Right)
                         Group.NativeMount.rightAngleWinch = new[] { Winch };
                 }
-                previous.Destroy(manager.boat);
+                previous.Destroy();
                 if (controller)
                     Bind(controller);
             }
@@ -622,11 +637,22 @@ namespace MoreSailwindSails.Controls
                     Winch.ShowWinch(true);
             }
 
-            internal void Suspend()
+            internal void Suspend(bool preserveControllers)
             {
-                clone.Detach(manager.boat);
+                if (preserveControllers)
+                    clone.Detach(boat: manager.boat);
                 if (clone.Mount)
                     clone.Mount.gameObject.SetActive(false);
+            }
+
+            internal void Retire()
+            {
+                if (disposed)
+                    return;
+                Group.Suspend(preserveControllers: true);
+                // Reconcile may already have replaced this control's group slot.
+                clone.Detach(boat: manager.boat);
+                Dispose();
             }
 
             public void Dispose()
@@ -635,7 +661,7 @@ namespace MoreSailwindSails.Controls
                     return;
                 disposed = true;
                 Group.Remove(this);
-                clone.Destroy(manager.boat);
+                clone.Destroy();
                 manager.controls.Remove(this);
             }
         }
