@@ -214,6 +214,45 @@ generated geometry; discard temporary objects without running donor scripts.
 Missing/incompatible donors log once and omit knots without disabling the sail.
 Knot leaves stay outside fabric scaling and follow corner pose/rope direction.
 
+#### Corner-knot mesh channels (issue #20, 2026-09-28)
+
+Read-only inspection of the installed Sailwind 0.39 donor `3d rope jib sheet`
+found renderer **4478** and mesh **1475** (`cloth_rope`) in
+`sharedassets24.assets`. The unreadable source mesh has **162 vertices, 162
+normals, 162 tangents and zero UVs**, including no compressed UV data. Its
+`rope static` material uses shader `Standard` with no assigned textures. The
+previous unconditional UV-count requirement rejected this valid untextured
+layout; missing UVs already exist in the source and are not evidence that baking
+lost them. Actual baked channel counts still need runtime confirmation.
+
+Knot construction requires one normal per vertex and preserves native normals.
+Complete UV arrays retain their selected vertex mapping and generated tangents.
+Zero UVs are accepted only for `Standard` with no assigned texture properties;
+that path leaves UVs and tangents absent and skips tangent generation. Partial
+UV arrays, missing/mismatched normals, and UV-less textured or unsupported
+materials still omit knots safely. No substitute UVs or normals are generated.
+Construction logs donor/mesh identity, source vertex count/readability, baked
+vertex/normal/UV/tangent counts, material compatibility and the selected policy
+once per template attempt. Failures identify the incompatible channel and
+include available diagnostic context. Shared meshes/materials remain unmodified.
+
+Version remains **0.2.1**. Release build passed with **zero warnings/errors**;
+GeometryChecks, AssemblyChecks, pinned CSharpier checking and `git diff --check`
+passed. New executed checks cover optional
+UV policy, normal/UV count failures, material restrictions, reordered channel
+mapping and unchanged source arrays. Structural checks guard conditional
+UV/tangent generation, material inspection, inactive construction and cleanup;
+they do not execute Unity baking, rendering or the full lifecycle.
+
+**In-game verification remains pending.** Start on Brig: confirm four correctly
+shaded knots and no availability warning with both rope settings. Check trimming,
+both tacks, partial/full hoisting, resizing without knot enlargement, boat motion,
+striking/disabling, recreation and save reloads. Compare logged baked counts with
+the source measurements above. Automated checks do not establish visual acceptance
+or simulate Unity Cloth. Built DLL:
+`src/bin/Release/netstandard2.0/MoreSailwindSails.dll`. No installed game files or
+saves were replaced.
+
 ## Staysails
 
 All marks fit registered Fisherman's Stays. Register after SE and before All
