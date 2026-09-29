@@ -10,7 +10,7 @@ are developed. The mod currently includes two sail families:
 
 **Fisherman's Stays** provide the rigging mounts for the staysail family.
 
-Version **0.2.0**.
+Version **0.2.1**.
 
 <p align="center">
   <a href="references/example-0-2-0A.png"><img src="references/example-0-2-0A.png" width="24%" alt="Fisherman's Staysail set between two masts, viewed from above"></a>
@@ -39,10 +39,13 @@ Select a screenshot to view it at full size.
 | **Fisherman's Staysail Mk.C** | The same head and controls, with a 50% longer luff and a lower edge rising 40° from the forward luff toward the aft leech on upright masts. |
 | **Fisherman's Flying Sail**   | A separate sail fitted directly to a mast through the **Other** category.                                                                   |
 
-Supported boats: **Brig, Junk, Jong, Sanbuq, Cog, Leopard, Shroud and the Bigbuqu
-introduced in 0.39**. Leopard and Shroud require their corresponding boat mods. These
-modded ships were only lightly tested. Let me know if there are issues. Available stay
-variants depend on the boat and its fitted masts.
+Supported boats: **Brig, Junk, Jong, Sanbuq, Cog, Shroud and the Bigbuqu
+introduced in 0.39**. Shroud requires its corresponding boat mod and has only
+been lightly tested. Let me know if there are issues. Available stay variants
+depend on the boat and its fitted masts.
+
+**Leopard support is temporarily suspended** pending additional compatibility
+work for Fisherman's sails.
 
 ## Requirements and installation
 

@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace MoreSailwindSails.BoatRigs
 {
+    // Resolves only supported boat profiles for sail fitting and stay registration.
     internal static class BoatRigCatalog
     {
         internal static readonly IReadOnlyList<BoatRigDefinition> All = Array.AsReadOnly(
@@ -14,7 +15,6 @@ namespace MoreSailwindSails.BoatRigs
                 Jong.Definition,
                 Sanbuq.Definition,
                 Cog.Definition,
-                Leopard.Definition,
                 Shroud.Definition,
                 LargeDhow.Definition,
             }

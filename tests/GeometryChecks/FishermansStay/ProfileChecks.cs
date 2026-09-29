@@ -37,12 +37,17 @@ internal static class ProfileChecks
         CheckReadOnly(BoatRigCatalog.All);
         if (!ReferenceEquals(BoatRigCatalog.All, BoatRigCatalog.All))
             throw new Exception("Catalog is rebuilt on access.");
-        var leopard = Leopard.Definition;
+        foreach (string suffix in new[] { "", "(Clone)", "(Clone)(Clone)" })
+            if (BoatRigCatalog.Find(boatName: "BOAT LEOPARD (207)" + suffix) != null)
+                throw new Exception("Leopard must remain unsupported pending compatibility work.");
+
         if (
-            !ReferenceEquals(BoatRigCatalog.Find("BOAT LEOPARD (207)(Clone)(Clone)"), leopard)
-            || !leopard.Sections(12).SequenceEqual(new[] { 12, 11, 10 })
-            || leopard.Base(12) != 10
+            !ReferenceEquals(
+                BoatRigCatalog.Find(boatName: "BOAT medi medium (50)(Clone)(Clone)"),
+                Brig.Definition
+            )
             || !Brig.Definition.Sections(56).SequenceEqual(new[] { 56, 5 })
+            || Brig.Definition.Base(section: 56) != 5
             || Brig.Definition.Sections(-1).Length != 0
         )
             throw new Exception("Profile lookup or ordered mast ancestry changed.");
@@ -75,8 +80,8 @@ internal static class ProfileChecks
                     );
         }
 
-        Reject<ArgumentException>(() => leopard.Sections(127));
-        Reject<ArgumentException>(() => leopard.Base(127));
+        Reject<ArgumentException>(() => Brig.Definition.Sections(section: 127));
+        Reject<ArgumentException>(() => Brig.Definition.Base(section: 127));
         BoatRigDefinition Profile(
             IReadOnlyDictionary<int, int> parents,
             params SheetWinchCategory[] categories

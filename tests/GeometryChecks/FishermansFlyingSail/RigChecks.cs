@@ -16,7 +16,6 @@ internal static class RigChecks
             "BOAT junk large (70)",
             "BOAT dhow medium (20)",
             "BOAT medi small (40)",
-            "BOAT LEOPARD (207)",
             "BOAT Shroud Large",
             "BOAT dhow large (30)",
         };
@@ -28,7 +27,6 @@ internal static class RigChecks
             "10:1>2;12:2>3;55:51>52;58:51>3;73:1>52;71:52>4",
             "60:10>59,55;67:11>59,55;71:10>70,69;81:11>80,12;82:10>80,12;58:51>14,11;68:62>14,11;79:51>14,11;54:10>55;61:10>69;66:11>55",
             "51:8>5;58:5>57;65:8>6",
-            "18:7>12;17:8>12;19:7>11",
             "25:7>9",
             "20:0>3,2;23:1>3,2;26:0>5,4;29:1>5,4;32:3,2>6;34:5,4>6;36:3,2>7;38:5,4>7;40:3,2>8;42:5,4>8",
         };
@@ -100,7 +98,7 @@ internal static class RigChecks
         Reject(() => new MastSupportDefinition(-1, new[] { 2 }, new[] { 3 }));
         Reject(() => new MastSupportDefinition(1, Array.Empty<int>(), new[] { 3 }));
         Console.WriteLine(
-            "PASS: eight boat profiles, physical mast sections, control-source selection and unknown-boat handling."
+            "PASS: seven supported boat profiles, physical mast sections, control-source selection and unknown-boat handling."
         );
     }
 
