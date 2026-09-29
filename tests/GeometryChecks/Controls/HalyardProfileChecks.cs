@@ -6,7 +6,7 @@ using MoreSailwindSails.BoatRigs;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
-// Checks authored groups against the installed support audit and native seat identities.
+// Checks supported boats' authored groups against the installed support audit and native seats.
 internal static class HalyardProfileChecks
 {
     internal static void Run()
@@ -18,7 +18,6 @@ internal static class HalyardProfileChecks
             { "Jong", Jong.Definition },
             { "Sanbuq", Sanbuq.Definition },
             { "Cog", Cog.Definition },
-            { "Leopard", Leopard.Definition },
             { "Shroud", Shroud.Definition },
             { "LargeDhow", LargeDhow.Definition },
         };
@@ -27,6 +26,7 @@ internal static class HalyardProfileChecks
             )
             .Where(line => !line.StartsWith("#") && line.Length > 0)
             .Select(line => line.Split('|'))
+            .Where(row => boats.ContainsKey(row[0]))
             .SelectMany(row =>
                 row[1]
                     .Split(',')
@@ -116,7 +116,7 @@ internal static class HalyardProfileChecks
             "Brig's registered mainmast source 70 was confused with unregistered foremast source 74."
         );
         Console.WriteLine(
-            $"PASS: {associations.Count} audited halyard groups across eight boats, exact mast/section source lists, own-seat priority, registered reef capacity and Brig 70/74 identity separation."
+            $"PASS: {associations.Count} audited halyard groups across seven supported boats, exact mast/section source lists, own-seat priority, registered reef capacity and Brig 70/74 identity separation."
         );
     }
 

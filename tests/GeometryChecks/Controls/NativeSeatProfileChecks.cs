@@ -50,7 +50,7 @@ internal static class NativeSeatProfileChecks
             "Jong mainmasts merged."
         );
         Check(
-            Leopard.Definition.SheetCategory(6) == Leopard.Definition.SheetCategory(4),
+            Brig.Definition.SheetCategory(mast: 56) == Brig.Definition.SheetCategory(mast: 5),
             "Topmast category lost."
         );
         Check(
@@ -97,17 +97,7 @@ internal static class NativeSeatProfileChecks
             .Where(l => l.StartsWith("rig|"))
             .Select(l => l.Split('|'))
             .ToArray();
-        var names = new[]
-        {
-            "Brig",
-            "Junk",
-            "Jong",
-            "Sanbuq",
-            "Cog",
-            "Leopard",
-            "Shroud",
-            "LargeDhow",
-        };
+        var names = new[] { "Brig", "Junk", "Jong", "Sanbuq", "Cog", "Shroud", "LargeDhow" };
         for (int b = 0; b < BoatRigCatalog.All.Count; b++)
         {
             var profile = BoatRigCatalog.All[b];

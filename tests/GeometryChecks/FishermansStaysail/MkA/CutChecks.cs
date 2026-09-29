@@ -220,10 +220,10 @@ internal static class CutChecks
                 throw new Exception("Mk.A fit limits ignored.");
             count++;
         }
-        if (count != 111)
+        if (count != 93)
             throw new Exception("Missing authored staysail configurations.");
         Console.WriteLine(
-            "PASS: Mk.A alignment and fore/aft-mast base references for all 111 authored stays."
+            "PASS: Mk.A alignment and fore/aft-mast base references for all 93 supported stays."
         );
     }
 

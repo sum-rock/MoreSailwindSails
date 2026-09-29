@@ -323,11 +323,16 @@ data; resolve `Sections`, `Base` and `SheetCategory` through that profile.
 | Jong                       |           5 |             9 |                          0 |
 | Sanbuq                     |           2 |            26 |                          5 |
 | Cog                        |           1 |             3 |                          0 |
-| Leopard                    |           2 |            18 |                          4 |
 | Shroud                     |           2 |             8 |                          2 |
 | Large dhow (Sailwind 0.39) |           2 |            14 |                          8 |
 
-The **111** variants prefer **70°** between the aft spar's downward axis and stay.
+These seven supported boats provide **93** variants. Leopard is excluded from
+the runtime catalog pending compatibility work following the user's in-game
+test on 2026-09-28. Its BoatRig profile has been removed; measurement fixtures
+remain as historical reference data. Compatibility work is tracked in
+[issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
+
+The **93** variants prefer **70°** between the aft spar's downward axis and stay.
 If that intersects above the connected forward spar, use its physical masthead
 and a steeper stay. Preserve physical fore/aft ordering, exclude higher aft
 topmasts from lower variants and store endpoints rather than infer them at runtime.
@@ -359,9 +364,10 @@ slope; aft guide heights and save IDs stay unchanged.
 ## Winch placement
 
 The **0.2.1** native winch placement redesign is **accepted as valid and complete**
-on Brig, Junk, Jong, Sanbuq, Cog, Leopard, Shroud and large dhow. It applies to
+on Brig, Junk, Jong, Sanbuq, Cog, Shroud and large dhow. The redesign applies to
 Flying Sails, all three staysail cuts and native sails fitted to Fisherman's
-Stays. This section owns the current behavior, including the completed follow-up
+Stays. Leopard support is now suspended pending compatibility work.
+This section owns the current behavior, including the completed follow-up
 architecture cleanup. The implementation plan and cleanup checklist have been
 retired; [runtime validation](#runtime-validation) records the checks and remaining
 in-game uncertainty.
@@ -437,13 +443,15 @@ references are intentional and use the existing identity/alias reservations.
 | Jong | 7 |
 | Sanbuq | 13 |
 | Cog | 1 |
-| Leopard | 9 |
 | Shroud | 6 |
 | Large dhow | 9 |
 
+The supported catalog has **59 halyard groups**. Leopard's nine former groups
+remain recorded in the historical audit fixture only.
+
 Unlisted masts retain their original lookup, including Jong's raked foremast and
 unsupported bermuda variants. Cog retains the user-tested group without additional
-expansion. The other seven profiles now cover their audited stay reef seats.
+expansion. The other six supported profiles cover their audited stay reef seats.
 
 Startup uses a complete usable pair from the forward category's ordered native
 sources, then its valid fallback templates. All three ownership paths use this
@@ -733,7 +741,9 @@ rendering has not been revalidated, and no installed DLL or save was changed.
 ### Asset provenance and measurement fixtures
 
 The support table below is retained as measurement provenance for manual fallback
-authoring; it no longer defines runtime generated placement strips.
+authoring; it no longer defines runtime generated placement strips. Leopard's
+measurements are historical reference data for future compatibility work, not an
+indication of current support.
 
 Installed references are `Sailwind_Data/level24`, SE's `shipyard_expansion.assets`,
 `Leopard/leopard` and `ShatteredSeasExpansion/veil piercer`. Include import-parent
@@ -754,8 +764,9 @@ meshes, textures or assemblies.
 
 `tests/GeometryChecks/FishermansStay/NativeWinchSeats.txt` records installed
 option labels, native/SE shipyard groups and prerequisites, control identities,
-array correspondence and parent-local poses across all eight boats. These are
-reference measurements, **not boat-local fallback vectors**. The inventory was
+array correspondence and parent-local poses across seven supported boats and
+the currently unsupported Leopard. These are reference measurements,
+**not boat-local fallback vectors**. The inventory was
 read from installed assets and SE's serialized part/option metadata; no proprietary
 assemblies or extracted asset payloads are committed.
 
@@ -768,6 +779,29 @@ native reclaim and active-mast resolver contracts. Neither suite establishes
 runtime accessibility, rendered support contact or Unity lifecycle behavior.
 
 ### Runtime validation
+
+#### Leopard support suspended (2026-09-28)
+
+The user tested Leopard and reported that additional compatibility work is needed
+for Fisherman's sails. Version remains **0.2.1**. Leopard is removed from the
+supported runtime catalog, so existing profile gates reject Flying Sail fitting
+and skip Fisherman's Stay registration. Its BoatRig profile has been removed:
+stacked mast sections, potentially suitable native stays with different geometry,
+and missing mast-top halyard winches require a different compatibility approach
+([issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33)). Numeric
+fixtures remain as historical reference data. Other boat profiles, prefab IDs
+and mount IDs are unchanged; no save migration is introduced.
+
+CSharpier check, Release build (zero warnings/errors), GeometryChecks,
+AssemblyChecks (62 Harmony targets) and `git diff --check` passed. Checks cover
+Leopard rejection for base and repeated-clone names, the seven supported profiles,
+93 active stay variants and 59 supported halyard groups. Built DLL:
+`src/bin/Release/netstandard2.0/MoreSailwindSails.dll`. No installed game files or
+saves were replaced.
+
+Live shipyard behavior and existing saves with fitted Leopard sails have not been
+revalidated. Manual acceptance starts with Brig, then confirms Leopard offers no
+Fisherman's fitting options and Shroud retains its options.
 
 #### Cog halyard group (2026-09-28)
 
@@ -797,12 +831,15 @@ the Cog's seat selection. No fallback positions or native arrays were changed.
 
 #### Halyard groups on the remaining boats (2026-09-28)
 
-Version remains **0.2.1**. The same source-group strategy now covers Brig, Junk,
-Jong, Sanbuq, Leopard, Shroud and large dhow: **68 groups total**, including the
-unchanged Cog group. Sources were checked against all **305** recorded native/SE/
-boat-mod rig objects in the installed assets, including reef-array identities,
+Version remains **0.2.1**. At the time of this audit, the source-group strategy
+covered Brig, Junk, Jong, Sanbuq, Leopard, Shroud and large dhow: **68 groups total**,
+including the unchanged Cog group. Sources were checked against all **305**
+recorded native/SE/boat-mod rig objects in the installed assets, including reef-array identities,
 guide hierarchies, prerequisites and mounting paths. No native arrays or geometry
 were modified, and the resolver and reservation behavior remain unchanged.
+Leopard has since been disabled following the user's in-game test; the active
+catalog now has 59 groups. The current profile checks exclude Leopard; its nine
+former groups remain recorded in the historical fixture.
 
 The earlier reported Brig fixture discrepancy was an audit lookup error: registered
 source **70** and unregistered source **74** have the same hierarchy path but are
@@ -822,9 +859,10 @@ reclaim, stability and retry recovery. Built DLL:
 `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`. No installed game files or
 saves were replaced.
 
-The new boats still require in-game confirmation. Start on Brig and Jong, then
-the other affected boats. Occupy the requested mast's own seats with native sails
-and leave associated stays absent; confirm a free stay seat is claimed, correct
+The supported boats still require in-game confirmation of these halyard groups.
+Start on Brig and Jong, then the other affected supported boats. Occupy the
+requested mast's own seats with native sails and leave associated stays absent;
+confirm a free stay seat is claimed, correct
 halyard routing and usable controls. Include both Jong mainmast positions, mast
 variants/topmasts, Shroud's separate stay coils, native reclaim, support changes,
 order completion/cancellation and save reloads. Neither suite simulates Unity
@@ -878,8 +916,9 @@ Cleanup implementation on **2026-09-27**, still **0.2.1**:
 - Release build passed with zero warnings and errors; GeometryChecks,
   AssemblyChecks (62 Harmony targets), CSharpier `check` and `git diff --check`
   passed. No README, installed game files or saves changed.
-- New executed checks cover defensive copies and read-only wrappers across all
-  eight profiles/111 stays; later-source and fallback bootstrap pairs; inactive
+- At that time, new executed checks covered defensive copies and read-only wrappers
+  across eight profiles/111 stays (before Leopard was disabled); later-source and
+  fallback bootstrap pairs; inactive
   versus active coincident references; retained claims and failed transactions;
   and the production discovery schedule/retention policy. IL checks cover shared
   bootstrap readiness, discovery before startup cloning, live validation, empty
