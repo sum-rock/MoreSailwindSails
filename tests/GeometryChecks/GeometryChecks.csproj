@@ -7,6 +7,19 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Stays/FishermansStay/FishermansStayMeshRegions.cs"
+      Link="FishermansStay/FishermansStayMeshRegions.cs"
+    />
+    <Compile
+      Include="../../src/Stays/FishermansStay/FishermansStayCollarFrame.cs"
+      Link="FishermansStay/FishermansStayCollarFrame.cs"
+    />
+    <Compile
+      Include="../../src/Stays/FishermansStay/FishermansStaySparSurface.cs"
+      Link="FishermansStay/FishermansStaySparSurface.cs"
+    />
+
+    <Compile
       Include="../../src/Controls/WinchDiscoverySchedule.cs"
       Link="Controls/WinchDiscoverySchedule.cs"
     />
