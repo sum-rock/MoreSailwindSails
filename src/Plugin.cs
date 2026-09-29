@@ -45,6 +45,7 @@ namespace MoreSailwindSails
             var harmony = new Harmony(PluginGuid);
             harmony.PatchAll(typeof(Plugin).Assembly);
             Sails.FishermansStaysail.Patches.FishermansStaysailSailInfoPatch.Install(harmony);
+            Compatibility.Patches.SailInfoNamesPatch.Install(harmony: harmony);
             Logger.LogInfo($"{PluginName} {PluginVersion} loaded!");
         }
 
