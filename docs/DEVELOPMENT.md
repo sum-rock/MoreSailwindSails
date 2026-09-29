@@ -434,6 +434,38 @@ not roll back stays or remove saved sails. Removal and inactive owners release
 claims. All placement state is transient; GUID, prefab/stay IDs, save ordering and
 saved geometry are unchanged.
 
+### Controller lifetime during cleanup
+
+Final `OwnedWinch.Dispose()` releases group claims and destroys owned winches
+without reparenting their controllers, including during sibling suspension.
+Boat, stay and sail destruction all use this path, so cleanup does not depend
+on their `OnDestroy` callback order. Controllers still beneath a destroyed mount
+are removed with that hierarchy; controllers already moved elsewhere are left alone.
+
+Live reconciliation and its rollback use `Retire()`: preserve sibling controllers,
+detach the retiring control explicitly, then dispose its winch. Explicit detachment
+also protects a retiring control whose group slot already holds its replacement.
+Template adoption detaches before destroying the old clone and rebinding. Ordinary
+support loss, inactive owners and seat exhaustion continue preserving controllers
+while hiding controls for later reuse. A missing owner triggers final disposal;
+a broken winch with a surviving owner uses retirement.
+
+The inspected pre-fix `Player-prev.log` on 2026-09-28 contained **66** rope-controller
+reparenting warnings across seven boats, clustered after `Saved game. (compressed)`
+at the end of the session. These are consistent with teardown; the native warnings
+did not include managed call stacks. Separate `SE_Bridge.OnDisable` exceptions
+are outside this fix.
+
+Assembly checks cover the preservation policy, retirement/adoption ordering,
+reconciliation cleanup and destruction entrypoints. CSharpier check, the Release
+build (zero warnings/errors), GeometryChecks, AssemblyChecks and `git diff --check`
+passed for this change. The suites do not execute Unity destruction or exception
+recovery. **In-game validation remains pending:** start
+on Brig, then Junk and Shroud; exercise both custom sail families and native sails
+on custom stays. Check exit/unload for absent reparenting warnings, removal for
+released seats, rig/template changes for working controls, and seat exhaustion
+followed by recovery. Existing cloth validation status is unchanged.
+
 ### Inventory lifetime and inspection counters
 
 The coordinator owns one native inventory, mast lookup and seat/alias lookup per
