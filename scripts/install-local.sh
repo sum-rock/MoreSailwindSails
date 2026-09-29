@@ -16,5 +16,6 @@ if [[ ! -d "$game_dir/BepInEx/plugins" ]]; then
     exit 1
 fi
 
+nix develop -c dotnet build src/MoreSailwindSails.csproj -c Release -t:Rebuild
 install -Dm644 -- "$dll" "$destination"
 printf 'Installed %s\n' "$destination"
