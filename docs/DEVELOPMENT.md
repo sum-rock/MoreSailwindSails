@@ -361,6 +361,62 @@ The capsule tip at z **2.29** is 6.7 cm higher and produced the reported floatin
 attachment. All eight fore/main variants use the corrected, slightly steeper
 slope; aft guide heights and save IDs stay unchanged.
 
+### Stay collars on Sanbuq and Large Dhow (issue #19, 2026-09-29)
+
+Version remains **0.2.1**. These boats fit their native forward and aft collars
+independently of the rope body. Previously the complete donor geometry was
+rotated and stretched along the stay, leaving tilted collars above short
+forward masts. The **26 Sanbuq** and **14 Large Dhow** variants now seat each
+collar around its supporting spar, keeping its full height below the rendered
+tip. The visible rope ends at the facing collar surfaces; logical mount
+endpoints, stay angles, sail fitting, control anchors and saved option IDs are
+unchanged. Other boats retain their existing geometry path.
+
+Sanbuq's separate native coils supply both attachments, reusing the forward
+coil when a donor lacks an aft coil. Its walking representation uses the same
+coil source even when the native walking donor omits collars. SE's non-readable
+rope-body meshes remain shared and are fitted using their own bounds. Large
+Dhow's combined meshes are separated by position-welded connectivity into the
+long rope and compact endpoint regions; the original seam indices, submeshes,
+materials and mesh channels survive in owned copies. Only copied geometry is
+changed. Each representation retains its own rope bounds and coordinate frame;
+new walking collars use the walking geometry's layer.
+
+Collar frames come from the native ring geometry. Radius fitting uses the
+rendered supporting mesh, not the capsule tip or radius. The sole unreadable
+support is SE's Sanbuq mizzen topmast **80**, `mizzen_topmast_sanbuq`:
+`Sanbuq.cs` records its measured wooden-spar taper, excluding attached holders.
+The authored taper agrees with the installed mesh at the affected collar
+heights. Static seating calculations are cached per collar; preview refreshes
+reapply the mast frame. Unexpected donor geometry rejects registration through
+the existing rollback. Generated meshes are owned by the stay and destroyed on
+rollback or teardown; shared donor assets and live Cloth are untouched.
+
+Validation:
+
+- Release build passed with **zero warnings/errors**. Pinned CSharpier check,
+  GeometryChecks, AssemblyChecks and `git diff --check` passed. Built DLL:
+  `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`; no installed files or
+  saves were changed.
+- GeometryChecks covers split seam vertices, region selection/channel indices,
+  malformed meshes, rotated/scaled native ring frames, rendered-tip seating,
+  tapered spar fitting, the authored topmast measurement, collar contact and
+  rope continuity, and a displaced/rotated walking frame. Existing checks still
+  cover all **93** stays and their fixed IDs.
+- A temporary read-only installed-asset audit executed the C# partition, collar
+  frame and seating calculations for **160** cases: both ends of all **40**
+  affected variants in visual and walking representations. All passed,
+  including comparison of the unreadable topmast's authored taper with its
+  actual mesh. Extracted geometry remains outside the repository.
+- AssemblyChecks guards cloned channel retention and generated-mesh cleanup
+  wiring through registration rollback and registry teardown. These are
+  structural checks, not executed Unity lifecycle recovery.
+- **In-game validation remains pending.** Start with Brig, then inspect both
+  attachments on Sanbuq and Large Dhow, including bare/raked foremast head
+  fallbacks, topmast variants and main/mizzen pairs. Check the visible rope
+  against the fitted sail head, shipyard preview/cancel/complete, and existing
+  stays after reload. Automated checks do not simulate rendering or Cloth.
+
 ## Winch placement
 
 The **0.2.1** native winch placement redesign is **accepted as valid and complete**

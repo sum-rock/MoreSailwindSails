@@ -8,6 +8,7 @@ using Object = UnityEngine.Object;
 
 namespace MoreSailwindSails.Stays.FishermansStay
 {
+    // Owns one registered stay mount, its controls and its visual/walking geometry.
     internal sealed class FishermansStay
     {
         internal const string DisplayName = "Fisherman's Stay";
@@ -24,6 +25,11 @@ namespace MoreSailwindSails.Stays.FishermansStay
             visualMax,
             walkMin,
             walkMax;
+        private FishermansStayAttachmentVisual attachmentVisual,
+            attachmentWalk;
+        private FishermansStaySparSurface foreSurface,
+            aftSurface;
+        private readonly List<Mesh> ownedMeshes = new List<Mesh>();
         private bool warned;
         private bool fits;
         private readonly List<Tuple<Transform, Transform>> anchors =
@@ -100,6 +106,30 @@ namespace MoreSailwindSails.Stays.FishermansStay
             walkVisual = CopyGeometry(source.walkColMast, WalkObject.transform);
             GeometryRange(walkVisual, out walkMin, out walkMax);
             Mount.walkColMast = WalkObject.transform;
+            var profile = BoatRigCatalog.Find(boat.name);
+            if (profile == Sanbuq.Definition || profile == LargeDhow.Definition)
+            {
+                foreSurface = FishermansStayAttachmentVisual.Surface(
+                    mast: references.Fore,
+                    profile: profile
+                );
+                aftSurface = FishermansStayAttachmentVisual.Surface(
+                    mast: references.Aft,
+                    profile: profile
+                );
+                attachmentVisual = new FishermansStayAttachmentVisual(
+                    geometry: visual,
+                    combined: profile == LargeDhow.Definition,
+                    collarTemplate: source.transform,
+                    owned: ownedMeshes
+                );
+                attachmentWalk = new FishermansStayAttachmentVisual(
+                    geometry: walkVisual,
+                    combined: profile == LargeDhow.Definition,
+                    collarTemplate: source.transform,
+                    owned: ownedMeshes
+                );
+            }
             var original = source.GetComponent<BoatPartOption>();
             Option = root.AddComponent<BoatPartOption>();
             Option.optionName = DisplayName + " (" + definition.Label + ")";
@@ -156,7 +186,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
             Mount.transform.SetPositionAndRotation(aft, rotation);
             Mount.transform.localScale = Vector3.one;
             Mount.mastHeight = span;
-            FitGeometry(visual, visualMin, visualMax, span);
+            if (attachmentVisual == null)
+                FitGeometry(visual, visualMin, visualMax, span);
             // Convert through the donor's matching visual/walking frames; the
             // walking boat has its own origin and rotation.
             WalkObject.transform.SetPositionAndRotation(
@@ -166,7 +197,32 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     * rotation
             );
             WalkObject.transform.localScale = Vector3.one;
-            FitGeometry(walkVisual, walkMin, walkMax, span);
+            if (attachmentWalk == null)
+                FitGeometry(walkVisual, walkMin, walkMax, span);
+            else
+            {
+                var toVisual = Mount.transform.worldToLocalMatrix;
+                var toWalk =
+                    WalkObject.transform.worldToLocalMatrix
+                    * source.walkColMast.localToWorldMatrix
+                    * source.transform.worldToLocalMatrix;
+                attachmentVisual.Place(
+                    foreToOwner: toVisual * references.Fore.transform.localToWorldMatrix,
+                    aftToOwner: toVisual * references.Aft.transform.localToWorldMatrix,
+                    foreSurface: foreSurface,
+                    aftSurface: aftSurface,
+                    forePoint: definition.ForePoint,
+                    aftPoint: definition.AftPoint
+                );
+                attachmentWalk.Place(
+                    foreToOwner: toWalk * references.Fore.transform.localToWorldMatrix,
+                    aftToOwner: toWalk * references.Aft.transform.localToWorldMatrix,
+                    foreSurface: foreSurface,
+                    aftSurface: aftSurface,
+                    forePoint: definition.ForePoint,
+                    aftPoint: definition.AftPoint
+                );
+            }
             foreach (var pair in anchors)
                 pair.Item2.SetPositionAndRotation(pair.Item1.position, pair.Item1.rotation);
             if (moved && Mount.sails.Count > 0)
@@ -227,6 +283,10 @@ namespace MoreSailwindSails.Stays.FishermansStay
             }
             if (WalkObject)
                 Object.Destroy(WalkObject);
+            foreach (var mesh in ownedMeshes)
+                if (mesh)
+                    Object.Destroy(mesh);
+            ownedMeshes.Clear();
         }
 
         private GPButtonRopeWinch[] CloneWinches(Mast donor, WinchRole role, string label)

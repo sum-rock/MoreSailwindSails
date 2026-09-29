@@ -45,6 +45,7 @@ internal static class Program
         Compatibility.TextureCatalogChecks.Run(assembly);
         FlyingSailChecks.Run(assembly);
         StayChecks.Run(assembly);
+        FishermansStay.CollarChecks.Run(assembly);
         FishermansStay.WinchChecks.Run(assembly);
         Controls.NativeResolverChecks.Run(assembly);
         Utils.WinchDiagnosticChecks.Run(assembly);
