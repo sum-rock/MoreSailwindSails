@@ -93,7 +93,7 @@ feature's `Patches/` directory and `.Patches` namespace.
 
 | Location                          | Responsibility                                                                                                                      |
 | --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `src/Plugin.cs`                   | Identity, dependencies, Harmony discovery and optional SailInfo patch                                                               |
+| `src/Plugin.cs`                   | Identity, dependencies, Harmony discovery and optional SailInfo integrations                                                        |
 | `src/Sails/FishermansFlyingSail/` | Mast-mounted sail registration, rig, geometry, tension, billow and aerodynamics                                                     |
 | `src/Sails/FishermansStaysail/`   | Family prefab builder, rig, fixed head, edge fitting and reefing; `MkA/`, `MkB/`, `MkC/` supply cuts and identities                 |
 | `src/Stays/FishermansStay/`       | Independent mounts, registration, previews, controls and save compatibility                                                         |
@@ -162,6 +162,40 @@ parent and grandparent for `Sail`. Both families place it beneath their pivot
 frame during inactive construction, preserving its initial world pose. Posed
 aerodynamic refreshes continue updating its center/orientation. Retain native
 clips, unmute delay and snap initialization; no native audio methods are patched.
+
+### SailInfo hover names (issue #17)
+
+Optional integration inspected against installed **SailInfo 1.2.1** supplies
+`Fisherman's Flying Sail` and `Fisherman's Staysail Mk.A`, `Mk.B`, or `Mk.C`
+for custom sheet and halyard hover labels. Standard mode already reads
+`Sail.sailName`; Historical and Simple Positional modes otherwise generate
+generic names. All three enabled modes now use the custom sail's full name.
+SailInfo retains its name-off setting, HUD formatting, halyard suffix, numeric
+readouts and vanilla sail naming. No mast location or sheet-side text is added.
+
+`Compatibility.Patches.SailInfoNamesPatch` independently patches the parameterless
+string-returning `SailInfo.WinchInfoSail.SailName()` method, validating its instance
+`Sail sailComponent` field through reflection. The prefix recognizes either
+custom family's rig and returns the current `Sail.sailName`, bypassing SailInfo's
+positional-name cache. Missing/destroyed references, empty names and other sails
+fall through. Absent SailInfo is silently skipped; an incompatible naming API
+logs one warning during startup and skips this integration. There is no direct
+SailInfo assembly reference. The existing staysail angle patch remains separate.
+
+Version remains **0.2.1**. Release build passed with **zero warnings/errors**;
+GeometryChecks, AssemblyChecks, pinned CSharpier checking and `git diff --check`
+passed. New executed checks accept the compatible naming contract and reject
+absent, wrong-field, wrong-return, static, parameterized and generic contracts.
+Structural checks cover both family markers, current-name access, startup wiring,
+the installed sheet/halyard HUD call sites, injected field and settings/suffix
+structure. They do not execute Unity object detection or render the HUD.
+
+**In-game verification remains pending.** Start on Brig with Flying Sail and
+all three staysail marks: hover both sheets and each halyard in Standard,
+Historical and Simple Positional modes; verify None hides names. Check settings
+changes, save reload, and control recreation after shipyard changes. Compare
+vanilla labels and confirm angle, deployment, efficiency and force readouts.
+Built DLL: `src/bin/Release/netstandard2.0/MoreSailwindSails.dll`.
 
 ## Flying Sail
 
