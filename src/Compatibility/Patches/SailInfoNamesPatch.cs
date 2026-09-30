@@ -6,7 +6,7 @@ using MoreSailwindSails.Sails.FishermansStaysail;
 
 namespace MoreSailwindSails.Compatibility.Patches
 {
-    // Supplies custom sail names while leaving SailInfo's HUD and settings in control.
+    // Supplies custom sail family names while leaving SailInfo's HUD and settings in control.
     internal static class SailInfoNamesPatch
     {
         internal static MethodInfo FindTarget(Type type)
@@ -51,18 +51,16 @@ namespace MoreSailwindSails.Compatibility.Patches
 
         private static bool Prefix(Sail ___sailComponent, ref string __result)
         {
-            if (
-                !___sailComponent
-                || string.IsNullOrEmpty(value: ___sailComponent.sailName)
-                || (
-                    !___sailComponent.GetComponent<FishermansFlyingSailRig>()
-                    && !___sailComponent.GetComponent<FishermansStaysailRig>()
-                )
-            )
+            if (!___sailComponent || string.IsNullOrEmpty(value: ___sailComponent.sailName))
                 return true;
             // WinchHUD gates names with SailInfo's setting and adds the halyard suffix.
-            // Bypass positional-name caching so the current sail always supplies its name.
-            __result = ___sailComponent.sailName;
+            // Bypass positional-name caching and omit mark and size from the family label.
+            if (___sailComponent.GetComponent<FishermansFlyingSailRig>())
+                __result = FishermansFlyingSail.DisplayName;
+            else if (___sailComponent.GetComponent<FishermansStaysailRig>())
+                __result = "Fisherman's Staysail";
+            else
+                return true;
             return false;
         }
     }
