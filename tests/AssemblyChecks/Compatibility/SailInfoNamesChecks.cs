@@ -118,12 +118,12 @@ internal static class SailInfoNamesChecks
                 throw new Exception("SailInfo naming must recognize the custom family: " + family);
         var instructions = Instructions(method: prefix).ToArray();
         if (
-            !instructions.Any(instruction =>
+            instructions.Count(predicate: instruction =>
                 instruction.Code == OpCodes.Ldfld
                 && instruction.Operand is FieldInfo field
                 && field.DeclaringType == sailType
                 && field.Name == "sailName"
-            )
+            ) != 1
             || !calls.Any(method =>
                 method.DeclaringType == typeof(string) && method.Name == "IsNullOrEmpty"
             )
@@ -132,7 +132,20 @@ internal static class SailInfoNamesChecks
             )
         )
             throw new Exception(
-                "Naming must read the current nonempty sail name without rewriting state."
+                "Naming must read sailName only for the empty-name guard without rewriting state."
+            );
+        var labels = instructions
+            .Where(predicate: instruction => instruction.Code == OpCodes.Ldstr)
+            .Select(selector: instruction => (string)instruction.Operand)
+            .OrderBy(keySelector: label => label)
+            .ToArray();
+        if (
+            !labels.SequenceEqual(
+                second: new[] { "Fisherman's Flying Sail", "Fisherman's Staysail" }
+            )
+        )
+            throw new Exception(
+                "SailInfo labels must contain only family names without mark or size."
             );
 
         var startup = assembly
@@ -153,7 +166,7 @@ internal static class SailInfoNamesChecks
             );
 
         Console.WriteLine(
-            "PASS: optional SailInfo naming contract rejection, family scoping, current-name access and startup wiring."
+            "PASS: optional SailInfo naming contract rejection, family scoping, family-only labels, empty-name guard and startup wiring."
         );
         var file = Path.Combine(gameDir, "BepInEx/plugins/SailInfo.dll");
         if (!File.Exists(path: file))
