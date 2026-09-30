@@ -1,7 +1,7 @@
 # Deferred architecture cleanup
 
-CLEANUP-1, -2, -3 and -5 are implemented; history is in Git. Current behavior and
-validation limits live in [DEVELOPMENT.md](DEVELOPMENT.md).
+CLEANUP-1, -2, -3 and -5 are implemented; history is in Git. Current behavior
+and validation limits live in [DEVELOPMENT.md](DEVELOPMENT.md).
 
 ## CLEANUP-4 — Extract identical shared calculations
 
@@ -11,8 +11,8 @@ shared winch controls are outside the deferral.
 
 If requested later, reassess tension and aerodynamic calculations, appearance
 setup and text wrapping for exact duplication. Extract only confirmed common
-logic; retain family tuning, Harmony scope/order, mounting, reefing and lifecycle
-behavior. Do not introduce a generic rig hierarchy.
+logic; retain family tuning, Harmony scope/order, mounting, reefing and
+lifecycle behavior. Do not introduce a generic rig hierarchy.
 
 Preserve finite fallbacks, appearance/text guards, native save layout, plugin
 identity and prefab IDs **400/401/402/403**. Use the standard

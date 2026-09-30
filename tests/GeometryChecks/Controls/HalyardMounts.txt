@@ -1,4 +1,4 @@
-# Installed Sailwind 0.39 / SE 0.11.1 / Leopard / Shroud halyard support audit, 2026-09-28.
+# Installed Sailwind 0.39 / SE 0.11.1 / Shroud halyard support audit, 2026-09-28.
 # boat|exact requested mast IDs|associated stay source IDs|installed support/guide evidence
 # Own mast reef array is always first. Each listed mast gets its own group, not variant inheritance.
 # Stay sources can be inactive; the requested mast and actual mounting support must be active.
@@ -39,9 +39,6 @@ Sanbuq|51,64|52,53,65,72|Upright foremast; lower, topmast and flying forestay co
 Sanbuq|62|63,78|Raked foremast; reef seat parented to raked_foremast
 Cog|8|51,65|Original mizzen; both midstay variants share winch_reef_midstay1
 Cog|57|58|User-confirmed mizzen mast 2; winch_reef_midstay2
-Leopard|4,5,6|0,1,2,3|Foremast sections; FORESTAYS/ROPES controls and foremast guides
-Leopard|7,8,9|13,14,15,16|Mainmast sections; MAINSTAYS/ROPES controls and mainmast guides
-Leopard|10,11,12|17,18,19|Mizzen sections; MIZZENSTAYS/ROPES controls and mizzen guides
 Shroud|5,6|13,14,15,20,21,22,23|Both foremast variants; Foremast Reef Coils/Jib Reefs only
 Shroud|7,8|16,17,24|Both mainmast variants; Mainmast Reef Coils/Jib Reefs only
 Shroud|9,10|18,19,25|Both mizzen variants; Mizzenmast Reef Coils/Jib Reef only

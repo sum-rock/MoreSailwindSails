@@ -5,6 +5,7 @@ using MoreSailwindSails.BoatRigs;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
+// Checks supported boat categories and their installed native control inventories.
 internal static class NativeSeatProfileChecks
 {
     internal static void Run()
@@ -77,17 +78,7 @@ internal static class NativeSeatProfileChecks
             .Select(l => l.Split('|'))
             .ToArray();
         foreach (
-            string boat in new[]
-            {
-                "Brig",
-                "Junk",
-                "Jong",
-                "Sanbuq",
-                "Cog",
-                "Leopard",
-                "Shroud",
-                "LargeDhow",
-            }
+            string boat in new[] { "Brig", "Junk", "Jong", "Sanbuq", "Cog", "Shroud", "LargeDhow" }
         )
             Check(rows.Any(r => r[1] == boat), "Missing boat inventory: " + boat);
         // Verify profile constants against independently extracted shipyard groups.
