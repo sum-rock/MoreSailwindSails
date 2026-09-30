@@ -327,14 +327,11 @@ data; resolve `Sections`, `Base` and `SheetCategory` through that profile.
 | Shroud                     |           2 |             8 |                          2 |
 | Large dhow (Sailwind 0.39) |           2 |            14 |                          8 |
 
-These seven supported boats provide **93** variants. Leopard is excluded from
-the runtime catalog pending compatibility work following the user's in-game
-test on 2026-09-28. Its BoatRig profile has been removed: stacked mast sections,
-different native stay geometry and missing mast-top halyard winches need further
-compatibility work. Existing profile gates reject Flying Sail fitting and skip
-Fisherman's Stay registration; no save migration is introduced. Measurement
-fixtures remain as historical reference data. Compatibility work is tracked in
-[issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
+These seven supported boats provide **93** variants. **Leopard is unsupported:**
+its support and BoatRig profile were removed after in-game compatibility problems.
+Profile gates reject Flying Sail fitting and skip Fisherman's Stay registration
+on Leopard; no save migration is provided. Future compatibility work is tracked
+in [issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
 
 The **93** variants prefer **70°** between the aft spar's downward axis and stay.
 If that intersects above the connected forward spar, use its physical masthead
@@ -479,8 +476,7 @@ references are intentional and use the existing identity/alias reservations.
 | Shroud     |              6 |
 | Large dhow |              9 |
 
-The supported catalog has **60 halyard groups**. Leopard's nine former groups
-remain recorded in the historical audit fixture only.
+The supported catalog has **60 halyard groups**.
 
 Unlisted masts retain their original lookup, including Jong's raked foremast and
 unsupported bermuda variants. Cog covers both ordinary mizzen variants; the
@@ -719,16 +715,14 @@ Disabled/hidden overlays do not scan the boat or draw.
 
 ### Asset provenance and measurement fixtures
 
-The support table below is retained as measurement provenance for manual fallback
-authoring; it no longer defines runtime generated placement strips. Leopard's
-measurements are historical reference data for future compatibility work, not an
-indication of current support.
+The support table below records measurement provenance for manual fallback
+authoring; it does not define runtime generated placement strips.
 
-Installed references are `Sailwind_Data/level24`, SE's `shipyard_expansion.assets`,
-`Leopard/leopard` and `ShatteredSeasExpansion/veil piercer`. Include import-parent
-transforms when comparing measurements in boat coordinates. Confirm dependencies
-against installed assemblies. Fixtures contain numeric measurements only, never
-meshes, textures or assemblies.
+Installed references for supported boats include `Sailwind_Data/level24`, SE's
+`shipyard_expansion.assets` and `ShatteredSeasExpansion/veil piercer`. Include
+import-parent transforms when comparing measurements in boat coordinates. Confirm
+dependencies against installed assemblies. Fixtures contain numeric measurements
+only, never meshes, textures or assemblies.
 
 | Boat       | Permanent support references                                                                                       |
 | ---------- | ------------------------------------------------------------------------------------------------------------------ |
@@ -737,17 +731,15 @@ meshes, textures or assemblies.
 | Junk       | `structure/trim_001` caps, `Cube_035` handrails, `Cube_032` transverse reef beam                                   |
 | Jong       | `structure/trim_010` forward/middle/aft caps                                                                       |
 | Cog        | `structure/trim_001` aft caps                                                                                      |
-| Leopard    | `structure_container/decking trim`, `mainfife back`, `mizzenfife`; exclude raised end posts                        |
 | Shroud     | `Clipper_Upper_Trim` fixed forward sheet points and aft strips; native mainmast/mizzen side-pin seats for halyards |
 | Large dhow | `Cube_001` and `Cube_008` lower/sloped/raised caps and inner aft rail faces                                        |
 
 `tests/GeometryChecks/FishermansStay/NativeWinchSeats.txt` records installed
 option labels, native/SE shipyard groups and prerequisites, control identities,
-array correspondence and parent-local poses across seven supported boats and
-the currently unsupported Leopard. These are reference measurements,
-**not boat-local fallback vectors**. The inventory was
-read from installed assets and SE's serialized part/option metadata; no proprietary
-assemblies or extracted asset payloads are committed.
+array correspondence and parent-local poses across the seven supported boats.
+These are reference measurements, **not boat-local fallback vectors**. The inventory
+was read from installed assets and SE's serialized part/option metadata; no
+proprietary assemblies or extracted asset payloads are committed.
 
 `NativeWinchSeats.txt` distinguishes Brig's registered source **70** (mainmast
 **B1** reef seats) from unregistered source **74** (foremast **F1** seats). Their
@@ -811,9 +803,6 @@ also does not establish visual acceptance.
 - **Overlay, 2026-09-28:** the user reported it worked, but occupied amber/yellow
   locations were hard to distinguish from green. Occupied traces now use red;
   the new color still needs visual confirmation.
-- **Leopard, 2026-09-28:** user testing found compatibility problems, leading to
-  suspension of support. The exclusion itself and existing saves with fitted
-  Leopard sails have not been revalidated in game.
 
 These observations apply to the tested configurations. The accepted Brig/Jong
 session predates the architecture cleanup, for which no dedicated game session
