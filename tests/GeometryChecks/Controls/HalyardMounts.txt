@@ -3,7 +3,7 @@
 # Own mast reef array is always first. Each listed mast gets its own group, not variant inheritance.
 # Stay sources can be inactive; the requested mast and actual mounting support must be active.
 # Duplicate seat references across stay variants are intentional; runtime aliases prevent double claims.
-# Unlisted masts retain their own reef array. Cog retains its user-confirmed 57 -> [57,58] scope.
+# Unlisted masts retain their own reef array. Cog mast 8 was added on 2026-09-29.
 # Brig 70 and 74 have identical hierarchy names but different object identities. 70 is registered
 # and has B1 reef seats; 74 is unregistered and has F1 reef seats. NativeWinchSeats.txt is correct.
 # Associations were checked using serialized object identities, reef arrays, guide paths, prerequisites
@@ -37,6 +37,7 @@ Sanbuq|55,59|54,60,66,67|Mizzenmast 2; mz2 stays
 Sanbuq|69,70|61,71|Mizzenmast 3; mz1 stays
 Sanbuq|51,64|52,53,65,72|Upright foremast; lower, topmast and flying forestay controls
 Sanbuq|62|63,78|Raked foremast; reef seat parented to raked_foremast
+Cog|8|51,65|Original mizzen; both midstay variants share winch_reef_midstay1
 Cog|57|58|User-confirmed mizzen mast 2; winch_reef_midstay2
 Leopard|4,5,6|0,1,2,3|Foremast sections; FORESTAYS/ROPES controls and foremast guides
 Leopard|7,8,9|13,14,15,16|Mainmast sections; MAINSTAYS/ROPES controls and mainmast guides
