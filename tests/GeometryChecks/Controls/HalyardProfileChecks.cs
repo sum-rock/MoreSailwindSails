@@ -102,6 +102,16 @@ internal static class HalyardProfileChecks
             }
         }
 
+        Check(
+            ReefSeats(boat: "Cog", source: 51).Length == 1
+                && ReefSeats(boat: "Cog", source: 51)
+                    .SequenceEqual(ReefSeats(boat: "Cog", source: 65))
+                && !ReefSeats(boat: "Cog", source: 8)
+                    .Intersect(ReefSeats(boat: "Cog", source: 51))
+                    .Any(),
+            "Cog's original mizzen must gain one shared midstay seat, not two independent seats."
+        );
+
         // These Brig objects have the same hierarchy name, but are not the same rig.
         Check(
             rigs[("Brig", 70)][7] == rigs[("Brig", 74)][7]

@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Linq;
 using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Controls;
@@ -7,6 +9,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
+// Exercises native seat selection, deduplication and reservation lifetime.
 internal static class NativeSeatPolicyChecks
 {
     internal static void Run()
@@ -57,7 +60,8 @@ internal static class NativeSeatPolicyChecks
                 && FallbackBootstrap(new[] { new object(), null }) == null,
             "Unavailable templates produced partial controls."
         );
-        CogHalyard();
+        CogHalyard(mast: 8);
+        CogHalyard(mast: 57);
         var ledger = new WinchReservations();
         var owner = new object();
         WinchCandidate Pair(string id, float x, bool fallback = false) =>
@@ -246,28 +250,61 @@ internal static class NativeSeatPolicyChecks
     }
 
     // Exercise the Cog's authored order through the production reservation policy.
-    private static void CogHalyard()
+    private static void CogHalyard(int mast)
     {
         var ledger = new WinchReservations();
         var owner = new object();
-        var candidates = Cog
-            .Definition.HalyardSources(mast: 57)
-            .Select(id => new WinchCandidate
+        var reefSeats = File.ReadAllLines(
+                Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
+            )
+            .Where(line => line.StartsWith("seat|Cog|"))
+            .Select(line => line.Split('|'))
+            .Where(row => row[4] == "reefWinch")
+            .ToLookup(row => int.Parse(row[3]));
+        var sources = Cog
+            .Definition.HalyardSources(mast: mast)
+            .SelectMany(source => reefSeats[source])
+            .Select(row => new WinchCandidate
             {
-                Id = "halyard/" + id,
+                Id = "halyard/" + row[6],
                 Supported = true,
                 Vacant = true,
                 Seats = new[]
                 {
                     new WinchSeat(
-                        identity: id,
+                        identity: row[6],
                         aliases: null,
-                        position: new Vector3(id, 0, 0),
+                        // Recorded local poses distinguish these seats and agree for shared references.
+                        position: new Vector3(
+                            x: float.Parse(
+                                s: row[8].Split(',')[0],
+                                provider: CultureInfo.InvariantCulture
+                            ),
+                            y: float.Parse(
+                                s: row[8].Split(',')[1],
+                                provider: CultureInfo.InvariantCulture
+                            ),
+                            z: float.Parse(
+                                s: row[8].Split(',')[2],
+                                provider: CultureInfo.InvariantCulture
+                            )
+                        ),
                         rotation: Quaternion.identity
                     ),
                 },
             })
             .ToArray();
+        var representatives = new List<WinchCandidate>();
+        foreach (var source in sources)
+            WinchPlacementPolicy.AddSupportedRepresentative(
+                candidates: representatives,
+                candidate: source
+            );
+        var candidates = representatives.ToArray();
+        Check(
+            candidates.Length == 2,
+            "Cog must have one primary and one distinct additional seat."
+        );
         WinchResolution Resolve(WinchCandidate current = null) =>
             WinchPlacementPolicy.Resolve(
                 ledger: ledger,
@@ -281,6 +318,11 @@ internal static class NativeSeatPolicyChecks
             Resolve(current: candidates[0]).Candidate == candidates[1] && ledger.Count == 1,
             "Occupied Cog mizzen seat did not yield to its authored additional seat."
         );
+        foreach (var source in sources.Skip(1))
+            Check(
+                !ledger.TryAcquireSeats(owner: new object(), seats: source.Seats),
+                "Another source rig allowed a duplicate claim on the Cog's shared midstay seat."
+            );
         candidates[0].Vacant = true;
         Check(
             Resolve(current: candidates[1]).Candidate == candidates[1],
@@ -305,7 +347,7 @@ internal static class NativeSeatPolicyChecks
         ledger.Release(owner: other);
         Check(Resolve().Candidate == candidates[1], "Cog did not recover a freed additional seat.");
         Console.WriteLine(
-            "PASS: Cog halyard source priority, stable additional seat, native reclaim, support loss, reservations and retry recovery."
+            $"PASS: Cog mast {mast} halyard source priority, shared-seat deduplication, stable additional seat, native reclaim, support loss, reservations and retry recovery."
         );
     }
 

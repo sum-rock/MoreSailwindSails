@@ -513,8 +513,11 @@ An unconfigured mast uses only its own reef array. All authored groups search th
 requested mast first, then verified associated native stay sources. For example,
 **Cog mast 57 (mizzen mast 2)** uses sources **[57, 58]**: its own seats first, then
 **58 (midstay 2-2)**, whose `winch_reef_midstay2` is mounted beside the mizzen's own
-reef winch. The source stay need not be installed, but the
-requested physical mast and the selected winch's mounting support must be active.
+reef winch. **Cog mast 8 (original mizzen)** uses **[8, 51, 65]**: its own seat,
+then the shared `winch_reef_midstay1` referenced by midstays **51 (2-1)** and
+**65 (1-1)**. These two references add only one distinct seat. The source stay need
+not be installed, but the requested physical mast and the selected winch's mounting
+support must be active.
 Existing native occupancy, aliases, reservations and stable-placement rules apply.
 Startup, allocation and retained-placement validation share this source mapping;
 source-array changes and native reclaim still invalidate a borrowed seat.
@@ -533,16 +536,16 @@ references are intentional and use the existing identity/alias reservations.
 | Junk | 9 |
 | Jong | 7 |
 | Sanbuq | 13 |
-| Cog | 1 |
+| Cog | 2 |
 | Shroud | 6 |
 | Large dhow | 9 |
 
-The supported catalog has **59 halyard groups**. Leopard's nine former groups
+The supported catalog has **60 halyard groups**. Leopard's nine former groups
 remain recorded in the historical audit fixture only.
 
 Unlisted masts retain their original lookup, including Jong's raked foremast and
-unsupported bermuda variants. Cog retains the user-tested group without additional
-expansion. The other six supported profiles cover their audited stay reef seats.
+unsupported bermuda variants. Cog covers both ordinary mizzen variants; the
+other six supported profiles cover their audited stay reef seats.
 
 Startup uses a complete usable pair from the forward category's ordered native
 sources, then its valid fallback templates. All three ownership paths use this
@@ -871,6 +874,37 @@ runtime accessibility, rendered support contact or Unity lifecycle behavior.
 
 ### Runtime validation
 
+#### Cog original mizzen halyard group (2026-09-29)
+
+Version remains **0.2.1** for the upcoming bug-fix release. During compatibility
+regression testing against **0.2.0**, the current BepInEx and Unity logs agreed on
+seven Cog Mk.B halyard exhaustion warnings requesting mast **8**, with one native
+seat unavailable and no reservation conflicts or missing supports. Sheets placed
+successfully. The user confirmed a vacant mizzen seat using WinchMountOverlay.
+The previous session's 0.2.0 placement failures were the regression baseline,
+not evidence of those failures recurring on other boats in 0.2.1.
+
+Cog now searches `[8, 51, 65]` for the original mizzen. The recorded installed
+inventory identifies sources 51 and 65 as the same `winch_reef_midstay1`; existing
+deduplication and reservations keep it a single additional seat. Mast 57 retains
+`[57, 58]`. Cog has two groups and the supported catalog has 60. No resolver,
+native array, fallback, save-format or public-interface changes are required.
+
+CSharpier check, Release build (zero warnings/errors), GeometryChecks,
+AssemblyChecks (62 Harmony targets) and `git diff --check` passed. Regression
+checks cover both mizzen groups, all 60 groups' exact source order, shared
+installed identity, primary-seat priority, duplicate-claim prevention, stable
+placement, native reclaim, support loss and retry recovery. Built DLL:
+`src/bin/Release/netstandard2.0/MoreSailwindSails.dll`. No installed game files or
+saves were replaced.
+
+**In-game validation remains pending:** smoke-test Brig, then Cog with mainmast
+5 or 6 and original mizzen 8. Occupy the primary mizzen halyard and leave the
+associated native midstay absent; confirm allocation to `winch_reef_midstay1`,
+usable controls, correct routing and save reload behavior. Exercise native
+reclaim and recovery, and retain a mast 57 regression check. Neither automated
+suite executes the complete Unity binding lifecycle or simulates Cloth.
+
 #### Leopard support suspended (2026-09-28)
 
 The user tested Leopard and reported that additional compatibility work is needed
@@ -928,9 +962,10 @@ including the unchanged Cog group. Sources were checked against all **305**
 recorded native/SE/boat-mod rig objects in the installed assets, including reef-array identities,
 guide hierarchies, prerequisites and mounting paths. No native arrays or geometry
 were modified, and the resolver and reservation behavior remain unchanged.
-Leopard has since been disabled following the user's in-game test; the active
-catalog now has 59 groups. The current profile checks exclude Leopard; its nine
-former groups remain recorded in the historical fixture.
+Leopard was subsequently disabled following the user's in-game test, reducing the
+active catalog to 59 groups; the later Cog mast 8 addition brings it to 60.
+The current profile checks exclude Leopard; its nine former groups remain
+recorded in the historical fixture.
 
 The earlier reported Brig fixture discrepancy was an audit lookup error: registered
 source **70** and unregistered source **74** have the same hierarchy path but are

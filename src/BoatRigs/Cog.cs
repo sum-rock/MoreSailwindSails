@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.BoatRigs
 {
+    // Defines the Cog's supported rigs, stay variants and native winch sources.
     internal static class Cog
     {
         internal static readonly BoatRigDefinition Definition = new BoatRigDefinition(
@@ -11,9 +12,14 @@ namespace MoreSailwindSails.BoatRigs
             stays: Stays(),
             mastParents: MastParents(),
             sheetCategories: SheetCategories(),
-            // Midstay 2-2's reef seat is physically on mizzen mast 2. The stay
-            // need not be fitted; live mounting support and occupancy still apply.
-            halyardGroups: new[] { new HalyardWinchGroup(mast: 57, sources: new[] { 57, 58 }) }
+            // Stay sources need not be fitted; live mounting support and occupancy apply.
+            halyardGroups: new[]
+            {
+                // Midstay 2-1 and 1-1 share one reef seat beside the original mizzen.
+                new HalyardWinchGroup(mast: 8, sources: new[] { 8, 51, 65 }),
+                // Midstay 2-2's reef seat is beside mizzen mast 2.
+                new HalyardWinchGroup(mast: 57, sources: new[] { 57, 58 }),
+            }
         );
 
         // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
