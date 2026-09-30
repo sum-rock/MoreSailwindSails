@@ -3,10 +3,10 @@
 MoreSailwindSails adds new sail types to Sailwind, with room for more as they
 are developed. The mod currently includes two sail families:
 
-- **Fisherman's Staysails** — Mk.A, Mk.B and Mk.C cuts fitted to a Fisherman's Stay
-  between two masts.
-- **Fisherman's Flying Sails** — sails fitted directly to a physical mast,
-  with an active mast behind it for support.
+- **Fisherman's Staysails** — Mk.A, Mk.B and Mk.C cuts fitted to a Fisherman's
+  Stay between two masts.
+- **Fisherman's Flying Sails** — sails fitted directly to a physical mast, with
+  an active mast behind it for support.
 
 **Fisherman's Stays** provide the rigging mounts for the staysail family.
 
@@ -23,8 +23,8 @@ Select a screenshot to view it at full size.
 ## New in 0.2.0
 
 - **Staysail Mk.C**, with a longer luff and a foot rising toward the aft mast.
-- A smaller **Flying Sail** with a trapezoid cut, fixed mast ties, rounded billow,
-  revised control ropes and corner knots.
+- A smaller **Flying Sail** with a trapezoid cut, fixed mast ties, rounded
+  billow, revised control ropes and corner knots.
 - Corrected sheet-winch placement along measured rails and other solid supports.
 - Support for Sailwind 0.39's **large Al’Ankh dhow** and a fix for custom sail
   sound initialization.
@@ -50,8 +50,8 @@ work for Fisherman's sails.
 ## Requirements and installation
 
 **Use at your own risk.** This mod is provided as-is, without warranty. I am not
-responsible for damage, data loss, or other issues affecting your computer, game,
-or save files from using this mod. Back up your saves before installing.
+responsible for damage, data loss, or other issues affecting your computer,
+game, or save files from using this mod. Back up your saves before installing.
 
 - Built against **Sailwind 0.39**
 - **BepInEx 5**
@@ -59,23 +59,24 @@ or save files from using this mod. Back up your saves before installing.
 
 1. Close Sailwind.
 2. Place `MoreSailwindSails.dll` in
-   `<Sailwind>/BepInEx/plugins/MoreSailwindSails/`, creating the folder if needed.
+   `<Sailwind>/BepInEx/plugins/MoreSailwindSails/`, creating the folder if
+   needed.
 3. When updating, replace the old DLL and remove any duplicate copies.
 4. Launch the game and visit a shipyard.
 
 ## Fitting a staysail
 
-1. Open the shipyard's **rigging parts** and select **Fisherman's Stay** for
-   the mast pair you want to use.
+1. Open the shipyard's **rigging parts** and select **Fisherman's Stay** for the
+   mast pair you want to use.
 2. Choose the variant matching your fitted masts and topmasts.
-3. Select that stay in the sail-fitting controls, open **Staysails**, and
-   choose **Fisherman's Staysail Mk.A**, **Mk.B** or **Mk.C**.
+3. Select that stay in the sail-fitting controls, open **Staysails**, and choose
+   **Fisherman's Staysail Mk.A**, **Mk.B** or **Mk.C**.
 4. Resize and position the sail with the normal shipyard controls, leaving
    clearance from the deck, aft mast and other rigging.
 5. Complete the shipyard order.
 
-**Mk.A, Mk.B and Mk.C fit only on Fisherman's Stays.** Each stay carries one sail;
-these stays can also carry vanilla staysails. Supported three-masted boats
+**Mk.A, Mk.B and Mk.C fit only on Fisherman's Stays.** Each stay carries one
+sail; these stays can also carry vanilla staysails. Supported three-masted boats
 offer additional mast pairs.
 
 All three cuts start with the same width; Mk.C has a luff 50% longer than Mk.A

@@ -10,7 +10,7 @@
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        packages = [ pkgs.dotnet-sdk_8 pkgs.pre-commit ];
+        packages = [ pkgs.dotnet-sdk_8 pkgs.pre-commit pkgs.prettier ];
       };
     };
 }

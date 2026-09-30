@@ -1,8 +1,8 @@
 # Working on MoreSailwindSails
 
-Read [README.md](README.md), [src/Plugin.cs](src/Plugin.cs) and relevant code before
-editing. Check `git status --short` and preserve user changes. Current user
-instructions take precedence over historical design choices.
+Read [README.md](README.md), [src/Plugin.cs](src/Plugin.cs) and relevant code
+before editing. Check `git status --short` and preserve user changes. Current
+user instructions take precedence over historical design choices.
 
 ## Scope and workflow
 
@@ -11,8 +11,9 @@ instructions take precedence over historical design choices.
 - Prefer one class per file as a rule and describe the responsibility of the
   class within a code comment at the top of the file.
 - Update `README.md` only when the user explicitly requests a README change.
-  Feature, bug-fix, release and general documentation work do not imply permission
-  to edit it; put technical and validation updates in `docs/DEVELOPMENT.md`.
+  Feature, bug-fix, release and general documentation work do not imply
+  permission to edit it; put technical and validation updates in
+  `docs/DEVELOPMENT.md`.
 - MoreSailwindSails is an expandable collection of sail families. Keep Flying
   Sail and staysail mechanics independently editable; future families need not
   follow either design. Shared-helper extraction remains
@@ -28,12 +29,13 @@ instructions take precedence over historical design choices.
   may differ. Never commit proprietary assemblies or extracted game assets.
 - Preserve GUID `com.august.moresailwindsails`, DLL `MoreSailwindSails.dll`,
   prefab IDs **400** (Flying Sail), **401/402/403** (Mk.A/B/C), and stay mount
-  IDs **128–255**. Keep plugin/project versions and release documentation aligned.
+  IDs **128–255**. Keep plugin/project versions and release documentation
+  aligned.
 
 ## Technical reference
 
-[DEVELOPMENT.md](docs/DEVELOPMENT.md) owns the detailed guidance. Read the relevant
-sections before changing a feature:
+[DEVELOPMENT.md](docs/DEVELOPMENT.md) owns the detailed guidance. Read the
+relevant sections before changing a feature:
 
 | Area                                            | Reference                                                              |
 | ----------------------------------------------- | ---------------------------------------------------------------------- |
@@ -58,36 +60,38 @@ sections before changing a feature:
 - Preserve coupled edge fitting, finite fallbacks and scoped force/appearance
   patches. Do not alter vanilla forces or shared donor assets. Keep full native
   sail lists outside control binding and restore them in a finalizer.
-- Resolve authored **active** mast sections/guides and protect occupied supports.
-  Preserve save ordering, preview restoration and registration rollback.
+- Resolve authored **active** mast sections/guides and protect occupied
+  supports. Preserve save ordering, preview restoration and registration
+  rollback.
 - Enforce **±40°** after native sway, retaining tighter collision limits. Keep
   iterative order-text guards before NANDFixes; later HarmonyX prefixes still
   run after `false` and must receive consumed input.
 - Preserve Flying Sail **85%** upper sheeting and fixed ties; staysails use
   **14° × clamped currentUnroll**, independent lower sheets and upward reefing.
-- Sheets reserve complete native pairs atomically by identity and aliases,
-  then try the category's explicit manual fallback. Halyards use the requested
-  active mast's authored source group, or its own native seats if unconfigured.
-  Native bindings take priority. Move the parent mount,
-  never the input wheel; exhaustion hides/retries while retaining controllers.
-  Trust native and authored fallback positions: do not add geometric clearance,
-  radius or proximity checks. Never restore generated rail/mast offsets or pooled
-  Shroud pin selection.
+- Sheets reserve complete native pairs atomically by identity and aliases, then
+  try the category's explicit manual fallback. Halyards use the requested active
+  mast's authored source group, or its own native seats if unconfigured. Native
+  bindings take priority. Move the parent mount, never the input wheel;
+  exhaustion hides/retries while retaining controllers. Trust native and
+  authored fallback positions: do not add geometric clearance, radius or
+  proximity checks. Never restore generated rail/mast offsets or pooled Shroud
+  pin selection.
 
 ## Verification and handoff
 
-Use the pinned Nix/CSharpier environment and the
+Use the pinned Nix formatting environment and the
 [build and check commands](docs/DEVELOPMENT.md#build-and-automated-checks).
-Always build Release for plugin-affecting changes and run both check suites.
-Use CSharpier `check` for read-only work and `format` to fix formatting.
-Documentation-only changes normally need diff/link/path review, not a build.
-Do not change dependencies to bypass first-time restore/network failures.
+Always build Release for plugin-affecting changes and run both check suites. Use
+CSharpier `check` for read-only work and `format` to fix formatting. For
+Markdown, use Prettier `--check` to verify and `--write` to fix formatting.
+Documentation-only changes normally need diff/link/path review, not a build. Do
+not change dependencies to bypass first-time restore/network failures.
 
 **Neither suite simulates Unity Cloth.** Report automated results separately
 from observed game behavior. For future changes, follow the runtime validation
-guidance in [DEVELOPMENT.md](docs/DEVELOPMENT.md), starting on Brig, then affected
-boats (especially Sanbuq for tack/cloth work). Keep validation notes current
-when user observations confirm or contradict an approach.
+guidance in [DEVELOPMENT.md](docs/DEVELOPMENT.md), starting on Brig, then
+affected boats (especially Sanbuq for tack/cloth work). Keep validation notes
+current when user observations confirm or contradict an approach.
 
 At handoff, report the version, changes, checks actually run, remaining in-game
 uncertainty and built DLL path when applicable.

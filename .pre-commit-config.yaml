@@ -18,3 +18,9 @@ repos:
         language: unsupported
         files: '\.(cs|csx|csproj|props|targets|xml|config)$'
         require_serial: true
+      - id: prettier-markdown
+        name: Prettier (Markdown)
+        entry: nix develop -c prettier --write
+        language: unsupported
+        files: '\.md$'
+        require_serial: true
