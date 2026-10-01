@@ -10,23 +10,19 @@ are developed. The mod currently includes two sail families:
 
 **Fisherman's Stays** provide the rigging mounts for the staysail family.
 
-Version **0.2.1**.
+Version **0.2.1**. See the [changelog](#changelog).
 
 <p align="center">
-  <a href="references/example-0-2-0A.png"><img src="references/example-0-2-0A.png" width="24%" alt="Fisherman's Staysail set between two masts, viewed from above"></a>
-  <a href="references/example-0-2-0C.png"><img src="references/example-0-2-0C.png" width="24%" alt="Fisherman's sails viewed from alongside a boat at sunset"></a>
-  <a href="references/example-0-2-0E.png"><img src="references/example-0-2-0E.png" width="24%" alt="Fisherman's Staysail on a three-masted boat near shore"></a>
+  <a href="references/junk-fishermans-sail.png"><img src="references/junk-fishermans-sail.png" width="32%" alt="Junk with a Fisherman's Staysail set between its masts, viewed from above"></a>
+  <a href="references/brig-flying-sail-and-fishermans-staysail.png"><img src="references/brig-flying-sail-and-fishermans-staysail.png" width="32%" alt="Brig with a Flying Sail and Fisherman's Staysail at sunset"></a>
+  <a href="references/shroud-fishermans-sails.png"><img src="references/shroud-fishermans-sails.png" width="32%" alt="Fisherman's sails fitted to Shroud, viewed from alongside near shore"></a>
+  <br>
+  <a href="references/baghala-fishermans-sails.png"><img src="references/baghala-fishermans-sails.png" width="32%" alt="Baghala with Fisherman's sails set between its masts at sea"></a>
+  <a href="references/sailinfo-staysail-halyard-label.png"><img src="references/sailinfo-staysail-halyard-label.png" width="32%" alt="SailInfo hover label identifying a Fisherman's Staysail halyard"></a>
+  <a href="references/fishermans-staysail-at-sea.png"><img src="references/fishermans-staysail-at-sea.png" width="32%" alt="Fisherman's Staysail between two masts, viewed from astern at sea"></a>
 </p>
 
 Select a screenshot to view it at full size.
-
-## New in 0.2.0
-
-- **Staysail Mk.C**, with a longer luff and a foot rising toward the aft mast.
-- A smaller **Flying Sail** with a trapezoid cut, fixed mast ties, rounded
-  billow, revised control ropes and corner knots.
-- Corrected sheet-winch placement along measured rails and other solid supports.
-- Support for new Baghala and a fix for custom sail sound initialization.
 
 ## What's included
 
@@ -39,11 +35,12 @@ Select a screenshot to view it at full size.
 | **Fisherman's Flying Sail**   | A separate sail fitted directly to a mast through the **Other** category.                                                                   |
 
 Supported boats: **Brig, Junk, Jong, Sanbuq, Cog, Shroud and Baghala**. Shroud
-requires its corresponding boat mod. Available stay variants depend on the boat
-and its fitted masts.
+requires
+[Shattered Seas Expansion](https://github.com/TheOriginOfAllEvil/Shattered-Seas-Expansion).
+Available stay variants depend on the boat and its fitted masts.
 
-**Leopard support is temporarily suspended** pending additional compatibility
-work for Fisherman's sails.
+**Leopard support has been removed.** Future compatibility work is tracked in
+[issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
 
 ## Requirements and installation
 
@@ -104,6 +101,36 @@ details, see the [Flying Sail reference](docs/DEVELOPMENT.md#flying-sail).
 Before uninstalling, remove all sails and rigging added by MoreSailwindSails
 (currently the Fisherman's sails and stays), then save your game. Remove fitted
 sails before removing the stays or masts that support them.
+
+## Changelog
+
+### 0.2.1
+
+- **Completely reworked sheeting winch and halyard winch placement** for much
+  more reasonable and consistent locations, using available native mounting
+  points and respecting existing winch use.
+- Fixed Fisherman's sail compatibility with **Shroud** from
+  [Shattered Seas Expansion](https://github.com/TheOriginOfAllEvil/Shattered-Seas-Expansion),
+  including sheet placement and halyard placement on its belaying pins.
+- Added **SailInfo hover labels** identifying Fisherman's Flying Sails and
+  Staysails when hovering over their sheet and halyard controls.
+- Fixed missing halyard placements on both **Cog** mizzen variants by using
+  available associated stay winches when the mast's own winch is occupied.
+- Corrected floating or tilted **Fisherman's Stay collars** on **Sanbuq** and
+  **Baghala**, fitting the collars around their supporting masts.
+- Fixed missing **Flying Sail corner knots**.
+- Added an optional **winch mounting-point overlay** to help inspect occupied
+  and available locations. It is disabled by default; see the
+  [diagnostic instructions](docs/DEVELOPMENT.md#viewing-winch-mounting-points).
+- Removed **Leopard support** pending further compatibility work.
+
+### 0.2.0
+
+- **Staysail Mk.C**, with a longer luff and a foot rising toward the aft mast.
+- A smaller **Flying Sail** with a trapezoid cut, fixed mast ties, rounded
+  billow, revised control ropes and corner knots.
+- Corrected sheet-winch placement along measured rails and other solid supports.
+- Support for new Baghala and a fix for custom sail sound initialization.
 
 For building the mod, technical details and testing notes, see the
 [development guide](docs/DEVELOPMENT.md).
