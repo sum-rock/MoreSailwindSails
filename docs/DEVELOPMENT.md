@@ -71,11 +71,11 @@ physics or the live shipyard. Passing checks do not establish in-game behavior.
 
 ## Release and manual installation
 
-For **0.2.1**, keep `Plugin.PluginVersion`, the project `<Version>`, README and
-startup example consistent. Preserve GUID `com.august.moresailwindsails`,
-assembly `MoreSailwindSails.dll`, display name/namespace `MoreSailwindSails` and
-prefab IDs **400** (Flying Sail), **401/402/403** (Mk.A/B/C). Distribute only
-the plugin DLL.
+For **0.3.0-dev**, keep `Plugin.PluginVersion`, the project `<Version>`, the
+README development version and startup example consistent. Preserve GUID
+`com.august.moresailwindsails`, assembly `MoreSailwindSails.dll`, display
+name/namespace `MoreSailwindSails` and prefab IDs **400** (Flying Sail),
+**401/402/403** (Mk.A/B/C). Distribute only the plugin DLL.
 
 The following scripts are **manual maintainer workflows**. Agents must not
 execute files from `scripts/` or use that directory as their working directory.
@@ -95,7 +95,7 @@ Builds/checks do not install the plugin, change saves or publish a release.
   generated notes. It requires Nix and an authenticated `gh`. A later
   build/publish failure can leave the pushed tag.
 
-After manual installation, confirm `MoreSailwindSails 0.2.1 loaded!` in
+After manual installation, confirm `MoreSailwindSails 0.3.0-dev loaded!` in
 `BepInEx/LogOutput.log`. Flying Sail registration uses donor **110**, prefab
 **400** and **825** vertices; staysails register **401/402/403**. Check the
 installed DLL separately from build output when diagnosing.

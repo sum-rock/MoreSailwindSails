@@ -1,5 +1,15 @@
 # MoreSailwindSails
 
+<!-- prettier-ignore -->
+> [!IMPORTANT]
+> This README documents the current development version of MoreSailwindSails.
+>
+> For documentation on the latest stable version and see the [0.2.1 tagged release](https://github.com/sum-rock/MoreSailwindSails/tree/v0.2.1).
+>
+> To download the latest release go to the [release page](https://github.com/sum-rock/MoreSailwindSails/releases)
+
+## Overview
+
 MoreSailwindSails adds new sail types to Sailwind, with room for more as they
 are developed. The mod currently includes two sail families:
 
@@ -10,7 +20,12 @@ are developed. The mod currently includes two sail families:
 
 **Fisherman's Stays** provide the rigging mounts for the staysail family.
 
-Version **0.2.1**. See the [changelog](#changelog).
+### Current versions
+
+**Latest release:** 0.2.1\
+**Development:** 0.3.0-dev
+
+See the [changelog](#changelog).
 
 <p align="center">
   <a href="references/junk-fishermans-sail.png"><img src="references/junk-fishermans-sail.png" width="32%" alt="Junk with a Fisherman's Staysail set between its masts, viewed from above"></a>
@@ -24,7 +39,7 @@ Version **0.2.1**. See the [changelog](#changelog).
 
 Select a screenshot to view it at full size.
 
-## What's included
+### What's included
 
 | Sail or rigging               | What it adds                                                                                                                                |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -42,24 +57,9 @@ Available stay variants depend on the boat and its fitted masts.
 **Leopard support has been removed.** Future compatibility work is tracked in
 [issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
 
-## Requirements and installation
+## Usage
 
-**Use at your own risk.** This mod is provided as-is, without warranty. I am not
-responsible for damage, data loss, or other issues affecting your computer,
-game, or save files from using this mod. Back up your saves before installing.
-
-- Built against **Sailwind 0.39**
-- **BepInEx 5**
-- **Shipyard Expansion** (developed against version 0.11.1)
-
-1. Close Sailwind.
-2. Place `MoreSailwindSails.dll` in
-   `<Sailwind>/BepInEx/plugins/MoreSailwindSails/`, creating the folder if
-   needed.
-3. When updating, replace the old DLL and remove any duplicate copies.
-4. Launch the game and visit a shipyard.
-
-## Fitting a staysail
+### Fitting a staysail
 
 1. Open the shipyard's **rigging parts** and select **Fisherman's Stay** for the
    mast pair you want to use.
@@ -83,7 +83,7 @@ Remove a fitted sail before replacing or removing its stay. If you change a
 supporting mast or add a topmast, choose a matching stay variant as part of the
 shipyard changes.
 
-## Using the Flying Sail
+### Using the Flying Sail
 
 At a shipyard, select a **physical mast**, open **Other**, and choose
 **Fisherman's Flying Sail**. It needs a supported active mast behind it.
@@ -91,10 +91,22 @@ At a shipyard, select a **physical mast**, open **Other**, and choose
 Its own hoist winch raises it from the deck, and its port and starboard sheets
 control the trim. Fully lowering it hides the sail.
 
-Two fixed 18-inch ties hold the luff corners away from the mast while the luff
-arches inward. The trapezoid cut has a rising head and falling foot; leave room
-for the higher aft head below its supporting pulley. For geometry and rigging
-details, see the [Flying Sail reference](docs/DEVELOPMENT.md#flying-sail).
+## Requirements and installation
+
+**Use at your own risk.** This mod is provided as-is, without warranty. I am not
+responsible for damage, data loss, or other issues affecting your computer,
+game, or save files from using this mod. Back up your saves before installing.
+
+- Built against **Sailwind 0.39**
+- **BepInEx 5**
+- **Shipyard Expansion** (developed against version 0.11.1)
+
+1. Close Sailwind.
+2. Place `MoreSailwindSails.dll` in
+   `<Sailwind>/BepInEx/plugins/MoreSailwindSails/`, creating the folder if
+   needed.
+3. When updating, replace the old DLL and remove any duplicate copies.
+4. Launch the game and visit a shipyard.
 
 ## Removing the mod
 
