@@ -26,8 +26,7 @@ Select a screenshot to view it at full size.
 - A smaller **Flying Sail** with a trapezoid cut, fixed mast ties, rounded
   billow, revised control ropes and corner knots.
 - Corrected sheet-winch placement along measured rails and other solid supports.
-- Support for Sailwind 0.39's **large Al’Ankh dhow** and a fix for custom sail
-  sound initialization.
+- Support for new Baghala and a fix for custom sail sound initialization.
 
 ## What's included
 
@@ -39,10 +38,9 @@ Select a screenshot to view it at full size.
 | **Fisherman's Staysail Mk.C** | The same head and controls, with a 50% longer luff and a lower edge rising 40° from the forward luff toward the aft leech on upright masts. |
 | **Fisherman's Flying Sail**   | A separate sail fitted directly to a mast through the **Other** category.                                                                   |
 
-Supported boats: **Brig, Junk, Jong, Sanbuq, Cog, Shroud and the Bigbuqu
-introduced in 0.39**. Shroud requires its corresponding boat mod and has only
-been lightly tested. Let me know if there are issues. Available stay variants
-depend on the boat and its fitted masts.
+Supported boats: **Brig, Junk, Jong, Sanbuq, Cog, Shroud and Baghala**. Shroud
+requires its corresponding boat mod. Available stay variants depend on the boat
+and its fitted masts.
 
 **Leopard support is temporarily suspended** pending additional compatibility
 work for Fisherman's sails.
