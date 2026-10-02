@@ -13,7 +13,7 @@ namespace MoreSailwindSails
     {
         public const string PluginGuid = "com.august.moresailwindsails";
         public const string PluginName = "MoreSailwindSails";
-        public const string PluginVersion = "0.2.1";
+        public const string PluginVersion = "0.3.0-dev";
 
         internal static ManualLogSource Log { get; private set; }
         private ConfigEntry<KeyboardShortcut> captureWinchPosition;

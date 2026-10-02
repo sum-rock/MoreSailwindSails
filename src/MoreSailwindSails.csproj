@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>MoreSailwindSails</AssemblyName>
     <RootNamespace>MoreSailwindSails</RootNamespace>
-    <Version>0.2.1</Version>
+    <Version>0.3.0-dev</Version>
     <SailwindDir Condition="'$(SailwindDir)' == ''"
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
