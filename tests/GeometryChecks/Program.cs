@@ -7,6 +7,14 @@ internal static class Program
 {
     private static void Main()
     {
+        Spritsail.CategoryChecks.Run();
+        Spritsail.TravelChecks.Run();
+        Spritsail.SpritVisualChecks.Run();
+        Spritsail.DeploymentChecks.Run();
+        Spritsail.ObstructionChecks.Run();
+        Spritsail.LooseFootedSpritsail.FlexChecks.Run();
+        Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run();
+        Spritsail.LooseFootedSpritsail.MkB.CutChecks.Run();
         Compatibility.TextureCatalogChecks.Run();
         RigChecks.Run();
         ProfileChecks.Run();

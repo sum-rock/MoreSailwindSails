@@ -43,6 +43,13 @@ internal static class Program
 
         PluginMetadataChecks.Run(assembly: assembly);
         HarmonySignatureChecks.Run(assembly);
+        Spritsail.CategoryChecks.Run(assembly: assembly, gameDir: gameDir);
+        Spritsail.ShipyardPlacementChecks.Run(assembly: assembly);
+        Spritsail.TravelChecks.Run(assembly: assembly);
+        Spritsail.DeploymentChecks.Run(assembly: assembly);
+        Spritsail.ObstructionChecks.Run(assembly: assembly);
+        Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run(assembly: assembly);
+        Spritsail.LooseFootedSpritsail.MarkChecks.Run(assembly: assembly);
         Compatibility.TextureCatalogChecks.Run(assembly);
         Compatibility.SailInfoNamesChecks.Run(assembly: assembly, gameDir: gameDir);
         FlyingSailChecks.Run(assembly);
