@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes force direction patch behavior to the spritsail family.
+    // Uses the posed loose-footed aerodynamic normal for native force direction.
 
     [HarmonyPatch(typeof(Sail), "GetSailForceDirection")]
     internal static class LooseFootedSpritsailForceDirectionPatch

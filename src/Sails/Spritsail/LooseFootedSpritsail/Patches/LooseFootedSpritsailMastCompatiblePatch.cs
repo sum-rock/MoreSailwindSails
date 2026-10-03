@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes mast compatible patch behavior to the spritsail family.
+    // Restricts loose-footed fitting to supported active physical masts.
 
     [HarmonyPatch(typeof(ShipyardUI), "SailMastCompatible")]
     internal static class LooseFootedSpritsailMastCompatiblePatch

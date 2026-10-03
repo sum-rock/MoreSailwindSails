@@ -7,6 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Sails/Spritsail/SpritsailSurfaceSample.cs"
+      Link="Spritsail/SpritsailSurfaceSample.cs"
+    />
+    <Compile
       Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailDefinition.cs"
       Link="Spritsail/BoomedSpritsail/BoomedSpritsailDefinition.cs"
     />

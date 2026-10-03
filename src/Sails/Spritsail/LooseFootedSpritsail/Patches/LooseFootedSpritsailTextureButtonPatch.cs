@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes texture button patch behavior to the spritsail family.
+    // Restricts shipyard texture selection for loose-footed sails.
 
     [HarmonyPatch(typeof(ShipyardUI), "UpdateMoveButtons")]
     internal static class LooseFootedSpritsailTextureButtonPatch

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes install guard patch behavior to the spritsail family.
+    // Rejects boomed installation when its mast support or guide clearance is invalid.
 
     [HarmonyPatch(typeof(ShipyardSailInstaller), "InstallSail")]
     internal static class BoomedSpritsailInstallGuardPatch

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes cloth refresh patch behavior to the spritsail family.
+    // Routes native Cloth refresh requests to the loose-footed rig lifecycle.
     [HarmonyPatch(typeof(ReefEffectAnimUniversal), "RefreshCloth")]
     internal static class LooseFootedSpritsailClothRefreshPatch
     {

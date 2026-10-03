@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes order refresh patch behavior to the spritsail family.
+    // Invalidates boomed support bindings after shipyard order refresh.
 
     [HarmonyPatch(typeof(BoatCustomParts), "RefreshPartsWithOrder")]
     internal static class BoomedSpritsailOrderRefreshPatch

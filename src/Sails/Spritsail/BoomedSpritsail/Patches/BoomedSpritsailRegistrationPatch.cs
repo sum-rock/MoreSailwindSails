@@ -2,7 +2,7 @@ using HarmonyLib;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes registration patch behavior to the spritsail family.
+    // Registers boomed templates after SE initialization and before All Sails caching.
     [HarmonyPatch(typeof(PrefabsDirectory), "Start")]
     internal static class BoomedSpritsailRegistrationPatch
     {

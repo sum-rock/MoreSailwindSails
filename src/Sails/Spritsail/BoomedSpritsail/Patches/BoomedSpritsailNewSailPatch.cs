@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes new sail patch behavior to the spritsail family.
+    // Initializes white color, default size and mast controls for new boomed sails.
 
     [HarmonyPatch(typeof(ShipyardSailInstaller), "AddNewSail")]
     internal static class BoomedSpritsailNewSailPatch

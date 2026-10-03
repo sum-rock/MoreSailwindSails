@@ -2,7 +2,7 @@ using HarmonyLib;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes registration patch behavior to the spritsail family.
+    // Registers loose-footed templates after SE initialization and before All Sails caching.
     [HarmonyPatch(typeof(PrefabsDirectory), "Start")]
     internal static class LooseFootedSpritsailRegistrationPatch
     {

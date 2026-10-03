@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes plain texture patch behavior to the spritsail family.
+    // Preserves plain-texture selection for loose-footed sails.
     [HarmonyPatch(typeof(SailTextureChanger), "UpdateMaterial")]
     internal static class LooseFootedSpritsailPlainTexturePatch
     {

@@ -94,6 +94,30 @@ internal static class CategoryChecks
         );
         ExpectRejected(method: overlapTransform, codes: Array.Empty<CodeInstruction>());
 
+        foreach (
+            var entry in new[]
+            {
+                ("SpritsailShipyardPatch", "Postfix"),
+                ("SpritsailShipyardFallbackPatch", "Prefix"),
+            }
+        )
+            Require(
+                value: IlReader
+                    .CalledMethods(method: Method("Patches." + entry.Item1, entry.Item2))
+                    .Any(m =>
+                        m.Name == "AddToShipyard"
+                        && m.DeclaringType.FullName == Family + "SpritsailCatalog"
+                    ),
+                message: "Shipyard insertion must call the family catalog directly."
+            );
+        foreach (string type in new[] { "LooseFootedSpritsail", "BoomedSpritsail" })
+            Require(
+                value: assembly
+                    .GetType(name: Family + type + "." + type, throwOnError: true)
+                    .GetMethod(name: "AddToShipyard", bindingAttr: All) == null,
+                message: "Type-specific shipyard forwarding wrappers must be removed."
+            );
+
         foreach (string name in new[] { "SpritsailMassPatch", "SpritsailPricePatch" })
             Require(
                 value: !IlReader

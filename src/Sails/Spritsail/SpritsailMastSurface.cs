@@ -11,13 +11,11 @@ namespace MoreSailwindSails.Sails.Spritsail
         private readonly int[] triangles;
         private bool warned;
         private readonly bool authoredSanbuqTopmast;
-        private Vector3 previousOrigin,
-            previousDirection;
-        private float previousRadius;
-        private bool cached;
+        private readonly SpritsailSurfaceSample[] samples;
 
-        internal SpritsailMastSurface(Mast mast)
+        internal SpritsailMastSurface(Mast mast, int sampleCount = 1)
         {
+            samples = new SpritsailSurfaceSample[sampleCount];
             filter = mast.GetComponent<MeshFilter>();
             authoredSanbuqTopmast =
                 mast.orderIndex == 80
@@ -31,18 +29,22 @@ namespace MoreSailwindSails.Sails.Spritsail
             }
         }
 
-        internal float Radius(Vector3 center, Vector3 direction, float fallback)
+        internal float Radius(
+            Vector3 center,
+            Vector3 direction,
+            float fallback,
+            int sampleIndex = 0
+        )
         {
             if (filter)
             {
                 var origin = filter.transform.InverseTransformPoint(position: center);
                 var ray = filter.transform.InverseTransformVector(vector: direction);
                 if (
-                    cached
-                    && (origin - previousOrigin).sqrMagnitude < 1e-8f
-                    && (ray - previousDirection).sqrMagnitude < 1e-8f
+                    samples[sampleIndex]
+                        .TryGet(origin: origin, direction: ray, radius: out var cachedRadius)
                 )
-                    return previousRadius;
+                    return cachedRadius;
                 float radius = 0;
                 bool found =
                     vertices != null
@@ -73,10 +75,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                 }
                 if (found)
                 {
-                    cached = true;
-                    previousOrigin = origin;
-                    previousDirection = ray;
-                    previousRadius = radius;
+                    samples[sampleIndex].Store(origin: origin, direction: ray, radius: radius);
                     return radius;
                 }
             }

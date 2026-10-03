@@ -20,6 +20,30 @@ internal static class ObstructionChecks
             assembly
                 .GetType(name: family + type, throwOnError: true)
                 .GetMethod(name: name, bindingAttr: all);
+        foreach (string type in new[] { "LooseFootedSpritsail", "BoomedSpritsail" })
+        {
+            var configure = IlReader
+                .Instructions(method: Method(type + "." + type + "Rig", "Configure"))
+                .ToArray();
+            int affected = Array.FindIndex(
+                configure,
+                i => i.Operand is FieldInfo field && field.Name == "StarboardAffected"
+            );
+            Require(
+                affected > 0
+                    && configure[affected - 1].Code == System.Reflection.Emit.OpCodes.Ldc_I4_1,
+                "Both rig templates must retain the starboard penalty."
+            );
+        }
+        Require(
+            IlReader
+                .Instructions(method: Method("Patches.SpritsailDescriptionPatch", "Prefix"))
+                .Any(i =>
+                    i.Operand is string text
+                    && text.Contains("Starboard tack performs worse than port tack.")
+                ),
+            "Shipyard description must agree with the configured affected tack."
+        );
         var native = Assembly.Load("Assembly-CSharp").GetType("Sail");
         var wind = IlReader
             .Instructions(method: native.GetMethod("GetApparentWind", all))

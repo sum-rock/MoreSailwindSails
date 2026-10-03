@@ -20,6 +20,60 @@ internal static class DeploymentChecks
             assembly
                 .GetType(name: family + type, throwOnError: true)
                 .GetMethod(name: name, bindingAttr: all);
+        var looseConfigure = IlReader
+            .CalledMethods(
+                method: Method(
+                    type: "LooseFootedSpritsail.LooseFootedSpritsailRig",
+                    name: "Configure"
+                )
+            )
+            .ToArray();
+        var looseCollision = IlReader
+            .Instructions(
+                method: Method(
+                    type: "LooseFootedSpritsail.LooseFootedSpritsailRig",
+                    name: "ConfigureCollision"
+                )
+            )
+            .ToArray();
+        Require(
+            value: looseConfigure.Any(m => m.Name == "RefreshSparCollision")
+                && looseCollision.Any(i =>
+                    i.Operand is string name && name == "LooseFootedSpritsail spar sweep "
+                ),
+            message: "Loose-footed sweep colliders must be constructed and posed before native Awake."
+        );
+        Require(
+            value: !IlReader
+                .CalledMethods(
+                    method: Method(
+                        type: "LooseFootedSpritsail.LooseFootedSpritsailRig",
+                        name: "RefreshSparCollision"
+                    )
+                )
+                .Any(m =>
+                    m.Name == "AddComponent"
+                    || (m is ConstructorInfo && m.DeclaringType.Name == "GameObject")
+                ),
+            message: "Loose-footed collision refresh must only reuse initialized collider children."
+        );
+        foreach (string type in new[] { "LooseFootedSpritsail", "BoomedSpritsail" })
+        {
+            var draw = IlReader
+                .CalledMethods(method: Method(type: type + "." + type + "Lines", name: "Draw"))
+                .ToArray();
+            Require(
+                value: draw.Any(m =>
+                    m is ConstructorInfo
+                    && m.DeclaringType.Name == "SpritsailMastSurface"
+                    && m.GetParameters().Length == 2
+                )
+                    && draw.Any(m =>
+                        m.Name == "Radius" && m.GetParameters().Any(p => p.Name == "sampleIndex")
+                    ),
+                message: "Each rig must allocate and address individual luff-tie surface samples."
+            );
+        }
         var runtime = IlReader
             .CalledMethods(
                 method: Method(

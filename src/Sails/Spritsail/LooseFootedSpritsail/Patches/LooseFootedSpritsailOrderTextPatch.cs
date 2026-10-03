@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes order text patch behavior to the spritsail family.
+    // Wraps loose-footed order text before later compatibility prefixes consume it.
     [HarmonyPatch(typeof(ShipyardUIOrderText), "AddLine")]
     internal static class LooseFootedSpritsailOrderTextPatch
     {

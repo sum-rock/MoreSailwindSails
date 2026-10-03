@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes parts refresh patch behavior to the spritsail family.
+    // Invalidates boomed support bindings after boat parts change.
 
     [HarmonyPatch(typeof(BoatCustomParts), "RefreshParts")]
     internal static class BoomedSpritsailPartsRefreshPatch

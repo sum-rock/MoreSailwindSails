@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes install error patch behavior to the spritsail family.
+    // Reports loose-footed support and guide-clearance errors in the shipyard.
 
     [HarmonyPatch(typeof(ShipyardSailInstaller), "GetInstallError")]
     internal static class LooseFootedSpritsailInstallErrorPatch

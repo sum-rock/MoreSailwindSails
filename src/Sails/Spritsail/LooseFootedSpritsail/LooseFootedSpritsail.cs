@@ -237,10 +237,5 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 Plugin.Log.LogError(data: $"Could not register {displayName}: {exception}");
             }
         }
-
-        internal static void AddToShipyard(Shipyard shipyard)
-        {
-            SpritsailCatalog.AddToShipyard(shipyard: shipyard);
-        }
     }
 }

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes mast compatible patch behavior to the spritsail family.
+    // Restricts boomed fitting to supported active physical masts.
 
     [HarmonyPatch(typeof(ShipyardUI), "SailMastCompatible")]
     internal static class BoomedSpritsailMastCompatiblePatch

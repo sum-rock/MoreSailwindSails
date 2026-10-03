@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes mast height patch behavior to the spritsail family.
+    // Reports scaled luff height from the boomed cut for mast fitting.
 
     [HarmonyPatch(typeof(Sail), "GetScaledHeight")]
     internal static class BoomedSpritsailMastHeightPatch

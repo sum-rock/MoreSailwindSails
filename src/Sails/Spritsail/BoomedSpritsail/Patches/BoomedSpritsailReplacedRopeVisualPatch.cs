@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes sheet visual patch behavior to the spritsail family.
+    // Suppresses replaced reef and topping-lift visuals while retaining the native boom sheet.
     [HarmonyPatch(typeof(RopeEffect), "LateUpdate")]
     internal static class BoomedSpritsailReplacedRopeVisualPatch
     {

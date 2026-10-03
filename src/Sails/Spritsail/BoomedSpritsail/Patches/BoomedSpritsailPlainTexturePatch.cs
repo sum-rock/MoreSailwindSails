@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes plain texture patch behavior to the spritsail family.
+    // Preserves plain-texture selection for boomed sails.
     [HarmonyPatch(typeof(SailTextureChanger), "UpdateMaterial")]
     internal static class BoomedSpritsailPlainTexturePatch
     {

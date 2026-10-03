@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes cloth refresh patch behavior to the spritsail family.
+    // Routes native Cloth refresh requests to the boomed rig lifecycle.
     [HarmonyPatch(typeof(ReefEffectAnimUniversal), "RefreshCloth")]
     internal static class BoomedSpritsailClothRefreshPatch
     {

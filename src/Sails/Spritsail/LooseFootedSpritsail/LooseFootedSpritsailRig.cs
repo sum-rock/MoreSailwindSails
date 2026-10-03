@@ -180,6 +180,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 width: width,
                 corners: data.Corners
             );
+            rig.RefreshSparCollision();
             foreach (
                 var visual in scaleRoot.GetComponentsInChildren<MeshRenderer>(includeInactive: true)
             )
@@ -292,6 +293,15 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 if (visual)
                     visual.enabled = false;
             }
+            // Native Awake initializes reporting on existing direct children only.
+            for (int i = 0; i <= 8; i++)
+            {
+                var sweep = new GameObject(
+                    name: "LooseFootedSpritsail spar sweep " + i
+                ).AddComponent<BoxCollider>();
+                sweep.transform.SetParent(parent: root, worldPositionStays: false);
+                sweep.isTrigger = true;
+            }
             return strips;
         }
 
@@ -320,12 +330,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             for (int i = 0; i <= 8; i++)
             {
                 string name = "LooseFootedSpritsail spar sweep " + i;
-                var child = checker.Find(n: name);
-                var box = child
-                    ? child.GetComponent<BoxCollider>()
-                    : new GameObject(name: name).AddComponent<BoxCollider>();
-                if (!child)
-                    box.transform.SetParent(parent: checker, worldPositionStays: false);
+                var box = checker.Find(n: name).GetComponent<BoxCollider>();
                 var pose = SpritsailDeployment.Evaluate(corners: corners, unroll: i / 8f);
                 var a = Unscale(point: pose.Heel, scale: scale);
                 var b = Unscale(point: pose.Tip, scale: scale);

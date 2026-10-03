@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes support removal patch behavior to the spritsail family.
+    // Blocks removal of mast sections supporting a loose-footed sail.
 
     [HarmonyPatch(typeof(BoatCustomParts), "CanUninstall")]
     internal static class LooseFootedSpritsailSupportRemovalPatch

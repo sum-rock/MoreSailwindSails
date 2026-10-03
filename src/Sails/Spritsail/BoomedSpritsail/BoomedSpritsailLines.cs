@@ -83,7 +83,10 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             if (surfaceMast != mast)
             {
                 surfaceMast = mast;
-                surface = new SpritsailMastSurface(mast: mast.GetComponent<Mast>());
+                surface = new SpritsailMastSurface(
+                    mast: mast.GetComponent<Mast>(),
+                    sampleCount: LuffTies.Length
+                );
             }
             for (int i = 0; i < LuffTies.Length; i++)
             {
@@ -108,6 +111,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 var center = origin + axis * Vector3.Dot(point - origin, axis);
                 var outward = Vector3.ProjectOnPlane(vector: aft, planeNormal: axis).normalized;
                 float radius = surface.Radius(
+                    sampleIndex: i,
                     center: center,
                     direction: outward,
                     fallback: BoomedSpritsailRigging.MastRadius(mast: mast.GetComponent<Mast>())

@@ -3,7 +3,7 @@ using HarmonyLib;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes order text patch behavior to the spritsail family.
+    // Wraps boomed order text before later compatibility prefixes consume it.
     [HarmonyPatch(typeof(ShipyardUIOrderText), "AddLine")]
     internal static class BoomedSpritsailOrderTextPatch
     {

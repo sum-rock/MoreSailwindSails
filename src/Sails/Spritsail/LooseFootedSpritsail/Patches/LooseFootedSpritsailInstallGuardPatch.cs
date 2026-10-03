@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes install guard patch behavior to the spritsail family.
+    // Rejects loose-footed installation when its mast support or guide clearance is invalid.
 
     [HarmonyPatch(typeof(ShipyardSailInstaller), "InstallSail")]
     internal static class LooseFootedSpritsailInstallGuardPatch

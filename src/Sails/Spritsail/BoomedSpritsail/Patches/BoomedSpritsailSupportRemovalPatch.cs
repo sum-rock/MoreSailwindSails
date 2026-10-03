@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes support removal patch behavior to the spritsail family.
+    // Blocks removal of mast sections supporting a boomed sail.
 
     [HarmonyPatch(typeof(BoatCustomParts), "CanUninstall")]
     internal static class BoomedSpritsailSupportRemovalPatch

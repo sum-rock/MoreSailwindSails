@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes sheet visual patch behavior to the spritsail family.
+    // Suppresses replaced native sheet visuals on loose-footed sails.
     [HarmonyPatch(typeof(RopeEffect), "LateUpdate")]
     internal static class LooseFootedSpritsailSheetVisualPatch
     {

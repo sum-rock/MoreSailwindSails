@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes order refresh patch behavior to the spritsail family.
+    // Invalidates loose-footed support bindings after shipyard order refresh.
 
     [HarmonyPatch(typeof(BoatCustomParts), "RefreshPartsWithOrder")]
     internal static class LooseFootedSpritsailOrderRefreshPatch

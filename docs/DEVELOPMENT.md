@@ -289,16 +289,15 @@ identify the incompatible channel and available diagnostic context.
 
 ## Spritsails category
 
-The [approved plan](SPRITSAILS_PLAN.md) defines the development scope.
-Spritsails now use mod-owned `SailCategory` value **6** and a **Spritsails**
-shipyard entry. The compiled game enum remains unchanged. Category code and its
-catalog live in `src/Sails/Spritsail/`; make-specific mechanics stay in the
-type/mark directory. Registration checks the native enum and foreign prefabs
-before claiming the value. Behavior patches require both category 6 and a
-registered family prefab ID, so failed registration does not apply spritsail
-rules to a conflicting mod. Future makes must validate, initialize and register
-through the family catalog; registration rollback removes the candidate from the
-catalog.
+This section records the current spritsail development scope. Spritsails now use
+mod-owned `SailCategory` value **6** and a **Spritsails** shipyard entry. The
+compiled game enum remains unchanged. Category code and its catalog live in
+`src/Sails/Spritsail/`; make-specific mechanics stay in the type/mark directory.
+Registration checks the native enum and foreign prefabs before claiming the
+value. Behavior patches require both category 6 and a registered family prefab
+ID, so failed registration does not apply spritsail rules to a conflicting mod.
+Future makes must validate, initialize and register through the family catalog;
+registration rollback removes the candidate from the catalog.
 
 ### Balance and physics defaults
 
@@ -1506,8 +1505,36 @@ confirmation remains pending; start on Brig, then Sanbuq.
 
 The category description now covers separate loose-footed sheets, the boomed
 single sheet, and upward reefing with cloth gathering at the mast. It removes
-the obsolete moving-snotter hoist description and states the user's reported
-port-tack performance disadvantage. Both rigs still set
-`StarboardAffected = true`; that implementation/documentation mismatch needs
-in-game tack validation before a separate behavior correction. This wording
-update does not change propulsion or tack classification.
+the obsolete moving-snotter hoist description. It states that **starboard tack
+performs worse than port tack**, matching both rigs' `StarboardAffected = true`
+setting. Propulsion and tack classification are unchanged.
+
+#### Spritsail architecture cleanup
+
+Loose-footed templates now construct and pose all nine spar-sweep colliders
+before native `ShipyardSailColChecker.Awake` initializes child reporting.
+Runtime refresh only updates existing colliders, matching the boomed lifecycle
+fix.
+
+Both types share family-level shipyard insertion patches calling
+`SpritsailCatalog` directly; unused type forwarding methods are removed. The
+native Awake postfix and document-opening fallback retain their timing and
+priority. Type-specific rig mechanics remain independently editable.
+
+Mast-surface queries now retain one cache slot per luff tie while sharing one
+read-only mesh snapshot per surface instance. Position and direction are keyed
+in mast-local space; direction magnitude includes transform scale. Changed
+queries miss the cache, and changing masts replaces the surface and its slots.
+The existing single-slot socket query and capsule/authored Sanbuq fallbacks are
+preserved. No frame-time improvement has been measured in game.
+
+Regression coverage includes construction-time loose-footed sweeps, no runtime
+collider creation, seven independent cached queries and invalidation by
+position, direction or scale, family-level insertion wiring, and agreement
+between the starboard rig setting and shipyard description. Release build (zero
+warnings/errors), both check suites, CSharpier, Prettier and diff checks passed.
+Runtime validation remains: Brig first, then Sanbuq; fit/resize both types near
+spar obstructions, check collars during reefing and mast changes, and reopen
+shipyard documents with mixed native/custom sails. No live Cloth topology, save
+IDs, balance settings or installed game files are changed. Version remains
+**0.3.0-dev**.

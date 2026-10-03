@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes support preview patch behavior to the spritsail family.
+    // Keeps occupied boomed mast supports active during removal previews.
 
     [HarmonyPatch(typeof(BoatPart), "SetOptionEnabled")]
     internal static class BoomedSpritsailSupportPreviewPatch

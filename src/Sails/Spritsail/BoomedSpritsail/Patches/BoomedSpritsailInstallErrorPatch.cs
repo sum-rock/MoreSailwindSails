@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes install error patch behavior to the spritsail family.
+    // Reports boomed support and guide-clearance errors in the shipyard.
 
     [HarmonyPatch(typeof(ShipyardSailInstaller), "GetInstallError")]
     internal static class BoomedSpritsailInstallErrorPatch

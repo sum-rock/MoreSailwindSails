@@ -17,7 +17,7 @@ namespace MoreSailwindSails.Sails.Spritsail.Patches
                 + "Loose-footed sails use port and starboard sheets;\n"
                 + "boomed sails use a single sheet at the boom's end.\n"
                 + "Reefing lifts the spars and gathers cloth at the mast.\n"
-                + "Port tack performs worse than starboard tack.";
+                + "Starboard tack performs worse than port tack.";
             return false;
         }
     }

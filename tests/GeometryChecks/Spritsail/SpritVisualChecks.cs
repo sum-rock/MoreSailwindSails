@@ -9,6 +9,42 @@ internal static class SpritVisualChecks
 {
     internal static void Run()
     {
+        var samples = new SpritsailSurfaceSample[7];
+        for (int i = 0; i < samples.Length; i++)
+        {
+            Require(
+                value: !samples[i]
+                    .TryGet(origin: new Vector3(0, i, 0), direction: Vector3.right, radius: out _),
+                message: "A new mast sample must not return an uninitialized radius."
+            );
+            samples[i]
+                .Store(origin: new Vector3(0, i, 0), direction: Vector3.right, radius: i + 0.5f);
+        }
+        for (int frame = 0; frame < 3; frame++)
+        for (int i = 0; i < samples.Length; i++)
+            Require(
+                value: samples[i]
+                    .TryGet(
+                        origin: new Vector3(0, i, 0),
+                        direction: Vector3.right,
+                        radius: out var radius
+                    )
+                    && radius == i + 0.5f,
+                message: "Sequential tie queries must retain all seven cached radii across frames."
+            );
+        Require(
+            value: !samples[3]
+                .TryGet(origin: new Vector3(0, 3.01f, 0), direction: Vector3.right, radius: out _)
+                && !samples[3]
+                    .TryGet(origin: new Vector3(0, 3, 0), direction: Vector3.forward, radius: out _)
+                && !samples[3]
+                    .TryGet(
+                        origin: new Vector3(0, 3, 0),
+                        direction: Vector3.right * 2,
+                        radius: out _
+                    ),
+            message: "Changed attachment position, direction or transformed scale must invalidate the sample."
+        );
         SpritsailSpritGeometry.Spar(
             vertices: out var vertices,
             uv: out var uv,

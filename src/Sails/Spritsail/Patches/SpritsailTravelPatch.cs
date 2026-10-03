@@ -2,7 +2,7 @@ using HarmonyLib;
 
 namespace MoreSailwindSails.Sails.Spritsail.Patches
 {
-    // Scopes travel patch behavior to the spritsail family.
+    // Enforces the family travel envelope after native paired-sheet sway.
     [HarmonyPatch(typeof(JibAngleMaster), "Update")]
     internal static class SpritsailTravelPatch
     {

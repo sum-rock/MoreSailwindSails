@@ -2,7 +2,7 @@ using HarmonyLib;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
 {
-    // Scopes collision patch behavior to the spritsail family.
+    // Aligns the shipyard collision sweep with the boomed mast pivot.
     [HarmonyPatch(typeof(ShipyardSailColChecker), "UpdateRotation")]
     internal static class BoomedSpritsailCollisionPatch
     {

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
 {
-    // Scopes wind frame patch behavior to the spritsail family.
+    // Substitutes posed loose-footed area during native wind-force calculation and restores unroll.
     [HarmonyPatch(typeof(Sail), "UpdateWindForceOnSail")]
     internal static class LooseFootedSpritsailWindFramePatch
     {
