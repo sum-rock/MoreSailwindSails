@@ -21,6 +21,25 @@ internal static class CategoryChecks
                 message: "Mass must match the installed gaff/junk calculation."
             );
         }
+        foreach (int prefabIndex in new[] { 400, 401, 404, 405, 406, 407, 408 })
+        foreach (float size in new[] { 0f, 0.1f, 1f, 25f, 100f })
+        {
+            bool boomed = prefabIndex == 406 || prefabIndex == 407;
+            Require(
+                value: Math.Abs(
+                    SpritsailRules.Price(area: size, prefabIndex: prefabIndex)
+                        - size * 9f * 1.29f * (boomed ? 1.1f : 1f)
+                ) < 0.001f,
+                message: "Only both boomed marks receive the size-scaled 10% price premium."
+            );
+            Require(
+                value: Math.Abs(
+                    SpritsailRules.Mass(realPower: size, prefabIndex: prefabIndex)
+                        - size * 40f * (boomed ? 1.2f : 1f)
+                ) < 0.001f,
+                message: "Only both boomed marks receive the size-scaled 20% boat mass premium."
+            );
+        }
         foreach (
             float value in new[] { -1f, float.NaN, float.NegativeInfinity, float.PositiveInfinity }
         )

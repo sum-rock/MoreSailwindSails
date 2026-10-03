@@ -15,9 +15,15 @@ namespace MoreSailwindSails.Sails.Spritsail
                 ? DefaultForceMultiplier
                 : value;
 
-        internal static float Price(float area) => area * 9f * PriceMultiplier;
+        internal static float Price(float area, int prefabIndex = -1) =>
+            area * 9f * PriceMultiplier * (IsBoomed(prefabIndex: prefabIndex) ? 1.1f : 1f);
 
-        internal static float Mass(float realPower) => realPower * MassPerPower;
+        internal static float Mass(float realPower, int prefabIndex = -1) =>
+            realPower * MassPerPower * (IsBoomed(prefabIndex: prefabIndex) ? 1.2f : 1f);
+
+        private static bool IsBoomed(int prefabIndex) =>
+            prefabIndex == BoomedSpritsail.MkA.BoomedSpritsailMkA.PrefabIndex
+            || prefabIndex == BoomedSpritsail.MkB.BoomedSpritsailMkB.PrefabIndex;
 
         internal static int OverlapCategory(int category) => category == CategoryId ? 3 : category;
 

@@ -11,7 +11,10 @@ namespace MoreSailwindSails.Sails.Spritsail.Patches
         {
             if (!SpritsailCategory.IsSpritsail(sail: __instance))
                 return true;
-            __result = SpritsailRules.Price(area: __instance.GetSailArea());
+            __result = SpritsailRules.Price(
+                area: __instance.GetSailArea(),
+                prefabIndex: __instance.prefabIndex
+            );
             return false;
         }
     }

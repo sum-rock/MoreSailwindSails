@@ -2,7 +2,7 @@ using HarmonyLib;
 
 namespace MoreSailwindSails.Sails.Spritsail.Patches
 {
-    // Gives spritsails the gaff/junk boat-mass contribution independently of propulsion tuning.
+    // Applies spritsail boat mass and the boom premium independently of propulsion tuning.
     [HarmonyPatch(typeof(BoatMass), "GetSailMass")]
     internal static class SpritsailMassPatch
     {
@@ -11,7 +11,10 @@ namespace MoreSailwindSails.Sails.Spritsail.Patches
         {
             if (!SpritsailCategory.IsSpritsail(sail: sail))
                 return true;
-            __result = SpritsailRules.Mass(realPower: sail.GetRealSailPower());
+            __result = SpritsailRules.Mass(
+                realPower: sail.GetRealSailPower(),
+                prefabIndex: sail.prefabIndex
+            );
             return false;
         }
     }

@@ -13,7 +13,11 @@ namespace MoreSailwindSails.Sails.Spritsail.Patches
             if (category != SpritsailCategory.Value || !SpritsailCatalog.HasMembers)
                 return true;
             ___descText.text =
-                "Spritsails are supported by a diagonal spar.\nLoose-footed sails use separate port and starboard\nclew sheets. The hoist control raises the sail and\nadjusts the spar's snotter along the mast.";
+                "Spritsails are supported by a diagonal spar.\n"
+                + "Loose-footed sails use port and starboard sheets;\n"
+                + "boomed sails use a single sheet at the boom's end.\n"
+                + "Reefing lifts the spars and gathers cloth at the mast.\n"
+                + "Port tack performs worse than starboard tack.";
             return false;
         }
     }

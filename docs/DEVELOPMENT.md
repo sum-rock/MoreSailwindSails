@@ -304,9 +304,9 @@ catalog.
 
 | Setting           | Development value                                                                                                            |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| Price             | `GetSailArea() × 9 × 1.29`, between equal-area gaff (1.25) and junk (1.33).                                                  |
+| Price             | `GetSailArea() × 9 × 1.29`, between equal-area gaff (1.25) and junk (1.33); boomed marks multiply this by **1.10**.          |
 | Propulsion        | `0.75`, the native junk reduction, applied once inside `Sail.ApplyForce`.                                                    |
-| Boat mass         | `GetRealSailPower() × 40`, matching gaff/junk.                                                                               |
+| Boat mass         | `GetRealSailPower() × 40`, matching gaff/junk; boomed marks multiply this by **1.20**.                                       |
 | Mast height       | Native gaff-style extended-height policy (false); Mk.A retains its geometry-derived fitting dimensions.                      |
 | Overlap           | Spritsails map to gaff only while evaluating the native square/gaff vertical-overlap exception, in both installation orders. |
 | Shadow colliders  | Ordinary triggers; no staysail collider exception.                                                                           |
@@ -1488,3 +1488,26 @@ Regression checks cover the template override, installed length-to-unroll
 mapping and retained native weight/wind resistance. Release and both suites
 pass; live input direction, relative speed and partial-reef reversals still need
 confirmation on Brig, then Sanbuq. Version remains **0.3.0-dev**.
+
+#### Boomed price and boat weight
+
+Both boomed marks (406/407) cost **10% more** and contribute **20% more boat
+mass** than their previous family baseline. The premiums scale with native sail
+area and real sail power, respectively. Loose-footed marks keep their existing
+values. This changes carried boat weight only; sail Rigidbody mass, boom
+movement, propulsion tuning and winch resistance are unchanged.
+
+Validation covers both marks across multiple sizes, zero size and IDs outside
+the boomed pair. Release build (zero warnings/errors), both check suites,
+CSharpier, Prettier and diff checks passed. In-game price and boat loading
+confirmation remains pending; start on Brig, then Sanbuq.
+
+#### Shipyard spritsail description
+
+The category description now covers separate loose-footed sheets, the boomed
+single sheet, and upward reefing with cloth gathering at the mast. It removes
+the obsolete moving-snotter hoist description and states the user's reported
+port-tack performance disadvantage. Both rigs still set
+`StarboardAffected = true`; that implementation/documentation mismatch needs
+in-game tack validation before a separate behavior correction. This wording
+update does not change propulsion or tack classification.
