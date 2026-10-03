@@ -21,6 +21,10 @@
       <HintPath>$(SailwindDir)/Sailwind_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(SailwindDir)/Sailwind_Data/Managed/UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
     <Reference Include="0Harmony">
       <HintPath>$(SailwindDir)/BepInEx/core/0Harmony.dll</HintPath>
       <Private>false</Private>

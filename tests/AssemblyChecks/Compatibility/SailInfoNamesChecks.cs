@@ -106,16 +106,22 @@ internal static class SailInfoNamesChecks
                 );
 
         var calls = CalledMethods(method: prefix).OfType<MethodInfo>().ToArray();
-        foreach (string family in new[] { "FishermansFlyingSail", "FishermansStaysail" })
+        foreach (
+            string rig in new[]
+            {
+                "FishermansFlyingSail.FishermansFlyingSailRig",
+                "FishermansStaysail.FishermansStaysailRig",
+                "Spritsail.LooseFootedSpritsail.LooseFootedSpritsailRig",
+            }
+        )
             if (
                 !calls.Any(method =>
                     method.Name == "GetComponent"
                     && method.IsGenericMethod
-                    && method.GetGenericArguments()[0].FullName
-                        == $"MoreSailwindSails.Sails.{family}.{family}Rig"
+                    && method.GetGenericArguments()[0].FullName == $"MoreSailwindSails.Sails.{rig}"
                 )
             )
-                throw new Exception("SailInfo naming must recognize the custom family: " + family);
+                throw new Exception("SailInfo naming must recognize the custom rig: " + rig);
         var instructions = Instructions(method: prefix).ToArray();
         if (
             instructions.Count(predicate: instruction =>
@@ -144,9 +150,14 @@ internal static class SailInfoNamesChecks
                 second: new[] { "Fisherman's Flying Sail", "Fisherman's Staysail" }
             )
         )
-            throw new Exception(
-                "SailInfo labels must contain only family names without mark or size."
-            );
+            throw new Exception("Fisherman SailInfo labels must retain their family names.");
+
+        if (
+            !calls.Any(method =>
+                method.DeclaringType.Name == "LooseFootedSpritsail" && method.Name == "DisplayName"
+            )
+        )
+            throw new Exception("Spritsail HUD names must resolve the mark by prefab identity.");
 
         var startup = assembly
             .GetType(name: "MoreSailwindSails.Plugin", throwOnError: true)

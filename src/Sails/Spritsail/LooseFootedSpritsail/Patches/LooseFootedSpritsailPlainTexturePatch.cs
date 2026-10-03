@@ -1,0 +1,20 @@
+using HarmonyLib;
+using ShipyardExpansion.Scripts;
+using UnityEngine;
+
+namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
+{
+    // Preserves plain-texture selection for loose-footed sails.
+    [HarmonyPatch(typeof(SailTextureChanger), "UpdateMaterial")]
+    internal static class LooseFootedSpritsailPlainTexturePatch
+    {
+        [HarmonyPrefix]
+        private static void Prefix(SailTextureChanger __instance)
+        {
+            if (__instance.GetComponent<LooseFootedSpritsailRig>())
+                // Covers saved patterns, SetTexture and NextTexture using the
+                // original material update and the existing plain texture.
+                __instance.textureIndex = LooseFootedSpritsailAppearance.PlainTextureIndex;
+        }
+    }
+}

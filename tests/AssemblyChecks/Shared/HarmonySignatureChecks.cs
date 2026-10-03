@@ -31,7 +31,10 @@ internal static class HarmonySignatureChecks
                         info.methodType == MethodType.Constructor
                             ? (MethodBase)
                                 info.declaringType.GetConstructor(all, null, Type.EmptyTypes, null)
-                            : info.declaringType.GetMethod(info.methodName, all),
+                            : info.declaringType.GetMethod(
+                                info.methodName,
+                                all | BindingFlags.DeclaredOnly
+                            ) ?? info.declaringType.GetMethod(info.methodName, all),
                     };
             foreach (var target in targets)
             {
@@ -99,8 +102,8 @@ internal static class HarmonySignatureChecks
                 count++;
             }
         }
-        if (count != 62)
-            throw new Exception($"Expected all 62 patch targets, found {count}.");
+        if (count != 113)
+            throw new Exception($"Expected all 113 patch targets, found {count}.");
 
         Console.WriteLine($"PASS: {count} Harmony targets and injected argument types.");
     }

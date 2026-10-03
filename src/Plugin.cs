@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails
 {
-    [BepInPlugin(PluginGuid, PluginName, PluginVersion)]
+    [BepInPlugin(PluginGuid, PluginName, PluginRuntimeVersion)]
     [BepInDependency("com.nandbrew.shipyardexpansion")]
     [BepInDependency("pr0skynesis.sailinfo", BepInDependency.DependencyFlags.SoftDependency)]
     public sealed class Plugin : BaseUnityPlugin
@@ -14,6 +14,9 @@ namespace MoreSailwindSails
         public const string PluginGuid = "com.august.moresailwindsails";
         public const string PluginName = "MoreSailwindSails";
         public const string PluginVersion = "0.3.0-dev";
+
+        // BepInEx 5 accepts numeric System.Version metadata, not prerelease labels.
+        public const string PluginRuntimeVersion = "0.3.0";
 
         internal static ManualLogSource Log { get; private set; }
         private ConfigEntry<KeyboardShortcut> captureWinchPosition;
@@ -24,6 +27,7 @@ namespace MoreSailwindSails
         private void Awake()
         {
             Log = Logger;
+            Sails.Spritsail.SpritsailCategory.Configure(config: Config);
             captureWinchPosition = Config.Bind(
                 "Diagnostics",
                 "CaptureWinchPosition",
