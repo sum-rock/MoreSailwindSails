@@ -41,6 +41,7 @@ internal static class Program
             Path.Combine(AppContext.BaseDirectory, "MoreSailwindSails.dll")
         );
 
+        PluginMetadataChecks.Run(assembly: assembly);
         HarmonySignatureChecks.Run(assembly);
         Compatibility.TextureCatalogChecks.Run(assembly);
         Compatibility.SailInfoNamesChecks.Run(assembly: assembly, gameDir: gameDir);
