@@ -7,6 +7,50 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailDefinition.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailDefinition.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailGeometry.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailGeometry.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailMeshData.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailMeshData.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailBillow.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailBillow.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailDeployment.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailDeployment.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailGathering.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailGathering.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailFrameGeometry.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailFrameGeometry.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailOrderText.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailOrderText.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/BoomedSpritsailMastInstallationGeometry.cs"
+      Link="Spritsail/BoomedSpritsail/BoomedSpritsailMastInstallationGeometry.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/MkA/BoomedSpritsailMkA.cs"
+      Link="Spritsail/BoomedSpritsail/MkA/BoomedSpritsailMkA.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/BoomedSpritsail/MkB/BoomedSpritsailMkB.cs"
+      Link="Spritsail/BoomedSpritsail/MkB/BoomedSpritsailMkB.cs"
+    />
+    <Compile
       Include="../../src/Sails/Spritsail/LooseFootedSpritsail/LooseFootedSpritsailDefinition.cs"
       Link="Spritsail/LooseFootedSpritsail/LooseFootedSpritsailDefinition.cs"
     />

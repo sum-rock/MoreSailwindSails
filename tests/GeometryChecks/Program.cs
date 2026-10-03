@@ -8,6 +8,7 @@ internal static class Program
     private static void Main()
     {
         Spritsail.CategoryChecks.Run();
+        Spritsail.BoomedSpritsail.GeometryChecks.Run();
         Spritsail.TravelChecks.Run();
         Spritsail.SpritVisualChecks.Run();
         Spritsail.DeploymentChecks.Run();

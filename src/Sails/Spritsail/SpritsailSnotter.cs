@@ -43,7 +43,10 @@ namespace MoreSailwindSails.Sails.Spritsail
             fitting.Timber.sharedMaterials = new[] { metal, metal };
             var connections = parent.GetComponent<SailConnections>();
             fitting.ReefSource = connections.reefController.GetComponent<RopeEffect>();
-            var source = connections.angleControllerLeft.GetComponent<RopeEffect>();
+            var sheet = connections.angleControllerLeft
+                ? connections.angleControllerLeft
+                : connections.angleControllerMid;
+            var source = sheet.GetComponent<RopeEffect>();
             fitting.Purchase = CreateLine(
                 parent: root.transform,
                 source: source,

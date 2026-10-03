@@ -106,17 +106,18 @@ The solution includes the plugin and both check projects. Feature namespaces
 follow their directories under `MoreSailwindSails`; Harmony patches live in each
 feature's `Patches/` directory and `.Patches` namespace.
 
-| Location                                    | Responsibility                                                                                                      |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `src/Plugin.cs`                             | Identity, dependencies, Harmony discovery and optional SailInfo integrations                                        |
-| `src/Sails/FishermansFlyingSail/`           | Mast-mounted sail registration, rig, geometry, tension, billow and aerodynamics                                     |
-| `src/Sails/FishermansStaysail/`             | Family prefab builder, rig, fixed head, edge fitting and reefing; `MkA/`, `MkB/`, `MkC/` supply cuts and identities |
-| `src/Sails/Spritsail/`                      | Category identity, family catalog, balance rules, shipyard browsing and optional All Sails integration              |
-| `src/Sails/Spritsail/LooseFootedSpritsail/` | Shared loose-footed rig, geometry and patches; `MkA/` and `MkB/` supply shape and identity                          |
-| `src/Stays/FishermansStay/`                 | Independent mounts, registration, previews, controls and save compatibility                                         |
-| `src/BoatRigs/`                             | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks                              |
-| `src/Controls/`                             | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning              |
-| `src/Utils/`                                | Optional, read-only in-game diagnostic tools and their geometry helpers                                             |
+| Location                                    | Responsibility                                                                                                                    |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `src/Plugin.cs`                             | Identity, dependencies, Harmony discovery and optional SailInfo integrations                                                      |
+| `src/Sails/FishermansFlyingSail/`           | Mast-mounted sail registration, rig, geometry, tension, billow and aerodynamics                                                   |
+| `src/Sails/FishermansStaysail/`             | Family prefab builder, rig, fixed head, edge fitting and reefing; `MkA/`, `MkB/`, `MkC/` supply cuts and identities               |
+| `src/Sails/Spritsail/`                      | Category identity, family catalog, balance rules, shipyard browsing and optional All Sails integration                            |
+| `src/Sails/Spritsail/LooseFootedSpritsail/` | Shared loose-footed rig, geometry and patches; `MkA/` and `MkB/` supply shape and identity                                        |
+| `src/Sails/Spritsail/BoomedSpritsail/`      | Independent boom-supported rig, native single-sheet controls and lifting-boom deployment; `MkA/` and `MkB/` supply companion cuts |
+| `src/Stays/FishermansStay/`                 | Independent mounts, registration, previews, controls and save compatibility                                                       |
+| `src/BoatRigs/`                             | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks                                            |
+| `src/Controls/`                             | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning                            |
+| `src/Utils/`                                | Optional, read-only in-game diagnostic tools and their geometry helpers                                                           |
 
 Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
 with one type per file. They retain the `MoreSailwindSails.BoatRigs` namespace.
@@ -134,8 +135,10 @@ use the family or mark prefix; preserve donor hierarchy names.
 Spritsails keep shared type mechanics under `src/Sails/Spritsail/<Type>/`.
 `LooseFootedSpritsail/` owns its rig, patches, prefab builder and geometry;
 `MkA/` and `MkB/` contain only cut and identity definitions. Sprit/socket
-geometry and rigid-sprit deployment remain shared at the Spritsails family
-level. Broader cross-family helper extraction remains deferred.
+geometry and loose-footed rigid-sprit deployment remain shared at the Spritsails
+family level. `BoomedSpritsail/` owns coordinated boom/sprit deployment with a
+fixed tack and rigid foot; it reuses family spar, fitting, collar, obstruction
+and furled visuals. Broader cross-family helper extraction remains deferred.
 
 Both check suites mirror feature directories and namespaces under
 `MoreSailwindSails.Tests.<Suite>.<Feature>`. Staysail behavior is parameterized
@@ -1367,3 +1370,121 @@ saves are changed by the build. Version remains **0.3.0-dev** (runtime
 
 The earlier report of zero port-tack efficiency could not be reproduced by the
 user; no speculative force or HUD fix was applied.
+
+### Boomed spritsail companions
+
+**Boomed Spritsail Mk.A/Mk.B**, prefabs **406/407**, accompany the existing
+loose-footed marks on the **0.3.0-dev** baseline (runtime **0.3.0**). Their
+fully deployed corner coordinates and default dimensions match their respective
+companions, including Mk.B's 30% horizontal stretch. The boomed type owns its
+mesh, skin, deployment, fitting and patches independently; mark directories
+supply identity and cut only. Availability remains limited to **Brig and
+Sanbuq** through **Spritsails**. IDs 400–405 and stay IDs 128–255 are unchanged.
+
+Installed gaff **15**, `15 SAIL A gaff full` (`full gaff`), supplies the
+inactive construction template, ordinary `RopeControllerSailAngle`, reef
+controller, Animator, readable Cloth mesh and shadow/audio hierarchy. A
+read-only installed-asset audit confirmed its single `angleControllerMid`,
+`limitBoth` setting and native two-segment sheet route. The brig jib **110**
+supplies the companion sizing baseline, upwind efficiency and sail amplifier;
+the gaff's serialized Cloth wind response is retained. Procedural cloth, shadow
+and spar meshes are template-owned. The boom shares the owned spar mesh and
+read-only gaff timber material; no native assets are modified or redistributed.
+
+Exactly **two native controls** operate each sail: one boom sheet and one
+coordinated deployment control. The sheet routes through the mast's native
+`midRopeAtt` (or its native winch fallback) to a fresh endpoint leaf beneath the
+clew bone, at the boom tip. Native `Mast.UpdateControllerAttachments` binds
+`midAngleWinch` and `reefWinch` by native mast order without a category check.
+Boomed sails therefore remain in the native binding list and use native capacity
+and placement; they do not reserve paired sheets or create custom winches.
+Existing loose-footed and Fisherman control filters continue restoring full
+lists. Native single-sheet trim constrains both tacks; a boomed-only postfix
+bounds the final ordinary controller limits to ±89° and tighter collision stops.
+
+The rigid boom pivots at the **fixed tack**. The complete foot is straight and
+pinned to it, with panel camber and solver travel fading to zero at the foot;
+there is no loose-footed sheet flex. Reefing raises the boom and sprit toward
+upright while the cloth gathers against the mast. The sprit retains its fixed
+quarter-luff socket and side lashing; the throat and entire luff remain fixed.
+Both spars retain their lengths, with separate fixed-pivot arcs driven by the
+same native deployment value. Head and leech chords may slacken but do not
+stretch. Interior folds vanish at the attachments. Existing family obstruction
+shaping acts on the panel, and propulsion uses the posed projected area,
+reaching zero when struck. The native mast-side bundle represents the struck
+cloth, spanning from the fixed tack to the raised sprit tip.
+
+The deployment purchase remains at 90% of the sprit, through an authored active
+upper mast guide; the boom lift is coordinated without another player control.
+Original gaff topping-lift and reef visuals are suppressed on the clone, while
+the native sheet remains visible even when struck. Mast ties, iron fitting and
+upper purchase use the existing family visuals. Supporting active mast ancestry
+is protected through shipyard previews and removal. Native save fields retain
+prefab IDs, scale, color, sheet setting and deployment; no new save schema or
+configuration is introduced.
+
+Fitting includes separate **nine-pose sprit and boom sweeps**, plus panel strips
+that include camber and Cloth travel. Culling bounds include gathered poses and
+the raised spars. These sampled sweeps are a clearance approximation, not proof
+of continuous collision coverage. Fresh Cloth is constructed only on the
+inactive template; live tacks and reefing move existing bones. Existing render
+state transitions handle deployed Cloth, procedural reefing and the struck
+bundle.
+
+Automated validation covers companion cuts, straight pinned feet, rest skin
+reconstruction, fixed pivots, rigid lengths, head/leech budgets, both tacks,
+scaling, reversible reefing, monotonic exposed area and finite fallbacks.
+Assembly checks cover new IDs and rollback wiring, installed gaff binding,
+separate boom/sprit sweeps, unchanged live topology, force-state restoration,
+NANDFixes order guards and mark-specific SailInfo names. Release and both suites
+pass; these checks do **not** execute Unity construction, Cloth or rendering.
+
+In-game validation is pending: begin on **Brig**, then **Sanbuq**. Fit and
+resize both marks, compare the companion cuts, tighten/ease the single sheet,
+tack at wide angles and test asymmetric collision stops. Reverse partial reefing
+and fully strike/redeploy; inspect the lifting boom, mast gathering, sprit
+pocket, cloth/boom attachment, native sheet route and folded bundle for clipping
+or jumps. Check recoloring, mixed native/custom sail installations, occupied
+native controls, support-removal previews and save/reload of sheet and reef
+settings. No installed DLL or save is replaced by the build.
+
+#### Boomed collision initialization correction
+
+The user reported both boomed marks remained at **checking collision...** and
+could not be installed. The inspected Unity log records
+`ShipyardSailColChecker.Awake` throwing `NullReferenceException` at IL offset
+`0x00f5` during sail cloning; the installed DLL matched the preceding build.
+BepInEx did not include this native exception. Installed IL confirms that Awake
+walks every direct child, adds its sub-checker and kinematic body, then
+unconditionally marks that child's collider as a trigger.
+
+The boomed builder removed the gaff's collider components but left their empty
+GameObjects behind. It now removes entire donor collision objects on the
+inactive clone. All 24 panel strips and both nine-pose spar sweeps are created
+and posed before activation, allowing native Awake to initialize every child.
+Runtime scaling/placement only updates those existing shapes. Previously the
+sweep objects were added after Awake and missed native collision reporting.
+
+Regression checks inspect the installed Awake contract, whole-object donor
+removal, inactive sweep construction and the absence of runtime shape creation.
+Release and both check suites pass; Unity startup, completed collision checks
+and successful installation still need an in-game retest of both marks on Brig,
+then Sanbuq. This corrects the initialization failure without bypassing
+collision checks or forcing installation readiness. Version remains
+**0.3.0-dev**.
+
+#### Boomed deployment winch direction
+
+The user reported that deploying required cranking against force. Gaff 15's
+serialized reef controller has `reverseReefing = true`, which maps hauling in to
+deployment. Boomed templates now explicitly set it to **false** before
+activation: paying out/letting fly increases deployment, while hauling in raises
+the boom and sprit to reef against load. The native controller retains its
+**25** weight resistance and **1.2** wind-load multiplier. Native winch input
+limits slow loaded hauling; quick release remains the faster deployment action.
+No additional speed multiplier or shared winch mutation is introduced.
+
+Regression checks cover the template override, installed length-to-unroll
+mapping and retained native weight/wind resistance. Release and both suites
+pass; live input direction, relative speed and partial-reef reversals still need
+confirmation on Brig, then Sanbuq. Version remains **0.3.0-dev**.

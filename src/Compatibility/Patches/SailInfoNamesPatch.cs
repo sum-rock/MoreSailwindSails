@@ -3,6 +3,7 @@ using System.Reflection;
 using HarmonyLib;
 using MoreSailwindSails.Sails.FishermansFlyingSail;
 using MoreSailwindSails.Sails.FishermansStaysail;
+using MoreSailwindSails.Sails.Spritsail.BoomedSpritsail;
 using MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail;
 
 namespace MoreSailwindSails.Compatibility.Patches
@@ -64,6 +65,8 @@ namespace MoreSailwindSails.Compatibility.Patches
                 __result = LooseFootedSpritsail.DisplayName(
                     prefabIndex: ___sailComponent.prefabIndex
                 );
+            else if (___sailComponent.GetComponent<BoomedSpritsailRig>())
+                __result = BoomedSpritsail.DisplayName(prefabIndex: ___sailComponent.prefabIndex);
             else
                 return true;
             return false;
