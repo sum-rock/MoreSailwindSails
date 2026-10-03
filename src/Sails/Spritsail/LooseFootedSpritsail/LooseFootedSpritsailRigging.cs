@@ -47,8 +47,8 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 return false;
             var boat = fore.GetComponentInParent<BoatRefs>();
             var profile = boat ? BoatRigCatalog.Find(boatName: boat.name) : null;
-            // Deliberately limit the prototype to its first two validation boats.
-            if (profile != Brig.Definition && profile != Sanbuq.Definition)
+            // Every registered boat profile can supply authored mast ancestry and guides.
+            if (profile == null)
                 return false;
             if (
                 !profile.MastParents.ContainsKey(key: fore.orderIndex)
@@ -140,7 +140,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             var pair = sail.GetComponent<LooseFootedSpritsailRigging>()?.Support;
             if (pair == null || pair.Mast != mast || !pair.Active)
                 if (!TryResolve(fore: mast, pair: out pair))
-                    return "(PROTOTYPE REQUIRES A BRIG OR SANBUQ MAST WITH ACTIVE GUIDES AND CONTROL TEMPLATES)";
+                    return "(REQUIRES A SUPPORTED MAST WITH ACTIVE GUIDES AND CONTROL TEMPLATES)";
             var head = mast.transform.TransformPoint(
                 position: new Vector3(0, 0, sail.GetCurrentInstallHeight() - mast.mastHeight)
             );

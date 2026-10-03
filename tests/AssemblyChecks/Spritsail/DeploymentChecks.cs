@@ -20,6 +20,30 @@ internal static class DeploymentChecks
             assembly
                 .GetType(name: family + type, throwOnError: true)
                 .GetMethod(name: name, bindingAttr: all);
+        foreach (string type in new[] { "LooseFootedSpritsail", "BoomedSpritsail" })
+        {
+            var resolve = Method(type: type + "." + type + "Rigging", name: "TryResolve");
+            var calls = IlReader.CalledMethods(method: resolve).ToArray();
+            Require(
+                value: calls.Any(m => m.DeclaringType.Name == "BoatRigCatalog" && m.Name == "Find")
+                    && IlReader
+                        .Instructions(method: resolve)
+                        .Any(i =>
+                            i.Operand is FieldInfo field
+                            && field.Name == "MastParents"
+                            && field.DeclaringType.Name == "BoatRigDefinition"
+                        )
+                    && calls.Any(m => m.Name == "Sections")
+                    && !IlReader
+                        .Instructions(method: resolve)
+                        .Any(i =>
+                            i.Operand is FieldInfo field
+                            && field.Name == "Definition"
+                            && field.DeclaringType.Namespace == "MoreSailwindSails.BoatRigs"
+                        ),
+                message: "Both spritsail types must use the supported catalog and authored ancestry without a per-boat allowlist."
+            );
+        }
         var looseConfigure = IlReader
             .CalledMethods(
                 method: Method(

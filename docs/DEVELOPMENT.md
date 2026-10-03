@@ -298,9 +298,13 @@ require both category 6 and a registered prefab ID. Type-specific patches
 recognize their rig component. Mark definitions supply cut and identity;
 loose-footed and boomed mechanics remain independently editable.
 
-All four marks currently fit physical masts on **Brig and Sanbuq only**. They
-need connected active mast sections and an upper guide, not an aft mast or a
-Fisherman's Stay. Other boats remain gated pending runtime validation.
+All four marks can fit eligible physical masts on **Brig, Junk, Jong, Sanbuq,
+Cog, Shroud and Baghala (large dhow)** through the existing boat profiles.
+Shroud requires its expansion. Fitting still requires authored, connected active
+mast sections, a capsule collider and an upper guide; square-only and stay-only
+mounts are excluded. Loose-footed sails also require usable control templates.
+No aft mast or Fisherman's Stay is needed. Leopard and unknown profiles remain
+unsupported. Availability does not establish in-game validation of each rig.
 
 ### Balance and physics defaults
 
@@ -650,8 +654,8 @@ rollback or teardown; shared donor assets and live Cloth are untouched.
 The native winch placement redesign is **accepted as valid and complete**. It
 supports the seven boats in [Boat profiles and stays](#boat-profiles-and-stays)
 and applies to Flying Sails, all three staysail cuts and native sails on
-Fisherman's Stays. Loose-footed spritsails also use these controls, within their
-Brig/Sanbuq gate; boomed spritsails use ordinary native controls instead. The
+Fisherman's Stays. Loose-footed spritsails also use these controls across the
+supported profiles; boomed spritsails use ordinary native controls instead. The
 follow-up architecture cleanup is implemented.
 [Runtime validation](#runtime-validation) separates accepted Brig/Jong evidence
 from later changes and remaining in-game uncertainty.
@@ -1069,7 +1073,9 @@ regressions and later changes rather than unfinished original placement work.
 ### Runtime checklist
 
 Start on **Brig**, then the affected boats, especially **Sanbuq** for cloth,
-tack and mast-surface work. Spritsails remain restricted to those two boats.
+tack and mast-surface work. Spritsail fitting is enabled across all seven
+profiles; Junk, Jong, Cog, Shroud and Baghala need runtime coverage of their
+eligible mast variants, guide clearance, controls, collision and save/reload.
 
 1. Fit and resize all affected cuts at several heights, with mixed native/custom
    sails. Check collision completion, spar obstructions, asymmetric trim stops,
