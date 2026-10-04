@@ -1,5 +1,5 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -18,17 +18,32 @@ internal static class TextureCatalogChecks
         var target = patch.GetCustomAttribute<HarmonyPatch>().info;
         var prefix = patch.GetMethod("Prefix", all);
         if (target.methodName != "Setup" || !prefix.IsDefined(typeof(HarmonyPrefix)))
-            throw new Exception("Seed the catalog before SE assigns prefab texture indices.");
-        var setupCalls = CalledMethods(target.declaringType.GetMethod("Setup")).ToArray();
-        foreach (string method in new[] { "Contains", "Add", "IndexOf" })
-            if (!setupCalls.Any(m => m.Name == method && m.DeclaringType.Name == "List`1"))
-                throw new Exception(
-                    "Installed SE texture discovery changed; review catalog compatibility."
-                );
-        var options = (IDictionary)target.declaringType.GetField("allowedTexMap").GetValue(null);
-        foreach (var pair in new[] { (12, 1), (6, 2), (17, 3) })
-            if (!((int[])options[pair.Item1]).SequenceEqual(new[] { 0, pair.Item2 }))
-                throw new Exception("Installed SE fixed texture option indices changed.");
+            throw new Exception(
+                "Register the plain texture before SE initializes prefab selections."
+            );
+        var changer = target.declaringType;
+        var textureMap = changer.GetField("textures");
+        if (
+            textureMap?.FieldType.GetGenericTypeDefinition() != typeof(Dictionary<,>)
+            || textureMap.FieldType.GetGenericArguments()[0] != typeof(string)
+            || textureMap.FieldType.GetGenericArguments()[1].FullName != "UnityEngine.Texture"
+            || changer.GetField("textureIndex")?.FieldType != typeof(string)
+            || changer.GetField("allowedTextures")?.FieldType != typeof(List<string>)
+            || changer.GetMethod("SetTexture", new[] { typeof(string) }) == null
+        )
+            throw new Exception("Installed SE name-based texture API changed.");
+        var setup = Instructions(changer.GetMethod("Setup")).ToArray();
+        var update = Instructions(changer.GetMethod("UpdateMaterial")).ToArray();
+        if (
+            !setup.Any(i => Equals(i.Operand, textureMap))
+            || !update.Any(i => Equals(i.Operand, textureMap))
+            || !CalledMethods(changer.GetMethod("UpdateMaterial"))
+                .Any(m => m.Name == "TryGetValue" && m.DeclaringType == textureMap.FieldType)
+        )
+            throw new Exception("SE discovery and material updates must use the named catalog.");
+        var names = (string[])changer.GetField("names").GetValue(null);
+        if (names[0] != "ParticleCloudWhite")
+            throw new Exception("Installed SE's default plain texture name changed.");
 
         var compatibility = assembly.GetType(
             "MoreSailwindSails.Compatibility.ShipyardExpansionTextureCatalog"
@@ -45,12 +60,12 @@ internal static class TextureCatalogChecks
             );
         if (
             calls.Any(m =>
-                m.Name.StartsWith("set_")
+                m.Name.StartsWith("set_") && m.Name != "set_Item"
                 || m.Name is "get_material" or "SetTexture" or "Clear" or "Insert"
             )
         )
             throw new Exception(
-                "Catalog seeding must not rewrite materials or renumber assigned entries."
+                "Catalog registration must not rewrite materials or remove named entries."
             );
         foreach (string family in new[] { "FishermansFlyingSail", "FishermansStaysail" })
         {
@@ -59,14 +74,14 @@ internal static class TextureCatalogChecks
             );
             if (
                 !CalledMethods(appearance.GetMethod("Configure", all))
-                    .Any(m => m.DeclaringType == compatibility && m.Name == "get_HasPlainFirst")
+                    .Any(m => m.DeclaringType == compatibility && m.Name == "get_HasPlainTexture")
             )
                 throw new Exception(
-                    "Custom appearance must verify texture zero is actually plain."
+                    "Custom appearance must verify the named plain texture is available."
                 );
         }
         Console.WriteLine(
-            "PASS: installed SE discovery/options contract, early catalog patch and guarded custom appearance; Unity initialization requires runtime validation."
+            "PASS: installed SE name-based texture contract, early catalog patch and guarded custom appearance; Unity initialization requires runtime validation."
         );
     }
 }

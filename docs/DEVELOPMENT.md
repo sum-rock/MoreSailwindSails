@@ -165,13 +165,15 @@ resolve full type names: update both when moving or renaming code.
 - Each family retains its iterative order-text guard before NANDFixes. HarmonyX
   runs later prefixes even after `false`: append wrapped lines to the native
   list and consume input so later prefixes cannot recurse on it.
-- New sails use native white palette **11** and SE plain texture **0**. Preserve
-  saved colors, recoloring and the hidden color-reference renderer; scope plain
-  texture/selector/material guards to custom sails. Never change donor/shared
-  assets. The SE compatibility patch seeds the native plain texture before
-  catalog discovery: numeric saved selections and SE's fixed option lists
-  require plain at zero. Never reorder a catalog after texture indices have been
-  assigned.
+- New sails use native white palette **11** and SE's named plain texture
+  **ParticleCloudWhite**. Preserve saved colors, recoloring and the hidden
+  color-reference renderer; scope plain texture/selector/material guards to
+  custom sails. Never change donor/shared assets. With **Shipyard Expansion
+  0.12.1**, texture selections and allowed options are strings, and the catalog
+  is a name-keyed dictionary. The compatibility patch registers the native plain
+  texture before prefab setup without changing other catalog entries. The former
+  numeric texture-zero ordering helper is no longer used. This build targets the
+  new API and does not support SE 0.11.1.
 
 ### Sailwind 0.39 audio
 
@@ -796,6 +798,29 @@ searches.
 This is the recorded validation status for **0.2.1 preparation**, through
 **2026-09-29**. The results below come from implementation checks and user
 tests; they are not new test runs performed during documentation consolidation.
+
+#### Shipyard Expansion 0.12.1 compatibility backport
+
+On **2026-10-04**, the failed 0.3.0-dev session logged a `MissingFieldException`
+for `SailTextureChanger.sailTextures` in our setup prefix, interrupting
+`PrefabsDirectory.Start`. A later exception in SE's
+`SailScalePatch.ChangeScalePatch` interrupted save loading; incomplete prefab
+initialization is a suspected consequence, not independently proven causation.
+
+The **0.2.1** backport switches both Fisherman's sail families to SE 0.12.1's
+named texture catalog, string selections and string allowed-option lists. The
+plain-texture material guards and native white palette remain in use. The
+obsolete numeric catalog-order helper and its synthetic regression fixture were
+removed; installed assembly checks now verify the named catalog API and its
+discovery/material-update routes. Plugin and project versions remain **0.2.1**
+pending release preparation.
+
+Validation against the installed **SE 0.12.1** passed Release with zero
+warnings/errors, GeometryChecks and AssemblyChecks (**62 Harmony targets**).
+Pinned CSharpier, Prettier and `git diff --check` also passed. No installed DLL
+or save was changed. The automated suites do not run Unity initialization:
+loading the affected save, fitting both families, recoloring, plain texture
+selection and save/reload still require an in-game retest, starting on Brig.
 
 #### Recorded automated results
 

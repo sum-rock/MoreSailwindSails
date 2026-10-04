@@ -13,7 +13,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Patches
             if (__instance.GetComponent<FishermansFlyingSailRig>())
                 // Covers saved patterns, SetTexture and NextTexture using the
                 // original material update and the existing plain texture.
-                __instance.textureIndex = FishermansFlyingSailAppearance.PlainTextureIndex;
+                __instance.textureIndex = FishermansFlyingSailAppearance.PlainTextureName;
         }
     }
 
