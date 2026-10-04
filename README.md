@@ -10,7 +10,7 @@ are developed. The mod currently includes two sail families:
 
 **Fisherman's Stays** provide the rigging mounts for the staysail family.
 
-Version **0.2.1**. See the [changelog](#changelog).
+Version **0.2.2**. See the [changelog](#changelog).
 
 <p align="center">
   <a href="references/junk-fishermans-sail.png"><img src="references/junk-fishermans-sail.png" width="32%" alt="Junk with a Fisherman's Staysail set between its masts, viewed from above"></a>
@@ -50,7 +50,7 @@ game, or save files from using this mod. Back up your saves before installing.
 
 - Built against **Sailwind 0.39**
 - **BepInEx 5**
-- **Shipyard Expansion** (developed against version 0.11.1)
+- **Shipyard Expansion 0.12.1** (required)
 
 1. Close Sailwind.
 2. Place `MoreSailwindSails.dll` in
@@ -103,6 +103,12 @@ Before uninstalling, remove all sails and rigging added by MoreSailwindSails
 sails before removing the stays or masts that support them.
 
 ## Changelog
+
+### 0.2.2
+
+- Updated texture integration for **Shipyard Expansion 0.12.1**, fixing the
+  missing-field exception that interrupted game loading.
+- Requires **Shipyard Expansion 0.12.1**.
 
 ### 0.2.1
 
