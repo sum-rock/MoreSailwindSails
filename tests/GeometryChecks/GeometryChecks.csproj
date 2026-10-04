@@ -184,10 +184,6 @@
       Link="Utils/WinchCaptureGeometry.cs"
     />
     <Compile
-      Include="../../src/Compatibility/TextureCatalogOrder.cs"
-      Link="Compatibility/TextureCatalogOrder.cs"
-    />
-    <Compile
       Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailKnotChannels.cs"
       Link="FishermansFlyingSail/FishermansFlyingSailKnotChannels.cs"
     />

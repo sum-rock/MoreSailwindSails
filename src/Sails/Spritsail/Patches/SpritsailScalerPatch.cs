@@ -12,7 +12,8 @@ namespace MoreSailwindSails.Sails.Spritsail.Patches
         {
             if (!SpritsailCategory.IsSpritsail(sail: ___sail))
                 return;
-            // SE hides both rotate buttons and SetAngle returns immediately for a null target.
+            // SE hides rotate buttons on eligible non-square-only masts. The rotation
+            // patch separately blocks SE 0.12.1's null-target fallback to the sail root.
             __instance.rotatablePart = null;
             __instance.scaleType = ScaleType.Uniform;
             __instance.flippable = false;

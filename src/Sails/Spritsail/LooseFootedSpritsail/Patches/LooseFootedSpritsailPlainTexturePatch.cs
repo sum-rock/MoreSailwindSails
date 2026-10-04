@@ -14,7 +14,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail.Patches
             if (__instance.GetComponent<LooseFootedSpritsailRig>())
                 // Covers saved patterns, SetTexture and NextTexture using the
                 // original material update and the existing plain texture.
-                __instance.textureIndex = LooseFootedSpritsailAppearance.PlainTextureIndex;
+                __instance.textureIndex = LooseFootedSpritsailAppearance.PlainTextureName;
         }
     }
 }

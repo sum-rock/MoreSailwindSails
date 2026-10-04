@@ -38,13 +38,36 @@ internal static class ShipyardPlacementChecks
             .Instructions(method: scaler.GetMethod(name: "SetAngle", bindingAttr: All))
             .ToArray();
         Require(
-            value: angle.Length > 5
+            value: angle.Length > 7
                 && angle[1].Operand is FieldInfo f
                 && f.Name == "rotatablePart"
-                && angle[2].Code == OpCodes.Ldnull
-                && angle[4].Code == OpCodes.Brfalse_S
-                && angle[5].Code == OpCodes.Ret,
-            message: "SE must reject rotation before mutating transforms when the target is null."
+                && angle[2].Code == OpCodes.Dup
+                && angle[3].Code == OpCodes.Brtrue_S
+                && angle[4].Code == OpCodes.Pop
+                && angle[6].Operand is MethodInfo fallback
+                && fallback.Name == "get_transform",
+            message: "Review SE's null rotation-target fallback when the installed implementation changes."
+        );
+        var rotation = Method(type: "Patches.SpritsailRotationPatch", method: "Prefix");
+        var rotationTarget = rotation.DeclaringType.GetCustomAttribute<HarmonyPatch>().info;
+        Require(
+            value: rotationTarget.declaringType == scaler
+                && rotationTarget.methodName == "SetAngle"
+                && rotation.IsDefined(typeof(HarmonyPrefix))
+                && rotation.ReturnType == typeof(bool),
+            message: "Suppress spritsail rotation at SE SetAngle, including saved-angle loading."
+        );
+        var guard = IlReader.Instructions(method: rotation).ToArray();
+        Require(
+            value: guard.Length == 5
+                && guard[0].Code == OpCodes.Ldarg_0
+                && guard[1].Operand is MethodInfo predicate
+                && predicate.DeclaringType.FullName == Family + "SpritsailCategory"
+                && predicate.Name == "IsSpritsail"
+                && guard[2].Code == OpCodes.Ldc_I4_0
+                && guard[3].Code == OpCodes.Ceq
+                && guard[4].Code == OpCodes.Ret,
+            message: "Only registered spritsails may skip SE rotation; other sails must retain native behavior."
         );
         var ui = IlReader
             .Instructions(
@@ -115,7 +138,7 @@ internal static class ShipyardPlacementChecks
             message: "Mk.A must not override the category placement policy."
         );
         Console.WriteLine(
-            "PASS (structural): category-wide no-rotation target, installed SE button/SetAngle guards and final bottom-placement/native refresh path; live fitting requires Unity validation."
+            "PASS (structural): category-wide no-rotation target, installed SE root-rotation fallback, scoped SetAngle guard and button visibility and final bottom-placement/native refresh path; live fitting requires Unity validation."
         );
     }
 

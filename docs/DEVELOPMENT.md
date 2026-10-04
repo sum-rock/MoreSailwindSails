@@ -185,13 +185,15 @@ resolve full type names: update both when moving or renaming code.
 - Each family retains its iterative order-text guard before NANDFixes. HarmonyX
   runs later prefixes even after `false`: append wrapped lines to the native
   list and consume input so later prefixes cannot recurse on it.
-- New sails use native white palette **11** and SE plain texture **0**. Preserve
-  saved colors, recoloring and the hidden color-reference renderer; scope plain
-  texture/selector/material guards to custom sails. Never change donor/shared
-  assets. The SE compatibility patch seeds the native plain texture before
-  catalog discovery: numeric saved selections and SE's fixed option lists
-  require plain at zero. Never reorder a catalog after texture indices have been
-  assigned.
+- New sails use native white palette **11** and SE's named plain texture
+  **ParticleCloudWhite**. Preserve saved colors, recoloring and the hidden
+  color-reference renderer; scope plain texture/selector/material guards to
+  custom sails. Never change donor/shared assets. With **Shipyard Expansion
+  0.12.1**, texture selections and allowed options are strings, and the catalog
+  is a name-keyed dictionary. The compatibility patch registers the native plain
+  texture before prefab setup without changing other catalog entries. The former
+  numeric texture-zero ordering helper is no longer used. This build targets the
+  new API and does not support SE 0.11.1.
 
 ### Sailwind 0.39 audio
 
@@ -1016,11 +1018,11 @@ searches.
 
 ### Automated baseline and limits
 
-The latest recorded **0.3.0-dev** implementation checks on **2026-10-02** passed
-Release with zero warnings/errors, both suites, CSharpier, Prettier and
-`git diff --check`. `HarmonySignatureChecks` currently expects **113** patch
-targets. This records the preceding code validation, not a new runtime session
-or a test run performed for this documentation edit.
+The **0.3.0-dev** SE 0.12.1 integration checks on **2026-10-04** passed Release
+with zero warnings/errors, both suites, CSharpier, Prettier and
+`git diff --check`. AssemblyChecks covers **114** patch targets, including the
+new spritsail rotation guard. These automated checks do not run Unity or
+establish in-game behavior.
 
 | Area                       | Coverage and limitation                                                                                                                                                                                               |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1036,6 +1038,31 @@ inspection-derived old-behavior model, not Unity hierarchy calls, frame timings
 or total allocation measurements. The separate installed-asset collar audit
 covered **160 cases** (both ends of 40 variants in visual/walking forms); it
 does not establish visual acceptance.
+
+### Shipyard Expansion 0.12.1 compatibility
+
+The 0.2.2 texture compatibility fix is incorporated into **0.3.0-dev** and
+extended to loose-footed and boomed spritsails. All families use SE 0.12.1's
+named texture catalog, string selections and string allowed-option lists. The
+obsolete numeric catalog-order helper and fixture are removed; installed
+assembly checks cover the named API and each family's plain-texture guard. SE
+**0.12.1 is required**; the dependency declaration intentionally has no
+minimum-version loading guard.
+
+On **2026-10-04**, the original failed development session logged a
+`MissingFieldException` for `SailTextureChanger.sailTextures`, interrupting
+`PrefabsDirectory.Start`. A later SE scale exception interrupted save loading;
+incomplete prefab initialization is a suspected consequence. The user then
+successfully loaded a save upgraded from MSS 0.2.1 / SE 0.11.1 to MSS 0.2.2 / SE
+0.12.1 and observed no disappearing sails or bad textures. That observation
+covers the tested save, not spritsails or general save migration and downgrade
+compatibility. SE 0.12.1 also rotates the sail root when its rotation target is
+null. A spritsail-only `SetAngle` prefix preserves the existing no-rotation
+policy, including saved angles; the null target still hides rotation buttons on
+eligible non-square-only masts. Other sails retain SE rotation.
+
+The spritsail adaptation still needs runtime loading, fitting, recoloring and
+save/reload checks, starting on Brig.
 
 ### Confirmed game observations
 
