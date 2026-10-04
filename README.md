@@ -4,7 +4,7 @@
 > [!IMPORTANT]
 > This README documents the current development version of MoreSailwindSails.
 >
-> For documentation on the latest stable version and see the [0.2.1 tagged release](https://github.com/sum-rock/MoreSailwindSails/tree/v0.2.1).
+> For documentation on the latest stable version, see the [0.2.2 tagged release](https://github.com/sum-rock/MoreSailwindSails/tree/v0.2.2).
 >
 > To download the latest release go to the [release page](https://github.com/sum-rock/MoreSailwindSails/releases)
 
@@ -22,7 +22,7 @@ are developed. The mod currently includes two sail families:
 
 ### Current versions
 
-**Latest release:** 0.2.1\
+**Latest release:** 0.2.2\
 **Development:** 0.3.0-dev
 
 See the [changelog](#changelog).
@@ -99,7 +99,7 @@ game, or save files from using this mod. Back up your saves before installing.
 
 - Built against **Sailwind 0.39**
 - **BepInEx 5**
-- **Shipyard Expansion** (developed against version 0.11.1)
+- **Shipyard Expansion 0.12.1** (required)
 
 1. Close Sailwind.
 2. Place `MoreSailwindSails.dll` in
@@ -115,6 +115,12 @@ Before uninstalling, remove all sails and rigging added by MoreSailwindSails
 sails before removing the stays or masts that support them.
 
 ## Changelog
+
+### 0.2.2
+
+- Updated texture integration for **Shipyard Expansion 0.12.1**, fixing the
+  missing-field exception that interrupted game loading.
+- Requires **Shipyard Expansion 0.12.1**.
 
 ### 0.2.1
 
