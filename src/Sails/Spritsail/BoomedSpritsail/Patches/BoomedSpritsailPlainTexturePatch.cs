@@ -14,7 +14,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail.Patches
             if (__instance.GetComponent<BoomedSpritsailRig>())
                 // Covers saved patterns, SetTexture and NextTexture using the
                 // original material update and the existing plain texture.
-                __instance.textureIndex = BoomedSpritsailAppearance.PlainTextureIndex;
+                __instance.textureIndex = BoomedSpritsailAppearance.PlainTextureName;
         }
     }
 }

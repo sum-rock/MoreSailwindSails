@@ -16,7 +16,6 @@ internal static class Program
         Spritsail.LooseFootedSpritsail.FlexChecks.Run();
         Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run();
         Spritsail.LooseFootedSpritsail.MkB.CutChecks.Run();
-        Compatibility.TextureCatalogChecks.Run();
         RigChecks.Run();
         ProfileChecks.Run();
         StayChecks.Run();

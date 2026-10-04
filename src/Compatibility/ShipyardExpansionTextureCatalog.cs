@@ -3,18 +3,20 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Compatibility
 {
+    // Registers the native plain texture in SE's name-based catalog without changing assets.
     internal static class ShipyardExpansionTextureCatalog
     {
-        private const string PlainTextureName = "ParticleCloudWhite";
+        internal const string PlainTextureName = "ParticleCloudWhite";
 
-        internal static bool HasPlainFirst =>
-            SailTextureChanger.sailTextures.Count > 0
-            && SailTextureChanger.sailTextures[0]
-            && SailTextureChanger.sailTextures[0].name == PlainTextureName;
+        internal static bool HasPlainTexture =>
+            SailTextureChanger.textures.TryGetValue(PlainTextureName, out var texture)
+            && texture
+            && texture.name == PlainTextureName;
 
         internal static void SeedPlain()
         {
-            if (SailTextureChanger.sailTextures.Count != 0)
+            // SE 0.12.1 keys textures and saved selections by name, not discovery order.
+            if (HasPlainTexture)
                 return;
             var directory = PrefabsDirectory.instance;
             // The brig jib's cloth is painted, but its native furled bundle uses
@@ -34,9 +36,9 @@ namespace MoreSailwindSails.Compatibility
                 );
                 return;
             }
-            TextureCatalogOrder.SeedPlain(SailTextureChanger.sailTextures, texture);
+            SailTextureChanger.textures[PlainTextureName] = texture;
             Plugin.Log.LogInfo(
-                "Seeded SE sail texture 0 with native ParticleCloudWhite before texture discovery."
+                "Registered native ParticleCloudWhite in SE's named sail texture catalog."
             );
         }
     }
