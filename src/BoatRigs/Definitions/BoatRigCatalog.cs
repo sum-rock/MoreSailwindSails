@@ -17,6 +17,10 @@ namespace MoreSailwindSails.BoatRigs
                 Cog.Definition,
                 Shroud.Definition,
                 LargeDhow.Definition,
+                Gloriana.Definition,
+                Chronian.Definition,
+                Caelanor.Definition,
+                Gallus.Definition,
             }
         );
 

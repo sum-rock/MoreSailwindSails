@@ -90,8 +90,59 @@ internal static class PatchChecks
         int lineCount = stayLines.Count;
         if (!(bool)stayText.Invoke(null, stayTextArguments) || stayLines.Count != lineCount)
             throw new Exception("Stay text guard intercepted another sail's order.");
+        var install = StayMethod("CanInstall", "Postfix");
+        if (
+            !CalledMethods(install).Any(m => m.Name == "Concat")
+            || !CalledMethods(install).Any(m => m.Name == "ConflictText")
+        )
+            throw new Exception("Stay install conflicts lost reciprocal named help text.");
+        foreach (
+            string conflict in new[]
+            {
+                "Fisherman's Stay (Foremast Top / Mainmast Top)",
+                "Fisherman's Stay (Mainmast Top / Mizzenmast Top)",
+            }
+        )
+            if (
+                (string)
+                    StayMethod("CanInstall", "ConflictText")
+                        .Invoke(null, new object[] { new[] { conflict } })
+                != "<color=red>incompatible with: " + conflict + ".</color>"
+            )
+                throw new Exception("Stay conflict help must name the opposing option in red.");
+        var updateOrder = saveType
+            .Assembly.GetType(name: "ShipyardPartsInstaller", throwOnError: true)
+            .GetMethod(
+                "UpdateOrder",
+                BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public
+            );
+        var updateCalls = CalledMethods(updateOrder).ToArray();
+        foreach (
+            string method in new[]
+            {
+                "CanInstall",
+                "get_red",
+                "ChangePartOptionTextColor",
+                "SetPartErrorText",
+            }
+        )
+            if (!updateCalls.Any(m => m.Name == method))
+                throw new Exception(
+                    "Native order validation no longer displays install errors: " + method
+                );
+        var errorText = saveType
+            .Assembly.GetType(name: "ShipyardUI", throwOnError: true)
+            .GetMethod(
+                "SetPartErrorText",
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+            );
+        if (
+            !CalledMethods(errorText)
+                .Any(m => m.DeclaringType.Name == "MouseoverTextTrigger" && m.Name == "SetText")
+        )
+            throw new Exception("Shipyard install errors no longer reach hover help.");
         Console.WriteLine(
-            "PASS: stay registration ordering, save capacity preservation, snapshot preparation, preview finalizer and scoped order-text protection."
+            "PASS: stay registration ordering, save capacity, preview protection, scoped order text and reciprocal red conflict help wired to native shipyard errors (no live UI execution)."
         );
     }
 }

@@ -8,6 +8,10 @@ namespace MoreSailwindSails.Stays.FishermansStay
         internal const int MountCapacity = 256;
         internal const float PreferredAngle = 70f;
 
+        // Keep the native guide's radial position, moving only its mast-axis height.
+        internal static Vector3 AlignGuideHeight(Vector3 guide, Vector3 head, Vector3 mastAxis) =>
+            guide + mastAxis.normalized * Vector3.Dot(head - guide, mastAxis.normalized);
+
         internal static float Span(Vector3 aft, Vector3 fore)
         {
             float span = (aft - fore).magnitude;

@@ -273,7 +273,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 return;
             // These are sail-owned guides. Never hand the physical mast fitting
             // or a skin bone to RopeEffect, which rotates endpoints with LookAt.
-            upperGuide.position = Pair.AftGuide.position;
+            upperGuide.position = Pair.Stay.HalyardPoint;
             mastGuide.position = upperGuide.position - MastAxis(Pair.Aft) * 0.05f;
             var connections = sail.GetComponent<SailConnections>();
             var guide = connections.mastReefAttachment;

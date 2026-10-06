@@ -18,6 +18,10 @@ internal static class RigChecks
             "BOAT medi small (40)",
             "BOAT Shroud Large",
             "BOAT dhow large (30)",
+            "BOAT GLORIANA (182)",
+            "BOAT CHRONIAN (187)",
+            "BOAT CAELANOR (192)",
+            "BOAT GALLUS (197)",
         };
         // Live mast-section and native winch-source mapping, in selection order.
         string[] layouts =
@@ -29,6 +33,10 @@ internal static class RigChecks
             "51:8>5;58:5>57;65:8>6",
             "25:7>9",
             "20:0>3,2;23:1>3,2;26:0>5,4;29:1>5,4;32:3,2>6;34:5,4>6;36:3,2>7;38:5,4>7;40:3,2>8;42:5,4>8",
+            "5:1>2;6:2>4,3",
+            "12:15,3,2>16,5,4;14:16,5,4>17,7,6",
+            "14:17,2,1>18,6,5",
+            "", // Gallus has no Fisherman's Flying Sail mast pairs.
         };
         Assert(BoatRigCatalog.All.Count == names.Length, "Missing boat mapping coverage.");
         for (int i = 0; i < names.Length; i++)
@@ -85,20 +93,11 @@ internal static class RigChecks
                 Brig.Definition.SheetCategories
             )
         );
-        Reject(() =>
-            new BoatRigDefinition(
-                "empty",
-                Array.Empty<MastSupportDefinition>(),
-                Brig.Definition.Stays,
-                Brig.Definition.MastParents,
-                Brig.Definition.SheetCategories
-            )
-        );
         Reject(() => new MastSupportDefinition(1, new[] { 2 }, new[] { 2 }));
         Reject(() => new MastSupportDefinition(-1, new[] { 2 }, new[] { 3 }));
         Reject(() => new MastSupportDefinition(1, Array.Empty<int>(), new[] { 3 }));
         Console.WriteLine(
-            "PASS: seven supported boat profiles, physical mast sections, control-source selection and unknown-boat handling."
+            "PASS: eleven boat profiles (Gallus has no Flying Sail pairs), physical mast sections, control-source selection and unknown-boat handling."
         );
     }
 

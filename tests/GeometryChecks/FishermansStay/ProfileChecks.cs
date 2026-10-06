@@ -17,7 +17,11 @@ internal static class ProfileChecks
             foreach (var support in boat.Supports)
                 CheckCopies(support);
             foreach (var group in boat.HalyardGroups)
+            {
                 CheckCopies(group);
+                if (group.Fallback != null)
+                    CheckCopies(group.Fallback);
+            }
             foreach (var group in boat.Stays)
             {
                 CheckCopies(group);
@@ -35,6 +39,8 @@ internal static class ProfileChecks
             }
         }
         CheckReadOnly(BoatRigCatalog.All);
+        ChronianChecks.Run();
+        CaelanorChecks.Run();
         if (!ReferenceEquals(BoatRigCatalog.All, BoatRigCatalog.All))
             throw new Exception("Catalog is rebuilt on access.");
         foreach (string suffix in new[] { "", "(Clone)", "(Clone)(Clone)" })
@@ -78,6 +84,42 @@ internal static class ProfileChecks
                     throw new Exception(
                         "Large dhow mast combination has missing or ambiguous stays."
                     );
+        }
+
+        var gloriana = Gloriana.Definition;
+        if (
+            !ReferenceEquals(BoatRigCatalog.Find(boatName: "BOAT GLORIANA (182)(Clone)"), gloriana)
+            || !gloriana.Sections(section: 4).SequenceEqual(new[] { 4, 3 })
+            || gloriana.SheetCategory(mast: 4) != gloriana.SheetCategory(mast: 3)
+            || !gloriana.HalyardSources(mast: 2).SequenceEqual(new[] { 2 })
+            || !gloriana.HalyardSources(mast: 3).SequenceEqual(new[] { 3, 4, 6 })
+        )
+            throw new Exception("Gloriana lost its connected mizzen or mast-specific controls.");
+        // Native stays supply assets only: either custom group remains available
+        // with both native stays removed. Topmast presence replaces the lower stay.
+        foreach (bool fore in new[] { false, true })
+        foreach (bool main in new[] { false, true })
+        foreach (bool mizzen in new[] { false, true })
+        foreach (bool top in new[] { false, true })
+        {
+            var active = new HashSet<int>();
+            if (fore)
+                active.Add(1);
+            if (main)
+                active.Add(2);
+            if (mizzen)
+                active.Add(3);
+            if (top)
+                active.Add(4);
+            int Available(FishermansStayGroupDefinition group) =>
+                group.Variants.Count(v =>
+                    v.Required.All(active.Contains) && !v.Forbidden.Any(active.Contains)
+                );
+            if (
+                Available(gloriana.Stays[0]) != (fore && main ? 1 : 0)
+                || Available(gloriana.Stays[1]) != (main && mizzen ? 1 : 0)
+            )
+                throw new Exception("Gloriana has missing or ambiguous stays for fitted supports.");
         }
 
         Reject<ArgumentException>(() => Brig.Definition.Sections(section: 127));

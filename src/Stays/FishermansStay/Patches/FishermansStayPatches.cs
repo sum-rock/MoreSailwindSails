@@ -168,18 +168,28 @@ namespace MoreSailwindSails.Stays.FishermansStay.Patches
             if (!registry)
                 return;
             var option = __instance.availableParts[partIndex].partOptions[optionIndex];
-            if (
-                registry.Stays.Any(s =>
+            var stay = registry.Stays.FirstOrDefault(s => s.Option == option);
+            var conflicts = registry
+                .Stays.Where(s =>
                     s.Option.gameObject.activeInHierarchy
                     && s.Option.requiresDisabled.Contains(option)
                 )
-            )
+                .Select(s => s.Option.optionName)
+                .Concat(
+                    stay == null
+                        ? Enumerable.Empty<string>()
+                        : stay
+                            .Option.requiresDisabled.Where(o => o && o.gameObject.activeInHierarchy)
+                            .Select(o => o.optionName)
+                )
+                .Distinct()
+                .ToArray();
+            if (conflicts.Length > 0)
             {
                 __result = false;
-                requiredOptionNames = "replace the conflicting Fisherman's Stay first.";
+                requiredOptionNames = ConflictText(names: conflicts);
                 return;
             }
-            var stay = registry.Stays.FirstOrDefault(s => s.Option == option);
             if (stay == null)
                 return;
             if (!stay.Available)
@@ -188,5 +198,9 @@ namespace MoreSailwindSails.Stays.FishermansStay.Patches
                 requiredOptionNames = "requires: matching active masts and halyard guide.";
             }
         }
+
+        // Native UpdateOrder marks the option red and sends this text to its hover help.
+        private static string ConflictText(string[] names) =>
+            "<color=red>incompatible with: " + string.Join(", ", names) + ".</color>";
     }
 }

@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.IO;
 using System.Linq;
 using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Stays.FishermansStay;
@@ -11,53 +8,9 @@ namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
 
 internal static class StayChecks
 {
-    private sealed class Spar
-    {
-        internal int Id;
-        internal int[] Parents;
-        internal float[] Matrix;
-        internal Vector3 Bottom,
-            Top,
-            Guide;
-
-        internal Vector3 Point(Vector3 local) =>
-            new Vector3(
-                Matrix[0] * local.x + Matrix[1] * local.y + Matrix[2] * local.z + Matrix[3],
-                Matrix[4] * local.x + Matrix[5] * local.y + Matrix[6] * local.z + Matrix[7],
-                Matrix[8] * local.x + Matrix[9] * local.y + Matrix[10] * local.z + Matrix[11]
-            );
-    }
-
     internal static void Run()
     {
-        var measurements = new Dictionary<string, Dictionary<int, Spar>>();
-        foreach (
-            string line in File.ReadLines(
-                Path.Combine(AppContext.BaseDirectory, "FishermansStay", "StayMeasurements.txt")
-            )
-        )
-        {
-            if (line.StartsWith("#"))
-                continue;
-            var values = line.Split('|');
-            if (!measurements.TryGetValue(values[0], out var masts))
-                measurements.Add(values[0], masts = new Dictionary<int, Spar>());
-            masts.Add(
-                int.Parse(values[1]),
-                new Spar
-                {
-                    Id = int.Parse(values[1]),
-                    Parents = values[2]
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Select(int.Parse)
-                        .ToArray(),
-                    Matrix = Floats(values[3]),
-                    Bottom = Point(values[4]),
-                    Top = Point(values[5]),
-                    Guide = Point(values[6]),
-                }
-            );
-        }
+        var measurements = StaySparMeasurement.Load();
         // Installed Jong donor 58 has different visual/walking mesh bounds.
         // Both must map onto the same new stay endpoints without reflection.
         foreach (var interval in new[] { new[] { -18.125f, 1.149f }, new[] { -18f, 0.872f } })
@@ -91,7 +44,7 @@ internal static class StayChecks
         );
         int variants = 0,
             fallback = 0;
-        int[] counts = { 24, 9, 9, 26, 3, 8, 14 };
+        int[] counts = { 24, 9, 9, 26, 3, 8, 14, 3, 2, 1, 0 };
         for (int boatIndex = 0; boatIndex < BoatRigCatalog.All.Count; boatIndex++)
         {
             var boat = BoatRigCatalog.All[boatIndex];
@@ -115,28 +68,53 @@ internal static class StayChecks
                     "Attachment left a physical spar."
                 );
                 var down = (aftSpar.Bottom - aftSpar.Top).normalized;
-                Check(
-                    Math.Abs(Vector3.Dot(aft - aftSpar.Guide, down)) < 0.025f,
-                    "Aft anchor left the authored halyard height."
-                );
-                float angle = Angle(fore - aft, down);
-                if (Math.Abs(angle - 70f) > 0.02f)
+                if (stay.AlignGuideHeightToAftAnchor)
                 {
-                    Check(angle < 70, "Fallback must steepen toward the shorter foremast.");
+                    var guide = FishermansStayGeometry.AlignGuideHeight(aftSpar.Guide, aft, -down);
                     Check(
-                        (fore - masts[stay.Fore].Top).magnitude < 0.002f,
-                        "Fallback must meet the foremast head."
+                        Math.Abs(Vector3.Dot(guide - aft, down)) < 0.00001f
+                            && Vector3.ProjectOnPlane(guide - aftSpar.Guide, down).magnitude
+                                < 0.00001f,
+                        "Aligned guide changed radial offset or missed attachment height."
                     );
-                    fallback++;
+                    var pose = new Vector3(25f, -8f, 17f);
+                    Check(
+                        (
+                            FishermansStayGeometry.AlignGuideHeight(
+                                Rotate(aftSpar.Guide) + pose,
+                                Rotate(aft) + pose,
+                                Rotate(-down)
+                            ) - (Rotate(guide) + pose)
+                        ).magnitude < 0.00001f,
+                        "Aligned halyard guide drifted with boat pose."
+                    );
                 }
-                Check(fore.y < aft.y, "Stay must descend toward the foremast.");
-                // Every known continuation above the selected aft section must
-                // be excluded, even if it belongs to a different shipyard group.
-                foreach (var upper in masts.Values.Where(m => m.Parents.Contains(stay.Aft)))
+                else
+                {
                     Check(
-                        stay.Forbidden.Contains(upper.Id),
-                        "A lower stay remains eligible beneath a topmast."
+                        Math.Abs(Vector3.Dot(aft - aftSpar.Guide, down)) < 0.025f,
+                        "Aft anchor left the authored halyard height."
                     );
+                    float angle = Angle(fore - aft, down);
+                    if (Math.Abs(angle - 70f) > 0.02f)
+                    {
+                        Check(angle < 70, "Fallback must steepen toward the shorter foremast.");
+                        Check(
+                            (fore - masts[stay.Fore].Top).magnitude < 0.002f,
+                            "Fallback must meet the foremast head."
+                        );
+                        fallback++;
+                    }
+                    Check(fore.y < aft.y, "Stay must descend toward the foremast.");
+                }
+                // Native-guide-height variants exclude continuations above the selected aft section.
+                // Optional T'gallants on authored aligned-guide stays are covered by their profile checks.
+                if (!stay.AlignGuideHeightToAftAnchor)
+                    foreach (var upper in masts.Values.Where(m => m.Parents.Contains(stay.Aft)))
+                        Check(
+                            stay.Forbidden.Contains(upper.Id),
+                            "A lower stay remains eligible beneath a topmast."
+                        );
                 Check(
                     stay.Required.Contains(stay.Fore) && stay.Required.Contains(stay.Aft),
                     "Missing supporting section dependency."
@@ -156,7 +134,7 @@ internal static class StayChecks
                 variants++;
             }
         }
-        Check(fallback == 21, "Shorter-foremast fallback coverage changed.");
+        Check(fallback == 22, "Shorter-foremast fallback coverage changed.");
         // The large dhow's foremast capsules extend 6.7 cm beyond the rendered
         // end rings. Both upright and raked options must use the visible spar.
         var dhowSpars = measurements[LargeDhow.Definition.BoatName];
@@ -259,17 +237,8 @@ internal static class StayChecks
             "Stay guard changed flying-sail scope."
         );
         Console.WriteLine(
-            $"PASS: {variants} authored stays across seven supported boats, {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs, pose invariance and order text."
+            $"PASS: {variants} authored stays across eleven boat profiles (Gallus has no stays), {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs, pose invariance and order text."
         );
-    }
-
-    private static float[] Floats(string s) =>
-        s.Split(',').Select(v => float.Parse(v, CultureInfo.InvariantCulture)).ToArray();
-
-    private static Vector3 Point(string s)
-    {
-        var a = Floats(s);
-        return new Vector3(a[0], a[1], a[2]);
     }
 
     private static float Angle(Vector3 a, Vector3 b) =>
@@ -279,7 +248,7 @@ internal static class StayChecks
             / Math.PI
         );
 
-    private static bool OnSegment(Vector3 p, Spar s)
+    private static bool OnSegment(Vector3 p, StaySparMeasurement s)
     {
         var axis = s.Top - s.Bottom;
         float t = Vector3.Dot(p - s.Bottom, axis) / axis.sqrMagnitude;

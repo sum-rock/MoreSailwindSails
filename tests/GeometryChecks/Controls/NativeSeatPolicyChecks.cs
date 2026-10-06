@@ -62,6 +62,7 @@ internal static class NativeSeatPolicyChecks
         );
         CogHalyard(mast: 8);
         CogHalyard(mast: 57);
+        GlorianaHalyardChecks.Run();
         var ledger = new WinchReservations();
         var owner = new object();
         WinchCandidate Pair(string id, float x, bool fallback = false) =>

@@ -6,6 +6,8 @@ using System.Linq;
 using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Sails.FishermansStaysail;
 using MoreSailwindSails.Sails.FishermansStaysail.MkA;
+using MoreSailwindSails.Sails.FishermansStaysail.MkB;
+using MoreSailwindSails.Sails.FishermansStaysail.MkC;
 using MoreSailwindSails.Stays.FishermansStay;
 using UnityEngine;
 
@@ -218,12 +220,43 @@ internal static class CutChecks
                     == null
             )
                 throw new Exception("Mk.A fit limits ignored.");
+            if (stay.AlignGuideHeightToAftAnchor)
+            {
+                foreach (
+                    var cut in new Func<float, float, FishermansStaysailMeshData>[]
+                    {
+                        FishermansStaysailMkAGeometry.Create,
+                        FishermansStaysailMkBGeometry.Create,
+                        FishermansStaysailMkCGeometry.Create,
+                    }
+                )
+                {
+                    var unit = cut(1f, slope);
+                    float luffRatio = (unit.Corners[0] - unit.Corners[2]).magnitude;
+                    float fittingWidth = Math.Min(span - 0.2f, (room - 0.05f) / luffRatio);
+                    var fitted = cut(fittingWidth, slope);
+                    CheckMesh(fitted, fittingWidth);
+                    if (
+                        fitted.Corners[1].x <= fitted.Corners[3].x
+                        || FishermansStaysailInstallationGeometry.FitError(
+                            fittingWidth,
+                            (fitted.Corners[0] - fitted.Corners[2]).magnitude,
+                            0f,
+                            room,
+                            span
+                        ) != null
+                    )
+                        throw new Exception(
+                            "Authored stay lost a non-crossing, physically fitting cut."
+                        );
+                }
+            }
             count++;
         }
-        if (count != 93)
+        if (count != 99)
             throw new Exception("Missing authored staysail configurations.");
         Console.WriteLine(
-            "PASS: Mk.A alignment and fore/aft-mast base references for all 93 supported stays."
+            "PASS: Mk.A alignment and fore/aft-mast base references for all 99 supported stays."
         );
     }
 

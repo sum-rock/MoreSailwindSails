@@ -31,6 +31,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 throw new ArgumentException(
                     "Expected a finite sail width between 0.25 and 100 metres."
                 );
+            if (corners[0].x <= corners[2].x || corners[1].x <= corners[3].x)
+                throw new ArgumentException("Stay slope leaves no positive luff or leech.");
             var data = new FishermansStaysailMeshData
             {
                 Vertices = new Vector3[(Columns + 1) * (Rows + 1)],

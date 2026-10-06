@@ -67,7 +67,7 @@ internal static class BehaviorCases
         {
             Near(mark.HeadAngle, 14, 0, mark.Name + " deployed head policy");
             foreach (float width in new[] { 3f, 6.9f, 13.8f })
-            foreach (float slope in new[] { 20f, 35f, 55f })
+            foreach (float slope in new[] { 0f, 8.483f, 20f, 35f, 55f })
                 Check(
                     $"{mark.Name}, {scenario}, width {width}, slope {slope}",
                     () => check(mark, width, slope)

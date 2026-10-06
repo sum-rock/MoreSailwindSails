@@ -49,3 +49,29 @@ LargeDhow|4,5|16,17,18,19,26,27,28,29,30,31|Mainmast 2 and topmast; stay seats p
 LargeDhow|6|32,33,34,35|Mizzenmast 1; stay seat parented to mast_mizzen_0
 LargeDhow|7|36,37,38,39|Mizzenmast 2; stay seat parented to mast_mizzen_1__raked
 LargeDhow|8|40,41,42,43|Mizzenmast 3; stay seat parented to mast_mizzen_2
+
+# Gloriana: OldChronian 0.6.0 native guide ownership and shared mizzen rail.
+Gloriana|2||Mainmast own native array, then manual reef fallback from F9 capture #2
+Gloriana|1|5|Forestay guide and separate reef seat associated with MAST_FORE
+Gloriana|3|4,6|Shared mizzen rail native seats, then manual reef fallback from FIFE_MIZEN capture #1
+Gloriana|4|6|Mizenstay guide and separate reef seat associated with MAST_MIZEN_TOP
+
+# Chronian: installed OldChronian 0.6.0 aelasyl; native stay-guide ownership.
+Chronian|2|8|Foremast Main / Forestay
+Chronian|3|9,10|Foremast Top / Jibstay and Fore Royalstay
+Chronian|4|11|Mainmast Main / Mainstay
+Chronian|5|12|Mainmast Top / Main Royalstay
+Chronian|6|13|Mizzenmast Main / Mizzenstay
+Chronian|7|14|Mizzenmast Top / Mizzen Royalstay
+
+# Caelanor: installed OldChronian 0.6.0 caelanor; native stay-guide ownership.
+Caelanor|1|7|Foremast Main / short forestay
+Caelanor|2|8,9|Foremast Top / short jib and royal stays
+Caelanor|3|10|Midmast Main / long forestay
+Caelanor|4|12,16|Midmast Top / long royal and jib stays
+Caelanor|5|13|Mainmast Main / mainstay
+Caelanor|6|14|Mainmast Top / main royalstay
+
+# Gallus: installed OldChronian 0.6.0 gallus; shared native seats across mast alternatives.
+Gallus|1|2,3|Plumb mast / short stay and jib halyards
+Gallus|4|5,6|Raked mast / long stay and jib halyards

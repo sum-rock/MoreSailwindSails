@@ -12,8 +12,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         {
             float along = Vector3.Dot(stay, mastAxis.normalized);
             float span = Vector3.ProjectOnPlane(stay, mastAxis).magnitude;
-            if (!Finite(along) || !Finite(span) || span < 0.25f || along < 0)
-                throw new ArgumentException("Invalid rising stay frame.");
+            if (!Finite(along) || !Finite(span) || span < 0.25f)
+                throw new ArgumentException("Invalid stay frame.");
             return (float)(Math.Atan2(along, span) * 180 / Math.PI);
         }
 
