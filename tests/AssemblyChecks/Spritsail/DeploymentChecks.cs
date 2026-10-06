@@ -77,9 +77,9 @@ internal static class DeploymentChecks
         Require(
             value: looseConfigure.Any(m => m.Name == "RefreshSparCollision")
                 && looseCollision.Any(i =>
-                    i.Operand is string name && name == "LooseFootedSpritsail spar sweep "
+                    i.Operand is string name && name == "LooseFootedSpritsail deployed sprit"
                 ),
-            message: "Loose-footed sweep colliders must be constructed and posed before native Awake."
+            message: "The loose-footed deployed sprit collider must be constructed and posed before native Awake."
         );
         Require(
             value: !IlReader
@@ -97,6 +97,24 @@ internal static class DeploymentChecks
         );
         foreach (string type in new[] { "LooseFootedSpritsail", "BoomedSpritsail" })
         {
+            var rig = type + "." + type + "Rig";
+            var collision = IlReader
+                .CalledMethods(method: Method(type: rig, name: "RefreshSparCollision"))
+                .ToArray();
+            Require(
+                value: collision.Count(m => m.Name == "Evaluate") == 1
+                    && !collision.Any(m => m.DeclaringType.Name.EndsWith("Gathering")),
+                message: "Spar collision must use one deployed pose without gathered-fabric envelopes."
+            );
+            Require(
+                value: IlReader
+                    .CalledMethods(method: Method(type: rig, name: "DeploymentBounds"))
+                    .Any(m => m.DeclaringType.Name.EndsWith("Gathering"))
+                    && IlReader
+                        .CalledMethods(method: Method(type: rig, name: "RefreshMastFrame"))
+                        .Any(m => m.Name == "DeploymentBounds"),
+                message: "Fitting must retain gathered-fabric rendering bounds independently of collision."
+            );
             var draw = IlReader
                 .CalledMethods(method: Method(type: type + "." + type + "Lines", name: "Draw"))
                 .ToArray();

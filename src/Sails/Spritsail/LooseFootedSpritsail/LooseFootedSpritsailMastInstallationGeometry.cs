@@ -35,7 +35,8 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             float head = Math.Min(high0, high1);
             float foot = Math.Max(low0, low1);
             center = new Vector3((head + foot) * 0.5f, 0, (z0 + z1) * 0.5f);
-            size = new Vector3(Math.Max(0.01f, head - foot - 0.1f), 0.05f, z1 - z0);
+            // Match the native junk panel thickness before shipyard scaling.
+            size = new Vector3(Math.Max(0.01f, head - foot - 0.1f), 0.1f, z1 - z0);
             return head - foot > 0.11f;
         }
 
