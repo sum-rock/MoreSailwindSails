@@ -49,10 +49,16 @@ Select a screenshot to view it at full size.
 | **Fisherman's Staysail Mk.C** | The same head and controls, with a 50% longer luff and a lower edge rising 40° from the forward luff toward the aft leech on upright masts. |
 | **Fisherman's Flying Sail**   | A separate sail fitted directly to a mast through the **Other** category.                                                                   |
 
-Supported boats: **Brig, Junk, Jong, Sanbuq, Cog, Shroud and Baghala**. Shroud
-requires
+### Supported boats
+
+Supported boats include **Brig, Junk, Jong, Sanbuq, Cog, Shroud and Baghala**.
+Shroud requires
 [Shattered Seas Expansion](https://github.com/TheOriginOfAllEvil/Shattered-Seas-Expansion).
 Available stay variants depend on the boat and its fitted masts.
+
+Flying Sail, Fisherman's Staysail and Spritsail support for **Gloriana, Chronian
+and Caelanor** from **OldChronian**, which must be installed to use these boats.
+**Gallus** supports loose-footed and boomed Spritsails on its plumb mast only.
 
 **Leopard support has been removed.** Future compatibility work is tracked in
 [issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
