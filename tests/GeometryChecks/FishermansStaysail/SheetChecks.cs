@@ -90,7 +90,7 @@ internal static class SheetChecks
         // Tilt the entire frame for mast rake and boat heel, and give the
         // reference stay its own pitch. Readout must show actual sheet travel.
         foreach (var axis in new[] { Vector3.right, new Vector3(0.2f, 1, 0.3f).normalized })
-        foreach (float pitch in new[] { 20f, 55f })
+        foreach (float pitch in new[] { 8.483f, 20f, 55f })
         foreach (float angle in new[] { -60f, -40f, -15f, 0f, 15f, 40f, 60f })
         {
             var neutral = Vector3.Cross(axis, Vector3.forward).normalized;

@@ -19,7 +19,7 @@ internal static class CollisionChecks
         };
         foreach (var mark in marks)
         foreach (float width in new[] { 0.25f, 3f, 13.8f, 100f })
-        foreach (float slope in new[] { 0f, 20f, 55f, 80f })
+        foreach (float slope in new[] { 0f, 8.483f, 20f, 55f, 80f })
         foreach (
             float clearance in new[]
             {

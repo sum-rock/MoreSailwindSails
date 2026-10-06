@@ -272,68 +272,52 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 strips[i] = box;
                 box.center = center;
                 box.size = size;
-                // Add only the lower triangle's bounded flex envelope; retain the original upper strips.
-                var flex = new GameObject(
-                    name: "LooseFootedSpritsail flex strip " + i
-                ).AddComponent<BoxCollider>();
-                flex.transform.SetParent(parent: root, worldPositionStays: false);
-                var bounds = LooseFootedSpritsailFlex.CollisionBounds(
-                    peak: corners[1],
-                    tack: corners[2],
-                    clew: corners[3],
-                    from: i / (float)LooseFootedSpritsailGeometry.Columns,
-                    to: (i + 1) / (float)LooseFootedSpritsailGeometry.Columns,
-                    camber: width * 0.12f
-                );
-                flex.center = bounds.center;
-                flex.size = bounds.size;
-                flex.isTrigger = true;
                 box.isTrigger = true;
                 var visual = box.GetComponent<MeshRenderer>();
                 if (visual)
                     visual.enabled = false;
             }
             // Native Awake initializes reporting on existing direct children only.
-            for (int i = 0; i <= 8; i++)
-            {
-                var sweep = new GameObject(
-                    name: "LooseFootedSpritsail spar sweep " + i
-                ).AddComponent<BoxCollider>();
-                sweep.transform.SetParent(parent: root, worldPositionStays: false);
-                sweep.isTrigger = true;
-            }
+            var spar = new GameObject(
+                name: "LooseFootedSpritsail deployed sprit"
+            ).AddComponent<BoxCollider>();
+            spar.transform.SetParent(parent: root, worldPositionStays: false);
+            spar.isTrigger = true;
             return strips;
         }
 
-        private Bounds RefreshSparCollision()
+        private void RefreshSparCollision()
         {
             var checker = Sail.GetComponent<SailConnections>().colChecker.transform;
             var scale = Sail.cloth.transform.lossyScale;
+            // Native gaff/junk checks use fixed deployed shapes, independent of reefing or billow.
+            var pose = SpritsailDeployment.Evaluate(
+                corners: ScaledCorners(scale: scale),
+                unroll: 1
+            );
+            var box = checker
+                .Find(n: "LooseFootedSpritsail deployed sprit")
+                .GetComponent<BoxCollider>();
+            var a = Unscale(point: pose.Heel, scale: scale);
+            var b = Unscale(point: pose.Tip, scale: scale);
+            box.transform.localPosition = (a + b) * 0.5f;
+            box.transform.localRotation = Quaternion.LookRotation(forward: b - a);
+            box.center = Vector3.zero;
+            box.size = new Vector3(
+                -Corners[0].z * 0.04f * SpritsailSpritGeometry.ThicknessMultiplier,
+                -Corners[0].z * 0.04f * SpritsailSpritGeometry.ThicknessMultiplier,
+                (b - a).magnitude
+            );
+        }
+
+        private Bounds DeploymentBounds()
+        {
+            var scale = Sail.cloth.transform.lossyScale;
             var corners = ScaledCorners(scale: scale);
             var envelope = new Bounds(center: Corners[2], size: Vector3.zero);
-            for (int column = 0; column < LooseFootedSpritsailGeometry.Columns; column++)
-            {
-                var flex = checker
-                    .Find(n: "LooseFootedSpritsail flex strip " + column)
-                    .GetComponent<BoxCollider>();
-                var bounds = LooseFootedSpritsailFlex.CollisionBounds(
-                    peak: corners[1],
-                    tack: corners[2],
-                    clew: corners[3],
-                    from: column / (float)LooseFootedSpritsailGeometry.Columns,
-                    to: (column + 1) / (float)LooseFootedSpritsailGeometry.Columns,
-                    camber: -Corners[0].z * scale.y * 0.12f
-                );
-                flex.center = Unscale(point: bounds.center, scale: scale);
-                flex.size = Unscale(point: bounds.size, scale: scale);
-            }
             for (int i = 0; i <= 8; i++)
             {
-                string name = "LooseFootedSpritsail spar sweep " + i;
-                var box = checker.Find(n: name).GetComponent<BoxCollider>();
                 var pose = SpritsailDeployment.Evaluate(corners: corners, unroll: i / 8f);
-                var a = Unscale(point: pose.Heel, scale: scale);
-                var b = Unscale(point: pose.Tip, scale: scale);
                 // Include the raised peak and complete gathered skin in culling bounds.
                 envelope.Encapsulate(point: Unscale(point: pose.Throat, scale: scale));
                 envelope.Encapsulate(point: Unscale(point: pose.Peak, scale: scale));
@@ -355,15 +339,6 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                             scale: scale
                         )
                     );
-                box.transform.localPosition = (a + b) * 0.5f;
-                box.transform.localRotation = Quaternion.LookRotation(forward: b - a);
-                box.center = Vector3.zero;
-                box.size = new Vector3(
-                    -Corners[0].z * 0.04f * SpritsailSpritGeometry.ThicknessMultiplier,
-                    -Corners[0].z * 0.04f * SpritsailSpritGeometry.ThicknessMultiplier,
-                    (b - a).magnitude
-                );
-                box.isTrigger = true;
             }
             float flexLimit =
                 (corners[3] - corners[2]).magnitude * LooseFootedSpritsailFlex.MaximumDisplacement;
@@ -477,7 +452,8 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 body.position = forePoint - body.rotation * nextPivot;
                 RefreshCollisionStrips();
                 RefreshClothTravel();
-                var deploymentBounds = RefreshSparCollision();
+                RefreshSparCollision();
+                var deploymentBounds = DeploymentBounds();
                 // The struck peak rises above the set head; retain the full bundle bounds.
                 var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
                 var bounds = clothRenderer.sharedMesh.bounds;

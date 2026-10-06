@@ -39,6 +39,14 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     throw new InvalidOperationException($"Missing physical mast {index}.");
                 return mast;
             }
+            // Exclusions may name native stays as well as physical mast sections.
+            // Supporting endpoints and required sections still use Physical above.
+            BoatPartOption ExcludedOption(int index)
+            {
+                if (!masts.TryGetValue(index, out var mast) || !mast.GetComponent<BoatPartOption>())
+                    throw new InvalidOperationException($"Missing excluded rig option {index}.");
+                return mast.GetComponent<BoatPartOption>();
+            }
             return profile
                 .Stays.Select(group =>
                     group
@@ -88,11 +96,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                                         Physical(i).GetComponent<BoatPartOption>()
                                     )
                                     .ToArray(),
-                                Forbidden = definition
-                                    .Forbidden.Select(i =>
-                                        Physical(i).GetComponent<BoatPartOption>()
-                                    )
-                                    .ToArray(),
+                                Forbidden = definition.Forbidden.Select(ExcludedOption).ToArray(),
                             };
                         })
                         .ToArray()

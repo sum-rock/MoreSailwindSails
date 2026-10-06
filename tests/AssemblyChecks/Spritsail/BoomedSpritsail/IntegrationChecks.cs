@@ -258,9 +258,10 @@ internal static class IntegrationChecks
             .Instructions(method: Method(type: "BoomedSpritsailRig", name: "RefreshSparCollision"))
             .ToArray();
         Require(
-            value: collision.Any(i => i.Operand is string s && s == "BoomedSpritsail spar sweep ")
-                && collision.Any(i => i.Operand is string s && s == "BoomedSpritsail boom sweep "),
-            message: "Fitting must include both moving spars."
+            value: collision.Any(i =>
+                i.Operand is string s && s == "BoomedSpritsail deployed sprit"
+            ) && collision.Any(i => i.Operand is string s && s == "BoomedSpritsail deployed boom"),
+            message: "Fitting must include the deployed sprit and boom."
         );
         var nativeAwake = native
             .GetType(name: "ShipyardSailColChecker", throwOnError: true)
@@ -302,9 +303,9 @@ internal static class IntegrationChecks
                 .CalledMethods(
                     method: Method(type: "BoomedSpritsailRig", name: "ConfigureCollision")
                 )
-                .Count(m => m.Name == "CreateSweepCollider") == 2
+                .Count(m => m.Name == "CreateSparCollider") == 2
                 && configureCalls.Any(m => m.Name == "RefreshSparCollision"),
-            message: "Both sweep sets must be created and posed on the inactive template before native Awake."
+            message: "Both deployed spar colliders must be created and posed on the inactive template before native Awake."
         );
         Require(
             value: !IlReader
@@ -358,7 +359,7 @@ internal static class IntegrationChecks
             message: "SailInfo must resolve boomed mark identities."
         );
         Console.WriteLine(
-            "PASS (structural): boomed 406/407 registration and rollback, installed gaff single-sheet contract, native binding, fixed topology, both spar sweeps and pre-Awake collider lifecycle, force restoration, order guards and HUD names. Unity lifecycle and rendering not executed."
+            "PASS (structural): boomed 406/407 registration and rollback, installed gaff single-sheet contract, native binding, fixed topology, deployed spars and pre-Awake collider lifecycle, force restoration, order guards and HUD names. Unity lifecycle and rendering not executed."
         );
     }
 

@@ -88,49 +88,6 @@ internal static class FlexChecks
                         Weight(Vector3.Lerp(c[1], c[2], i / 32f)) < 1e-10f,
                         "Diagonal must remain fixed."
                     );
-                for (int column = 0; column < 24; column++)
-                {
-                    float from = column / 24f,
-                        to = (column + 1) / 24f;
-                    var bounds = LooseFootedSpritsailFlex.CollisionBounds(
-                        peak: c[1],
-                        tack: c[2],
-                        clew: c[3],
-                        from: from,
-                        to: to,
-                        camber: 0.72f
-                    );
-                    for (int sample = 0; sample <= 4; sample++)
-                    {
-                        float u = from + (to - from) * sample / 4;
-                        var point = Vector3.Lerp(c[2], c[3], u);
-                        float distance =
-                            (c[3] - c[2]).magnitude
-                            * LooseFootedSpritsailFlex.MaximumDisplacement
-                            * Weight(point);
-                        foreach (
-                            var direction in new[]
-                            {
-                                Vector3.up,
-                                Vector3.down,
-                                Vector3.right,
-                                Vector3.left,
-                                Vector3.forward,
-                                Vector3.back,
-                            }
-                        )
-                        {
-                            var posed = point + direction * distance;
-                            var difference = posed - bounds.center;
-                            Require(
-                                Math.Abs(difference.x) <= bounds.extents.x + 1e-5f
-                                    && Math.Abs(difference.y) <= bounds.extents.y + 1e-5f
-                                    && Math.Abs(difference.z) <= bounds.extents.z + 1e-5f,
-                                "Lower collision strips must contain the bounded flex."
-                            );
-                        }
-                    }
-                }
                 for (int reef = 0; reef <= 4; reef++)
                 {
                     float amount = reef / 4f;

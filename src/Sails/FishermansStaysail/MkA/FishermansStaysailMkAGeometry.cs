@@ -20,7 +20,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.MkA
                 || headSlope > 80
             )
                 throw new ArgumentException(
-                    "Expected a finite rising stay slope below 80 degrees."
+                    "Expected a finite stay slope between 0 and 80 degrees."
                 );
             float rise = width * (float)Math.Tan(headSlope * Math.PI / 180);
             float fall = width * (float)Math.Tan(NominalSlope * Math.PI / 180);

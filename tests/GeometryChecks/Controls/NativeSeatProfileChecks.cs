@@ -78,7 +78,20 @@ internal static class NativeSeatProfileChecks
             .Select(l => l.Split('|'))
             .ToArray();
         foreach (
-            string boat in new[] { "Brig", "Junk", "Jong", "Sanbuq", "Cog", "Shroud", "LargeDhow" }
+            string boat in new[]
+            {
+                "Brig",
+                "Junk",
+                "Jong",
+                "Sanbuq",
+                "Cog",
+                "Shroud",
+                "LargeDhow",
+                "Gloriana",
+                "Chronian",
+                "Caelanor",
+                "Gallus",
+            }
         )
             Check(rows.Any(r => r[1] == boat), "Missing boat inventory: " + boat);
         // Verify profile constants against independently extracted shipyard groups.
@@ -88,7 +101,20 @@ internal static class NativeSeatProfileChecks
             .Where(l => l.StartsWith("rig|"))
             .Select(l => l.Split('|'))
             .ToArray();
-        var names = new[] { "Brig", "Junk", "Jong", "Sanbuq", "Cog", "Shroud", "LargeDhow" };
+        var names = new[]
+        {
+            "Brig",
+            "Junk",
+            "Jong",
+            "Sanbuq",
+            "Cog",
+            "Shroud",
+            "LargeDhow",
+            "Gloriana",
+            "Chronian",
+            "Caelanor",
+            "Gallus",
+        };
         for (int b = 0; b < BoatRigCatalog.All.Count; b++)
         {
             var profile = BoatRigCatalog.All[b];

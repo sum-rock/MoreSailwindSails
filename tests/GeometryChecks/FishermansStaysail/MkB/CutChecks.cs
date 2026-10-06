@@ -11,7 +11,7 @@ internal static class CutChecks
     internal static void Run()
     {
         foreach (float width in new[] { 0.25f, 3f, 13.8f, 40f })
-        foreach (float slope in new[] { 0f, 20f, 45f, 75f })
+        foreach (float slope in new[] { 0f, 8.483f, 20f, 45f, 75f })
         {
             var mesh = FishermansStaysailMkBGeometry.Create(width, slope);
             var a = FishermansStaysailMkAGeometry.Create(width, slope).Corners;
@@ -23,7 +23,14 @@ internal static class CutChecks
             Near(Vector3.Dot(c[2] - c[0], c[3] - c[2]), 0, 1e-6f, "fore 90° corner");
             Near(Vector3.Dot(c[1] - c[3], c[2] - c[3]), 0, 1e-5f, "aft 90° corner");
             Near((c[1] - c[3]).magnitude, width + c[1].x, width * 1e-5f, "leech");
-            if (mesh.Center.x >= c[1].x || mesh.Center.x <= c[2].x)
+            float centerU = (mesh.Center.z + width) / width;
+            if (
+                !float.IsFinite(mesh.Center.sqrMagnitude)
+                || centerU <= 0
+                || centerU >= 1
+                || mesh.Center.x >= Vector3.Lerp(c[0], c[1], centerU).x
+                || mesh.Center.x <= Vector3.Lerp(c[2], c[3], centerU).x
+            )
                 throw new Exception("Mk.B centroid is outside the nominal panel.");
 
             int pinned = 0;

@@ -16,7 +16,8 @@ namespace MoreSailwindSails.BoatRigs
         internal readonly string Label;
         internal readonly Vector3 ForePoint,
             AftPoint;
-        internal readonly bool ExtendedGuide;
+        internal readonly bool ExtendedGuide,
+            AlignGuideHeightToAftAnchor;
         internal readonly IReadOnlyList<int> Required,
             Forbidden;
 
@@ -31,7 +32,8 @@ namespace MoreSailwindSails.BoatRigs
             bool extendedGuide,
             int guideIndex,
             IEnumerable<int> required,
-            IEnumerable<int> forbidden
+            IEnumerable<int> forbidden,
+            bool alignGuideHeightToAftAnchor = false
         )
         {
             var requiredCopy = (required ?? Array.Empty<int>()).ToArray();
@@ -62,6 +64,7 @@ namespace MoreSailwindSails.BoatRigs
             ForePoint = forePoint;
             AftPoint = aftPoint;
             ExtendedGuide = extendedGuide;
+            AlignGuideHeightToAftAnchor = alignGuideHeightToAftAnchor;
             GuideIndex = guideIndex;
             Required = Array.AsReadOnly(requiredCopy);
             Forbidden = Array.AsReadOnly(forbiddenCopy);

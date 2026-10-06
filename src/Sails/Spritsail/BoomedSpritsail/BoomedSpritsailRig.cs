@@ -286,34 +286,61 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                     visual.enabled = false;
             }
             // All shapes must exist before native Awake adds sub-checkers, tags and rigidbodies.
-            for (int i = 0; i <= 8; i++)
-            {
-                CreateSweepCollider(parent: root, name: "BoomedSpritsail spar sweep " + i);
-                CreateSweepCollider(parent: root, name: "BoomedSpritsail boom sweep " + i);
-            }
+            CreateSparCollider(parent: root, name: "BoomedSpritsail deployed sprit");
+            CreateSparCollider(parent: root, name: "BoomedSpritsail deployed boom");
             return strips;
         }
 
-        private static void CreateSweepCollider(Transform parent, string name)
+        private static void CreateSparCollider(Transform parent, string name)
         {
             var box = new GameObject(name: name).AddComponent<BoxCollider>();
             box.transform.SetParent(parent: parent, worldPositionStays: false);
             box.isTrigger = true;
         }
 
-        private Bounds RefreshSparCollision()
+        private void RefreshSparCollision()
         {
             var checker = Sail.GetComponent<SailConnections>().colChecker.transform;
+            var scale = Sail.cloth.transform.lossyScale;
+            // Native gaff/junk checks use fixed deployed shapes, independent of reefing or billow.
+            var pose = BoomedSpritsailDeployment.Evaluate(
+                corners: ScaledCorners(scale: scale),
+                unroll: 1
+            );
+            var box = checker.Find(n: "BoomedSpritsail deployed sprit").GetComponent<BoxCollider>();
+            var a = Unscale(point: pose.Heel, scale: scale);
+            var b = Unscale(point: pose.Tip, scale: scale);
+            box.transform.localPosition = (a + b) * 0.5f;
+            box.transform.localRotation = Quaternion.LookRotation(forward: b - a);
+            box.center = Vector3.zero;
+            box.size = new Vector3(
+                -Corners[0].z * 0.04f * SpritsailSpritGeometry.ThicknessMultiplier,
+                -Corners[0].z * 0.04f * SpritsailSpritGeometry.ThicknessMultiplier,
+                (b - a).magnitude
+            );
+            var boomBox = checker
+                .Find(n: "BoomedSpritsail deployed boom")
+                .GetComponent<BoxCollider>();
+            a = Unscale(point: pose.Tack, scale: scale);
+            b = Unscale(point: pose.Clew, scale: scale);
+            boomBox.transform.localPosition = (a + b) * 0.5f;
+            boomBox.transform.localRotation = Quaternion.LookRotation(forward: b - a);
+            boomBox.center = Vector3.zero;
+            boomBox.size = new Vector3(
+                -Corners[0].z * 0.04f,
+                -Corners[0].z * 0.04f,
+                (b - a).magnitude
+            );
+        }
+
+        private Bounds DeploymentBounds()
+        {
             var scale = Sail.cloth.transform.lossyScale;
             var corners = ScaledCorners(scale: scale);
             var envelope = new Bounds(center: Corners[2], size: Vector3.zero);
             for (int i = 0; i <= 8; i++)
             {
-                string name = "BoomedSpritsail spar sweep " + i;
-                var box = checker.Find(n: name).GetComponent<BoxCollider>();
                 var pose = BoomedSpritsailDeployment.Evaluate(corners: corners, unroll: i / 8f);
-                var a = Unscale(point: pose.Heel, scale: scale);
-                var b = Unscale(point: pose.Tip, scale: scale);
                 // Include the raised peak and complete gathered skin in culling bounds.
                 envelope.Encapsulate(point: Unscale(point: pose.Throat, scale: scale));
                 envelope.Encapsulate(point: Unscale(point: pose.Peak, scale: scale));
@@ -335,28 +362,6 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                             scale: scale
                         )
                     );
-                box.transform.localPosition = (a + b) * 0.5f;
-                box.transform.localRotation = Quaternion.LookRotation(forward: b - a);
-                box.center = Vector3.zero;
-                box.size = new Vector3(
-                    -Corners[0].z * 0.04f * SpritsailSpritGeometry.ThicknessMultiplier,
-                    -Corners[0].z * 0.04f * SpritsailSpritGeometry.ThicknessMultiplier,
-                    (b - a).magnitude
-                );
-                box.isTrigger = true;
-                string boomName = "BoomedSpritsail boom sweep " + i;
-                var boomBox = checker.Find(n: boomName).GetComponent<BoxCollider>();
-                a = Unscale(point: pose.Tack, scale: scale);
-                b = Unscale(point: pose.Clew, scale: scale);
-                boomBox.transform.localPosition = (a + b) * 0.5f;
-                boomBox.transform.localRotation = Quaternion.LookRotation(forward: b - a);
-                boomBox.center = Vector3.zero;
-                boomBox.size = new Vector3(
-                    -Corners[0].z * 0.04f,
-                    -Corners[0].z * 0.04f,
-                    (b - a).magnitude
-                );
-                boomBox.isTrigger = true;
             }
             envelope.Expand(amount: -Corners[0].z * 0.1f);
             return envelope;
@@ -468,7 +473,8 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 body.position = forePoint - body.rotation * nextPivot;
                 RefreshCollisionStrips();
                 RefreshClothTravel();
-                var deploymentBounds = RefreshSparCollision();
+                RefreshSparCollision();
+                var deploymentBounds = DeploymentBounds();
                 // The struck peak rises above the set head; retain the full bundle bounds.
                 var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
                 var bounds = clothRenderer.sharedMesh.bounds;

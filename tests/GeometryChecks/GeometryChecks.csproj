@@ -131,6 +131,10 @@
       Link="Spritsail/LooseFootedSpritsail/LooseFootedSpritsailTension.cs"
     />
     <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMastAlignment.cs"
+      Link="Spritsail/SpritsailMastAlignment.cs"
+    />
+    <Compile
       Include="../../src/Sails/Spritsail/SpritsailTravel.cs"
       Link="Spritsail/SpritsailTravel.cs"
     />

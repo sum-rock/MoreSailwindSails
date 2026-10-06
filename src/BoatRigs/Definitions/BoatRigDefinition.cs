@@ -30,12 +30,12 @@ namespace MoreSailwindSails.BoatRigs
                 sheetCategories ?? Array.Empty<SheetWinchCategory>()
             ).ToArray();
             var halyardGroupsCopy = (halyardGroups ?? Array.Empty<HalyardWinchGroup>()).ToArray();
+            // Single-mast sail families need ancestry and controls without a mast pair.
             if (
-                supportsCopy.Length == 0
-                || supportsCopy.Select(s => s.SheetControlSource).Distinct().Count()
-                    != supportsCopy.Length
+                supportsCopy.Select(s => s.SheetControlSource).Distinct().Count()
+                != supportsCopy.Length
             )
-                throw new ArgumentException("Empty mast supportsCopy or duplicate control source.");
+                throw new ArgumentException("Duplicate mast-pair control source.");
             var mounts = staysCopy.SelectMany(g => g.Variants).Select(v => v.MountIndex).ToArray();
             if (mounts.Distinct().Count() != mounts.Length)
                 throw new ArgumentException("Duplicate Fisherman's Stay mount ID.");

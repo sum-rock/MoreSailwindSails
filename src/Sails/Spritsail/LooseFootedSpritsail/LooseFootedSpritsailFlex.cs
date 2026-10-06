@@ -149,31 +149,6 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             return best;
         }
 
-        internal static Bounds CollisionBounds(
-            Vector3 peak,
-            Vector3 tack,
-            Vector3 clew,
-            float from,
-            float to,
-            float camber
-        )
-        {
-            float peakFraction = (peak.z - tack.z) / (clew.z - tack.z);
-            Vector3 Top(float fraction) =>
-                fraction <= peakFraction
-                    ? Vector3.Lerp(tack, peak, peakFraction > 1e-6f ? fraction / peakFraction : 0)
-                    : Vector3.Lerp(peak, clew, (fraction - peakFraction) / (1 - peakFraction));
-            var bounds = new Bounds(center: Top(fraction: from), size: Vector3.zero);
-            bounds.Encapsulate(point: Top(fraction: to));
-            if (from < peakFraction && to > peakFraction)
-                bounds.Encapsulate(point: peak);
-            bounds.Encapsulate(point: Vector3.Lerp(tack, clew, from));
-            bounds.Encapsulate(point: Vector3.Lerp(tack, clew, to));
-            float padding = (clew - tack).magnitude * MaximumDisplacement * to * to;
-            bounds.Expand(amount: Vector3.one * (2 * padding) + Vector3.up * (2 * camber));
-            return bounds;
-        }
-
         private static Vector3 Limit(Vector3 value, float limit) =>
             value.magnitude > limit ? value.normalized * limit : value;
 

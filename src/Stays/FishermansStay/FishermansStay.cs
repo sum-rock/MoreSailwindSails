@@ -18,6 +18,24 @@ namespace MoreSailwindSails.Stays.FishermansStay
         private readonly BoatRefs boat;
         private readonly FishermansStayReferences references;
         internal FishermansStayReferences References => references;
+        internal Vector3 HalyardPoint
+        {
+            get
+            {
+                if (!references.Definition.AlignGuideHeightToAftAnchor)
+                    return references.Guide.position;
+                var spar = references.Aft.GetComponent<CapsuleCollider>();
+                var axis =
+                    spar.direction == 0 ? Vector3.right
+                    : spar.direction == 1 ? Vector3.up
+                    : Vector3.forward;
+                return FishermansStayGeometry.AlignGuideHeight(
+                    guide: references.Guide.position,
+                    head: references.Aft.transform.TransformPoint(references.Definition.AftPoint),
+                    mastAxis: references.Aft.transform.TransformDirection(axis)
+                );
+            }
+        }
         private Mast source => references.Donor;
         private Transform visual,
             walkVisual;
@@ -224,7 +242,10 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 );
             }
             foreach (var pair in anchors)
-                pair.Item2.SetPositionAndRotation(pair.Item1.position, pair.Item1.rotation);
+                pair.Item2.SetPositionAndRotation(
+                    pair.Item1 == references.Guide ? HalyardPoint : pair.Item1.position,
+                    pair.Item1.rotation
+                );
             if (moved && Mount.sails.Count > 0)
                 Mount.UpdateControllerAttachments();
             fits = true;

@@ -110,6 +110,19 @@ internal static class NativeResolverChecks
         );
         var halyardValidate = Type("HalyardWinchPlacementResolver")
             .GetMethod("ValidateCurrent", flags);
+        var halyardFallback = Type("HalyardWinchPlacementResolver").GetMethod("Fallback", flags);
+        Check(
+            CalledMethods(halyard).Any(m => m.Name == "Fallback")
+                && CalledMethods(halyard)
+                    .Any(m => m.Name == "Resolve" && m.DeclaringType.Name == "WinchPlacementPolicy")
+                && CalledMethods(halyardFallback).Any(m => m.Name == "ActiveSupport")
+                && CalledMethods(halyardFallback).Any(m => m.Name == "Template")
+                && CalledMethods(halyardValidate).Any(m => m.Name == "Template")
+                && CalledMethods(halyardValidate).Any(m => m.Name == "MatchesPose")
+                && CalledMethods(Type("HalyardWinchPlacementResolver").GetMethod("Template", flags))
+                    .Any(m => m.Name == "TemplateUsable"),
+            "Manual halyard fallback bypasses allocation, active support, template validity or retained pose checks."
+        );
         Check(
             CalledMethods(halyardValidate).Any(m => m.Name == "HalyardSources")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "ActiveSupport")

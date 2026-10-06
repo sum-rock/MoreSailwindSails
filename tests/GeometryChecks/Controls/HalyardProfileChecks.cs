@@ -20,6 +20,10 @@ internal static class HalyardProfileChecks
             { "Cog", Cog.Definition },
             { "Shroud", Shroud.Definition },
             { "LargeDhow", LargeDhow.Definition },
+            { "Gloriana", Gloriana.Definition },
+            { "Chronian", Chronian.Definition },
+            { "Caelanor", Caelanor.Definition },
+            { "Gallus", Gallus.Definition },
         };
         var associations = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "Controls", "HalyardMounts.txt")
@@ -34,7 +38,10 @@ internal static class HalyardProfileChecks
                     {
                         Boat = row[0],
                         Mast = int.Parse(id),
-                        Sources = row[2].Split(',').Select(int.Parse).ToArray(),
+                        Sources = row[2]
+                            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Select(int.Parse)
+                            .ToArray(),
                     })
             )
             .ToDictionary(row => (row.Boat, row.Mast), row => row.Sources);
@@ -92,12 +99,16 @@ internal static class HalyardProfileChecks
                     );
                 var own = ReefSeats(boat: entry.Key, source: group.Mast);
                 Check(
-                    group
-                        .Sources.Skip(1)
-                        .SelectMany(source => ReefSeats(boat: entry.Key, source: source))
-                        .Except(own)
-                        .Any(),
-                    "Group adds no distinct stay reef seats: " + entry.Key + "/" + group.Mast
+                    group.Fallback?.Valid == true
+                        || group
+                            .Sources.Skip(1)
+                            .SelectMany(source => ReefSeats(boat: entry.Key, source: source))
+                            .Except(own)
+                            .Any(),
+                    "Group adds neither distinct stay reef seats nor a valid fallback: "
+                        + entry.Key
+                        + "/"
+                        + group.Mast
                 );
             }
         }
@@ -126,7 +137,7 @@ internal static class HalyardProfileChecks
             "Brig's registered mainmast source 70 was confused with unregistered foremast source 74."
         );
         Console.WriteLine(
-            $"PASS: {associations.Count} audited halyard groups across seven supported boats, exact mast/section source lists, own-seat priority, registered reef capacity and Brig 70/74 identity separation."
+            $"PASS: {associations.Count} audited halyard groups across eleven supported boats, exact mast/section source lists, own-seat priority, registered reef capacity and Brig 70/74 identity separation."
         );
     }
 
