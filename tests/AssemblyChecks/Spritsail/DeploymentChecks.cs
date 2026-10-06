@@ -24,6 +24,20 @@ internal static class DeploymentChecks
         {
             var resolve = Method(type: type + "." + type + "Rigging", name: "TryResolve");
             var calls = IlReader.CalledMethods(method: resolve).ToArray();
+            var upright = Method(type: type + "." + type + "Rigging", name: "IsUpright");
+            Require(
+                value: calls.Any(m => m.Name == "IsUpright")
+                    && IlReader
+                        .CalledMethods(method: upright)
+                        .Any(m => m.Name == "InverseTransformVector")
+                    && IlReader
+                        .CalledMethods(method: upright)
+                        .Any(m =>
+                            m.DeclaringType.Name == "SpritsailMastAlignment"
+                            && m.Name == "IsUpright"
+                        ),
+                message: "Both spritsail types must reject rake in the boat frame during mast compatibility resolution."
+            );
             Require(
                 value: calls.Any(m => m.DeclaringType.Name == "BoatRigCatalog" && m.Name == "Find")
                     && IlReader

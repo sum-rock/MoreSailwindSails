@@ -10,6 +10,7 @@ internal static class Program
         Spritsail.CategoryChecks.Run();
         Spritsail.BoomedSpritsail.GeometryChecks.Run();
         Spritsail.TravelChecks.Run();
+        Spritsail.MastAlignmentChecks.Run();
         Spritsail.SpritVisualChecks.Run();
         Spritsail.DeploymentChecks.Run();
         Spritsail.ObstructionChecks.Run();

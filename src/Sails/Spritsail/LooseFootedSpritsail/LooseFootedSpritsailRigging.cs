@@ -52,7 +52,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 return false;
             if (
                 !profile.MastParents.ContainsKey(key: fore.orderIndex)
-                || !fore.GetComponent<CapsuleCollider>()
+                || !IsUpright(mast: fore, boat: boat)
                 || !FishermanWinchControls.BootstrapReady(boat: boat, forward: fore, halyard: fore)
             )
                 return false;
@@ -60,6 +60,15 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 .Where(predicate: m => m.gameObject.activeInHierarchy)
                 .GroupBy(keySelector: m => m.orderIndex)
                 .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First());
+            if (
+                profile
+                    .Sections(section: fore.orderIndex)
+                    .Any(predicate: id =>
+                        !masts.TryGetValue(key: id, value: out var support)
+                        || !IsUpright(mast: support, boat: boat)
+                    )
+            )
+                return false;
             Transform highest = null;
             Mast[] selected = null;
             float height = float.NegativeInfinity;
@@ -70,7 +79,9 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 var chain = profile.Sections(section: section.orderIndex);
                 if (
                     !chain.Contains(value: fore.orderIndex)
-                    || chain.Any(predicate: id => !masts.ContainsKey(key: id))
+                    || chain.Any(predicate: id =>
+                        !masts.ContainsKey(key: id) || !IsUpright(mast: masts[id], boat: boat)
+                    )
                 )
                     continue;
                 foreach (
@@ -106,6 +117,22 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 w && w.GetComponent<Renderer>() && w.GetComponent<Collider>()
             );
 
+        private static bool IsUpright(Mast mast, BoatRefs boat)
+        {
+            var collider = mast ? mast.GetComponent<CapsuleCollider>() : null;
+            if (!collider || !boat)
+                return false;
+            var localAxis =
+                collider.direction == 0 ? Vector3.right
+                : collider.direction == 1 ? Vector3.up
+                : Vector3.forward;
+            return SpritsailMastAlignment.IsUpright(
+                boatLocalAxis: boat.transform.InverseTransformVector(
+                    vector: collider.transform.TransformVector(vector: localAxis)
+                )
+            );
+        }
+
         internal bool Bind(Mast mast)
         {
             // A removal preview temporarily enables two mutually exclusive options.
@@ -115,6 +142,9 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 Support != null
                 && Support.Mast == mast
                 && Support.Active
+                && Support.Sections.All(predicate: section =>
+                    IsUpright(mast: section, boat: Support.Boat)
+                )
                 && (!bindingDirty || GameState.currentShipyard)
             )
                 return true;
@@ -140,7 +170,9 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             var pair = sail.GetComponent<LooseFootedSpritsailRigging>()?.Support;
             if (pair == null || pair.Mast != mast || !pair.Active)
                 if (!TryResolve(fore: mast, pair: out pair))
-                    return "(REQUIRES A SUPPORTED MAST WITH ACTIVE GUIDES AND CONTROL TEMPLATES)";
+                    return "(REQUIRES A SUPPORTED UPRIGHT MAST WITH ACTIVE GUIDES AND CONTROL TEMPLATES)";
+            if (pair.Sections.Any(predicate: section => !IsUpright(mast: section, boat: pair.Boat)))
+                return "(SPRITSAILS REQUIRE AN UPRIGHT MAST)";
             var head = mast.transform.TransformPoint(
                 position: new Vector3(0, 0, sail.GetCurrentInstallHeight() - mast.mastHeight)
             );
