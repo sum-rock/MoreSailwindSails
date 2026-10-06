@@ -4,13 +4,18 @@ using System.Linq;
 
 namespace MoreSailwindSails.BoatRigs
 {
-    // Immutable ordered native reef sources for one exact requested mast ID.
+    // Ordered native reef sources and an optional measured seat for one requested mast ID.
     internal sealed class HalyardWinchGroup
     {
         internal readonly int Mast;
         internal readonly IReadOnlyList<int> Sources;
+        internal readonly HalyardFallbackSeat Fallback;
 
-        internal HalyardWinchGroup(int mast, IEnumerable<int> sources)
+        internal HalyardWinchGroup(
+            int mast,
+            IEnumerable<int> sources,
+            HalyardFallbackSeat fallback = null
+        )
         {
             var sourcesCopy = (sources ?? Array.Empty<int>()).ToArray();
             if (
@@ -23,6 +28,7 @@ namespace MoreSailwindSails.BoatRigs
                 throw new ArgumentException("Invalid halyard winch group.");
             Mast = mast;
             Sources = Array.AsReadOnly(sourcesCopy);
+            Fallback = fallback;
         }
     }
 }
