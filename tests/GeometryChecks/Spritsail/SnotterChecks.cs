@@ -420,13 +420,34 @@ internal static class SnotterChecks
             value: smoothSleeve,
             message: "The sleeve bake must retain smooth vertex normals distinct from flat triangle normals."
         );
-        for (int i = 0; i < mapped.Length; i++)
+        foreach (
+            int index in SpritsailSnotterGeometry.MaterialTriangles(
+                material: SpritsailSnotterGeometry.MetalMaterial
+            )
+        )
             Require(
-                value: mapped[i] == original[i],
-                message: "Fitting must preserve the exported UVs on both authored materials."
+                value: mapped[index] == original[index],
+                message: "Mast trim remapping must preserve every metal UV from the Blender export."
             );
+        foreach (
+            int index in SpritsailSnotterGeometry.MaterialTriangles(
+                material: SpritsailSnotterGeometry.DarkWoodMaterial
+            )
+        )
+        {
+            var uv = mapped[index];
+            Require(
+                value: float.IsFinite(uv.x)
+                    && float.IsFinite(uv.y)
+                    && uv.x >= 0.350f - 1e-6f
+                    && uv.x <= 0.352f + 1e-6f
+                    && uv.y >= 0.870f - 1e-6f
+                    && uv.y <= 0.900f + 1e-6f,
+                message: "Every wood face must sample only the inspected dark mast trim patch, including shared triangle corners."
+            );
+        }
         Console.WriteLine(
-            "PASS: authored smooth normals, nonuniform mounting normal fit, unchanged authored UVs."
+            "PASS: authored smooth normals, nonuniform mounting normal fit, dark mast trim UV containment and unchanged authored metal UVs."
         );
     }
 

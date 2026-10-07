@@ -86,6 +86,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                         parts[i] = part;
                     }
                     var buckets = new[] { new List<int>(), new List<int>() };
+                    var woodVertices = new bool[vertexCount];
                     for (int i = 0; i < indexCount; i += 3)
                     {
                         for (int corner = 0; corner < 3; corner++)
@@ -103,9 +104,23 @@ namespace MoreSailwindSails.Sails.Spritsail
                                 message: "Invalid snotter mesh material."
                             );
                         for (int corner = 0; corner < 3; corner++)
+                        {
                             buckets[material].Add(item: indices[i + corner]);
+                            if (material == DarkWoodMaterial)
+                                woodVertices[indices[i + corner]] = true;
+                        }
                     }
                     materialIndices = new[] { buckets[0].ToArray(), buckets[1].ToArray() };
+                    // Native dhow_medium_paint (Sailwind 0.39): interior of the dark
+                    // longitudinal mast wood island, away from its edge and bright grain.
+                    // The bake has separate face corners, so wood UVs never alter metal.
+                    // Map each vertex once even when two triangles share a face corner.
+                    for (int i = 0; i < vertexCount; i++)
+                        if (woodVertices[i])
+                            texture[i] = new Vector2(
+                                x: 0.350f + texture[i].x * 0.002f,
+                                y: 0.870f + texture[i].y * 0.030f
+                            );
                 }
             }
         }
