@@ -421,7 +421,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 .transform.InverseTransformDirection(direction: foreAxis)
                 .normalized;
             var aftDirection = mount.transform.InverseTransformDirection(
-                direction: rigging.AftDirection
+                direction: rigging.AftDirection(axis: foreAxis)
             );
             var alignment =
                 Quaternion.LookRotation(

@@ -36,7 +36,7 @@ namespace MoreSailwindSails.Sails.Spritsail
         private static readonly Vector3[] source;
         private static readonly Vector3[] sourceNormals;
         private static readonly Vector2[] texture;
-        private static readonly int[] indices;
+
         private static readonly int[][] materialIndices;
 
         static SpritsailSnotterGeometry()
@@ -79,7 +79,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                     sourceNormals = new Vector3[vertexCount];
                     texture = new Vector2[vertexCount];
                     parts = new int[vertexCount];
-                    indices = new int[indexCount];
+                    var indices = new int[indexCount];
                     for (int i = 0; i < vertexCount; i++)
                     {
                         float x = reader.ReadSingle(),
@@ -168,20 +168,18 @@ namespace MoreSailwindSails.Sails.Spritsail
         internal static float LuffDistance(float mastRadius) =>
             (mastRadius + Clearance) / InnerRadius * OuterRadius + SpritClearance;
 
-        internal static void Create(
+        internal static Vector2[] TextureCoordinates() => (Vector2[])texture.Clone();
+
+        internal static void Fit(
             float sparRadius,
             float mastRadius,
             float pivotDistance,
             out Vector3[] vertices,
-            out Vector3[] normals,
-            out Vector2[] uv,
-            out int[] triangles
+            out Vector3[] normals
         )
         {
             vertices = new Vector3[source.Length];
             normals = new Vector3[source.Length];
-            uv = (Vector2[])texture.Clone();
-            triangles = (int[])indices.Clone();
             float scale = (mastRadius + Clearance) / InnerRadius;
             float mountingScale = (mastRadius + MountingDiameterExtra / 2) / MountingOuterRadius;
             float pinBase = mastRadius * 0.9f;

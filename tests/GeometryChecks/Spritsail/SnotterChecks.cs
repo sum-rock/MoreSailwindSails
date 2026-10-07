@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using MoreSailwindSails.Sails.Spritsail;
 using UnityEngine;
@@ -23,15 +24,18 @@ internal static class SnotterChecks
         {
             float pivot =
                 SpritsailSnotterGeometry.LuffDistance(mastRadius: mastRadius) + sparRadius;
-            SpritsailSnotterGeometry.Create(
+            SpritsailSnotterGeometry.Fit(
                 sparRadius: sparRadius,
                 mastRadius: mastRadius,
                 pivotDistance: pivot,
                 vertices: out var vertices,
-                normals: out var normals,
-                uv: out var uv,
-                triangles: out var triangles
+                normals: out var normals
             );
+            var uv = SpritsailSnotterGeometry.TextureCoordinates();
+            var triangles = SpritsailSnotterGeometry
+                .MaterialTriangles(material: 0)
+                .Concat(SpritsailSnotterGeometry.MaterialTriangles(material: 1))
+                .ToArray();
             Require(
                 value: vertices.Length == 3164
                     && triangles.Length == 4902
@@ -180,15 +184,18 @@ internal static class SnotterChecks
             vertices[0] = Vector3.zero;
             uv[0] = Vector2.zero;
             triangles[0] = -1;
-            SpritsailSnotterGeometry.Create(
+            SpritsailSnotterGeometry.Fit(
                 sparRadius: sparRadius,
                 mastRadius: mastRadius,
                 pivotDistance: pivot,
                 vertices: out var fresh,
-                normals: out var freshNormals,
-                uv: out var freshUv,
-                triangles: out var freshTriangles
+                normals: out var freshNormals
             );
+            var freshUv = SpritsailSnotterGeometry.TextureCoordinates();
+            var freshTriangles = SpritsailSnotterGeometry
+                .MaterialTriangles(material: 0)
+                .Concat(SpritsailSnotterGeometry.MaterialTriangles(material: 1))
+                .ToArray();
             Require(
                 value: freshNormals[0] == originalNormal
                     && fresh[0] == original
@@ -275,15 +282,10 @@ internal static class SnotterChecks
 
     private static void CheckMaterials()
     {
-        SpritsailSnotterGeometry.Create(
-            sparRadius: 0.08f,
-            mastRadius: 0.3f,
-            pivotDistance: 0.5f,
-            vertices: out _,
-            normals: out _,
-            uv: out _,
-            triangles: out var all
-        );
+        var all = SpritsailSnotterGeometry
+            .MaterialTriangles(material: 0)
+            .Concat(SpritsailSnotterGeometry.MaterialTriangles(material: 1))
+            .ToArray();
         var remaining = new HashSet<(int, int, int)>();
         for (int i = 0; i < all.Length; i += 3)
             Require(
@@ -335,15 +337,18 @@ internal static class SnotterChecks
 
     private static void CheckSurfaceData()
     {
-        SpritsailSnotterGeometry.Create(
+        SpritsailSnotterGeometry.Fit(
             sparRadius: 0.08f,
             mastRadius: 0.3f,
             pivotDistance: 0.5f,
             vertices: out var vertices,
-            normals: out var normals,
-            uv: out var mapped,
-            triangles: out var triangles
+            normals: out var normals
         );
+        var mapped = SpritsailSnotterGeometry.TextureCoordinates();
+        var triangles = SpritsailSnotterGeometry
+            .MaterialTriangles(material: 0)
+            .Concat(SpritsailSnotterGeometry.MaterialTriangles(material: 1))
+            .ToArray();
         // Compare against the embedded export, independently of the runtime UV cache.
         using var stream = typeof(SpritsailSnotterGeometry).Assembly.GetManifestResourceStream(
             name: SpritsailSnotterGeometry.ResourceName

@@ -22,6 +22,19 @@ internal static class DeploymentChecks
                 .GetMethod(name: name, bindingAttr: all);
         foreach (string type in new[] { "LooseFootedSpritsail", "BoomedSpritsail" })
         {
+            var aft = Method(type: type + "." + type + "Rigging", name: "AftDirection");
+            Require(
+                value: !IlReader.CalledMethods(method: aft).Any(m => m.Name == "LuffSailFrame")
+                    && IlReader
+                        .CalledMethods(
+                            method: Method(
+                                type: type + "." + type + "Rig",
+                                name: "RefreshMastFrame"
+                            )
+                        )
+                        .Count(m => m.Name == "LuffSailFrame") == 1,
+                message: "Mast alignment must resolve the stateful luff frame only once."
+            );
             var resolve = Method(type: type + "." + type + "Rigging", name: "TryResolve");
             var calls = IlReader.CalledMethods(method: resolve).ToArray();
             var upright = Method(type: type + "." + type + "Rigging", name: "IsUpright");

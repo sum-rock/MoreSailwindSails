@@ -282,16 +282,10 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             axis = pair.Boat.transform.TransformDirection(direction: (top - bottom).normalized);
         }
 
-        internal Vector3 AftDirection
-        {
-            get
-            {
-                LuffSailFrame(point: out _, axis: out var axis, hingePoint: out _);
-                return Vector3
-                    .ProjectOnPlane(vector: -Support.Boat.transform.forward, planeNormal: axis)
-                    .normalized;
-            }
-        }
+        internal Vector3 AftDirection(Vector3 axis) =>
+            Vector3
+                .ProjectOnPlane(vector: -Support.Boat.transform.forward, planeNormal: axis)
+                .normalized;
 
         // Native Mast.UpdateControllerAttachments owns the two winches and the sheet route.
         // Only the coordinated sprit purchase needs an active upper mast guide.

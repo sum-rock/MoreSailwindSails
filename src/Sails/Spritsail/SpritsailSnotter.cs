@@ -154,14 +154,12 @@ namespace MoreSailwindSails.Sails.Spritsail
                 || Mathf.Abs(mastRadius - meshMastRadius) > 0.001f
             )
             {
-                SpritsailSnotterGeometry.Create(
+                SpritsailSnotterGeometry.Fit(
                     sparRadius: contactRadius,
                     mastRadius: mastRadius,
                     pivotDistance: pivotDistance,
                     vertices: out profile,
-                    normals: out profileNormals,
-                    uv: out var uv,
-                    triangles: out _
+                    normals: out profileNormals
                 );
                 posed = new Vector3[profile.Length];
                 posedNormals = new Vector3[profile.Length];
@@ -172,7 +170,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                     GetComponent<MeshFilter>().sharedMesh = ownedMesh;
                 }
                 ownedMesh.vertices = profile;
-                ownedMesh.uv = uv;
+                ownedMesh.uv = SpritsailSnotterGeometry.TextureCoordinates();
                 ownedMesh.subMeshCount = SpritsailSnotterGeometry.MaterialCount;
                 for (
                     int material = 0;

@@ -382,6 +382,11 @@ assets are redistributed or modified.
 
 ### Shared sprit and snotter visuals
 
+Snotter fitting returns only positions and normals; UVs and material topology
+are requested separately when a mesh needs initialization. Mast alignment passes
+its already resolved axis into `AftDirection`, avoiding a second stateful
+luff-frame resolution in both spritsail families.
+
 The sprit is rigid, with a **1.03** thickness multiplier, end radii **85%** of
 its middle radius and separate flat-cap vertices. Its bolt pivot sits
 one-quarter up the deployed luff, initially on the starboard side of the mast.

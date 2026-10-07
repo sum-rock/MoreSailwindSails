@@ -292,16 +292,10 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             axis = pair.Boat.transform.TransformDirection(direction: (top - bottom).normalized);
         }
 
-        internal Vector3 AftDirection
-        {
-            get
-            {
-                LuffSailFrame(point: out _, axis: out var axis, hingePoint: out _);
-                return Vector3
-                    .ProjectOnPlane(vector: -Support.Boat.transform.forward, planeNormal: axis)
-                    .normalized;
-            }
-        }
+        internal Vector3 AftDirection(Vector3 axis) =>
+            Vector3
+                .ProjectOnPlane(vector: -Support.Boat.transform.forward, planeNormal: axis)
+                .normalized;
 
         internal void AttachControls()
         {
