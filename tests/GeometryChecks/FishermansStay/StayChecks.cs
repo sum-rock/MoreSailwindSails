@@ -44,7 +44,7 @@ internal static class StayChecks
         );
         int variants = 0,
             fallback = 0;
-        int[] counts = { 24, 9, 9, 26, 3, 8, 14, 3, 2, 1, 0 };
+        int[] counts = { 24, 9, 9, 26, 3, 8, 14, 3, 2, 1, 2, 2 };
         for (int boatIndex = 0; boatIndex < BoatRigCatalog.All.Count; boatIndex++)
         {
             var boat = BoatRigCatalog.All[boatIndex];
@@ -237,7 +237,7 @@ internal static class StayChecks
             "Stay guard changed flying-sail scope."
         );
         Console.WriteLine(
-            $"PASS: {variants} authored stays across ten Fisherman boat profiles, {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs, pose invariance and order text."
+            $"PASS: {variants} authored stays across {BoatRigCatalog.All.Count} Fisherman boat profiles, {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs, pose invariance and order text."
         );
     }
 

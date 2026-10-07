@@ -90,6 +90,8 @@ internal static class NativeSeatProfileChecks
                 "Gloriana",
                 "Chronian",
                 "Caelanor",
+                "Kakam",
+                "Dhow",
             }
         )
             Check(rows.Any(r => r[1] == boat), "Missing boat inventory: " + boat);
@@ -112,6 +114,8 @@ internal static class NativeSeatProfileChecks
             "Gloriana",
             "Chronian",
             "Caelanor",
+            "Kakam",
+            "Dhow",
         };
         for (int b = 0; b < BoatRigCatalog.All.Count; b++)
         {
