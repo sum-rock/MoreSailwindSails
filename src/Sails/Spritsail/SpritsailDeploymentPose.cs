@@ -5,6 +5,7 @@ namespace MoreSailwindSails.Sails.Spritsail
     // A complete deployment sample, independent of Unity objects and prior frames.
     internal readonly struct SpritsailDeploymentPose
     {
+        // Heel is the bolt pivot in the rotating sail frame; the rendered spar extends forward of it.
         internal readonly Vector3 Throat,
             Peak,
             Tack,

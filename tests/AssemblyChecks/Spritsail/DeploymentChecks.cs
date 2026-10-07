@@ -167,9 +167,20 @@ internal static class DeploymentChecks
             ),
             message: "Sheet flex must not rebuild or reset live Cloth."
         );
+        using (var socket = assembly.GetManifestResourceStream(name: "MoreSailwindSails.Snotter"))
+            Require(
+                value: socket != null && socket.Length > 12,
+                message: "The plugin DLL must carry the authored snotter mesh without loose runtime assets."
+            );
         var visual = IlReader
             .CalledMethods(method: Method(type: "SpritsailSnotter", name: "Pose"))
             .ToArray();
+        Require(
+            value: visual.Any(m => m.Name == "set_normals")
+                && !visual.Any(m => m.Name == "RecalculateNormals")
+                && visual.Any(m => m.Name == "RecalculateTangents"),
+            message: "Snotter posing must retain authored smooth normals and refresh tangents without flattening face corners."
+        );
         foreach (var calls in new[] { runtime, visual })
             Require(
                 value: calls.Any(m =>

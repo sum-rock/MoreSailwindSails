@@ -18,11 +18,12 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
         )
         {
             const float socketRow = 1 - SpritsailDeployment.SocketLuffFraction;
+            var luffSocket = pose.Heel - SpritsailDeployment.LashingOffset(corners: corners);
             var fore =
                 v <= socketRow
-                    ? Vector3.Lerp(a: pose.Throat, b: pose.Heel, t: v / socketRow)
+                    ? Vector3.Lerp(a: pose.Throat, b: luffSocket, t: v / socketRow)
                     : Vector3.Lerp(
-                        a: pose.Heel,
+                        a: luffSocket,
                         b: pose.Tack,
                         t: (v - socketRow) / (1 - socketRow)
                     );

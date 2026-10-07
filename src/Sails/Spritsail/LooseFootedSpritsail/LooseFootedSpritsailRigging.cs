@@ -222,22 +222,18 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 );
         }
 
-        internal void LuffSailFrame(out Vector3 point, out Vector3 axis)
+        internal void LuffSailFrame(out Vector3 point, out Vector3 axis, out Vector3 hingePoint)
         {
             var mast = Support.Mast;
             var heightPoint = mast.transform.TransformPoint(
                 position: new Vector3(0, 0, sail.GetCurrentInstallHeight() - mast.mastHeight)
             );
             MastFrame(pair: Support, heightPoint: heightPoint, point: out point, axis: out axis);
-            var aft = Vector3
-                .ProjectOnPlane(vector: -Support.Boat.transform.forward, planeNormal: axis)
+            hingePoint = point;
+            var starboard = Vector3
+                .ProjectOnPlane(vector: Support.Boat.transform.right, planeNormal: axis)
                 .normalized;
             var rig = sail.GetComponent<LooseFootedSpritsailRig>();
-            float sparRadius =
-                -rig.Corners[0].z
-                * sail.cloth.transform.lossyScale.z
-                * 0.018f
-                * SpritsailSpritGeometry.ThicknessMultiplier;
             if (surfaceMast != mast || mastSurface == null)
             {
                 surfaceMast = mast;
@@ -249,11 +245,12 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 * (1 - SpritsailDeployment.SocketLuffFraction);
             SocketRadius = mastSurface.Radius(
                 center: point - axis * down,
-                direction: aft,
+                direction: starboard,
                 fallback: MastRadius(mast: mast)
             );
-            SocketGap = sparRadius * 1.1f + 0.005f;
-            point += aft * (SocketRadius + SocketGap);
+            SocketGap =
+                SpritsailSnotterGeometry.LuffDistance(mastRadius: SocketRadius) - SocketRadius;
+            point += starboard * (SocketRadius + SocketGap);
         }
 
         private static void MastFrame(
@@ -299,7 +296,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
         {
             get
             {
-                LuffSailFrame(point: out _, axis: out var axis);
+                LuffSailFrame(point: out _, axis: out var axis, hingePoint: out _);
                 return Vector3
                     .ProjectOnPlane(vector: -Support.Boat.transform.forward, planeNormal: axis)
                     .normalized;

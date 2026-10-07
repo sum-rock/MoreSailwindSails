@@ -85,7 +85,9 @@ internal static class PrototypeChecks
                         message: "The luff must stay on its mast line."
                     );
                     Require(
-                        value: Math.Abs((pose.Tip - pose.Peak).magnitude - width * scale.z * 0.04f)
+                        value: Math.Abs(
+                            (pose.Tip - pose.Peak).magnitude - width * scale.z * 0.01854f
+                        )
                             < length * 0.00001f,
                         message: "The working peak must remain lashed beside the spar tip."
                     );

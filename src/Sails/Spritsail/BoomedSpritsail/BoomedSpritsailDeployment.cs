@@ -22,9 +22,9 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 throw new ArgumentException(message: "Expected positive span and luff.");
             float amount = SpritsailDeployment.Amount(unroll: unroll);
             var socket = SpritsailDeployment.WorkingSocket(corners: corners);
-            // Match the family sprit's fixed on-axis socket and side lashing.
+            // Both ends share the side offset, keeping the spar perpendicular to its bolt.
             // Only the foot changes: its fixed tack drives a rigid boom arc.
-            var side = Vector3.up * (width * 0.04f);
+            var side = SpritsailDeployment.LashingOffset(corners: corners);
             var tip = Pivot(origin: socket, working: corners[1] + side, amount: amount);
             var clew = Pivot(origin: corners[2], working: corners[3], amount: amount);
             return new SpritsailDeploymentPose(

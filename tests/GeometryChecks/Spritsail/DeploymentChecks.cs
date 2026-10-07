@@ -77,9 +77,11 @@ internal static class DeploymentChecks
                         degrees: angle
                     );
                     Require(
-                        value: (heel - full.Heel).magnitude < epsilon
+                        value: Math.Abs(
+                            (heel - corners[0]).magnitude - (full.Heel - corners[0]).magnitude
+                        ) < epsilon
                             && Math.Abs((tip - heel).magnitude - length) < epsilon,
-                        message: "Tacking must pivot the sprit without orbiting its heel."
+                        message: "Tacking must preserve the bolt orbit radius and rigid sprit length."
                     );
                     // A raked mast and translated boat must preserve these same invariants.
                     var rakedHeel = LooseFootedSpritsailFrameGeometry.RotateAroundMast(

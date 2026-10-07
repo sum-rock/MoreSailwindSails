@@ -18,14 +18,23 @@ namespace MoreSailwindSails.Sails.Spritsail
         {
             if (corners == null || corners.Length != 4)
                 throw new ArgumentException(message: "Expected four spritsail corners.");
-            return Vector3.Lerp(a: corners[2], b: corners[0], t: SocketLuffFraction);
+            return Vector3.Lerp(a: corners[2], b: corners[0], t: SocketLuffFraction)
+                + LashingOffset(corners: corners);
         }
+
+        internal static Vector3 LashingOffset(Vector3[] corners) =>
+            Vector3.up
+            * (
+                (corners[3].z - corners[2].z)
+                * SpritsailSpritGeometry.RadiusFraction
+                * SpritsailSpritGeometry.ThicknessMultiplier
+            );
 
         internal static SpritsailDeploymentPose Evaluate(Vector3[] corners, float unroll) =>
             Evaluate(corners: corners, socket: WorkingSocket(corners: corners), unroll: unroll);
 
         // Scale-applied sail frame: X along the mast, Y normal, Z aft. The socket
-        // lies on the fixed luff/hinge axis, so neither reefing nor tacking moves it.
+        // is fixed in this rotating frame, offset from the luff along the bolt axis.
         internal static SpritsailDeploymentPose Evaluate(
             Vector3[] corners,
             Vector3 socket,
@@ -45,7 +54,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                     message: "Expected a positive spritsail span and luff."
                 );
             float amount = Amount(unroll: unroll);
-            var side = Vector3.up * (width * 0.04f);
+            var side = LashingOffset(corners: corners);
             var working = corners[1] + side - socket;
             float length = working.magnitude;
             float angle = (float)Math.Acos(Math.Max(-1, Math.Min(1, working.x / length)));
@@ -58,7 +67,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                         + outward * (float)Math.Sin(angle * amount)
                     );
             var peak = tip - side;
-            var tack = Vector3.Lerp(a: socket, b: corners[2], t: amount);
+            var tack = Vector3.Lerp(a: socket - side, b: corners[2], t: amount);
             var clew = GatheredClew(
                 requested: Vector3.Lerp(a: socket - side, b: corners[3], t: amount),
                 peak: peak,
