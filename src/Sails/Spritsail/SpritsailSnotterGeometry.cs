@@ -1,244 +1,278 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
 {
-    // Builds curved wooden cheek plates, a seated heel cradle, mast band and bolt heads.
+    // Fits and poses the rotating sleeve/bolt and mast-fixed lower mounting.
     internal static class SpritsailSnotterGeometry
     {
-        internal static void Create(
-            float backDepth,
-            float mastRadius,
-            out Vector3[] vertices,
-            out Vector2[] uv,
-            out int[] wood,
-            out int[] iron
-        )
+        internal const string ResourceName = "MoreSailwindSails.Snotter";
+        internal const int HeaderSize = 100;
+
+        internal const int DarkWoodMaterial = 0;
+        internal const int MetalMaterial = 1;
+        internal const int MaterialCount = 2;
+
+        internal const int SleevePart = 0;
+        internal const int BoltPart = 1;
+        internal const int MountingPart = 2;
+
+        // Supplied OBJ: Y up, bolt centered at Y=Z=0 and pointing along -X.
+        // Inner radii include the flat facets, not just the circular vertex rings.
+        private static readonly float InnerRadius;
+        private static readonly float MountingOuterRadius;
+        private const float MountingDiameterExtra = 0.2032f;
+        private static readonly float OuterRadius;
+        private static readonly float BoltBase;
+        private static readonly float HeadInner;
+        private static readonly float BoltEnd;
+        private const float SpritClearance = 0.003f;
+        private const float HeadClearance = 0.001f;
+        private const float BoltProjection = 0.005f;
+        private const float Clearance = 0.005f;
+        private static readonly int[] parts;
+        private static readonly Vector3[] source;
+        private static readonly Vector3[] sourceNormals;
+        private static readonly Vector2[] texture;
+
+        private static readonly int[][] materialIndices;
+
+        static SpritsailSnotterGeometry()
         {
-            var points = new List<Vector3>();
-            var texture = new List<Vector2>();
-            var woodIndices = new List<int>();
-            var ironIndices = new List<int>();
-            const int steps = 24;
-            for (int i = 0; i < steps; i++)
+            using (
+                var stream = typeof(SpritsailSnotterGeometry).Assembly.GetManifestResourceStream(
+                    name: ResourceName
+                )
+            )
             {
-                float a = -(float)Math.PI / 2 + (float)Math.PI * i / steps;
-                float b = -(float)Math.PI / 2 + (float)Math.PI * (i + 1) / steps;
-                Vector3 Inner(float angle) =>
-                    new Vector3(
-                        0,
-                        0.65f + 1.55f * (float)Math.Sin(angle),
-                        1 - (backDepth + 0.5f) * (float)Math.Cos(angle)
+                if (stream == null)
+                    throw new InvalidOperationException(
+                        message: "Embedded snotter mesh is missing."
                     );
-                Vector3 Outer(float angle) =>
-                    new Vector3(
-                        0,
-                        0.65f + 1.95f * (float)Math.Sin(angle),
-                        1.1f - (backDepth + 1.1f) * (float)Math.Cos(angle)
-                    );
-                Strip(
-                    low: -1.65f,
-                    high: -1.1f,
-                    a: Inner(angle: a),
-                    b: Inner(angle: b),
-                    c: Outer(angle: a),
-                    d: Outer(angle: b)
-                );
-                Strip(
-                    low: 1.1f,
-                    high: 1.65f,
-                    a: Inner(angle: a),
-                    b: Inner(angle: b),
-                    c: Outer(angle: a),
-                    d: Outer(angle: b)
-                );
-                // Join the cheeks below the heel and against the mast, leaving
-                // the forward and upper mouth open for pitching and stowing.
-                if (i < 3 || (i >= 10 && i < 14))
-                    Strip(
-                        low: -1.1f,
-                        high: 1.1f,
-                        a: Inner(angle: a),
-                        b: Inner(angle: b),
-                        c: Outer(angle: a),
-                        d: Outer(angle: b)
-                    );
-            }
-            var mastCenter = new Vector3(0, 0, -backDepth - mastRadius);
-            for (int i = 0; i < 48; i++)
-            {
-                float a = (float)Math.PI * 2 * i / 48;
-                float b = (float)Math.PI * 2 * (i + 1) / 48;
-                Vector3 Ring(float angle, float radius, float height) =>
-                    mastCenter
-                    + new Vector3(
-                        (float)Math.Sin(angle) * radius,
-                        height,
-                        (float)Math.Cos(angle) * radius
-                    );
-                var outward = new Vector3(
-                    (float)Math.Sin((a + b) / 2),
-                    0,
-                    (float)Math.Cos((a + b) / 2)
-                );
-                float inner = mastRadius + 0.015f,
-                    outer = mastRadius + 0.13f;
-                Quad(
-                    a: Ring(a, outer, 0.25f),
-                    b: Ring(b, outer, 0.25f),
-                    c: Ring(b, outer, 0.95f),
-                    d: Ring(a, outer, 0.95f),
-                    normal: outward,
-                    metal: true
-                );
-                Quad(
-                    a: Ring(a, inner, 0.25f),
-                    b: Ring(b, inner, 0.25f),
-                    c: Ring(b, inner, 0.95f),
-                    d: Ring(a, inner, 0.95f),
-                    normal: -outward,
-                    metal: true
-                );
-                Quad(
-                    a: Ring(a, inner, 0.95f),
-                    b: Ring(b, inner, 0.95f),
-                    c: Ring(b, outer, 0.95f),
-                    d: Ring(a, outer, 0.95f),
-                    normal: Vector3.up,
-                    metal: true
-                );
-                Quad(
-                    a: Ring(a, inner, 0.25f),
-                    b: Ring(b, inner, 0.25f),
-                    c: Ring(b, outer, 0.25f),
-                    d: Ring(a, outer, 0.25f),
-                    normal: Vector3.down,
-                    metal: true
-                );
-            }
-            foreach (float side in new[] { -1f, 1f })
-            {
-                var center = new Vector3(side * 1.67f, 0.6f, -backDepth + 0.25f);
-                // A narrow iron mounting plate and raised six-sided bolt head.
-                Quad(
-                    a: center + new Vector3(0, -0.55f, -0.2f),
-                    b: center + new Vector3(0, 0.55f, -0.2f),
-                    c: center + new Vector3(0, 0.55f, 0.2f),
-                    d: center + new Vector3(0, -0.55f, 0.2f),
-                    normal: Vector3.right * side,
-                    metal: true
-                );
-                for (int i = 0; i < 6; i++)
+                using (var reader = new BinaryReader(input: stream))
                 {
-                    float a = (float)Math.PI * i / 3,
-                        b = (float)Math.PI * (i + 1) / 3;
-                    var p = new Vector3(0, (float)Math.Sin(a), (float)Math.Cos(a)) * 0.23f;
-                    var q = new Vector3(0, (float)Math.Sin(b), (float)Math.Cos(b)) * 0.23f;
-                    var lift = Vector3.right * side * 0.16f;
-                    Quad(
-                        a: center + p,
-                        b: center + q,
-                        c: center + q + lift,
-                        d: center + p + lift,
-                        normal: p + q,
-                        metal: true
-                    );
-                    Quad(
-                        a: center + lift,
-                        b: center + p + lift,
-                        c: center + q + lift,
-                        d: center + lift,
-                        normal: Vector3.right * side,
-                        metal: true
-                    );
+                    if (reader.ReadInt32() != 0x364E534D)
+                        throw new InvalidDataException(message: "Invalid snotter mesh header.");
+                    int vertexCount = reader.ReadInt32();
+                    int indexCount = reader.ReadInt32();
+                    if (
+                        vertexCount <= 0
+                        || vertexCount > 65535
+                        || indexCount <= 0
+                        || indexCount % 3 != 0
+                        || stream.Length != HeaderSize + vertexCount * 36L + indexCount / 3L * 16L
+                    )
+                        throw new InvalidDataException(message: "Invalid snotter mesh size.");
+                    InnerRadius = ReadDimension(reader: reader);
+                    OuterRadius = ReadDimension(reader: reader);
+                    MountingOuterRadius = ReadDimension(reader: reader);
+                    BoltBase = ReadDimension(reader: reader);
+                    HeadInner = ReadDimension(reader: reader);
+                    BoltEnd = ReadDimension(reader: reader);
+                    if (InnerRadius >= OuterRadius || BoltBase >= HeadInner || HeadInner >= BoltEnd)
+                        throw new InvalidDataException(message: "Invalid snotter fit metadata.");
+                    // Source and marker SHA-256 hashes are verified by the offline checks.
+                    stream.Position = HeaderSize;
+                    source = new Vector3[vertexCount];
+                    sourceNormals = new Vector3[vertexCount];
+                    texture = new Vector2[vertexCount];
+                    parts = new int[vertexCount];
+                    var indices = new int[indexCount];
+                    for (int i = 0; i < vertexCount; i++)
+                    {
+                        float x = reader.ReadSingle(),
+                            y = reader.ReadSingle(),
+                            z = reader.ReadSingle();
+                        source[i] = new Vector3(z, y, -x);
+                        texture[i] = new Vector2(reader.ReadSingle(), reader.ReadSingle());
+                        float nx = reader.ReadSingle(),
+                            ny = reader.ReadSingle(),
+                            nz = reader.ReadSingle();
+                        sourceNormals[i] = new Vector3(nz, ny, -nx);
+                        int part = reader.ReadInt32();
+                        if (part < SleevePart || part > MountingPart)
+                            throw new InvalidDataException(message: "Invalid snotter mesh part.");
+                        parts[i] = part;
+                    }
+                    var buckets = new[] { new List<int>(), new List<int>() };
+                    var woodVertices = new bool[vertexCount];
+                    for (int i = 0; i < indexCount; i += 3)
+                    {
+                        for (int corner = 0; corner < 3; corner++)
+                        {
+                            int index = reader.ReadInt32();
+                            if (index < 0 || index >= vertexCount)
+                                throw new InvalidDataException(
+                                    message: "Invalid snotter mesh index."
+                                );
+                            indices[i + corner] = index;
+                        }
+                        int material = reader.ReadInt32();
+                        if (material < 0 || material >= MaterialCount)
+                            throw new InvalidDataException(
+                                message: "Invalid snotter mesh material."
+                            );
+                        for (int corner = 0; corner < 3; corner++)
+                        {
+                            buckets[material].Add(item: indices[i + corner]);
+                            if (material == DarkWoodMaterial)
+                                woodVertices[indices[i + corner]] = true;
+                        }
+                    }
+                    materialIndices = new[] { buckets[0].ToArray(), buckets[1].ToArray() };
+                    // Separate face corners prevent wood UVs from altering metal.
+                    for (int i = 0; i < vertexCount; i++)
+                        if (woodVertices[i])
+                            texture[i] = SpritsailSnotterMaterials.WoodUv(uv: texture[i]);
                 }
             }
-            vertices = points.ToArray();
-            uv = texture.ToArray();
-            wood = woodIndices.ToArray();
-            iron = ironIndices.ToArray();
+        }
 
-            void Strip(float low, float high, Vector3 a, Vector3 b, Vector3 c, Vector3 d)
+        private static float ReadDimension(BinaryReader reader)
+        {
+            float value = reader.ReadSingle();
+            if (float.IsNaN(value) || float.IsInfinity(value) || value <= 0)
+                throw new InvalidDataException(message: "Invalid snotter fit dimension.");
+            return value;
+        }
+
+        internal static int[] MaterialTriangles(int material) =>
+            (int[])materialIndices[material].Clone();
+
+        internal static int Part(int vertex) => parts[vertex];
+
+        // Build each rigid group's compact vertex map and material topology once.
+        internal static void Group(
+            bool mounting,
+            out int[] sourceIndices,
+            out Vector2[] uv,
+            out int[][] triangles
+        )
+        {
+            var selected = new List<int>();
+            var mapped = new int[source.Length];
+            for (int i = 0; i < source.Length; i++)
             {
-                var left = Vector3.right * low;
-                var right = Vector3.right * high;
-                var radial = (a + b + c + d) / 4 - new Vector3(0, 0.65f, 1);
-                Quad(
-                    a: a + left,
-                    b: b + left,
-                    c: d + left,
-                    d: c + left,
-                    normal: Vector3.left,
-                    metal: false
-                );
-                Quad(
-                    a: a + right,
-                    b: b + right,
-                    c: d + right,
-                    d: c + right,
-                    normal: Vector3.right,
-                    metal: false
-                );
-                Quad(
-                    a: a + left,
-                    b: a + right,
-                    c: b + right,
-                    d: b + left,
-                    normal: -radial,
-                    metal: false
-                );
-                Quad(
-                    a: c + left,
-                    b: c + right,
-                    c: d + right,
-                    d: d + left,
-                    normal: radial,
-                    metal: false
-                );
-                Quad(
-                    a: a + left,
-                    b: c + left,
-                    c: c + right,
-                    d: a + right,
-                    normal: a - b,
-                    metal: false
-                );
-                Quad(
-                    a: b + left,
-                    b: d + left,
-                    c: d + right,
-                    d: b + right,
-                    normal: b - a,
-                    metal: false
-                );
+                mapped[i] = -1;
+                if ((parts[i] == MountingPart) == mounting)
+                {
+                    mapped[i] = selected.Count;
+                    selected.Add(item: i);
+                }
             }
-            void Quad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 normal, bool metal)
+            sourceIndices = selected.ToArray();
+            uv = new Vector2[selected.Count];
+            for (int i = 0; i < selected.Count; i++)
+                uv[i] = texture[selected[i]];
+            triangles = new int[MaterialCount][];
+            for (int material = 0; material < MaterialCount; material++)
             {
-                int start = points.Count;
-                points.AddRange(new[] { a, b, c, d });
-                texture.AddRange(
-                    new[]
-                    {
-                        new Vector2(a.z, a.y),
-                        new Vector2(b.z, b.y),
-                        new Vector2(c.z, c.y),
-                        new Vector2(d.z, d.y),
-                    }
-                );
-                var indices = metal ? ironIndices : woodIndices;
-                bool forward = Vector3.Dot(Vector3.Cross(b - a, c - a), normal) >= 0;
-                indices.AddRange(
-                    forward
-                        ? new[] { start, start + 1, start + 2 }
-                        : new[] { start, start + 2, start + 1 }
-                );
-                if ((d - a).sqrMagnitude > 1e-10f)
-                    indices.AddRange(
-                        forward
-                            ? new[] { start, start + 2, start + 3 }
-                            : new[] { start, start + 3, start + 2 }
+                var group = new List<int>();
+                var all = materialIndices[material];
+                for (int i = 0; i < all.Length; i += 3)
+                {
+                    int a = mapped[all[i]],
+                        b = mapped[all[i + 1]],
+                        c = mapped[all[i + 2]];
+                    if ((a >= 0) != (b >= 0) || (a >= 0) != (c >= 0))
+                        throw new InvalidDataException(
+                            message: "Snotter triangle spans rigid groups."
+                        );
+                    if (a < 0)
+                        continue;
+                    group.Add(item: a);
+                    group.Add(item: b);
+                    group.Add(item: c);
+                }
+                triangles[material] = group.ToArray();
+            }
+        }
+
+        // Both frames follow the mast; only the sleeve/bolt frame follows the tack.
+        // The caller supplies orthonormal world directions, independent of parent scale.
+        internal static Matrix4x4 Frame(Vector3 center, Vector3 axis, Vector3 outward)
+        {
+            var right = Vector3.Cross(lhs: axis, rhs: outward);
+            return new Matrix4x4(
+                column0: new Vector4(right.x, right.y, right.z, 0),
+                column1: new Vector4(axis.x, axis.y, axis.z, 0),
+                column2: new Vector4(outward.x, outward.y, outward.z, 0),
+                column3: new Vector4(center.x, center.y, center.z, 1)
+            );
+        }
+
+        internal static float LuffDistance(float mastRadius) =>
+            (mastRadius + Clearance) / InnerRadius * OuterRadius + SpritClearance;
+
+        internal static Vector2[] TextureCoordinates() => (Vector2[])texture.Clone();
+
+        internal static void Fit(
+            float sparRadius,
+            float mastRadius,
+            float pivotDistance,
+            out Vector3[] vertices,
+            out Vector3[] normals
+        )
+        {
+            vertices = new Vector3[source.Length];
+            normals = new Vector3[source.Length];
+            float scale = (mastRadius + Clearance) / InnerRadius;
+            float mountingScale = (mastRadius + MountingDiameterExtra / 2) / MountingOuterRadius;
+            float pinBase = mastRadius * 0.9f;
+            float headInner = pivotDistance + sparRadius + HeadClearance;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                var point = source[i];
+                var normal = sourceNormals[i];
+                if (parts[i] == BoltPart)
+                {
+                    float lengthScale =
+                        point.z <= HeadInner
+                            ? (headInner - pinBase) / (HeadInner - BoltBase)
+                            : (BoltProjection - HeadClearance) / (BoltEnd - HeadInner);
+                    normal = new Vector3(
+                        x: normal.x / (sparRadius * 3),
+                        y: normal.y / (sparRadius * 3),
+                        z: normal.z / lengthScale
                     );
+                    // Retain the pin/head profile, with its head outside the timber
+                    // and its root buried in the mast beneath the curved sheet.
+                    point.x *= sparRadius * 3;
+                    point.y *= sparRadius * 3;
+                    // Stretch the shaft to reach through the spar, then fit the head
+                    // separately so a larger mast cannot lengthen the visible tip.
+                    point.z =
+                        point.z <= HeadInner
+                            ? pinBase
+                                + (point.z - BoltBase)
+                                    / (HeadInner - BoltBase)
+                                    * (headInner - pinBase)
+                            : headInner
+                                + (point.z - HeadInner)
+                                    / (BoltEnd - HeadInner)
+                                    * (BoltProjection - HeadClearance);
+                }
+                else if (parts[i] == MountingPart)
+                {
+                    // Fit the lower clip's opening independently while keeping its
+                    // authored top at the sleeve's bottom (source Y=-1).
+                    point.x *= mountingScale;
+                    point.z *= mountingScale;
+                    point.y *= scale;
+                    normal = new Vector3(
+                        x: normal.x / mountingScale,
+                        y: normal.y / scale,
+                        z: normal.z / mountingScale
+                    );
+                }
+                else
+                    point *= scale;
+                vertices[i] = point;
+                // Inverse-transpose of each part's fit preserves authored shading
+                // under unequal radial/vertical scales and shortened bolt sections.
+                normals[i] = normal.normalized;
             }
         }
     }

@@ -308,7 +308,10 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 unroll: 1
             );
             var box = checker.Find(n: "BoomedSpritsail deployed sprit").GetComponent<BoxCollider>();
-            var a = Unscale(point: pose.Heel, scale: scale);
+            var a = Unscale(
+                point: SpritsailSpritGeometry.ForwardEnd(pivot: pose.Heel, tip: pose.Tip),
+                scale: scale
+            );
             var b = Unscale(point: pose.Tip, scale: scale);
             box.transform.localPosition = (a + b) * 0.5f;
             box.transform.localRotation = Quaternion.LookRotation(forward: b - a);
@@ -421,20 +424,25 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             if (!rigging || !rigging.Bind(mast: mount))
                 return false;
 
-            rigging.LuffSailFrame(point: out var forePoint, axis: out var foreAxis);
+            rigging.LuffSailFrame(
+                point: out var forePoint,
+                axis: out var foreAxis,
+                hingePoint: out var hingePoint
+            );
             var scaleRoot = Sail.cloth.transform.parent;
             if (!ValidScale(scale: scaleRoot.localScale))
                 return false;
             // Preserve the native saved installation coordinate. Offset the
-            // model and hinge together onto the fixed offset luff line. Sheet
-            // rotation leaves the entire pinned luff stationary.
+            // model onto the offset luff line, but hinge around the mast axis.
+            // The ring, bolt and luff orbit together under native sheeting.
             var origin = new Vector3(0, 0, Sail.GetCurrentInstallHeight() - mount.mastHeight);
-            var nextPivot = mount.transform.InverseTransformPoint(position: forePoint) - origin;
+            var nextPivot = mount.transform.InverseTransformPoint(position: hingePoint) - origin;
+            var luffPoint = mount.transform.InverseTransformPoint(position: forePoint) - origin;
             var nextAxis = mount
                 .transform.InverseTransformDirection(direction: foreAxis)
                 .normalized;
             var aftDirection = mount.transform.InverseTransformDirection(
-                direction: rigging.AftDirection
+                direction: rigging.AftDirection(axis: foreAxis)
             );
             var alignment =
                 Quaternion.LookRotation(
@@ -443,7 +451,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 ) * Quaternion.Inverse(rotation: scaleRoot.localRotation);
             MastFrame.localRotation = alignment;
             MastFrame.localPosition = BoomedSpritsailFrameGeometry.ModelOffset(
-                pivot: nextPivot,
+                pivot: luffPoint,
                 alignedHead: alignment
                     * (
                         scaleRoot.localPosition
@@ -470,7 +478,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 var hinge = Sail.GetComponent<HingeJoint>();
                 if (!boundToMast || GameState.currentShipyard)
                     body.rotation = mount.transform.rotation;
-                body.position = forePoint - body.rotation * nextPivot;
+                body.position = hingePoint - body.rotation * nextPivot;
                 RefreshCollisionStrips();
                 RefreshClothTravel();
                 RefreshSparCollision();
@@ -493,7 +501,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 hinge.axis = nextAxis;
                 hinge.anchor = nextPivot;
                 hinge.connectedAnchor = mount.shipRigidbody.transform.InverseTransformPoint(
-                    position: forePoint
+                    position: hingePoint
                 );
                 if (!boundToMast)
                     Sail.GetComponent<SailConnections>().angleControllerMid.UpdateSailAttachment();
@@ -707,12 +715,16 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 position: Unscale(point: pose.Tip, scale: scale)
             );
             SpritHoistAttachment.position = SpritsailDeployment.PurchasePoint(heel: heel, tip: tip);
-            Spar.Pose(heel: heel, tip: tip, radius: -Corners[0].z * scale.z * 0.018f);
+            Spar.Pose(
+                heel: SpritsailSpritGeometry.ForwardEnd(pivot: heel, tip: tip),
+                tip: tip,
+                radius: -Corners[0].z * scale.z * SpritsailSpritGeometry.RadiusFraction
+            );
             Spar.SetVisible(visible: visible);
             Boom.Pose(
                 heel: Bones[2].position,
                 tip: Bones[3].position,
-                radius: -Corners[0].z * scale.z * 0.018f,
+                radius: -Corners[0].z * scale.z * SpritsailSpritGeometry.RadiusFraction,
                 visible: visible
             );
             if (supported)
@@ -724,10 +736,13 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                     tip: tip,
                     sparRadius: -Corners[0].z
                         * scale.z
-                        * 0.018f
+                        * SpritsailSpritGeometry.RadiusFraction
                         * SpritsailSpritGeometry.ThicknessMultiplier,
                     guide: rigging.Support.Guide.position,
-                    fallbackDirection: rigging.AftDirection,
+                    fallbackDirection: Sail.cloth.transform.TransformDirection(
+                        direction: Vector3.up
+                    ),
+                    mountingDirection: rigging.Support.Boat.transform.right,
                     mastRadius: rigging.SocketRadius,
                     visible: visible
                 );
@@ -737,7 +752,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                     bones: Bones,
                     tip: tip,
                     mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
-                    aft: rigging.AftDirection,
+                    aft: Sail.cloth.transform.TransformDirection(direction: Vector3.up),
                     struck: state == 0
                 );
             else
@@ -767,7 +782,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             Spar.Furled.Pose(
                 heel: Bones[2].position,
                 tip: tip,
-                radial: supported ? rigging.AftDirection : Vector3.forward,
+                radial: Sail.cloth.transform.TransformDirection(direction: Vector3.up),
                 heelGap: supported ? rigging.SocketGap : 0,
                 cloth: renderer.sharedMaterial,
                 visible: visible && state == 0

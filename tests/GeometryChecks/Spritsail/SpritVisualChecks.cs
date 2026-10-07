@@ -93,38 +93,6 @@ internal static class SpritVisualChecks
                 );
             }
         }
-        foreach (float backDepth in new[] { 1.1f, 2f, 4f })
-        foreach (float mastRadius in new[] { 2f, 5f, 12f })
-        {
-            SpritsailSnotterGeometry.Create(
-                backDepth: backDepth,
-                mastRadius: mastRadius,
-                vertices: out vertices,
-                uv: out uv,
-                wood: out var wood,
-                iron: out var iron
-            );
-            Require(
-                value: wood.Length > 0 && iron.Length > 0 && vertices.Length == uv.Length,
-                message: "Curved timber and ironwork require separate complete submeshes."
-            );
-            foreach (int index in wood)
-                Require(
-                    value: vertices[index].z >= -backDepth - 0.0001f,
-                    message: "Wooden back must seat on the mast tangent plane."
-                );
-            foreach (var indices in new[] { wood, iron })
-                for (int i = 0; i < indices.Length; i += 3)
-                    Require(
-                        value: Vector3
-                            .Cross(
-                                vertices[indices[i + 1]] - vertices[indices[i]],
-                                vertices[indices[i + 2]] - vertices[indices[i]]
-                            )
-                            .sqrMagnitude > 1e-10f,
-                        message: "Curved fitting must have non-degenerate surfaces."
-                    );
-        }
         // A tapered square timber: a larger collision capsule must not determine seating.
         var taper = new[]
         {
@@ -183,7 +151,7 @@ internal static class SpritVisualChecks
             );
         }
         Console.WriteLine(
-            "PASS: shared sprit 3% thickness, 85% blunt ends, cap separation/winding and curved wood/iron submeshes and rendered mast seating."
+            "PASS: shared sprit 3% thickness, 85% blunt ends, cap separation/winding and rendered mast seating."
         );
     }
 

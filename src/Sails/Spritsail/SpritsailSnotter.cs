@@ -1,46 +1,52 @@
-using System.Linq;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
 {
-    // Owns the fixed mast pocket and upper-sprit purchase visuals without altering controls.
+    // Owns the rotating sleeve, fixed lower mounting and upper-sprit purchase visuals.
     internal sealed class SpritsailSnotter : MonoBehaviour
     {
-        public MeshRenderer Timber;
+        public Material[] Materials;
         public LineRenderer Purchase;
         public SpritsailRopeCollar PurchaseCollar;
         public RopeEffect ReefSource;
-        private Mesh ownedMesh;
-        private Vector3[] profile;
-        private Vector3[] posed;
-        private float meshBackDepth = -1;
+        private SpritsailSnotterMesh rotatingMesh;
+        private SpritsailSnotterMesh mountingMesh;
+        private float meshContactRadius = -1;
+        private float meshPivotDistance = -1;
         private float meshMastRadius = -1;
         private Material ownedMetal;
+        private Material ownedWood;
 
-        internal static SpritsailSnotter Create(Transform parent, Material timber)
+        internal static SpritsailSnotter Create(
+            Transform parent,
+            Material timber,
+            PrefabsDirectory directory
+        )
         {
             var root = new GameObject(name: "Spritsail snotter mast fitting");
             root.transform.SetParent(parent: parent, worldPositionStays: false);
             var fitting = root.AddComponent<SpritsailSnotter>();
-            root.AddComponent<MeshFilter>();
-            fitting.Timber = root.AddComponent<MeshRenderer>();
-            var metal = Resources
-                .FindObjectsOfTypeAll<Material>()
-                .FirstOrDefault(material => material.name == "mast_metal");
-            if (!metal)
-            {
-                metal = new Material(timber)
-                {
-                    name = "Spritsail dark iron",
-                    color = new Color(0.04f, 0.04f, 0.04f, 1),
-                };
-                fitting.ownedMetal = metal;
-                if (metal.HasProperty(name: "_Metallic"))
-                    metal.SetFloat(name: "_Metallic", value: 0.7f);
-                if (metal.HasProperty(name: "_Glossiness"))
-                    metal.SetFloat(name: "_Glossiness", value: 0.25f);
-            }
-            fitting.Timber.sharedMaterials = new[] { metal, metal };
+            var woodIndex = SpritsailSnotterMaterials.WoodSailIndex;
+            var metalIndex = SpritsailSnotterMaterials.MetalItemIndex;
+            var darkWood = SpritsailSnotterMaterials.Wood(
+                donor: directory.sails != null && directory.sails.Length > woodIndex
+                    ? directory.sails[woodIndex]
+                    : null,
+                shader: timber.shader,
+                owned: out fitting.ownedWood
+            );
+            var metal = SpritsailSnotterMaterials.Metal(
+                donor: directory.directory != null && directory.directory.Length > metalIndex
+                    ? directory.directory[metalIndex]
+                    : null,
+                shader: timber.shader,
+                owned: out fitting.ownedMetal
+            );
+            if (fitting.ownedWood || fitting.ownedMetal)
+                Plugin.Log.LogWarning(
+                    data: "Snotter native finish donor unavailable; using an owned untextured fallback."
+                );
+            fitting.Materials = new[] { darkWood, metal };
             var connections = parent.GetComponent<SailConnections>();
             fitting.ReefSource = connections.reefController.GetComponent<RopeEffect>();
             var sheet = connections.angleControllerLeft
@@ -91,6 +97,7 @@ namespace MoreSailwindSails.Sails.Spritsail
             float sparRadius,
             Vector3 guide,
             Vector3 fallbackDirection,
+            Vector3 mountingDirection,
             float mastRadius,
             bool visible
         )
@@ -113,50 +120,50 @@ namespace MoreSailwindSails.Sails.Spritsail
             if (forward.sqrMagnitude < 0.000001f)
                 forward = Vector3.ProjectOnPlane(vector: fallbackDirection, planeNormal: axis);
             forward.Normalize();
-            var right = Vector3.Cross(axis, forward).normalized;
-            float backDepth = Mathf.Max(
-                a: 1.1f,
-                b: ((heel - center).magnitude - mastRadius) / sparRadius
-            );
-            float scaledMastRadius = mastRadius / sparRadius;
-            if (
-                !ownedMesh
-                || Mathf.Abs(backDepth - meshBackDepth) > 0.001f
-                || Mathf.Abs(scaledMastRadius - meshMastRadius) > 0.001f
-            )
+            var fixedForward = Vector3
+                .ProjectOnPlane(vector: mountingDirection, planeNormal: axis)
+                .normalized;
+            if (fixedForward.sqrMagnitude < 0.000001f)
             {
-                SpritsailSnotterGeometry.Create(
-                    backDepth: backDepth,
-                    mastRadius: scaledMastRadius,
-                    vertices: out profile,
-                    uv: out var uv,
-                    wood: out var wood,
-                    iron: out var iron
-                );
-                posed = new Vector3[profile.Length];
-                if (!ownedMesh)
-                {
-                    ownedMesh = new Mesh { name = "Spritsail fixed heel pocket" };
-                    ownedMesh.MarkDynamic();
-                    GetComponent<MeshFilter>().sharedMesh = ownedMesh;
-                }
-                ownedMesh.vertices = profile;
-                ownedMesh.uv = uv;
-                ownedMesh.subMeshCount = 2;
-                ownedMesh.SetTriangles(triangles: wood, submesh: 0);
-                ownedMesh.SetTriangles(triangles: iron, submesh: 1);
-                meshBackDepth = backDepth;
-                meshMastRadius = scaledMastRadius;
+                // Mast-local fallback is independent of the sail's current tack.
+                var reference = localAxis == Vector3.right ? Vector3.up : Vector3.right;
+                fixedForward = Vector3
+                    .ProjectOnPlane(
+                        vector: mast.transform.TransformDirection(direction: reference),
+                        planeNormal: axis
+                    )
+                    .normalized;
             }
-            Vector3 World(Vector3 point) =>
-                heel + (right * point.x + axis * point.y + forward * point.z) * sparRadius;
-            for (int i = 0; i < profile.Length; i++)
-                posed[i] = transform.InverseTransformPoint(position: World(point: profile[i]));
-            ownedMesh.vertices = posed;
-            ownedMesh.RecalculateNormals();
-            ownedMesh.RecalculateTangents();
-            ownedMesh.RecalculateBounds();
-            Timber.enabled = true;
+            float pivotDistance = (heel - center).magnitude;
+            float contactRadius = SpritsailSpritGeometry.RadiusAtPivot(
+                radius: sparRadius,
+                pivotToTip: (tip - heel).magnitude
+            );
+            if (
+                rotatingMesh == null
+                || Mathf.Abs(pivotDistance - meshPivotDistance) > 0.001f
+                || Mathf.Abs(contactRadius - meshContactRadius) > 0.001f
+                || Mathf.Abs(mastRadius - meshMastRadius) > 0.001f
+            )
+                Refit(
+                    contactRadius: contactRadius,
+                    mastRadius: mastRadius,
+                    pivotDistance: pivotDistance
+                );
+            rotatingMesh.Draw(
+                frame: SpritsailSnotterGeometry.Frame(center: center, axis: axis, outward: forward),
+                materials: Materials,
+                layer: gameObject.layer
+            );
+            mountingMesh.Draw(
+                frame: SpritsailSnotterGeometry.Frame(
+                    center: center,
+                    axis: axis,
+                    outward: fixedForward
+                ),
+                materials: Materials,
+                layer: gameObject.layer
+            );
             var purchasePoint = SpritsailDeployment.PurchasePoint(heel: heel, tip: tip);
             var contact = PurchaseCollar.Pose(
                 center: purchasePoint,
@@ -174,10 +181,38 @@ namespace MoreSailwindSails.Sails.Spritsail
             }
         }
 
+        private void Refit(float contactRadius, float mastRadius, float pivotDistance)
+        {
+            SpritsailSnotterGeometry.Fit(
+                sparRadius: contactRadius,
+                mastRadius: mastRadius,
+                pivotDistance: pivotDistance,
+                vertices: out var profile,
+                normals: out var profileNormals
+            );
+            if (rotatingMesh == null)
+                rotatingMesh = new SpritsailSnotterMesh(
+                    mounting: false,
+                    profile: profile,
+                    profileNormals: profileNormals
+                );
+            else
+                rotatingMesh.Refit(profile: profile, profileNormals: profileNormals);
+            if (mountingMesh == null)
+                mountingMesh = new SpritsailSnotterMesh(
+                    mounting: true,
+                    profile: profile,
+                    profileNormals: profileNormals
+                );
+            else
+                mountingMesh.Refit(profile: profile, profileNormals: profileNormals);
+            meshContactRadius = contactRadius;
+            meshPivotDistance = pivotDistance;
+            meshMastRadius = mastRadius;
+        }
+
         internal void Hide()
         {
-            if (Timber)
-                Timber.enabled = false;
             if (Purchase)
                 Purchase.enabled = false;
             if (PurchaseCollar)
@@ -188,8 +223,10 @@ namespace MoreSailwindSails.Sails.Spritsail
 
         private void OnDestroy()
         {
-            if (ownedMesh)
-                Destroy(obj: ownedMesh);
+            rotatingMesh?.Dispose();
+            mountingMesh?.Dispose();
+            if (ownedWood)
+                Destroy(obj: ownedWood);
             if (ownedMetal)
                 Destroy(obj: ownedMetal);
         }

@@ -6,6 +6,21 @@ namespace MoreSailwindSails.Sails.Spritsail
     // Defines the common blunt-ended sprit profile used by every spritsail make.
     internal static class SpritsailSpritGeometry
     {
+        internal const float ForwardExtension = 0.3048f;
+
+        // Inputs are world-space or scale-applied coordinates, never unscaled mesh units.
+        internal static Vector3 ForwardEnd(Vector3 pivot, Vector3 tip) =>
+            pivot - (tip - pivot).normalized * ForwardExtension;
+
+        // The bolt intersects the taper 12 inches from the forward cap. Use that
+        // section's radius when trimming the pin, rather than the thicker midpoint.
+        internal static float RadiusAtPivot(float radius, float pivotToTip)
+        {
+            float fraction = ForwardExtension / (ForwardExtension + pivotToTip);
+            return radius * (1 - (1 - EndRadiusRatio) * Math.Abs(2 * fraction - 1));
+        }
+
+        internal const float RadiusFraction = 0.018f;
         internal const float ThicknessMultiplier = 1.03f;
         internal const float EndRadiusRatio = 0.85f;
         internal const float RopeThicknessMultiplier = 1.5f;

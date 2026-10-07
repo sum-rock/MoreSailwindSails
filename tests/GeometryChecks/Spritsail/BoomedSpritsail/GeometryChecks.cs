@@ -258,11 +258,12 @@ internal static class GeometryChecks
                     ) < epsilon,
                     message: "Tacking must preserve rigid boom length."
                 );
-                Near(
-                    actual: Rotate(point: pose.Heel),
-                    expected: pose.Heel,
-                    epsilon: epsilon,
-                    message: "Tacking must preserve the fixed sprit socket."
+                Require(
+                    value: Math.Abs(
+                        (Rotate(point: pose.Heel) - corners[0]).magnitude
+                            - (pose.Heel - corners[0]).magnitude
+                    ) < epsilon,
+                    message: "Tacking must preserve the sprit socket's orbit radius."
                 );
                 Near(
                     actual: Rotate(point: pose.Tack),

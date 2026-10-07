@@ -382,16 +382,46 @@ assets are redistributed or modified.
 
 ### Shared sprit and snotter visuals
 
-The sprit is rigid, with a **1.03** thickness multiplier, end radii **85%** of
-its middle radius and separate flat-cap vertices. Its fixed socket sits
-one-quarter up the deployed luff, on the hinge line. The peak remains lashed
-beside the tip; the purchase attaches **90%** along the sprit. Both types use
-family spar, pocket, collar, obstruction and struck-bundle visuals.
+The rigid sprit has a **1.03** thickness multiplier, end radii **85%** of its
+middle radius and separate flat-cap vertices. Its bolt pivot sits one-quarter up
+the deployed luff, initially starboard of the mast. The sheeting hinge lies on
+the **mast axis**: tacking rotates the sleeve, bolt, sprit and offset luff
+around it. Reefing pivots the sprit about the bolt; equal side-lashing offsets
+at both ends keep it **perpendicular to the bolt**, including when struck. The
+peak remains lashed beside the tip, and the purchase attaches **90%** of the
+distance from bolt to tip.
 
-The decorative pocket has curved cheeks, a lower cradle, mast band and bolts. It
-uses native `mast_metal` or an owned dark fallback; its generated mesh is
-instance-owned and disposed on destruction. It has no collider or Rigidbody. The
-heel seats **1.1 sprit radii + 5 mm** beyond the rendered mast surface.
+The forward end extends **12 inches (0.3048 m)** along the sprit from the bolt,
+regardless of sail size or reef pose. Deployment's `Heel` denotes the bolt; only
+the timber and deployed collider extend forward. The sleeve stays centered on
+the mast. The lower mounting follows boat movement and installation height, but
+uses the boat's neutral starboard direction projected perpendicular to the mast,
+so it does not follow tacks. Luff collars, ties and the struck bundle follow the
+rotating sail frame.
+
+`SpritsailSnotterGeometry` fits the authored parts to these dimensions:
+
+- Sleeve opening: **5 mm** minimum clearance from the sampled mast radius.
+- Luff: **3 mm** outside the sleeve envelope. The bolt pivot adds one maximum
+  sprit radius, matching the peak's side-lashing offset.
+- Lower mounting: **outside diameter = mast diameter + 8 inches (0.2032 m)**.
+  Its radial scale is independent; its vertical scale matches the sleeve,
+  preserving their junction at source Y = -1.
+- Bolt: the head begins **1 mm** beyond the tapered sprit surface at the pivot;
+  its tip projects **5 mm** beyond that surface. Shaft and head lengths are
+  fitted separately, with thickness based on the sprit's local radius.
+
+Each instance lazily owns two rigid meshes: sleeve/bolt and lower mounting, with
+wood and metal submeshes in each. Topology and UVs are initialized once;
+positions and inverse-transpose fitted normals update when dimensions change.
+Only tangents and bounds are recalculated, preserving Blender's smooth/sharp
+normals. Each visible rig `LateUpdate` submits world frames through
+`Graphics.DrawMesh`, with shadows and light probes enabled. This avoids ordinary
+per-frame mesh uploads and distortion from nonuniform parent scale. There are no
+detached renderer objects, colliders or Rigidbodies for the fitting; both meshes
+are disposed with their instance. Mast alignment reuses its resolved axis for
+`AftDirection` in both spritsail families.
+
 `SpritsailMastSurface` snapshots readable mast vertices; known unreadable Sanbuq
 topmast **80** uses its authored taper. Other misses warn once per surface
 instance and fall back to the capsule radius.
@@ -404,6 +434,91 @@ mast replaces it. Socket queries retain a single slot. No runtime performance
 improvement has been measured. Luff lines hide when struck, leaving the native
 bundle's bindings visible; the purchase remains visible when its winch is
 available.
+
+#### Snotter materials
+
+`SpritsailSnotterMaterials` couples native donor selection with UV mapping. It
+searches the specified prefab's mesh renderers, including inactive children:
+
+| Face tag   | Native material and donor               | UV policy                                 |
+| ---------- | --------------------------------------- | ----------------------------------------- |
+| `DarkWood` | `dhow_medium_paint`, sail prefab **62** | Map 0–1 into U 0.350–0.352, V 0.870–0.900 |
+| `Metal`    | Lantern `metal2`, item prefab **114**   | Preserve exported UVs                     |
+
+The wood patch is the dark-brown vertical mast trim in Sailwind 0.39's Sanbuq
+atlas. Keep exported wood UVs inside **0–1**. Native materials and their shader
+settings remain unchanged; the sprit retains its gaff timber material.
+
+Missing donors log a warning and use untextured fallbacks built with the gaff
+material's Standard shader, without copying its wood maps. Wood uses matte RGB
+**(0.12, 0.065, 0.035)**. Metal matches lantern `metal2`: RGB **(0.11035956,
+0.14488259, 0.1509434)**, metallic **0.51**, smoothness **0.4**. The creating
+template owns and disposes fallback materials; its clones share them. Native
+materials are neither modified nor destroyed.
+
+#### Authoring and baking the snotter
+
+Keep all three objects in `assets/snotter/snotter.obj`, named exactly
+**`Sleave`**, **`Bolt`** and **`Mounting`**. Use Y up, with the bolt pointing
+along -X and centered at Y = Z = 0. Export UVs, finite unit normals and material
+assignments. Tag every face `DarkWood` or `Metal`; numeric suffixes such as
+`.001` are accepted. The baker reads OBJ `usemtl` tags, not MTL colors or
+textures, and rejects unknown or missing assignments.
+
+The baker measures the sleeve's inner facets and outer envelope, mounting radius
+and bolt endpoints. Set `boltHeadInner` in `assets/snotter/snotter.fit.json` to
+the shaft/head transition's **negated source X coordinate (`-x`)**; it must lie
+between the bolt endpoints and match an exported bolt vertex plane. Remodeling
+updates the source and marker rather than C# measurement constants; physical
+clearances remain runtime policy.
+
+After exporting, run from the repository root:
+
+```sh
+blender -b --python tools/convert_snotter.py
+python -m unittest discover -s tests/AssetChecks
+```
+
+The converter uses Blender triangulation, preserves UV seams and per-corner
+normals, and rejects degenerate triangles or winding inconsistent with normals.
+It removes exact duplicate faces with matching positions, UVs, normals, part and
+material. Coincident faces within a part that differ in attributes produce a
+warning naming the object and OBJ lines; both faces remain for author review.
+The current source retains overlapping metal quads on `Mounting` at lines **861
+and 876** with different shading attributes. Resolve them in Blender if
+unwanted; inspect for flicker or shading artifacts in game.
+
+The current bake has **3,164 vertices and 1,634 triangles**: **164 DarkWood**
+and **1,470 Metal**. Internal format `MSN6` uses a 100-byte header with counts,
+six fit dimensions and SHA-256 hashes of the OBJ and marker file; each vertex
+stores position, UV, normal and part in 36 bytes, and each triangle stores three
+indices and a material in 16 bytes. GeometryChecks detects changed source or
+marker files without a rebake. Keep the OBJ, marker and generated
+`snotter.bytes` in version control. Ordinary .NET builds embed the checked-in
+bytes and require neither Blender nor loose runtime assets.
+
+#### Snotter validation
+
+The branch's **0.3.0-dev** Release build passed with zero warnings/errors; asset
+checks, GeometryChecks and AssemblyChecks passed. Checks cover source freshness,
+material/topology preservation, independent mesh data, fitted normals and UVs,
+dimensions across mast/sprit sizes, boat motion, tacking, reefing, the
+perpendicular sprit and 12-inch extension. Assembly checks guard mesh ownership
+and the separation of refitting from ordinary drawing.
+
+The user confirmed sleeve, bolt and sprit placement and accepted the 8-inch
+mounting allowance. Their **2026-10-06** wood-grain feedback established the
+dark-brown mast trim as the appearance reference. The current finishes, smooth
+shading and rigid draw path still need in-game verification; automated checks do
+not simulate Unity Cloth, establish rendered appearance or measure frame-time
+gains.
+
+Start on **Brig**, with both types and marks, then other supported masts,
+especially **Sanbuq**. Check both tacks, reefing/striking and resizing; confirm
+the fixed mounting, rotating sleeve/bolt, mast clearance, sleeve/mounting
+junction and 12-inch extension. Inspect material regions, seams, overlapping
+faces, shadows, luff ties and struck bundles. Verify shipyard previews,
+collisions and save/reload, including fit around tapered or noncircular masts.
 
 ### Sprit obstruction on one tack
 
@@ -488,13 +603,14 @@ binding, wraps other family filters and restores the full mast list last. Shared
 winch allocation supplies native-first complete pairs, authored fallbacks and
 the carrying mast's halyard group. Boomed sails remain on native binding.
 
-The sprit pivots about its fixed quarter-luff socket (about **34°** from the
-mast for fully deployed Mk.A at uniform scale). Pulling the purchase raises it
-toward upright; easing spreads the sail. The throat and upper luff remain fixed;
-the lower luff gathers toward the socket, and the clew moves inward/upward.
-Foot/leech budgets constrain the pose, including wide shallow cuts whose struck
-clew rests above the socket. Luff, peak and clew are solver-pinned; the free
-edges can flex. Full deployment uses coupled foot/leech fitting.
+The sprit reefs about its quarter-luff bolt in the rotating mast fitting (about
+**34°** from the mast for fully deployed Mk.A at uniform scale). Pulling the
+purchase raises it toward upright; easing spreads the sail. The throat and upper
+luff remain fixed within the rotating sail frame; the lower luff gathers toward
+the socket, and the clew moves inward/upward. Foot/leech budgets constrain the
+pose, including wide shallow cuts whose struck clew rests above the socket.
+Luff, peak and clew are solver-pinned; the free edges can flex. Full deployment
+uses coupled foot/leech fitting.
 
 ### Loose-footed spritsail sheet flex
 
@@ -525,9 +641,10 @@ native boom sheet remains visible when struck.
 The boom pivots at the fixed tack, with the complete straight foot pinned to it
 and foot camber/solver travel fading to zero. Reefing raises boom and sprit on
 separate rigid arcs while cloth gathers at the mast. The throat and entire luff
-stay fixed; head/leech chords may slacken but do not stretch. Interior folds
-vanish at attachments. The struck bundle spans the tack to raised sprit tip.
-There is no loose-footed sheet flex or additional boom control.
+stay fixed within the rotating sail frame; head/leech chords may slacken but do
+not stretch. Interior folds vanish at attachments. The struck bundle spans the
+tack to raised sprit tip. There is no loose-footed sheet flex or additional boom
+control.
 
 Templates set `reverseReefing = false`, overriding gaff 15's true setting.
 Paying out/letting fly deploys; hauling in reefs against native **25** weight

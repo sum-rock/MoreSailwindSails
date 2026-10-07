@@ -6,6 +6,26 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <None
+      Include="../../assets/snotter/snotter.obj"
+      Link="SnotterSource/snotter.obj"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <None
+      Include="../../assets/snotter/snotter.fit.json"
+      Link="SnotterSource/snotter.fit.json"
+      CopyToOutputDirectory="PreserveNewest"
+    />
+    <EmbeddedResource
+      Include="../../assets/snotter/snotter.bytes"
+      LogicalName="MoreSailwindSails.Snotter"
+    />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailSnotterMaterials.cs"
+      Link="Spritsail/SpritsailSnotterMaterials.cs"
+    />
     <Compile
       Include="../../src/Sails/Spritsail/SpritsailSurfaceSample.cs"
       Link="Spritsail/SpritsailSurfaceSample.cs"
