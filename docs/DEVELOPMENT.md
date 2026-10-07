@@ -382,182 +382,45 @@ assets are redistributed or modified.
 
 ### Shared sprit and snotter visuals
 
-Snotter fitting returns only positions and normals; UVs and material topology
-are requested separately when a mesh needs initialization. Mast alignment passes
-its already resolved axis into `AftDirection`, avoiding a second stateful
-luff-frame resolution in both spritsail families.
+The rigid sprit has a **1.03** thickness multiplier, end radii **85%** of its
+middle radius and separate flat-cap vertices. Its bolt pivot sits one-quarter up
+the deployed luff, initially starboard of the mast. The sheeting hinge lies on
+the **mast axis**: tacking rotates the sleeve, bolt, sprit and offset luff
+around it. Reefing pivots the sprit about the bolt; equal side-lashing offsets
+at both ends keep it **perpendicular to the bolt**, including when struck. The
+peak remains lashed beside the tip, and the purchase attaches **90%** of the
+distance from bolt to tip.
 
-The sprit is rigid, with a **1.03** thickness multiplier, end radii **85%** of
-its middle radius and separate flat-cap vertices. Its bolt pivot sits
-one-quarter up the deployed luff, initially on the starboard side of the mast.
-The native sheeting hinge lies on the **mast axis**: tacking rotates the ring,
-bolt, sprit and offset luff together around that axis. Reefing pivots the sprit
-about the bolt within this rotating frame. Both ends of the sprit carry the same
-side-lashing offset, keeping the spar **perpendicular to the bolt** through all
-reef states, including fully struck. The ring stays centered on the mast; luff
-collars and the struck bundle follow the rotating radial direction. The forward
-end extends **0.3048 m (12 inches)** along the sprit beyond the bolt at every
-sail size and reef pose. The deployed sprit collider includes this extension.
-Deployment's `Heel` remains the bolt reference; only the timber and its collider
-extend forward. The peak remains lashed beside the tip; the purchase remains
-**90%** from the bolt to the tip. Both types use the family spar, fitting,
-collar, obstruction and struck-bundle visuals.
+The forward end extends **12 inches (0.3048 m)** along the sprit from the bolt,
+regardless of sail size or reef pose. Deployment's `Heel` denotes the bolt; only
+the timber and deployed collider extend forward. The sleeve stays centered on
+the mast. The lower mounting follows boat movement and installation height, but
+uses the boat's neutral starboard direction projected perpendicular to the mast,
+so it does not follow tacks. Luff collars, ties and the struck bundle follow the
+rotating sail frame.
 
-The sleeve, starboard bolt and fixed lower mounting use the authored Blender
-mesh in `assets/snotter/snotter.obj`, baked into `snotter.bytes` and embedded in
-the plugin DLL. All three objects stay in one source asset. The sleeve and bolt
-use the sail's rotating radial frame; the lower mounting uses the boat's neutral
-starboard direction projected perpendicular to the mast. Thus the mounting
-follows boat movement and installation height, but never follows sail tacking.
-Each instance lazily owns two rigid meshes: sleeve/bolt and mounting. It uploads
-positions, authored normals, tangents and bounds only when the physical fit
-changes. Each visible rig `LateUpdate` submits the two world frames through
-`Graphics.DrawMesh`, with two material submeshes each, shadows and light probes.
-Explicit world frames avoid distortion from nonuniform sail-parent scale. There
-are no detached renderer objects; inactive templates allocate no fitted meshes,
-and instance destruction disposes both meshes. The fitting has no collider or
-Rigidbody. Two submeshes apply the authored face materials: `DarkWood` uses
-native `dhow_medium_paint` with UVs restricted to its dark-brown vertical mast
-trim, and `Metal` uses native `metal2` from the metal-framed lantern. The sprit
-retains its gaff timber. `SpritsailSnotterMaterials` owns the paired donor/UV
-policy: it looks for `dhow_medium_paint` inside sail prefab **62** and `metal2`
-inside lantern item prefab **114**, including inactive children. It never scans
-globally loaded materials. A missing wood donor uses owned, untextured matte
-dark brown and logs a warning without aborting sail registration. Shared game
-materials remain read-only. Purchase and collar ropes retain their separate
-visuals and controls. Luff ties and the struck bundle seat toward the current
-rotating mounting side.
+`SpritsailSnotterGeometry` fits the authored parts to these dimensions:
 
-Lantern `metal2` is an untextured Standard material: native RGB **(0.11035956,
-0.14488259, 0.1509434)**, metallic **0.51**, smoothness **0.4**. It replaces the
-mast metal atlas that stretched unrelated surface details over the sleeve. If
-the native lantern material is not loaded, the fitting owns an untextured
-fallback with these same settings, using the gaff material's Standard shader
-without copying its wood textures. Both fallbacks are owned by the template that
-creates them and shared by its clones; they are destroyed with that owner. The
-shared native material is never modified or destroyed. Existing metal UVs and
-authored smooth normals remain intact; no asset rebake is needed. The lantern
-finish still needs in-game comparison on Brig, then Sanbuq. The rigid draw path
-also needs in-game visibility, shadow, shipyard preview and tack validation;
-automated checks establish topology/frame equivalence and the absence of mesh
-uploads on ordinary draws, not Unity rendering or measured frame-time gains.
+- Sleeve opening: **5 mm** minimum clearance from the sampled mast radius.
+- Luff: **3 mm** outside the sleeve envelope. The bolt pivot adds one maximum
+  sprit radius, matching the peak's side-lashing offset.
+- Lower mounting: **outside diameter = mast diameter + 8 inches (0.2032 m)**.
+  Its radial scale is independent; its vertical scale matches the sleeve,
+  preserving their junction at source Y = -1.
+- Bolt: the head begins **1 mm** beyond the tapered sprit surface at the pivot;
+  its tip projects **5 mm** beyond that surface. Shaft and head lengths are
+  fitted separately, with thickness based on the sprit's local radius.
 
-The supplied OBJ has Y up and the bolt pointing along -X, centered at Y = Z = 0.
-Keep the exact export names **`Sleave`**, **`Bolt`** and **`Mounting`**. The
-sleeve uses a conservative **0.8718-unit** inner radius and **5 mm** mast
-clearance. Its **1.1408-unit** outer envelope includes the bolt attachment block
-in the latest export (measured maximum radius **1.140749**); this replaces the
-previous 1.1343-unit envelope and preserves the close sprit clearance. The lower
-mounting's **outside diameter is the mast diameter plus 8 inches (0.2032 m)**,
-extending **4 inches (0.1016 m)** beyond the mast on each side, using its
-measured **1.2314329-unit** outer radius to set the radial scale. Both use the
-sleeve's vertical scale, preserving their touching faces at source Y = -1 and
-the lower mounting's bottom at Y = -1.5. The latest sleeve export offsets its
-circular opening along source Z; its closest inner facet is now **0.871859**
-units from the mast axis. Updating the inner-radius reference preserves minimum
-mast clearance without altering the authored vertices. The mounting radius also
-changed slightly; its updated reference preserves the exact 8-inch diameter
-addition.
-
-The luff sits **3 mm** outside the scaled sleeve envelope. The bolt pivot adds
-**one maximum sprit radius**, shared with the peak lashing, so the sprit sits
-close to the sleeve without the former cumulative sail-width offset. The bolt
-ends **5 mm** beyond the tapered sprit section at its pivot; the head begins **1
-mm** beyond it. Shaft and head lengths are fitted separately so larger masts do
-not stretch the exposed tip. Bolt thickness follows that sprit section. The
-baker derives the opening/facet clearance, sleeve and mounting outer radii, and
-bolt endpoints from the triangulated source. The ambiguous shaft/head transition
-is an explicit source-coordinate marker in `assets/snotter/snotter.fit.json`;
-the baker rejects it if it no longer matches a bolt vertex plane. Remodeling
-updates the asset and its marker, not C# measurement constants. Runtime code
-retains the intended physical clearances, 8-inch mounting allowance and 12-inch
-spar extension. Fit around tapered or noncircular masts still needs visual
-inspection.
-
-To update the model, replace the repository OBJ and run from the repository
-root:
-
-```sh
-blender -b --python tools/convert_snotter.py
-```
-
-The converter uses Blender's polygon triangulation, checks winding against the
-exported normals, and preserves UV seams and per-corner smooth/sharp normals.
-The current bake has **3,164 vertices and 1,634 triangles**: **164 DarkWood**
-and **1,470 Metal**. Its internal `MSN6` format stores position, UV, normal and
-moving part in each 36-byte vertex, with material per triangle. A 100-byte
-header carries counts, six measured fit dimensions and SHA-256 hashes of both
-the OBJ and marker file. GeometryChecks compares those hashes with the source
-files copied to its test output and fails if either changed without a rebake.
-The converter requires all three named objects and a material on every face.
-Assign `DarkWood` or `Metal` in Blender; numeric duplicate suffixes such as
-`.001` and `.002` map to their base names. Unknown or missing material
-assignments fail before writing the bake. Export UVs, normals and materials; OBJ
-`usemtl` assignments supply the tags, while MTL color/texture settings are
-unused because the game supplies the materials. Exported normals must be finite
-unit vectors. Runtime fits normals using the inverse transpose of each part's
-scale, then poses them in the same rotating/fixed frame as its vertices. The
-final world-to-local normal conversion also accounts for parent scale. Only
-tangents and bounds are recalculated; recalculating normals would flatten the
-separate face corners and discard Blender's smooth shading. Keep both the source
-OBJ and generated bytes in version control. Ordinary .NET builds use the
-checked-in bytes and do not require Blender or loose runtime assets.
-
-The wood UV mapping targets the installed Sailwind 0.39 Sanbuq material
-`dhow_medium_paint` (`sharedassets1.assets`, material 31), whose main texture is
-the 8192-square `dhow medium paint` atlas. Its mast mesh uses a narrow vertical
-wood island; the selected interior patch is **U 0.350–0.352, V 0.870–0.900**.
-Runtime maps the exported wood UVs from 0–1 into that patch once, preserving
-their layout, while metal UVs retain their exact exported values. Keep wood UVs
-inside 0–1 when re-exporting. The bake and source need no changes for this
-material correction. Native shader settings are borrowed unchanged, including
-`_Metallic = 0`, `_Glossiness = 0`, `_GlossMapScale = 0.206` and normal strength
-0.125. The material is also used by native sail-prefab meshes 60–62; a missing
-material fails fitting creation explicitly before creating its root rather than
-pairing these UVs with another atlas.
-
-The latest **2026-10-06** smooth-shaded export uses only `DarkWood` and `Metal`
-material names. Two metal quads on `Mounting` occupy the same four corner
-positions (OBJ face lines 861 and 876). Their shading attributes differ, so they
-are not exact duplicates under the converter's position/UV/normal/part/ material
-comparison and both are retained as authored. The baker now emits a separate
-position-based overlap warning with the object name and OBJ face lines, even
-when normals, UVs or materials differ. It does not choose which face to delete.
-Run the pure authoring checks with
-`python -m unittest discover -s tests/AssetChecks`. The earlier report of two
-distinct added metal triangles did not account for this geometric overlap; the
-current bake has the same 1,634 triangles as the previous smooth export. The
-source OBJ remains untouched. Inspect these overlapping faces for flicker or
-shading artifacts in game; removal remains an authoring change. The bake passes
-winding/degeneracy checks. The updated Release build passed with zero
-warnings/errors, and both GeometryChecks and AssemblyChecks passed. Geometry
-checks cover the three-part resource, exact authored material assignments,
-one-to-one triangle partitioning with winding preserved, independent instance
-material indices, independent radial fit and vertical alignment, fixed lower
-mounting through tacks, all parts following boat motion, the 12-inch tail and
-perpendicular sprit through reefing. Sizing regressions check the fixed 8-inch
-diameter addition, close sleeve clearance, tapered bolt contact radius and 5 mm
-tip projection across mast and sprit sizes. Texture checks compare the runtime
-metal UVs directly against the embedded bake and bound every wood corner to the
-selected trim patch. Normal checks verify the actual smooth sleeve normals, unit
-lengths across fitting sizes, inverse-transpose mounting shading and independent
-normal arrays. AssemblyChecks guards against runtime normal recalculation
-overwriting the export.
-
-The user confirmed the sleeve, bolt and sprit positioning and accepted the fixed
-8-inch mounting diameter addition. Their **2026-10-06** screenshot showed overly
-bright/blocky wood grain after material tagging; the requested reference is the
-dark-brown vertical mast trim. The earlier gaff material with unrestricted OBJ
-UVs did not match that finish. The material/UV correction and latest smooth
-shading still need in-game comparison under the same lighting; native asset
-inspection and UV checks do not establish the final rendered appearance. Start
-on Brig with both types and marks: verify the lower mounting stays fixed while
-the sleeve and bolt rotate through both tacks, then inspect the sprit and
-12-inch tail through reefing/striking and resizing. Inspect both material
-regions, their UVs and seams. Check mast contact, the sleeve/mounting junction,
-luff ties, struck bundles, shipyard collisions and save/reload. Continue on
-other supported masts, especially Sanbuq. Automated geometry/resource checks
-cannot establish rendering or contact appearance in Unity.
+Each instance lazily owns two rigid meshes: sleeve/bolt and lower mounting, with
+wood and metal submeshes in each. Topology and UVs are initialized once;
+positions and inverse-transpose fitted normals update when dimensions change.
+Only tangents and bounds are recalculated, preserving Blender's smooth/sharp
+normals. Each visible rig `LateUpdate` submits world frames through
+`Graphics.DrawMesh`, with shadows and light probes enabled. This avoids ordinary
+per-frame mesh uploads and distortion from nonuniform parent scale. There are no
+detached renderer objects, colliders or Rigidbodies for the fitting; both meshes
+are disposed with their instance. Mast alignment reuses its resolved axis for
+`AftDirection` in both spritsail families.
 
 `SpritsailMastSurface` snapshots readable mast vertices; known unreadable Sanbuq
 topmast **80** uses its authored taper. Other misses warn once per surface
@@ -571,6 +434,91 @@ mast replaces it. Socket queries retain a single slot. No runtime performance
 improvement has been measured. Luff lines hide when struck, leaving the native
 bundle's bindings visible; the purchase remains visible when its winch is
 available.
+
+#### Snotter materials
+
+`SpritsailSnotterMaterials` couples native donor selection with UV mapping. It
+searches the specified prefab's mesh renderers, including inactive children:
+
+| Face tag   | Native material and donor               | UV policy                                 |
+| ---------- | --------------------------------------- | ----------------------------------------- |
+| `DarkWood` | `dhow_medium_paint`, sail prefab **62** | Map 0–1 into U 0.350–0.352, V 0.870–0.900 |
+| `Metal`    | Lantern `metal2`, item prefab **114**   | Preserve exported UVs                     |
+
+The wood patch is the dark-brown vertical mast trim in Sailwind 0.39's Sanbuq
+atlas. Keep exported wood UVs inside **0–1**. Native materials and their shader
+settings remain unchanged; the sprit retains its gaff timber material.
+
+Missing donors log a warning and use untextured fallbacks built with the gaff
+material's Standard shader, without copying its wood maps. Wood uses matte RGB
+**(0.12, 0.065, 0.035)**. Metal matches lantern `metal2`: RGB **(0.11035956,
+0.14488259, 0.1509434)**, metallic **0.51**, smoothness **0.4**. The creating
+template owns and disposes fallback materials; its clones share them. Native
+materials are neither modified nor destroyed.
+
+#### Authoring and baking the snotter
+
+Keep all three objects in `assets/snotter/snotter.obj`, named exactly
+**`Sleave`**, **`Bolt`** and **`Mounting`**. Use Y up, with the bolt pointing
+along -X and centered at Y = Z = 0. Export UVs, finite unit normals and material
+assignments. Tag every face `DarkWood` or `Metal`; numeric suffixes such as
+`.001` are accepted. The baker reads OBJ `usemtl` tags, not MTL colors or
+textures, and rejects unknown or missing assignments.
+
+The baker measures the sleeve's inner facets and outer envelope, mounting radius
+and bolt endpoints. Set `boltHeadInner` in `assets/snotter/snotter.fit.json` to
+the shaft/head transition's **negated source X coordinate (`-x`)**; it must lie
+between the bolt endpoints and match an exported bolt vertex plane. Remodeling
+updates the source and marker rather than C# measurement constants; physical
+clearances remain runtime policy.
+
+After exporting, run from the repository root:
+
+```sh
+blender -b --python tools/convert_snotter.py
+python -m unittest discover -s tests/AssetChecks
+```
+
+The converter uses Blender triangulation, preserves UV seams and per-corner
+normals, and rejects degenerate triangles or winding inconsistent with normals.
+It removes exact duplicate faces with matching positions, UVs, normals, part and
+material. Coincident faces within a part that differ in attributes produce a
+warning naming the object and OBJ lines; both faces remain for author review.
+The current source retains overlapping metal quads on `Mounting` at lines **861
+and 876** with different shading attributes. Resolve them in Blender if
+unwanted; inspect for flicker or shading artifacts in game.
+
+The current bake has **3,164 vertices and 1,634 triangles**: **164 DarkWood**
+and **1,470 Metal**. Internal format `MSN6` uses a 100-byte header with counts,
+six fit dimensions and SHA-256 hashes of the OBJ and marker file; each vertex
+stores position, UV, normal and part in 36 bytes, and each triangle stores three
+indices and a material in 16 bytes. GeometryChecks detects changed source or
+marker files without a rebake. Keep the OBJ, marker and generated
+`snotter.bytes` in version control. Ordinary .NET builds embed the checked-in
+bytes and require neither Blender nor loose runtime assets.
+
+#### Snotter validation
+
+The branch's **0.3.0-dev** Release build passed with zero warnings/errors; asset
+checks, GeometryChecks and AssemblyChecks passed. Checks cover source freshness,
+material/topology preservation, independent mesh data, fitted normals and UVs,
+dimensions across mast/sprit sizes, boat motion, tacking, reefing, the
+perpendicular sprit and 12-inch extension. Assembly checks guard mesh ownership
+and the separation of refitting from ordinary drawing.
+
+The user confirmed sleeve, bolt and sprit placement and accepted the 8-inch
+mounting allowance. Their **2026-10-06** wood-grain feedback established the
+dark-brown mast trim as the appearance reference. The current finishes, smooth
+shading and rigid draw path still need in-game verification; automated checks do
+not simulate Unity Cloth, establish rendered appearance or measure frame-time
+gains.
+
+Start on **Brig**, with both types and marks, then other supported masts,
+especially **Sanbuq**. Check both tacks, reefing/striking and resizing; confirm
+the fixed mounting, rotating sleeve/bolt, mast clearance, sleeve/mounting
+junction and 12-inch extension. Inspect material regions, seams, overlapping
+faces, shadows, luff ties and struck bundles. Verify shipyard previews,
+collisions and save/reload, including fit around tapered or noncircular masts.
 
 ### Sprit obstruction on one tack
 
