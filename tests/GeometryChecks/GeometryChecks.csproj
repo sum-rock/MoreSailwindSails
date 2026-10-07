@@ -23,6 +23,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Visuals/RoutedRopeGeometry.cs"
+      Link="Visuals/RoutedRopeGeometry.cs"
+    />
+    <Compile
       Include="../../src/Sails/Spritsail/SpritsailControlSlots.cs"
       Link="Spritsail/SpritsailControlSlots.cs"
     />

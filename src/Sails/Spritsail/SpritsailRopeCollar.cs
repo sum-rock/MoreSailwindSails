@@ -1,3 +1,4 @@
+using MoreSailwindSails.Visuals;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
@@ -5,7 +6,7 @@ namespace MoreSailwindSails.Sails.Spritsail
     // Draws a close-wound rope collar without changing native rope endpoints or sail physics.
     internal sealed class SpritsailRopeCollar : MonoBehaviour
     {
-        public LineRenderer Rope;
+        public RoutedRope Rope;
         private const int Segments = 96;
 
         internal static SpritsailRopeCollar Create(
@@ -18,18 +19,18 @@ namespace MoreSailwindSails.Sails.Spritsail
             var root = new GameObject(name: name);
             root.transform.SetParent(parent: parent, worldPositionStays: false);
             var collar = root.AddComponent<SpritsailRopeCollar>();
-            collar.Rope = root.AddComponent<LineRenderer>();
+            var line = root.AddComponent<LineRenderer>();
             var original = source.GetComponent<LineRenderer>();
-            collar.Rope.sharedMaterials = original.sharedMaterials;
-            collar.Rope.startColor = original.startColor;
-            collar.Rope.endColor = original.endColor;
-            collar.Rope.startWidth = collar.Rope.endWidth =
+            line.sharedMaterials = original.sharedMaterials;
+            line.startColor = original.startColor;
+            line.endColor = original.endColor;
+            line.startWidth = line.endWidth =
                 source.ropeWidth * SpritsailSpritGeometry.RopeThicknessMultiplier * thicknessScale;
-            collar.Rope.textureMode = LineTextureMode.Tile;
-            collar.Rope.useWorldSpace = true;
-            collar.Rope.positionCount = Segments + 1;
-            collar.Rope.numCapVertices = 3;
-            collar.Rope.enabled = false;
+            line.textureMode = LineTextureMode.Tile;
+            line.useWorldSpace = true;
+            line.positionCount = Segments + 1;
+            line.numCapVertices = 3;
+            collar.Rope = RoutedRope.Attach(line: line);
             return collar;
         }
 
@@ -42,7 +43,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                     .Cross(axis, Mathf.Abs(axis.y) < 0.9f ? Vector3.up : Vector3.right)
                     .normalized;
             var side = Vector3.Cross(axis, outward).normalized;
-            float width = Rope.startWidth;
+            float width = Rope.Width;
             for (int i = 0; i <= Segments; i++)
             {
                 float t = i / (float)Segments;
@@ -55,14 +56,14 @@ namespace MoreSailwindSails.Sails.Spritsail
                         + axis * ((t - 0.5f) * 3 * width * 1.05f)
                 );
             }
-            Rope.enabled = true;
+            Rope.SetVisible(visible: true);
             return center + outward * (radius + width * 0.55f);
         }
 
         internal void Hide()
         {
             if (Rope)
-                Rope.enabled = false;
+                Rope.SetVisible(visible: false);
         }
 
         private void OnDisable() => Hide();

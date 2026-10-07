@@ -1,3 +1,4 @@
+using MoreSailwindSails.Visuals;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansFlyingSail
@@ -6,9 +7,9 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
     // Native sheet controllers still calculate tension and operate the winches.
     internal sealed class FishermansFlyingSailSupportLine : MonoBehaviour
     {
-        public LineRenderer[] UpperSheets;
-        public LineRenderer[] LowerSheets;
-        public LineRenderer[] SharedSpans;
+        public RoutedRope[] UpperSheets;
+        public RoutedRope[] LowerSheets;
+        public RoutedRope[] SharedSpans;
         public RopeEffect[] NativeSheets;
         public FishermansFlyingSailLuffTies LuffTies;
         public FishermansFlyingSailKnots Knots;
@@ -25,9 +26,9 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             root.transform.SetParent(parent, false);
             var route = root.AddComponent<FishermansFlyingSailSupportLine>();
             route.NativeSheets = new[] { left, right };
-            route.UpperSheets = new LineRenderer[2];
-            route.LowerSheets = new LineRenderer[2];
-            route.SharedSpans = new LineRenderer[3];
+            route.UpperSheets = new RoutedRope[2];
+            route.LowerSheets = new RoutedRope[2];
+            route.SharedSpans = new RoutedRope[3];
             route.LuffTies = FishermansFlyingSailLuffTies.Create(root.transform, bones, left);
             for (int i = 0; i < 2; i++)
             {
@@ -51,7 +52,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             return route;
         }
 
-        internal static LineRenderer CreateRenderer(
+        internal static RoutedRope CreateRenderer(
             Transform parent,
             string name,
             RopeEffect source,
@@ -74,8 +75,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             rope.shadowCastingMode = original.shadowCastingMode;
             rope.receiveShadows = original.receiveShadows;
             rope.positionCount = count;
-            rope.enabled = false;
-            return rope;
+            return RoutedRope.Attach(line: rope);
         }
 
         internal void Draw(
@@ -118,7 +118,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 if (Knots)
                     Knots.Hide();
                 foreach (var span in SharedSpans)
-                    span.enabled = false;
+                    span.SetVisible(visible: false);
             }
             else
             {
@@ -152,7 +152,8 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 var source = NativeSheets[side];
                 if (!source || !source.gameObject.activeInHierarchy)
                 {
-                    UpperSheets[side].enabled = LowerSheets[side].enabled = false;
+                    UpperSheets[side].SetVisible(visible: false);
+                    LowerSheets[side].SetVisible(visible: false);
                     continue;
                 }
                 var control = source.transform.position;
@@ -172,7 +173,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 source.totalRopeLength
             );
 
-        private void DrawDirectSpan(LineRenderer rope, Vector3 start, Vector3 end, float slack)
+        private void DrawDirectSpan(RoutedRope rope, Vector3 start, Vector3 end, float slack)
         {
             for (int i = 0; i < points.Length; i++)
                 points[i] = FishermansFlyingSailRopeGeometry.DirectPoint(
@@ -182,11 +183,11 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                     (float)i / (points.Length - 1)
                 );
             rope.SetPositions(points);
-            rope.enabled = true;
+            rope.SetVisible(visible: true);
         }
 
         private void DrawSpan(
-            LineRenderer rope,
+            RoutedRope rope,
             Vector3 start,
             Vector3 end,
             Vector3 startDirection,
@@ -217,17 +218,17 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                     (float)i / (points.Length - 1)
                 );
             rope.SetPositions(points);
-            rope.enabled = true;
+            rope.SetVisible(visible: true);
         }
 
         internal void Hide()
         {
             foreach (var sheet in UpperSheets)
-                sheet.enabled = false;
+                sheet.SetVisible(visible: false);
             foreach (var sheet in LowerSheets)
-                sheet.enabled = false;
+                sheet.SetVisible(visible: false);
             foreach (var span in SharedSpans)
-                span.enabled = false;
+                span.SetVisible(visible: false);
             LuffTies.Hide();
             if (Knots)
                 Knots.Hide();

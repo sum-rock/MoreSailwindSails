@@ -125,6 +125,7 @@ feature's `Patches/` directory and `.Patches` namespace.
 | `src/Stays/FishermansStay/`                 | Independent mounts, registration, previews, controls and save compatibility                                                       |
 | `src/BoatRigs/`                             | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks                                            |
 | `src/Controls/`                             | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning                            |
+| `src/Visuals/`                              | Route-only rope rendering; family code retains all routing, visibility and control decisions                                      |
 | `src/Utils/`                                | Optional, read-only in-game diagnostic tools and their geometry helpers                                                           |
 
 Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
@@ -220,6 +221,46 @@ field through reflection, then recognizes custom rig components. Missing or
 empty sail references fall through. Absent SailInfo is silently skipped; an
 incompatible API warns once and skips integration. There is no direct assembly
 reference. The staysail-specific angle patch remains separate.
+
+## Custom rope rendering
+
+Flying Sail sheets, shared spans and fixed ties, plus both Spritsail types'
+custom sheets, lashings, luff ties, mast collars and snotter purchases, follow
+the native `Settings.clothRopes` option. When enabled, `RoutedRope` builds a
+six-sided tube with smooth radial normals along each family's existing route.
+When disabled, it uses the original line material, colors and flat renderer. The
+native boomed Spritsail sheet and Fisherman's Staysail ropes retain their native
+rendering.
+
+The installed plain `3d rope` donor was inspected on **2026-10-07**:
+`sharedassets24.assets` renderer **4503**, mesh **1475**, material **64**
+(`rope static`). It has **66 vertices**, eleven six-vertex rings, a **0.02 m**
+source radius, smooth radial normals and no UVs or assigned textures. Custom
+tubes reuse this donor's material and shadow settings at runtime and retain
+their existing authored world-space diameters, including spritsail thickness
+multipliers. They do not copy the flat-line texture onto the tube.
+
+Family code submits the final posed route before selecting visibility. The
+rendering component owns one lazily created mesh per live rope, reuses its
+buffers/topology and compensates for the complete parent transform. Collapsed or
+nonfinite routes are hidden in 3D mode. Missing donor materials warn once, use
+the flat fallback and retry. Mode changes select only one representation;
+disable hides both, and destruction releases only the generated mesh. Shared
+native meshes/materials and sail Cloth are untouched. This rendering primitive
+does not merge family mechanics or resume the deferred calculation extraction.
+
+The user's **2026-10-07** report of flat-looking Flying Sail/Spritsail lines
+matches the previous implementation: custom routes always used flat lines and
+suppressed native 3D visuals. The new geometry checks cover diameter, normals,
+winding, coils, bends, translations and degenerate routes; assembly checks cover
+native setting/material access, route integration, resource ownership and
+physics isolation. These do not establish visual acceptance. Validate on Brig
+first, then Sanbuq: compare with adjacent native ropes from several camera
+angles, toggle 3D ropes both ways, resize, trim/tack, reef/strike, lose/recover
+supports, preview/cancel shipyard changes and reload. Check both Spritsail types
+and marks, coil continuity, knots, shading, thickness, duplicate/missing lines
+and cleanup. Runtime switching, Unity rendering and performance remain
+unverified.
 
 ## Flying Sail
 

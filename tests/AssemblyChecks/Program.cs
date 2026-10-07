@@ -42,6 +42,7 @@ internal static class Program
         );
 
         PluginMetadataChecks.Run(assembly: assembly);
+        Visuals.RoutedRopeChecks.Run(assembly: assembly);
         HarmonySignatureChecks.Run(assembly);
         Spritsail.CategoryChecks.Run(assembly: assembly, gameDir: gameDir);
         Spritsail.BoomedSpritsail.IntegrationChecks.Run(assembly: assembly);

@@ -1,10 +1,11 @@
+using MoreSailwindSails.Visuals;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansFlyingSail
 {
     internal sealed class FishermansFlyingSailLuffTies : MonoBehaviour
     {
-        public LineRenderer[] Ropes;
+        public RoutedRope[] Ropes;
         public Transform[] MastEnds;
         public Transform[] CornerEnds;
 
@@ -17,7 +18,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             var root = new GameObject("FishermansFlyingSail fixed luff ties");
             root.transform.SetParent(parent, false);
             var ties = root.AddComponent<FishermansFlyingSailLuffTies>();
-            ties.Ropes = new LineRenderer[2];
+            ties.Ropes = new RoutedRope[2];
             ties.MastEnds = new Transform[2];
             ties.CornerEnds = new Transform[2];
             for (int i = 0; i < 2; i++)
@@ -47,14 +48,14 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 );
                 Ropes[i].SetPosition(0, MastEnds[i].position);
                 Ropes[i].SetPosition(1, corner);
-                Ropes[i].enabled = true;
+                Ropes[i].SetVisible(visible: true);
             }
         }
 
         internal void Hide()
         {
             foreach (var rope in Ropes)
-                rope.enabled = false;
+                rope.SetVisible(visible: false);
         }
 
         private void OnDisable()
