@@ -122,16 +122,10 @@ namespace MoreSailwindSails.Sails.Spritsail
                         }
                     }
                     materialIndices = new[] { buckets[0].ToArray(), buckets[1].ToArray() };
-                    // Native dhow_medium_paint (Sailwind 0.39): interior of the dark
-                    // longitudinal mast wood island, away from its edge and bright grain.
-                    // The bake has separate face corners, so wood UVs never alter metal.
-                    // Map each vertex once even when two triangles share a face corner.
+                    // Separate face corners prevent wood UVs from altering metal.
                     for (int i = 0; i < vertexCount; i++)
                         if (woodVertices[i])
-                            texture[i] = new Vector2(
-                                x: 0.350f + texture[i].x * 0.002f,
-                                y: 0.870f + texture[i].y * 0.030f
-                            );
+                            texture[i] = SpritsailSnotterMaterials.WoodUv(uv: texture[i]);
                 }
             }
         }

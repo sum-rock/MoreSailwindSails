@@ -38,7 +38,11 @@ namespace MoreSailwindSails.Sails.Spritsail
             spar.Renderer = root.AddComponent<MeshRenderer>();
             spar.Renderer.sharedMaterial = timber.sharedMaterial;
             spar.Renderer.enabled = false;
-            spar.Snotter = SpritsailSnotter.Create(parent: parent, timber: timber.sharedMaterial);
+            spar.Snotter = SpritsailSnotter.Create(
+                parent: parent,
+                timber: timber.sharedMaterial,
+                directory: directory
+            );
             spar.Furled = SpritsailFurledVisual.Create(parent: parent, directory: directory);
             return spar;
         }

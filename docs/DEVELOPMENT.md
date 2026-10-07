@@ -414,19 +414,24 @@ on destruction. The fitting has no collider or Rigidbody. Two submeshes apply
 the authored face materials: `DarkWood` uses native `dhow_medium_paint` with UVs
 restricted to its dark-brown vertical mast trim, and `Metal` uses native
 `metal2` from the metal-framed lantern. The sprit retains its gaff timber.
-Shared game materials remain read-only. Purchase and collar ropes retain their
-separate visuals and controls. Luff ties and the struck bundle seat toward the
-current rotating mounting side.
+`SpritsailSnotterMaterials` owns the paired donor/UV policy: it looks for
+`dhow_medium_paint` inside sail prefab **62** and `metal2` inside lantern item
+prefab **114**, including inactive children. It never scans globally loaded
+materials. A missing wood donor uses owned, untextured matte dark brown and logs
+a warning without aborting sail registration. Shared game materials remain
+read-only. Purchase and collar ropes retain their separate visuals and controls.
+Luff ties and the struck bundle seat toward the current rotating mounting side.
 
 Lantern `metal2` is an untextured Standard material: native RGB **(0.11035956,
 0.14488259, 0.1509434)**, metallic **0.51**, smoothness **0.4**. It replaces the
 mast metal atlas that stretched unrelated surface details over the sleeve. If
 the native lantern material is not loaded, the fitting owns an untextured
 fallback with these same settings, using the gaff material's Standard shader
-without copying its wood textures. The fallback is destroyed with the fitting;
-the shared native material is never modified or destroyed. Existing metal UVs
-and authored smooth normals remain intact; no asset rebake is needed. The
-lantern finish still needs in-game comparison on Brig, then Sanbuq.
+without copying its wood textures. Both fallbacks are owned by the template that
+creates them and shared by its clones; they are destroyed with that owner. the
+shared native material is never modified or destroyed. Existing metal UVs and
+authored smooth normals remain intact; no asset rebake is needed. The lantern
+finish still needs in-game comparison on Brig, then Sanbuq.
 
 The supplied OBJ has Y up and the bolt pointing along -X, centered at Y = Z = 0.
 Keep the exact export names **`Sleave`**, **`Bolt`** and **`Mounting`**. The

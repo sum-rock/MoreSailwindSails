@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
@@ -20,40 +18,39 @@ namespace MoreSailwindSails.Sails.Spritsail
         private float meshPivotDistance = -1;
         private float meshMastRadius = -1;
         private Material ownedMetal;
+        private Material ownedWood;
 
-        internal static SpritsailSnotter Create(Transform parent, Material timber)
+        internal static SpritsailSnotter Create(
+            Transform parent,
+            Material timber,
+            PrefabsDirectory directory
+        )
         {
-            var materials = Resources.FindObjectsOfTypeAll<Material>();
-            var darkWood = materials.FirstOrDefault(material =>
-                material.name == "dhow_medium_paint"
-            );
-            if (!darkWood)
-                throw new InvalidOperationException(
-                    message: "Expected native dhow_medium_paint material for the snotter's mast trim UVs."
-                );
             var root = new GameObject(name: "Spritsail snotter mast fitting");
             root.transform.SetParent(parent: parent, worldPositionStays: false);
             var fitting = root.AddComponent<SpritsailSnotter>();
             root.AddComponent<MeshFilter>();
             fitting.Timber = root.AddComponent<MeshRenderer>();
-            var metal = materials.FirstOrDefault(material => material.name == "metal2");
-            if (!metal)
-            {
-                // Match the installed lantern's untextured Standard material if
-                // its native material has not loaded yet. Do not inherit wood maps.
-                metal = new Material(shader: timber.shader)
-                {
-                    name = "Spritsail lantern metal",
-                    color = new Color(r: 0.11035956f, g: 0.14488259f, b: 0.1509434f, a: 1),
-                };
-                fitting.ownedMetal = metal;
-                if (metal.HasProperty(name: "_Metallic"))
-                    metal.SetFloat(name: "_Metallic", value: 0.51f);
-                if (metal.HasProperty(name: "_Glossiness"))
-                    metal.SetFloat(name: "_Glossiness", value: 0.4f);
-            }
-            // Geometry maps the wood UVs into the Sanbuq mast's dark trim atlas region.
-            // Borrow both native materials without changing their textures or surface settings.
+            var woodIndex = SpritsailSnotterMaterials.WoodSailIndex;
+            var metalIndex = SpritsailSnotterMaterials.MetalItemIndex;
+            var darkWood = SpritsailSnotterMaterials.Wood(
+                donor: directory.sails != null && directory.sails.Length > woodIndex
+                    ? directory.sails[woodIndex]
+                    : null,
+                shader: timber.shader,
+                owned: out fitting.ownedWood
+            );
+            var metal = SpritsailSnotterMaterials.Metal(
+                donor: directory.directory != null && directory.directory.Length > metalIndex
+                    ? directory.directory[metalIndex]
+                    : null,
+                shader: timber.shader,
+                owned: out fitting.ownedMetal
+            );
+            if (fitting.ownedWood || fitting.ownedMetal)
+                Plugin.Log.LogWarning(
+                    data: "Snotter native finish donor unavailable; using an owned untextured fallback."
+                );
             fitting.Timber.sharedMaterials = new[] { darkWood, metal };
             var connections = parent.GetComponent<SailConnections>();
             fitting.ReefSource = connections.reefController.GetComponent<RopeEffect>();
@@ -251,6 +248,8 @@ namespace MoreSailwindSails.Sails.Spritsail
         {
             if (ownedMesh)
                 Destroy(obj: ownedMesh);
+            if (ownedWood)
+                Destroy(obj: ownedWood);
             if (ownedMetal)
                 Destroy(obj: ownedMetal);
         }
