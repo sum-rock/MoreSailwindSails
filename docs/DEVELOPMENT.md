@@ -493,11 +493,15 @@ The latest **2026-10-06** smooth-shaded export uses only `DarkWood` and `Metal`
 material names. Two metal quads on `Mounting` occupy the same four corner
 positions (OBJ face lines 861 and 876). Their shading attributes differ, so they
 are not exact duplicates under the converter's position/UV/normal/part/ material
-comparison and both are retained as authored. The earlier report of two distinct
-added metal triangles did not account for this geometric overlap; the current
-bake has the same 1,634 triangles as the previous smooth export. The source OBJ
-remains untouched. Inspect these overlapping faces for flicker or shading
-artifacts in game; removal remains an authoring change. The bake passes
+comparison and both are retained as authored. The baker now emits a separate
+position-based overlap warning with the object name and OBJ face lines, even
+when normals, UVs or materials differ. It does not choose which face to delete.
+Run the pure authoring checks with
+`python -m unittest discover -s tests/AssetChecks`. The earlier report of two
+distinct added metal triangles did not account for this geometric overlap; the
+current bake has the same 1,634 triangles as the previous smooth export. The
+source OBJ remains untouched. Inspect these overlapping faces for flicker or
+shading artifacts in game; removal remains an authoring change. The bake passes
 winding/degeneracy checks. The updated Release build passed with zero
 warnings/errors, and both GeometryChecks and AssemblyChecks passed. Geometry
 checks cover the three-part resource, exact authored material assignments,

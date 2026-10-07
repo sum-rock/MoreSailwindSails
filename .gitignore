@@ -2,3 +2,4 @@ bin/
 obj/
 result
 result-*
+__pycache__/

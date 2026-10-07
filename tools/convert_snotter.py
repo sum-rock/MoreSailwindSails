@@ -8,11 +8,15 @@ from pathlib import Path
 import struct
 import re
 import math
+import sys
 
 import bpy
 
 
 root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(root))
+from tools.snotter_asset import coincident_faces
+
 positions, texcoords, normals, faces = [], [], [], []
 parts = []
 part = None
@@ -20,7 +24,8 @@ material = None
 face_materials = []
 seen_faces = set()
 duplicates = 0
-for line in (root / "assets/snotter/snotter.obj").read_text().splitlines():
+face_lines = []
+for line_number, line in enumerate((root / "assets/snotter/snotter.obj").read_text().splitlines(), 1):
     fields = line.split()
     if not fields:
         continue
@@ -55,11 +60,16 @@ for line in (root / "assets/snotter/snotter.obj").read_text().splitlines():
             continue
         seen_faces.add(key)
         faces.append(face)
+        face_lines.append((part, line_number, tuple(positions[v] for v, _, _ in face)))
         face_materials.append(material)
         parts.extend([part] * len(face))
 
 if set(parts) != {0, 1, 2}:
     raise ValueError("The export must contain Sleave, Bolt and Mounting faces.")
+for part, first, second in coincident_faces(face_lines):
+    name = ("Sleave", "Bolt", "Mounting")[part]
+    print(f"WARNING: {name} faces at OBJ lines {first} and {second} occupy the same "
+          "positions with different attributes; both are retained. Resolve in Blender.")
 if any(not all(math.isfinite(v) for v in normal)
        or abs(sum(v * v for v in normal) - 1) > 0.001 for normal in normals):
     raise ValueError("Re-export with finite, unit-length surface normals.")
