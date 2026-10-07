@@ -5,15 +5,12 @@ namespace MoreSailwindSails.Sails.Spritsail
     // Owns the rotating sleeve, fixed lower mounting and upper-sprit purchase visuals.
     internal sealed class SpritsailSnotter : MonoBehaviour
     {
-        public MeshRenderer Timber;
+        public Material[] Materials;
         public LineRenderer Purchase;
         public SpritsailRopeCollar PurchaseCollar;
         public RopeEffect ReefSource;
-        private Mesh ownedMesh;
-        private Vector3[] profile;
-        private Vector3[] posed;
-        private Vector3[] profileNormals;
-        private Vector3[] posedNormals;
+        private SpritsailSnotterMesh rotatingMesh;
+        private SpritsailSnotterMesh mountingMesh;
         private float meshContactRadius = -1;
         private float meshPivotDistance = -1;
         private float meshMastRadius = -1;
@@ -29,8 +26,6 @@ namespace MoreSailwindSails.Sails.Spritsail
             var root = new GameObject(name: "Spritsail snotter mast fitting");
             root.transform.SetParent(parent: parent, worldPositionStays: false);
             var fitting = root.AddComponent<SpritsailSnotter>();
-            root.AddComponent<MeshFilter>();
-            fitting.Timber = root.AddComponent<MeshRenderer>();
             var woodIndex = SpritsailSnotterMaterials.WoodSailIndex;
             var metalIndex = SpritsailSnotterMaterials.MetalItemIndex;
             var darkWood = SpritsailSnotterMaterials.Wood(
@@ -51,7 +46,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                 Plugin.Log.LogWarning(
                     data: "Snotter native finish donor unavailable; using an owned untextured fallback."
                 );
-            fitting.Timber.sharedMaterials = new[] { darkWood, metal };
+            fitting.Materials = new[] { darkWood, metal };
             var connections = parent.GetComponent<SailConnections>();
             fitting.ReefSource = connections.reefController.GetComponent<RopeEffect>();
             var sheet = connections.angleControllerLeft
@@ -145,76 +140,30 @@ namespace MoreSailwindSails.Sails.Spritsail
                 pivotToTip: (tip - heel).magnitude
             );
             if (
-                !ownedMesh
+                rotatingMesh == null
                 || Mathf.Abs(pivotDistance - meshPivotDistance) > 0.001f
                 || Mathf.Abs(contactRadius - meshContactRadius) > 0.001f
                 || Mathf.Abs(mastRadius - meshMastRadius) > 0.001f
             )
-            {
-                SpritsailSnotterGeometry.Fit(
-                    sparRadius: contactRadius,
+                Refit(
+                    contactRadius: contactRadius,
                     mastRadius: mastRadius,
-                    pivotDistance: pivotDistance,
-                    vertices: out profile,
-                    normals: out profileNormals
+                    pivotDistance: pivotDistance
                 );
-                posed = new Vector3[profile.Length];
-                posedNormals = new Vector3[profile.Length];
-                if (!ownedMesh)
-                {
-                    ownedMesh = new Mesh { name = "Spritsail authored sleeve, bolt and mounting" };
-                    ownedMesh.MarkDynamic();
-                    GetComponent<MeshFilter>().sharedMesh = ownedMesh;
-                }
-                ownedMesh.vertices = profile;
-                ownedMesh.uv = SpritsailSnotterGeometry.TextureCoordinates();
-                ownedMesh.subMeshCount = SpritsailSnotterGeometry.MaterialCount;
-                for (
-                    int material = 0;
-                    material < SpritsailSnotterGeometry.MaterialCount;
-                    material++
-                )
-                    ownedMesh.SetTriangles(
-                        triangles: SpritsailSnotterGeometry.MaterialTriangles(material: material),
-                        submesh: material
-                    );
-                meshContactRadius = contactRadius;
-                meshPivotDistance = pivotDistance;
-                meshMastRadius = mastRadius;
-            }
-            var normalToLocal = transform.localToWorldMatrix.transpose;
-            for (int i = 0; i < profile.Length; i++)
-            {
-                posed[i] = transform.InverseTransformPoint(
-                    position: SpritsailSnotterGeometry.PosePoint(
-                        vertex: i,
-                        point: profile[i],
-                        center: center,
-                        axis: axis,
-                        rotatingDirection: forward,
-                        fixedDirection: fixedForward
-                    )
-                );
-                // Normals follow the same rotating/fixed frame as their points,
-                // then use the inverse-transpose of the world-to-local point map.
-                posedNormals[i] = normalToLocal
-                    .MultiplyVector(
-                        vector: SpritsailSnotterGeometry.PosePoint(
-                            vertex: i,
-                            point: profileNormals[i],
-                            center: Vector3.zero,
-                            axis: axis,
-                            rotatingDirection: forward,
-                            fixedDirection: fixedForward
-                        )
-                    )
-                    .normalized;
-            }
-            ownedMesh.vertices = posed;
-            ownedMesh.normals = posedNormals;
-            ownedMesh.RecalculateTangents();
-            ownedMesh.RecalculateBounds();
-            Timber.enabled = true;
+            rotatingMesh.Draw(
+                frame: SpritsailSnotterGeometry.Frame(center: center, axis: axis, outward: forward),
+                materials: Materials,
+                layer: gameObject.layer
+            );
+            mountingMesh.Draw(
+                frame: SpritsailSnotterGeometry.Frame(
+                    center: center,
+                    axis: axis,
+                    outward: fixedForward
+                ),
+                materials: Materials,
+                layer: gameObject.layer
+            );
             var purchasePoint = SpritsailDeployment.PurchasePoint(heel: heel, tip: tip);
             var contact = PurchaseCollar.Pose(
                 center: purchasePoint,
@@ -232,10 +181,38 @@ namespace MoreSailwindSails.Sails.Spritsail
             }
         }
 
+        private void Refit(float contactRadius, float mastRadius, float pivotDistance)
+        {
+            SpritsailSnotterGeometry.Fit(
+                sparRadius: contactRadius,
+                mastRadius: mastRadius,
+                pivotDistance: pivotDistance,
+                vertices: out var profile,
+                normals: out var profileNormals
+            );
+            if (rotatingMesh == null)
+                rotatingMesh = new SpritsailSnotterMesh(
+                    mounting: false,
+                    profile: profile,
+                    profileNormals: profileNormals
+                );
+            else
+                rotatingMesh.Refit(profile: profile, profileNormals: profileNormals);
+            if (mountingMesh == null)
+                mountingMesh = new SpritsailSnotterMesh(
+                    mounting: true,
+                    profile: profile,
+                    profileNormals: profileNormals
+                );
+            else
+                mountingMesh.Refit(profile: profile, profileNormals: profileNormals);
+            meshContactRadius = contactRadius;
+            meshPivotDistance = pivotDistance;
+            meshMastRadius = mastRadius;
+        }
+
         internal void Hide()
         {
-            if (Timber)
-                Timber.enabled = false;
             if (Purchase)
                 Purchase.enabled = false;
             if (PurchaseCollar)
@@ -246,8 +223,8 @@ namespace MoreSailwindSails.Sails.Spritsail
 
         private void OnDestroy()
         {
-            if (ownedMesh)
-                Destroy(obj: ownedMesh);
+            rotatingMesh?.Dispose();
+            mountingMesh?.Dispose();
             if (ownedWood)
                 Destroy(obj: ownedWood);
             if (ownedMetal)

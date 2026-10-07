@@ -96,26 +96,22 @@ internal static class SnotterChecks
                 }
                 // Exercise the same part-dependent posing used by the renderer.
                 var center = new Vector3(4, 7, -2);
-                var neutral = SpritsailSnotterGeometry.PosePoint(
-                    vertex: i,
-                    point: vertex,
-                    center: center,
-                    axis: Vector3.up,
-                    rotatingDirection: Vector3.forward,
-                    fixedDirection: Vector3.forward
-                );
+                var neutral = SpritsailSnotterGeometry
+                    .Frame(center: center, axis: Vector3.up, outward: Vector3.forward)
+                    .MultiplyPoint3x4(point: vertex);
                 foreach (float degrees in new[] { -89f, -40f, 40f, 89f })
                 {
                     float angle = degrees * (float)Math.PI / 180;
                     var rotating = new Vector3((float)Math.Sin(angle), 0, (float)Math.Cos(angle));
-                    var posed = SpritsailSnotterGeometry.PosePoint(
-                        vertex: i,
-                        point: vertex,
-                        center: center,
-                        axis: Vector3.up,
-                        rotatingDirection: rotating,
-                        fixedDirection: Vector3.forward
-                    );
+                    var posed = SpritsailSnotterGeometry
+                        .Frame(
+                            center: center,
+                            axis: Vector3.up,
+                            outward: part == SpritsailSnotterGeometry.MountingPart
+                                ? Vector3.forward
+                                : rotating
+                        )
+                        .MultiplyPoint3x4(point: vertex);
                     Require(
                         value: part == SpritsailSnotterGeometry.MountingPart
                             ? (posed - neutral).sqrMagnitude < 1e-10f
@@ -123,14 +119,15 @@ internal static class SnotterChecks
                         message: "Only sleeve and bolt vertices may rotate when the sail tacks."
                     );
                     // Turn and translate the entire boat: even the fixed clip must follow it.
-                    var moved = SpritsailSnotterGeometry.PosePoint(
-                        vertex: i,
-                        point: vertex,
-                        center: center + Vector3.up * 5,
-                        axis: Vector3.forward,
-                        rotatingDirection: new Vector3(rotating.x, -rotating.z, 0),
-                        fixedDirection: Vector3.down
-                    );
+                    var moved = SpritsailSnotterGeometry
+                        .Frame(
+                            center: center + Vector3.up * 5,
+                            axis: Vector3.forward,
+                            outward: part == SpritsailSnotterGeometry.MountingPart
+                                ? Vector3.down
+                                : new Vector3(rotating.x, -rotating.z, 0)
+                        )
+                        .MultiplyPoint3x4(point: vertex);
                     var relative = posed - center;
                     var expected =
                         center + Vector3.up * 5 + new Vector3(relative.x, -relative.z, relative.y);
@@ -204,6 +201,7 @@ internal static class SnotterChecks
                 message: "Posing one fitting must not modify the cached mesh or another instance."
             );
         }
+        CheckGroups();
         CheckMaterials();
         CheckSurfaceData();
         foreach (float size in new[] { 0.5f, 1f, 3f })
@@ -278,6 +276,66 @@ internal static class SnotterChecks
         Console.WriteLine(
             "PASS: embedded sleeve/bolt/fixed mounting, authored wood/metal face assignments, mast clearance, independent tacking/boat motion, rotating bolt orbit, perpendicular sprit, 12-inch tail and independent mesh data."
         );
+    }
+
+    private static void CheckGroups()
+    {
+        var allUv = SpritsailSnotterGeometry.TextureCoordinates();
+        var vertices = new HashSet<int>();
+        var faces = new HashSet<(int Material, int A, int B, int C)>();
+        foreach (bool mounting in new[] { false, true })
+        {
+            SpritsailSnotterGeometry.Group(
+                mounting: mounting,
+                sourceIndices: out var indices,
+                uv: out var uv,
+                triangles: out var triangles
+            );
+            for (int i = 0; i < indices.Length; i++)
+            {
+                Require(
+                    value: vertices.Add(indices[i]),
+                    message: "Rigid groups must not duplicate source vertices."
+                );
+                Require(
+                    value: uv[i] == allUv[indices[i]]
+                        && (
+                            SpritsailSnotterGeometry.Part(vertex: indices[i])
+                            == SpritsailSnotterGeometry.MountingPart
+                        ) == mounting,
+                    message: "Group compaction must retain UVs and rotating/fixed membership."
+                );
+            }
+            for (int material = 0; material < triangles.Length; material++)
+            for (int i = 0; i < triangles[material].Length; i += 3)
+                Require(
+                    value: faces.Add(
+                        (
+                            material,
+                            indices[triangles[material][i]],
+                            indices[triangles[material][i + 1]],
+                            indices[triangles[material][i + 2]]
+                        )
+                    ),
+                    message: "Rigid groups must preserve every material face exactly once."
+                );
+        }
+        Require(
+            value: vertices.Count == allUv.Length,
+            message: "Rigid grouping must retain all authored vertices."
+        );
+        for (int material = 0; material < SpritsailSnotterGeometry.MaterialCount; material++)
+        {
+            var triangles = SpritsailSnotterGeometry.MaterialTriangles(material: material);
+            for (int i = 0; i < triangles.Length; i += 3)
+                Require(
+                    value: faces.Remove(
+                        (material, triangles[i], triangles[i + 1], triangles[i + 2])
+                    ),
+                    message: "Group faces must retain original winding and material assignment."
+                );
+        }
+        Require(value: faces.Count == 0, message: "Rigid grouping must not add faces.");
     }
 
     private static void CheckMaterials()

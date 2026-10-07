@@ -188,11 +188,29 @@ internal static class DeploymentChecks
         var visual = IlReader
             .CalledMethods(method: Method(type: "SpritsailSnotter", name: "Pose"))
             .ToArray();
+        var upload = IlReader
+            .CalledMethods(method: Method(type: "SpritsailSnotterMesh", name: "UploadFit"))
+            .ToArray();
+        var drawFitting = IlReader
+            .CalledMethods(method: Method(type: "SpritsailSnotterMesh", name: "Draw"))
+            .ToArray();
         Require(
-            value: visual.Any(m => m.Name == "set_normals")
-                && !visual.Any(m => m.Name == "RecalculateNormals")
-                && visual.Any(m => m.Name == "RecalculateTangents"),
-            message: "Snotter posing must retain authored smooth normals and refresh tangents without flattening face corners."
+            value: upload.Any(m => m.Name == "set_normals")
+                && !upload.Any(m => m.Name == "RecalculateNormals")
+                && IlReader
+                    .CalledMethods(method: Method(type: "SpritsailSnotterMesh", name: "Refit"))
+                    .Any(m => m.Name == "RecalculateTangents")
+                && drawFitting.Any(m => m.Name == "DrawMesh")
+                && !visual
+                    .Concat(drawFitting)
+                    .Any(m =>
+                        m.Name
+                            is "set_vertices"
+                                or "set_normals"
+                                or "RecalculateTangents"
+                                or "RecalculateBounds"
+                    ),
+            message: "Rigid snotter drawing must reuse fitted surfaces; authored normals and tangents update only on refit."
         );
         foreach (var calls in new[] { runtime, visual })
             Require(
@@ -216,8 +234,12 @@ internal static class DeploymentChecks
         Require(
             value: IlReader
                 .CalledMethods(method: Method(type: "SpritsailSnotter", name: "OnDestroy"))
-                .Any(m => m.Name == "Destroy"),
-            message: "Pocket mesh must be disposed with its owner."
+                .Count(m => m.DeclaringType.Name == "SpritsailSnotterMesh" && m.Name == "Dispose")
+                == 2
+                && IlReader
+                    .CalledMethods(method: Method(type: "SpritsailSnotterMesh", name: "Dispose"))
+                    .Any(m => m.Name == "Destroy"),
+            message: "Both rigid fitting meshes must be disposed with their instance owner."
         );
         Require(
             value: assembly

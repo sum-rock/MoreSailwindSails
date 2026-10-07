@@ -409,18 +409,24 @@ the plugin DLL. All three objects stay in one source asset. The sleeve and bolt
 use the sail's rotating radial frame; the lower mounting uses the boat's neutral
 starboard direction projected perpendicular to the mast. Thus the mounting
 follows boat movement and installation height, but never follows sail tacking.
-Each instance owns one posed mesh with separately tagged parts and disposes it
-on destruction. The fitting has no collider or Rigidbody. Two submeshes apply
-the authored face materials: `DarkWood` uses native `dhow_medium_paint` with UVs
-restricted to its dark-brown vertical mast trim, and `Metal` uses native
-`metal2` from the metal-framed lantern. The sprit retains its gaff timber.
-`SpritsailSnotterMaterials` owns the paired donor/UV policy: it looks for
-`dhow_medium_paint` inside sail prefab **62** and `metal2` inside lantern item
-prefab **114**, including inactive children. It never scans globally loaded
-materials. A missing wood donor uses owned, untextured matte dark brown and logs
-a warning without aborting sail registration. Shared game materials remain
-read-only. Purchase and collar ropes retain their separate visuals and controls.
-Luff ties and the struck bundle seat toward the current rotating mounting side.
+Each instance lazily owns two rigid meshes: sleeve/bolt and mounting. It uploads
+positions, authored normals, tangents and bounds only when the physical fit
+changes. Each visible rig `LateUpdate` submits the two world frames through
+`Graphics.DrawMesh`, with two material submeshes each, shadows and light probes.
+Explicit world frames avoid distortion from nonuniform sail-parent scale. There
+are no detached renderer objects; inactive templates allocate no fitted meshes,
+and instance destruction disposes both meshes. The fitting has no collider or
+Rigidbody. Two submeshes apply the authored face materials: `DarkWood` uses
+native `dhow_medium_paint` with UVs restricted to its dark-brown vertical mast
+trim, and `Metal` uses native `metal2` from the metal-framed lantern. The sprit
+retains its gaff timber. `SpritsailSnotterMaterials` owns the paired donor/UV
+policy: it looks for `dhow_medium_paint` inside sail prefab **62** and `metal2`
+inside lantern item prefab **114**, including inactive children. It never scans
+globally loaded materials. A missing wood donor uses owned, untextured matte
+dark brown and logs a warning without aborting sail registration. Shared game
+materials remain read-only. Purchase and collar ropes retain their separate
+visuals and controls. Luff ties and the struck bundle seat toward the current
+rotating mounting side.
 
 Lantern `metal2` is an untextured Standard material: native RGB **(0.11035956,
 0.14488259, 0.1509434)**, metallic **0.51**, smoothness **0.4**. It replaces the
@@ -428,10 +434,13 @@ mast metal atlas that stretched unrelated surface details over the sleeve. If
 the native lantern material is not loaded, the fitting owns an untextured
 fallback with these same settings, using the gaff material's Standard shader
 without copying its wood textures. Both fallbacks are owned by the template that
-creates them and shared by its clones; they are destroyed with that owner. the
+creates them and shared by its clones; they are destroyed with that owner. The
 shared native material is never modified or destroyed. Existing metal UVs and
 authored smooth normals remain intact; no asset rebake is needed. The lantern
-finish still needs in-game comparison on Brig, then Sanbuq.
+finish still needs in-game comparison on Brig, then Sanbuq. The rigid draw path
+also needs in-game visibility, shadow, shipyard preview and tack validation;
+automated checks establish topology/frame equivalence and the absence of mesh
+uploads on ordinary draws, not Unity rendering or measured frame-time gains.
 
 The supplied OBJ has Y up and the bolt pointing along -X, centered at Y = Z = 0.
 Keep the exact export names **`Sleave`**, **`Bolt`** and **`Mounting`**. The

@@ -143,20 +143,64 @@ namespace MoreSailwindSails.Sails.Spritsail
 
         internal static int Part(int vertex) => parts[vertex];
 
-        // Both frames move with the mast; only the sleeve/bolt frame turns with the sail.
-        // Directions and axis are orthonormal world vectors supplied by the caller.
-        internal static Vector3 PosePoint(
-            int vertex,
-            Vector3 point,
-            Vector3 center,
-            Vector3 axis,
-            Vector3 rotatingDirection,
-            Vector3 fixedDirection
+        // Build each rigid group's compact vertex map and material topology once.
+        internal static void Group(
+            bool mounting,
+            out int[] sourceIndices,
+            out Vector2[] uv,
+            out int[][] triangles
         )
         {
-            var outward = parts[vertex] == MountingPart ? fixedDirection : rotatingDirection;
-            var right = Vector3.Cross(axis, outward);
-            return center + right * point.x + axis * point.y + outward * point.z;
+            var selected = new List<int>();
+            var mapped = new int[source.Length];
+            for (int i = 0; i < source.Length; i++)
+            {
+                mapped[i] = -1;
+                if ((parts[i] == MountingPart) == mounting)
+                {
+                    mapped[i] = selected.Count;
+                    selected.Add(item: i);
+                }
+            }
+            sourceIndices = selected.ToArray();
+            uv = new Vector2[selected.Count];
+            for (int i = 0; i < selected.Count; i++)
+                uv[i] = texture[selected[i]];
+            triangles = new int[MaterialCount][];
+            for (int material = 0; material < MaterialCount; material++)
+            {
+                var group = new List<int>();
+                var all = materialIndices[material];
+                for (int i = 0; i < all.Length; i += 3)
+                {
+                    int a = mapped[all[i]],
+                        b = mapped[all[i + 1]],
+                        c = mapped[all[i + 2]];
+                    if ((a >= 0) != (b >= 0) || (a >= 0) != (c >= 0))
+                        throw new InvalidDataException(
+                            message: "Snotter triangle spans rigid groups."
+                        );
+                    if (a < 0)
+                        continue;
+                    group.Add(item: a);
+                    group.Add(item: b);
+                    group.Add(item: c);
+                }
+                triangles[material] = group.ToArray();
+            }
+        }
+
+        // Both frames follow the mast; only the sleeve/bolt frame follows the tack.
+        // The caller supplies orthonormal world directions, independent of parent scale.
+        internal static Matrix4x4 Frame(Vector3 center, Vector3 axis, Vector3 outward)
+        {
+            var right = Vector3.Cross(lhs: axis, rhs: outward);
+            return new Matrix4x4(
+                column0: new Vector4(right.x, right.y, right.z, 0),
+                column1: new Vector4(axis.x, axis.y, axis.z, 0),
+                column2: new Vector4(outward.x, outward.y, outward.z, 0),
+                column3: new Vector4(center.x, center.y, center.z, 1)
+            );
         }
 
         internal static float LuffDistance(float mastRadius) =>
