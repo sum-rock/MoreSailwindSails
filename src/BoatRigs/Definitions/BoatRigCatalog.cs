@@ -20,7 +20,6 @@ namespace MoreSailwindSails.BoatRigs
                 Gloriana.Definition,
                 Chronian.Definition,
                 Caelanor.Definition,
-                Gallus.Definition,
             }
         );
 

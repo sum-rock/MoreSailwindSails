@@ -237,7 +237,7 @@ internal static class StayChecks
             "Stay guard changed flying-sail scope."
         );
         Console.WriteLine(
-            $"PASS: {variants} authored stays across eleven boat profiles (Gallus has no stays), {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs, pose invariance and order text."
+            $"PASS: {variants} authored stays across ten Fisherman boat profiles, {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs, pose invariance and order text."
         );
     }
 

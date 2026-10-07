@@ -23,6 +23,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Sails/Spritsail/SpritsailControlSlots.cs"
+      Link="Spritsail/SpritsailControlSlots.cs"
+    />
+    <Compile
       Include="../../src/Sails/Spritsail/SpritsailSnotterMaterials.cs"
       Link="Spritsail/SpritsailSnotterMaterials.cs"
     />

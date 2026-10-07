@@ -21,7 +21,6 @@ internal static class RigChecks
             "BOAT GLORIANA (182)",
             "BOAT CHRONIAN (187)",
             "BOAT CAELANOR (192)",
-            "BOAT GALLUS (197)",
         };
         // Live mast-section and native winch-source mapping, in selection order.
         string[] layouts =
@@ -36,7 +35,6 @@ internal static class RigChecks
             "5:1>2;6:2>4,3",
             "12:15,3,2>16,5,4;14:16,5,4>17,7,6",
             "14:17,2,1>18,6,5",
-            "", // Gallus has no Fisherman's Flying Sail mast pairs.
         };
         Assert(BoatRigCatalog.All.Count == names.Length, "Missing boat mapping coverage.");
         for (int i = 0; i < names.Length; i++)
@@ -97,7 +95,7 @@ internal static class RigChecks
         Reject(() => new MastSupportDefinition(-1, new[] { 2 }, new[] { 3 }));
         Reject(() => new MastSupportDefinition(1, Array.Empty<int>(), new[] { 3 }));
         Console.WriteLine(
-            "PASS: eleven boat profiles (Gallus has no Flying Sail pairs), physical mast sections, control-source selection and unknown-boat handling."
+            "PASS: ten Fisherman boat profiles, physical mast sections, control-source selection and unknown-boat handling."
         );
     }
 

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -32,7 +31,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             return rig;
         }
 
-        internal static bool TryResolve(Mast fore, out BoomedSpritsailMount pair)
+        internal static bool TryResolve(Mast fore, out BoomedSpritsailMount pair, int slot = 0)
         {
             pair = null;
             if (
@@ -43,109 +42,60 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             )
                 return false;
             var boat = fore.GetComponentInParent<BoatRefs>();
-            var profile = boat ? BoatRigCatalog.Find(boatName: boat.name) : null;
-            // Every registered boat profile can supply authored mast ancestry and guides.
-            if (profile == null)
-                return false;
+            var collider = fore.GetComponent<CapsuleCollider>();
             if (
-                !profile.MastParents.ContainsKey(key: fore.orderIndex)
-                || !IsUpright(mast: fore, boat: boat)
-            )
-                return false;
-            var masts = boat.GetComponentsInChildren<Mast>(includeInactive: true)
-                .Where(predicate: m => m.gameObject.activeInHierarchy)
-                .GroupBy(keySelector: m => m.orderIndex)
-                .ToDictionary(keySelector: g => g.Key, elementSelector: g => g.First());
-            if (
-                profile
-                    .Sections(section: fore.orderIndex)
-                    .Any(predicate: id =>
-                        !masts.TryGetValue(key: id, value: out var support)
-                        || !IsUpright(mast: support, boat: boat)
-                    )
-            )
-                return false;
-            Transform highest = null;
-            Mast[] selected = null;
-            float height = float.NegativeInfinity;
-            foreach (var section in masts.Values)
-            {
-                if (!profile.MastParents.ContainsKey(key: section.orderIndex))
-                    continue;
-                var chain = profile.Sections(section: section.orderIndex);
-                if (
-                    !chain.Contains(value: fore.orderIndex)
-                    || chain.Any(predicate: id =>
-                        !masts.ContainsKey(key: id) || !IsUpright(mast: masts[id], boat: boat)
+                !boat
+                || !collider
+                || !SpritsailMastAlignment.IsUsable(
+                    boatLocalAxis: boat.transform.InverseTransformVector(
+                        vector: collider.transform.TransformVector(
+                            vector: SpritsailMastAlignment.LocalAxis(direction: collider.direction)
+                        )
                     )
                 )
-                    continue;
-                foreach (
-                    var guide in (section.mastReefAtt ?? Array.Empty<Transform>()).Concat(
-                        second: section.mastReefAttExtension ?? Array.Empty<Transform>()
-                    )
-                )
-                {
-                    if (!guide || !guide.gameObject.activeInHierarchy)
-                        continue;
-                    float y = boat.transform.InverseTransformPoint(position: guide.position).y;
-                    if (y <= height)
-                        continue;
-                    height = y;
-                    highest = guide;
-                    selected = chain.Select(selector: id => masts[id]).ToArray();
-                }
-            }
-            if (!highest)
+            )
+                return false;
+            var lower = SpritsailNativeBinding.Attachment(items: fore.mastReefAtt, index: slot);
+            var upper = SpritsailNativeBinding.Attachment(
+                items: fore.mastReefAttExtension,
+                index: slot
+            );
+            if (!upper)
+                upper = lower;
+            if (
+                !lower
+                || !upper
+                || !lower.gameObject.activeInHierarchy
+                || !upper.gameObject.activeInHierarchy
+            )
                 return false;
             pair = new BoomedSpritsailMount
             {
                 Boat = boat,
                 Mast = fore,
-                Guide = highest,
-                Sections = selected,
+                LowerGuide = lower,
+                Guide = upper,
+                Parts = SpritsailNativeBinding.SupportParts(mast: fore, lower: lower, upper: upper),
             };
-            return true;
-        }
-
-        private static bool IsUpright(Mast mast, BoatRefs boat)
-        {
-            var collider = mast ? mast.GetComponent<CapsuleCollider>() : null;
-            if (!collider || !boat)
-                return false;
-            var localAxis =
-                collider.direction == 0 ? Vector3.right
-                : collider.direction == 1 ? Vector3.up
-                : Vector3.forward;
-            return SpritsailMastAlignment.IsUpright(
-                boatLocalAxis: boat.transform.InverseTransformVector(
-                    vector: collider.transform.TransformVector(vector: localAxis)
-                )
-            );
+            return pair.Active;
         }
 
         internal bool Bind(Mast mast)
         {
-            // A removal preview temporarily enables two mutually exclusive options.
-            // Keep the current support until that order finishes, so the removal
-            // guard cannot be evaded by silently rebinding to the preview option.
-            if (
-                Support != null
-                && Support.Mast == mast
-                && Support.Active
-                && Support.Sections.All(predicate: section =>
-                    IsUpright(mast: section, boat: Support.Boat)
-                )
-                && (!bindingDirty || GameState.currentShipyard)
-            )
+            var binding = sail.GetComponent<SpritsailNativeBinding>();
+            if (binding && binding.Mast == mast && binding.Error != null)
+                return false;
+            int slot = binding && binding.Mast == mast ? binding.Slot : 0;
+            if (Support != null && Support.Mast == mast && Support.Active && !bindingDirty)
                 return true;
-            if (!TryResolve(fore: mast, pair: out var resolved))
+            if (!TryResolve(fore: mast, pair: out var resolved, slot: slot))
                 return false;
             bool changed =
                 Support == null
                 || Support.Mast != resolved.Mast
                 || Support.Guide != resolved.Guide
-                || !Support.Sections.SequenceEqual(second: resolved.Sections);
+                || Support.LowerGuide != resolved.LowerGuide
+                || !Support.Parts.SequenceEqual(second: resolved.Parts);
             Support = resolved;
             bindingDirty = false;
             if (changed)
@@ -157,16 +107,19 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
 
         internal static string InstallError(Sail sail, Mast mast)
         {
-            var pair = sail.GetComponent<BoomedSpritsailRigging>()?.Support;
-            if (pair == null || pair.Mast != mast || !pair.Active)
-                if (!TryResolve(fore: mast, pair: out pair))
-                    return "(REQUIRES A SUPPORTED UPRIGHT MAST WITH ACTIVE GUIDES)";
-            if (pair.Sections.Any(predicate: section => !IsUpright(mast: section, boat: pair.Boat)))
-                return "(SPRITSAILS REQUIRE AN UPRIGHT MAST)";
+            var binding = sail.GetComponent<SpritsailNativeBinding>();
+            if (!binding || binding.Mast != mast)
+                return "(NATIVE MAST CONTROLS NOT READY)";
+            if (binding.Error != null)
+                return binding.Error;
+            int slot = binding.Slot;
+            if (!TryResolve(fore: mast, pair: out var pair, slot: slot))
+                return "(REQUIRES AN ACTIVE PHYSICAL MAST WITH NATIVE GUIDES)";
             var head = mast.transform.TransformPoint(
                 position: new Vector3(0, 0, sail.GetCurrentInstallHeight() - mast.mastHeight)
             );
-            if (Vector3.Dot(head - pair.Guide.position, pair.Boat.transform.up) > 0.05f)
+            MastFrame(pair: pair, heightPoint: head, point: out head, axis: out var axis);
+            if (Vector3.Dot(head - pair.Guide.position, axis) > 0.05f)
                 return "(LUFF ABOVE MAST GUIDE)";
             var scale = sail.cloth.transform.parent.localScale;
             if (
@@ -188,14 +141,6 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             float rise =
                 SpritsailDeployment.PurchasePoint(heel: struck.Heel, tip: struck.Tip).x
                 - corners[0].x;
-            var mastCollider = mast.GetComponent<CapsuleCollider>();
-            var localAxis =
-                mastCollider.direction == 0 ? Vector3.right
-                : mastCollider.direction == 1 ? Vector3.up
-                : Vector3.forward;
-            var axis = mast.transform.TransformDirection(direction: localAxis).normalized;
-            if (Vector3.Dot(axis, pair.Boat.transform.up) < 0)
-                axis = -axis;
             if (Vector3.Dot(head + axis * rise - pair.Guide.position, axis) > -0.05f)
                 return "(SPRIT HOIST REQUIRES A HIGHER MAST GUIDE)";
             return null;
@@ -307,8 +252,18 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
         internal void UpdateHalyard(Transform attachment)
         {
             EnsureGuides();
-            mastGuide.position = Support.Guide.position;
-            upperGuide.position = Support.Guide.position + Support.Boat.transform.up * 0.05f;
+            mastGuide.position = Support.LowerGuide.position;
+            var axis = Support.Mast.GetComponent<CapsuleCollider>();
+            var up = axis
+                .transform.TransformDirection(
+                    direction: SpritsailMastAlignment.LocalAxis(direction: axis.direction)
+                )
+                .normalized;
+            if (Vector3.Dot(up, Support.Boat.transform.up) < 0)
+                up = -up;
+            upperGuide.position =
+                Support.Guide.position
+                + (Support.Guide == Support.LowerGuide ? up * 0.05f : Vector3.zero);
             var connections = sail.GetComponent<SailConnections>();
             var guide = connections.mastReefAttachment;
             var upper = connections.mastReefAttExtension;
@@ -325,9 +280,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
         {
             if (Support == null)
                 return false;
-            return Support.Sections.Any(predicate: m =>
-                m && (m.GetComponent<BoatPartOption>() == option || option.childMast == m)
-            );
+            return Support.Parts.Contains(value: option);
         }
 
         private void OnDestroy()
