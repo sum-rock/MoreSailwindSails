@@ -3,17 +3,21 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
 {
-    // Records the carrying mast, its active upper guide and protected ancestry.
+    // Records the carrying mast, its native guides and their actual supporting parts.
     internal sealed class LooseFootedSpritsailMount
     {
         internal BoatRefs Boat;
         internal Mast Mast;
-        internal Transform Guide;
-        internal Mast[] Sections;
+        internal Transform Guide,
+            LowerGuide;
+        internal BoatPartOption[] Parts;
         internal bool Active =>
             Mast
+            && Mast.gameObject.activeInHierarchy
+            && LowerGuide
+            && LowerGuide.gameObject.activeInHierarchy
             && Guide
             && Guide.gameObject.activeInHierarchy
-            && Sections.All(predicate: m => m && m.gameObject.activeInHierarchy);
+            && Parts.All(predicate: p => p && p.gameObject.activeInHierarchy);
     }
 }

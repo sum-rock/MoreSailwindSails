@@ -39,33 +39,10 @@ internal static class PrototypeChecks
                     .info.before.Contains("NatoriusG.AllSailsAllShipyards"),
             message: "Register after SE construction and before All Sails caches the catalog."
         );
-        ControlRestorationChecks.Run(
-            assembly: assembly,
-            patchName: Family + "Patches.LooseFootedSpritsailControlsPatch",
-            feature: "Spritsail"
-        );
         Require(
-            value: Method(type: "Patches.LooseFootedSpritsailControlsPatch", method: "Prefix")
-                .GetCustomAttribute<HarmonyPriority>()
-                .info.priority == Priority.First
-                && Method(type: "Patches.LooseFootedSpritsailControlsPatch", method: "Finalizer")
-                    .GetCustomAttribute<HarmonyPriority>()
-                    .info.priority == Priority.Last,
-            message: "The spritsail filter must wrap existing family filters without losing their sails."
-        );
-        var bind = IlReader
-            .CalledMethods(
-                method: Method(type: "LooseFootedSpritsailRigging", method: "AttachControls")
-            )
-            .ToArray();
-        Require(
-            value: bind.Any(m =>
-                m.DeclaringType.Name == "FishermanWinchControls" && m.Name == "Reconcile"
-            )
-                && bind.Any(m =>
-                    m.DeclaringType.Name == "FishermanWinchControls" && m.Name == "BindSheets"
-                ),
-            message: "Use existing atomic control allocation for the clew pair and reef winch."
+            value: assembly.GetType(name: Family + "Patches.LooseFootedSpritsailControlsPatch")
+                == null,
+            message: "Loose-footed spritsails must remain in the native control list."
         );
         var resolver = IlReader
             .CalledMethods(
@@ -73,9 +50,9 @@ internal static class PrototypeChecks
             )
             .ToArray();
         Require(
-            value: !resolver.Any(m => m.Name == "MastPairs")
-                && resolver.Any(m => m.Name == "Sections"),
-            message: "Spritsail supports must use a single active mast chain, never an aft mast pair."
+            value: !resolver.Any(m => m.DeclaringType.Namespace == "MoreSailwindSails.BoatRigs")
+                && resolver.Any(m => m.Name == "Attachment"),
+            message: "Spritsail supports use the carrying mast's native attachments without a profile."
         );
         foreach (
             var type in assembly
@@ -167,7 +144,7 @@ internal static class PrototypeChecks
             message: "Reuse the inspected gaff timber without modifying its shared material."
         );
         Console.WriteLine(
-            "PASS (structural): spritsail registration, mixed-family filter ordering, single-mast supports, shared control allocation, independent mechanics, fixed live topology, force-state restoration, order guards and gaff timber ownership."
+            "PASS (structural): spritsail registration, single-mast supports, native control binding, independent mechanics, fixed live topology, force-state restoration, order guards and gaff timber ownership."
         );
     }
 

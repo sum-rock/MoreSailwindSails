@@ -23,7 +23,6 @@ internal static class HalyardProfileChecks
             { "Gloriana", Gloriana.Definition },
             { "Chronian", Chronian.Definition },
             { "Caelanor", Caelanor.Definition },
-            { "Gallus", Gallus.Definition },
         };
         var associations = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "Controls", "HalyardMounts.txt")
@@ -137,7 +136,7 @@ internal static class HalyardProfileChecks
             "Brig's registered mainmast source 70 was confused with unregistered foremast source 74."
         );
         Console.WriteLine(
-            $"PASS: {associations.Count} audited halyard groups across eleven supported boats, exact mast/section source lists, own-seat priority, registered reef capacity and Brig 70/74 identity separation."
+            $"PASS: {associations.Count} audited halyard groups across ten supported boats, exact mast/section source lists, own-seat priority, registered reef capacity and Brig 70/74 identity separation."
         );
     }
 

@@ -119,7 +119,7 @@ feature's `Patches/` directory and `.Patches` namespace.
 | `src/Plugin.cs`                             | Identity, dependencies, Harmony discovery and optional SailInfo integrations                                                      |
 | `src/Sails/FishermansFlyingSail/`           | Mast-mounted sail registration, rig, geometry, tension, billow and aerodynamics                                                   |
 | `src/Sails/FishermansStaysail/`             | Family prefab builder, rig, fixed head, edge fitting and reefing; `MkA/`, `MkB/`, `MkC/` supply cuts and identities               |
-| `src/Sails/Spritsail/`                      | Category identity, family catalog, balance rules, shipyard browsing and optional All Sails integration                            |
+| `src/Sails/Spritsail/`                      | Category identity, family catalog, native control binding, balance rules, shipyard browsing and optional All Sails integration    |
 | `src/Sails/Spritsail/LooseFootedSpritsail/` | Shared loose-footed rig, geometry and patches; `MkA/` and `MkB/` supply shape and identity                                        |
 | `src/Sails/Spritsail/BoomedSpritsail/`      | Independent boom-supported rig, native single-sheet controls and lifting-boom deployment; `MkA/` and `MkB/` supply companion cuts |
 | `src/Stays/FishermansStay/`                 | Independent mounts, registration, previews, controls and save compatibility                                                       |
@@ -176,8 +176,10 @@ resolve full type names: update both when moving or renaming code.
   and restore the full list in a finalizer. Capacity, collision, overlap and
   saves must see all sails. Boomed spritsails use native single-sheet binding
   and must remain in the native list.
-- Resolve authored, connected **active** mast sections/guides; registration and
-  previews can precede activation. Protect occupied stays and support chains.
+- Fisherman families resolve authored, connected **active** mast
+  sections/guides. Spritsails resolve their carrying mast and native assigned
+  guides. Registration and previews can precede activation; protect occupied
+  stays and actual support parts.
 - Clamp fisherman sail travel to **±40°** and spritsail travel to **±89°** after
   native controller updates, preserving tighter limits without snapping
   transforms. Paired sheets use `JibAngleMaster.Update`; boomed spritsails use
@@ -300,15 +302,41 @@ require both category 6 and a registered prefab ID. Type-specific patches
 recognize their rig component. Mark definitions supply cut and identity;
 loose-footed and boomed mechanics remain independently editable.
 
-All four marks can fit eligible physical masts on **Brig, Junk, Jong, Sanbuq,
-Cog, Shroud, Baghala (large dhow), Gloriana, Chronian, Caelanor and Gallus**
-through the existing boat profiles. Shroud requires its expansion; Gloriana,
-Chronian, Caelanor and Gallus require OldChronian. Fitting still requires
-authored, connected active mast sections, a capsule collider and an upper guide;
-raked, square-only and stay-only mounts are excluded. Loose-footed sails also
-require usable control templates. No aft mast or Fisherman's Stay is needed.
-Leopard and unknown profiles remain unsupported. Availability does not establish
-in-game validation of each rig.
+All four marks fit ordinary physical masts directly from native mast data,
+including raked masts and boats without a MoreSailwindSails profile. Native
+square-only and stay-only restrictions remain. A usable capsule collider, active
+native rope guides, sufficient guide clearance and native control slots are
+required. No aft mast or Fisherman's Stay is needed. Availability does not
+establish in-game validation of each rig.
+
+Both types use native `Mast.UpdateControllerAttachments` binding by sail order:
+boomed sails use `midAngleWinch`, loose-footed sails use `leftAngleWinch` and
+`rightAngleWinch`, and both use `reefWinch`. Category 6 and `squareSail = false`
+remain unchanged; loose-footed sails do not share square-topsail trim. There are
+no spritsail winch clones, borrowed fittings or profile fallbacks.
+
+The binding guard runs after Fisherman filters and records the native slot and
+its assigned guides before the full sail order is restored. It leaves sails in
+the list. Missing or conflicting slots temporarily suppress only that
+spritsail's controller/attachment references; a finalizer restores the
+references and keeps unbound controllers inactive without deleting their input
+state. Native square sails claim pair zero even above a loose-footed sail: this
+conflict is rejected. Malformed mast winch arrays skip native binding with a
+diagnostic because native setup dereferences every entry. Other native
+exceptions still propagate.
+
+Guides come from the carrying mast's indexed `mastReefAtt` and optional
+`mastReefAttExtension`, falling back to the former when no extension is
+assigned. There is no search through other mast sections. Runtime ancestry
+identifies actual mast/guide-owning parts for removal and preview protection.
+Clearance is measured along the mast axis, and the existing luff/hinge frame
+follows rake. Horizontal/degenerate axes remain invalid for height-based
+fitting.
+
+Existing prefab IDs, installation coordinates and save fields remain unchanged.
+Loaded arrangements that depended on borrowed fittings or higher profiled guides
+may require refitting. No save migration or automatic repositioning is
+performed.
 
 ### Balance and physics defaults
 
@@ -540,21 +568,19 @@ a guarantee of spar/fabric contact clearance.
 
 ### Fitting, collision and force lifecycle
 
-Both loose-footed and boomed marks require upright carrying and supporting mast
-sections. The physical capsule axis is measured in boat-local coordinates, so
-boat heel/pitch does not change eligibility. A **0.1°** tolerance absorbs
-transform noise; fore/aft rake and sideways lean beyond it are excluded from
-shipyard compatibility and installation. Upright topmasts on raked bases are
-also excluded. This includes Gloriana's raked foremast; its upright mainmast and
-mizzen sections remain eligible. No save migration is performed.
+Both loose-footed and boomed marks accept raked and leaning carrying masts. The
+physical capsule axis is measured in boat-local coordinates, so boat heel/pitch
+does not change eligibility. The luff and hinge follow that axis; nonfinite,
+degenerate or effectively horizontal axes cannot support the existing
+height-based fitting calculation.
 
-The highest eligible active guide comes from the carrying mast's connected
-ancestry, which remains protected through removal previews. The guide must be at
-least **5 cm above the fully raised purchase**; otherwise installation reports
+The native slot's assigned guide must be at least **5 cm above the fully raised
+purchase**, measured along the mast axis. Otherwise installation reports
 `SPRIT HOIST REQUIRES A HIGHER MAST GUIDE`. Lower or resize the sail, or use a
-taller supported mast. Native mast save slots and control mechanisms are
-retained; no custom save schema is added. Save/reload behavior still needs
-runtime validation.
+mast with a suitable native guide. The actual guide-owning parts remain
+protected through removal previews. Native mast save slots are retained; no
+custom save schema is added. Save/reload behavior still needs runtime
+validation.
 
 Construct all collision children on the inactive template. Native
 `ShipyardSailColChecker.Awake` initializes reporting, tags, layers and kinematic
@@ -598,10 +624,9 @@ topology construction.
 ## Loose-footed spritsail prototype
 
 Both marks share the jib's paired sheet controllers and coordinated deployment.
-The control filter temporarily removes only loose-footed sails from native
-binding, wraps other family filters and restores the full mast list last. Shared
-winch allocation supplies native-first complete pairs, authored fallbacks and
-the carrying mast's halyard group. Boomed sails remain on native binding.
+Their controllers bind directly to the carrying mast's native left/right sheet
+and reef slots. Spritsails remain in the native binding list alongside boomed
+and vanilla sails; Fisherman families retain their separate filters/allocation.
 
 The sprit reefs about its quarter-luff bolt in the rotating mast fitting (about
 **34°** from the mast for fully deployed Mk.A at uniform scale). Pulling the
@@ -734,18 +759,18 @@ data; resolve `Sections`, `Base` and `SheetCategory` through that profile.
 | Gloriana (OldChronian 0.6.0) |           2 |             3 |                          1 |
 | Chronian (OldChronian 0.6.0) |           2 |             2 |                          0 |
 | Caelanor (OldChronian 0.6.0) |           1 |             1 |                          0 |
-| Gallus (OldChronian 0.6.0)   |           0 |             0 |                          0 |
 
-The eleven profiles provide **99** stay variants across ten boats; Gallus
-supports Spritsails only. OldChronian support is profile-based with no hard mod
-assembly dependency; only the four listed OldChronian boats are supported. Exact
-vectors, prerequisites and ordered control-source lists live in each profile,
-backed by numeric installed-asset fixtures.
+The ten profiles provide **99** stay variants. Fisherman support for OldChronian
+is profile-based with no hard mod assembly dependency; Gloriana, Chronian and
+Caelanor have profiles. Spritsails do not require profiles, including on Gallus.
+Exact vectors, prerequisites and ordered control-source lists live in each
+profile, backed by numeric installed-asset fixtures.
 
-**Leopard is unsupported:** its support and BoatRig profile were removed after
+**Leopard has no Fisherman support:** its BoatRig profile was removed after
 in-game compatibility problems. Profile gates reject Flying Sail fitting and
 skip Fisherman's Stay registration on Leopard; no save migration is provided.
-Future compatibility work is tracked in
+Spritsails use its native mast fittings under the same profile-independent rules
+as other boats. Future compatibility work is tracked in
 [issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
 
 Standard stay variants use **70°** between the aft spar's downward axis and
@@ -848,16 +873,11 @@ seats. All manual fallbacks are null.
 
 ### Gallus (OldChronian)
 
-[Gallus.cs](../src/BoatRigs/Gallus.cs) profiles OldChronian 0.6.0's `gallus`
-bundle, identity `BOAT GALLUS (197)`. Its single mast offers **1 (Plumb)** and
-**4 (Raked, 15°)**. All four Spritsail marks can fit the plumb option; the raked
-option is ineligible. Empty stay and mast-pair lists mean no Fisherman's Stays,
-Staysails or Flying Sails. `BoatRigDefinition` permits empty support lists while
-retaining duplicate-source validation.
-
-Both mast options share one sheet category. Halyard sources are **1:[1,2,3]**
-and **4:[4,5,6]**; reservations deduplicate shared native identities. No manual
-fallbacks are authored. Boomed Spritsails retain ordinary native controls.
+OldChronian 0.6.0's `gallus` bundle, identity `BOAT GALLUS (197)`, offers **1
+(Plumb)** and **4 (Raked, 15°)**. Both mast frames are eligible for all four
+Spritsail marks subject to native fittings and clearance. Gallus has no boat
+profile and receives no Fisherman's Stays or Flying Sail support. Its installed
+mast measurements remain as regression fixtures for profile-independent fitting.
 
 ### Stay collars on Sanbuq and Large Dhow
 
@@ -891,10 +911,10 @@ rollback or teardown; shared donor assets and live Cloth are untouched.
 ## Winch placement
 
 The native winch placement redesign is **accepted as valid and complete**. It
-supports the eleven boats in [Boat profiles and stays](#boat-profiles-and-stays)
-and applies to Flying Sails, all three staysail cuts and native sails on
-Fisherman's Stays. Loose-footed spritsails also use these controls across the
-supported profiles; boomed spritsails use ordinary native controls instead. The
+supports the ten profiled boats in
+[Boat profiles and stays](#boat-profiles-and-stays) and applies to Flying Sails,
+all three staysail cuts and native sails on Fisherman's Stays. Both spritsail
+types use ordinary native controls independently of these profiles. The
 follow-up architecture cleanup is implemented.
 [Runtime validation](#runtime-validation) separates accepted Brig/Jong evidence
 from later changes and remaining in-game uncertainty.
@@ -918,12 +938,12 @@ mast positions: Jong has separate `MainmastA`/`MainmastB` categories; Cog's
 raked foremast belongs to its separate foremast group.
 
 The forward physical mast selects the sheet category (`References.Fore` for
-custom stays, `Pair.Fore` for Flying Sails, carrying mast for loose-footed
-spritsails). `SheetingWinchPlacementResolver` searches complete native
-left/right pairs in authored source order and native array order. It discovers
-inactive source rigs through the boat hierarchy without relying on the startup
-`BoatRefs.masts` array. Missing or unmatched array entries are skipped with a
-diagnostic. Centre sheets never become pair candidates.
+custom stays, `Pair.Fore` for Flying Sails). `SheetingWinchPlacementResolver`
+searches complete native left/right pairs in authored source order and native
+array order. It discovers inactive source rigs through the boat hierarchy
+without relying on the startup `BoatRefs.masts` array. Missing or unmatched
+array entries are skipped with a diagnostic. Centre sheets never become pair
+candidates.
 
 Native poses preserve both sides' position, orientation and asymmetry. Shared
 references and coincident seats are deduplicated; the first supported whole pair
@@ -974,9 +994,8 @@ mast variants' ordinary reef arrays.
 | Gloriana   |              4 |
 | Chronian   |              6 |
 | Caelanor   |              6 |
-| Gallus     |              2 |
 
-The supported catalog has **78 halyard groups**.
+The supported catalog has **76 halyard groups**.
 
 Unlisted masts retain their original lookup, including Jong's raked foremast and
 unsupported bermuda variants. Cog covers both ordinary mizzen variants; the
@@ -1065,12 +1084,12 @@ frame-time or total managed-allocation measurements.
 
 `HalyardWinchPlacementResolver` uses the concrete requested active mast's
 authored group, preserving native array order within each source. Flying Sails
-and loose-footed spritsails request their mounting mast; staysail Mk.A/B/C
-request the aft base; native sails on custom stays request the stay's aft
-halyard source. Topmast seats on an active lower support retain their native
-association. An optional measured fallback is tried after native sources
-exhaust; it is scoped to that exact requested mast. There is no inferred
-alternative-mast search or generated placement.
+request their mounting mast; staysail Mk.A/B/C request the aft base; native
+sails on custom stays request the stay's aft halyard source. Topmast seats on an
+active lower support retain their native association. An optional measured
+fallback is tried after native sources exhaust; it is scoped to that exact
+requested mast. There is no inferred alternative-mast search or generated
+placement.
 
 Shroud uses these same resolvers. Its short mainmast has **five** ordinary reef
 entries and its tall mainmast **seven**. Each keeps its own ordinary array
@@ -1265,10 +1284,11 @@ measurements only, never meshes, textures or assemblies.
 
 `tests/GeometryChecks/FishermansStay/NativeWinchSeats.txt` records installed
 option labels, native/SE shipyard groups and prerequisites, control identities,
-array correspondence and parent-local poses across the eleven supported boats.
-These are reference measurements, **not boat-local fallback vectors**. The
-inventory was read from installed assets and SE's serialized part/option
-metadata; no proprietary assemblies or extracted asset payloads are committed.
+array correspondence and parent-local poses across eleven measured boats
+(including the now profile-free Gallus). These are reference measurements, **not
+boat-local fallback vectors**. The inventory was read from installed assets and
+SE's serialized part/option metadata; no proprietary assemblies or extracted
+asset payloads are committed.
 
 `NativeWinchSeats.txt` distinguishes Brig's registered source **70** (mainmast
 **B1** reef seats) from unregistered source **74** (foremast **F1** seats).
@@ -1285,27 +1305,28 @@ searches.
 
 ### Automated baseline and limits
 
-The **0.3.0-dev** baseline on **2026-10-05**, including OldChronian profiles and
-the architecture cleanup, passed Release with zero warnings/errors, both suites,
-CSharpier, Prettier and `git diff --check`. AssemblyChecks covers **114**
-Harmony targets against installed assemblies. These results do not establish
-in-game behavior.
+The **0.3.0-dev** baseline on **2026-10-07**, including profile-free spritsails,
+OldChronian profiles and the architecture cleanup, passed Release with zero
+warnings/errors, both suites, CSharpier, Prettier and `git diff --check`.
+AssemblyChecks covers **114** Harmony targets against installed assemblies.
+These results do not establish in-game behavior.
 
-| Area                       | Coverage and limitation                                                                                                                                                                                                |
-| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geometry and forces        | All sail cuts, skin weights, coupled edges, fixed-head/reef poses, spritsail flex and obstruction, collision bounds, force inputs and finite fallbacks; no Cloth simulation                                            |
-| Shipyard and compatibility | IDs/rollback, native IL contracts, patch ordering, filtering/restoration, category paging/scaling, spritsail pre-Awake collider construction, SailInfo reflection and naming; no live menus or Unity initialization    |
-| Winch placement            | Eleven profiles, 99 stays, 78 halyard groups, exact sources/aliases, atomic pairs, fallbacks, native reclaim, stable reservations, retries, bootstrap and teardown structure; no Unity exception/destruction execution |
-| Visuals and diagnostics    | Knot channels, collars, mast-surface query slots, displaced walking frames, overlay occupancy and resource ownership; no rendering, audio startup or interactive validation                                            |
+| Area                       | Coverage and limitation                                                                                                                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geometry and forces        | All sail cuts, skin weights, coupled edges, fixed-head/reef poses, spritsail flex and obstruction, collision bounds, force inputs and finite fallbacks; no Cloth simulation                                         |
+| Shipyard and compatibility | IDs/rollback, native IL contracts, patch ordering, filtering/restoration, category paging/scaling, spritsail pre-Awake collider construction, SailInfo reflection and naming; no live menus or Unity initialization |
+| Winch placement            | Ten profiles, 99 stays, 76 halyard groups, exact sources/aliases, atomic pairs, fallbacks, native reclaim, stable reservations, retries, bootstrap and teardown structure; no Unity exception/destruction execution |
+| Visuals and diagnostics    | Knot channels, collars, mast-surface query slots, displaced walking frames, overlay occupancy and resource ownership; no rendering, audio startup or interactive validation                                         |
 
 OldChronian profile checks cover measured endpoints/slopes, mast ancestry,
 capsule acceptance, guide alignment, native controls and all three staysail
 cuts. Availability checks include **1,024** Chronian support/exclusion
 combinations, **512** Caelanor combinations, both Gloriana mizzen variants and
-Gallus's absence of Fisherman's support. Spritsail checks cover rake/lean
-rejection, transform invariance and expected active collision strips. Gloriana
-fallback checks cover native priority, exclusive reservations, stable retention,
-support loss/recovery and template/pose validation.
+Gallus's absence of Fisherman's support. Spritsail checks cover native control
+slots, conflicts and rake/lean acceptance, transform invariance and expected
+active collision strips. Gloriana fallback checks cover native priority,
+exclusive reservations, stable retention, support loss/recovery and
+template/pose validation.
 
 The placement cleanup's synthetic **600-frame / 60 Hz** single-pair fixture
 reduced modeled scan requests **1,200 → 20**, candidate builds **600 → 1** and
@@ -1384,18 +1405,27 @@ These observations cover specific configurations, not all boats or lifecycle
 transitions. The winch redesign remains accepted; remaining checks concern
 regressions and later changes rather than unfinished original placement work.
 
+### Spritsail native binding revision (2026-10-07)
+
+The profile-free/native-control revision has not been observed in game. Validate
+both types/marks on Brig, then Gallus plumb/raked and Sanbuq; include mixed
+square/gaff/Fisherman arrangements, reordered sails, missing or occupied native
+slots, guide-owner removal previews, and loading existing spritsails. Check
+native sheet/reef operation and both tacks without Cloth resets. Earlier runtime
+acceptance of Fisherman winch placement does not validate this spritsail change.
+
 ### Runtime checklist
 
 Start on **Brig**, then the affected boats, especially **Sanbuq** for cloth,
-tack and mast-surface work. Spritsail fitting is enabled across all eleven
-profiles; Junk, Jong, Cog, Shroud and Baghala need runtime coverage of their
-eligible mast variants, guide clearance, controls, collision and save/reload.
+tack and mast-surface work. Spritsail fitting is independent of boat profiles;
+Junk, Jong, Cog, Shroud and Baghala need runtime coverage of their eligible mast
+variants, guide clearance, controls, collision and save/reload.
 
 For OldChronian, apply the common checklist below plus these profile-specific
 checks. Current profile and collider revisions have no recorded runtime
 acceptance:
 
-- **Gloriana:** compare raked-foremast rejection with upright main/mizzen
+- **Gloriana:** compare raked-foremast and upright main/mizzen spritsail
   fitting; cover both mizzen variants, native-stay removal, collar appearance,
   free auxiliary mizzen halyard seats, and both measured reef fallbacks'
   seating, reachability and operation. Retest the reported Spritsail/lateen
@@ -1404,8 +1434,9 @@ acceptance:
   red conflict help for mount 129 versus Mizzen Royalstay 14.
 - **Caelanor:** use foremast/aft-mainmast with and without optional T’gallants;
   verify occupied controls and absence of a stay for the Midmast alternative.
-- **Gallus:** fit both Spritsail types/marks on the plumb mast, verify raked
-  rejection, neutral clearance, contact-limited rotation and reefing visibility.
+- **Gallus:** fit both Spritsail types/marks on the plumb and raked masts
+  without a boat profile; verify native controls, guide clearance,
+  contact-limited rotation and reefing visibility.
 
 1. Fit and resize all affected cuts at several heights, with mixed native/custom
    sails. Check collision completion, spar obstructions, asymmetric trim stops,

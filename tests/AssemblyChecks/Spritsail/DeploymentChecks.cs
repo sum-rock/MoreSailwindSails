@@ -37,38 +37,18 @@ internal static class DeploymentChecks
             );
             var resolve = Method(type: type + "." + type + "Rigging", name: "TryResolve");
             var calls = IlReader.CalledMethods(method: resolve).ToArray();
-            var upright = Method(type: type + "." + type + "Rigging", name: "IsUpright");
             Require(
-                value: calls.Any(m => m.Name == "IsUpright")
-                    && IlReader
-                        .CalledMethods(method: upright)
-                        .Any(m => m.Name == "InverseTransformVector")
-                    && IlReader
-                        .CalledMethods(method: upright)
-                        .Any(m =>
-                            m.DeclaringType.Name == "SpritsailMastAlignment"
-                            && m.Name == "IsUpright"
-                        ),
-                message: "Both spritsail types must reject rake in the boat frame during mast compatibility resolution."
+                value: calls.Any(m =>
+                    m.DeclaringType.Name == "SpritsailMastAlignment" && m.Name == "IsUsable"
+                ) && !calls.Any(m => m.Name == "IsUpright"),
+                message: "Both spritsail types must accept finite raked physical masts."
             );
             Require(
-                value: calls.Any(m => m.DeclaringType.Name == "BoatRigCatalog" && m.Name == "Find")
-                    && IlReader
-                        .Instructions(method: resolve)
-                        .Any(i =>
-                            i.Operand is FieldInfo field
-                            && field.Name == "MastParents"
-                            && field.DeclaringType.Name == "BoatRigDefinition"
-                        )
-                    && calls.Any(m => m.Name == "Sections")
-                    && !IlReader
-                        .Instructions(method: resolve)
-                        .Any(i =>
-                            i.Operand is FieldInfo field
-                            && field.Name == "Definition"
-                            && field.DeclaringType.Namespace == "MoreSailwindSails.BoatRigs"
-                        ),
-                message: "Both spritsail types must use the supported catalog and authored ancestry without a per-boat allowlist."
+                value: !calls.Any(m => m.DeclaringType.Namespace == "MoreSailwindSails.BoatRigs")
+                    && calls.Any(m =>
+                        m.DeclaringType.Name == "SpritsailNativeBinding" && m.Name == "Attachment"
+                    ),
+                message: "Both spritsail types must resolve native mast attachments without boat profiles."
             );
         }
         var looseConfigure = IlReader

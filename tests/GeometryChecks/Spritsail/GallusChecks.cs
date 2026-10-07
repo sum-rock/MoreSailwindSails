@@ -14,18 +14,7 @@ internal static class GallusChecks
     internal static void Run()
     {
         var profile = BoatRigCatalog.Find(boatName: "BOAT GALLUS (197)(Clone)");
-        Check(profile == Gallus.Definition, "Gallus profile was not registered.");
-        Check(
-            profile.Stays.Count == 0 && profile.Supports.Count == 0,
-            "Gallus must not register Fisherman's Stays or Flying Sail support pairs."
-        );
-        foreach (int mast in new[] { 1, 4 })
-            Check(
-                profile.Sections(section: mast).SequenceEqual(new[] { mast })
-                    && profile.SheetCategory(mast: mast) != null
-                    && !profile.MastPairs(foreIndex: mast).Any(),
-                "Gallus mast alternatives must remain independent single-mast supports."
-            );
+        Check(profile == null, "Gallus spritsails must not require a boat profile.");
         var frames = File.ReadLines(
                 Path.Combine(AppContext.BaseDirectory, "FishermansStay", "StayMeasurements.txt")
             )
@@ -40,14 +29,14 @@ internal static class GallusChecks
                 .Select(value => float.Parse(value, CultureInfo.InvariantCulture))
                 .ToArray();
             Check(
-                SpritsailMastAlignment.IsUpright(
+                SpritsailMastAlignment.IsUsable(
                     boatLocalAxis: new Vector3(matrix[2], matrix[6], matrix[10])
-                ) == (frame[1] == "1"),
-                "Gallus Spritsails must accept the plumb mast and reject the 15-degree raked mast."
+                ),
+                "Gallus Spritsails must accept both the plumb and 15-degree raked mast frames."
             );
         }
         Console.WriteLine(
-            "PASS: Gallus single-mast profile, plumb Spritsail eligibility, raked rejection and no Fisherman's sail support."
+            "PASS: Gallus profile independence, plumb and raked mast eligibility; no Fisherman's sail support."
         );
     }
 

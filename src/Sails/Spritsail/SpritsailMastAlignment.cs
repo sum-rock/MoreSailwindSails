@@ -2,10 +2,10 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
 {
-    // Tests physical spar alignment in the boat frame, independent of heel and pitch.
+    // Validates a finite mast axis while allowing rake and lean in the boat frame.
     internal static class SpritsailMastAlignment
     {
-        internal static bool IsUpright(Vector3 boatLocalAxis)
+        internal static bool IsUsable(Vector3 boatLocalAxis)
         {
             if (
                 !SpritsailDeployment.Finite(value: boatLocalAxis.x)
@@ -14,9 +14,13 @@ namespace MoreSailwindSails.Sails.Spritsail
                 || boatLocalAxis.sqrMagnitude < 0.000001f
             )
                 return false;
-            // Allow 0.1 degrees of transform noise around the boat's vertical axis.
-            return boatLocalAxis.x * boatLocalAxis.x + boatLocalAxis.z * boatLocalAxis.z
-                <= boatLocalAxis.y * boatLocalAxis.y * 0.00000304618f;
+            // Horizontal spars cannot define the existing height-based installation frame.
+            return Mathf.Abs(f: boatLocalAxis.normalized.y) > 0.001f;
         }
+
+        internal static Vector3 LocalAxis(int direction) =>
+            direction == 0 ? Vector3.right
+            : direction == 1 ? Vector3.up
+            : Vector3.forward;
     }
 }
