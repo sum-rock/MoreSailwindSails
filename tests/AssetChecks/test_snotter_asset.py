@@ -2,10 +2,15 @@
 
 import unittest
 
-from tools.snotter_asset import coincident_faces
+from tools.snotter_asset import coincident_faces, axis_distance
 
 
 class OverlapChecks(unittest.TestCase):
+    def test_axis_distance_uses_facets_not_just_vertices(self):
+        self.assertAlmostEqual(axis_distance(((1, -1, -1), (1, 1, -1), (1, 1, 1))), 1)
+        self.assertEqual(axis_distance(((-1, 0, -1), (1, 0, -1), (0, 0, 1))), 0)
+        self.assertAlmostEqual(axis_distance(((2, 0, 0), (2, 1, 0), (2, 2, 0))), 2)
+
     def test_reordered_face_corners_are_reported_by_source_line(self):
         quad = ((0, 0, 0), (1, 0, 0), (1, 1, 0), (0, 1, 0))
         # Shading attributes and OBJ indices deliberately do not enter this key.

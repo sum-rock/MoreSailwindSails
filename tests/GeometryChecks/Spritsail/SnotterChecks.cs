@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 using MoreSailwindSails.Sails.Spritsail;
 using UnityEngine;
 
@@ -348,7 +349,24 @@ internal static class SnotterChecks
             name: SpritsailSnotterGeometry.ResourceName
         );
         using var reader = new BinaryReader(input: stream);
-        stream.Position = 12;
+        stream.Position = 36;
+        foreach (string file in new[] { "snotter.obj", "snotter.fit.json" })
+        {
+            var bakedHash = reader.ReadBytes(count: 32);
+            var currentHash = SHA256.HashData(
+                File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "SnotterSource", file))
+            );
+            Require(
+                value: Convert.ToHexString(bakedHash) == Convert.ToHexString(currentHash),
+                message: "The embedded bake is stale relative to "
+                    + file
+                    + "; rerun the Blender converter."
+            );
+        }
+        Require(
+            value: stream.Position == SpritsailSnotterGeometry.HeaderSize,
+            message: "The metadata header must precede vertex data."
+        );
         var original = new Vector2[mapped.Length];
         var sourceNormals = new Vector3[mapped.Length];
         bool adjustedMountingNormal = false;

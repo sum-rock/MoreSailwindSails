@@ -9,6 +9,7 @@ namespace MoreSailwindSails.Sails.Spritsail
     internal static class SpritsailSnotterGeometry
     {
         internal const string ResourceName = "MoreSailwindSails.Snotter";
+        internal const int HeaderSize = 100;
 
         internal const int DarkWoodMaterial = 0;
         internal const int MetalMaterial = 1;
@@ -20,13 +21,13 @@ namespace MoreSailwindSails.Sails.Spritsail
 
         // Supplied OBJ: Y up, bolt centered at Y=Z=0 and pointing along -X.
         // Inner radii include the flat facets, not just the circular vertex rings.
-        private const float InnerRadius = 0.8718f;
-        private const float MountingOuterRadius = 1.2314329f;
+        private static readonly float InnerRadius;
+        private static readonly float MountingOuterRadius;
         private const float MountingDiameterExtra = 0.2032f;
-        private const float OuterRadius = 1.1408f;
-        private const float BoltBase = 0.875f;
-        private const float HeadInner = 1.593703f;
-        private const float BoltEnd = 1.68f;
+        private static readonly float OuterRadius;
+        private static readonly float BoltBase;
+        private static readonly float HeadInner;
+        private static readonly float BoltEnd;
         private const float SpritClearance = 0.003f;
         private const float HeadClearance = 0.001f;
         private const float BoltProjection = 0.005f;
@@ -52,7 +53,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                     );
                 using (var reader = new BinaryReader(input: stream))
                 {
-                    if (reader.ReadInt32() != 0x354E534D)
+                    if (reader.ReadInt32() != 0x364E534D)
                         throw new InvalidDataException(message: "Invalid snotter mesh header.");
                     int vertexCount = reader.ReadInt32();
                     int indexCount = reader.ReadInt32();
@@ -61,9 +62,19 @@ namespace MoreSailwindSails.Sails.Spritsail
                         || vertexCount > 65535
                         || indexCount <= 0
                         || indexCount % 3 != 0
-                        || stream.Length != 12L + vertexCount * 36L + indexCount / 3L * 16L
+                        || stream.Length != HeaderSize + vertexCount * 36L + indexCount / 3L * 16L
                     )
                         throw new InvalidDataException(message: "Invalid snotter mesh size.");
+                    InnerRadius = ReadDimension(reader: reader);
+                    OuterRadius = ReadDimension(reader: reader);
+                    MountingOuterRadius = ReadDimension(reader: reader);
+                    BoltBase = ReadDimension(reader: reader);
+                    HeadInner = ReadDimension(reader: reader);
+                    BoltEnd = ReadDimension(reader: reader);
+                    if (InnerRadius >= OuterRadius || BoltBase >= HeadInner || HeadInner >= BoltEnd)
+                        throw new InvalidDataException(message: "Invalid snotter fit metadata.");
+                    // Source and marker SHA-256 hashes are verified by the offline checks.
+                    stream.Position = HeaderSize;
                     source = new Vector3[vertexCount];
                     sourceNormals = new Vector3[vertexCount];
                     texture = new Vector2[vertexCount];
@@ -123,6 +134,14 @@ namespace MoreSailwindSails.Sails.Spritsail
                             );
                 }
             }
+        }
+
+        private static float ReadDimension(BinaryReader reader)
+        {
+            float value = reader.ReadSingle();
+            if (float.IsNaN(value) || float.IsInfinity(value) || value <= 0)
+                throw new InvalidDataException(message: "Invalid snotter fit dimension.");
+            return value;
         }
 
         internal static int[] MaterialTriangles(int material) =>
