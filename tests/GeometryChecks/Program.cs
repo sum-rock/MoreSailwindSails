@@ -7,6 +7,7 @@ internal static class Program
 {
     private static void Main()
     {
+        Visuals.RoutedRopeChecks.Run();
         Spritsail.CategoryChecks.Run();
         Spritsail.BoomedSpritsail.GeometryChecks.Run();
         Spritsail.CollisionChecks.Run();

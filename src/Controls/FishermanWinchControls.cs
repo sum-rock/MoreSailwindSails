@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.BoatRigs;
-using MoreSailwindSails.Sails;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -542,7 +541,7 @@ namespace MoreSailwindSails.Controls
                     prepared.Winch = obj.GetComponent<GPButtonRopeWinch>();
                     prepared.Winch.rope = null;
                     obj.AddComponent<FishermanOwnedWinchMarker>();
-                    FishermanWinchVisuals.ResetClonedOutline(prepared.Winch);
+                    FishermanWinchVisuals.ResetClonedOutline(winch: prepared.Winch);
                     obj.transform.localPosition = Vector3.zero;
                     obj.transform.localRotation = Quaternion.identity;
                     if (

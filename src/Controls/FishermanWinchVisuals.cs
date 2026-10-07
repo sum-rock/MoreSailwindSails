@@ -2,8 +2,9 @@ using cakeslice;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace MoreSailwindSails.Sails
+namespace MoreSailwindSails.Controls
 {
+    // Resets cloned winch outlines so native initialization can create fresh visual state.
     internal static class FishermanWinchVisuals
     {
         internal static void ResetClonedOutline(GPButtonRopeWinch winch)

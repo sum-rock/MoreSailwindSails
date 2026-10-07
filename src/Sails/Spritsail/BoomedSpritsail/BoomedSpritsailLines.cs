@@ -1,3 +1,4 @@
+using MoreSailwindSails.Visuals;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
@@ -5,8 +6,8 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
     // Draws mast ties and the peak lashing; native gaff ropes render the single boom sheet.
     internal sealed class BoomedSpritsailLines : MonoBehaviour
     {
-        public LineRenderer PeakLashing;
-        public LineRenderer[] LuffTies;
+        public RoutedRope PeakLashing;
+        public RoutedRope[] LuffTies;
         public SpritsailRopeCollar[] LuffCollars;
         private CapsuleCollider surfaceMast;
         private SpritsailMastSurface surface;
@@ -29,7 +30,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 source: source,
                 name: "Peak lashing"
             );
-            lines.LuffTies = new LineRenderer[7];
+            lines.LuffTies = new RoutedRope[7];
             lines.LuffCollars = new SpritsailRopeCollar[7];
             for (int i = 0; i < lines.LuffTies.Length; i++)
             {
@@ -48,7 +49,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             return lines;
         }
 
-        private static LineRenderer CreateLine(Transform parent, RopeEffect source, string name)
+        private static RoutedRope CreateLine(Transform parent, RopeEffect source, string name)
         {
             var root = new GameObject(name: name);
             root.transform.SetParent(parent: parent, worldPositionStays: false);
@@ -61,8 +62,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             renderer.textureMode = LineTextureMode.Tile;
             renderer.useWorldSpace = true;
             renderer.positionCount = 9;
-            renderer.enabled = false;
-            return renderer;
+            return RoutedRope.Attach(line: renderer);
         }
 
         internal void Draw(
@@ -122,7 +122,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             }
         }
 
-        private static void Span(LineRenderer line, Vector3 start, Vector3 end, float sag)
+        private static void Span(RoutedRope line, Vector3 start, Vector3 end, float sag)
         {
             float depth = (end - start).magnitude * sag;
             for (int i = 0; i < 9; i++)
@@ -133,7 +133,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                     position: Vector3.Lerp(start, end, t) + Vector3.down * (depth * 4 * t * (1 - t))
                 );
             }
-            line.enabled = true;
+            line.SetVisible(visible: true);
         }
 
         internal void Hide()
@@ -141,13 +141,13 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             if (LuffTies != null)
                 foreach (var line in LuffTies)
                     if (line)
-                        line.enabled = false;
+                        line.SetVisible(visible: false);
             if (LuffCollars != null)
                 foreach (var collar in LuffCollars)
                     if (collar)
                         collar.Hide();
             if (PeakLashing)
-                PeakLashing.enabled = false;
+                PeakLashing.SetVisible(visible: false);
         }
 
         private void OnDisable() => Hide();

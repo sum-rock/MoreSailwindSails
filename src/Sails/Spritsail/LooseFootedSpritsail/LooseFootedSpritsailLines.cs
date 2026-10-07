@@ -1,3 +1,4 @@
+using MoreSailwindSails.Visuals;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
@@ -6,10 +7,10 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
     internal sealed class LooseFootedSpritsailLines : MonoBehaviour
     {
         public RopeEffect[] Sources;
-        public LineRenderer[] Sheets;
-        public LineRenderer PeakLashing;
+        public RoutedRope[] Sheets;
+        public RoutedRope PeakLashing;
         public RopeEffect ReefSource;
-        public LineRenderer[] LuffTies;
+        public RoutedRope[] LuffTies;
         public SpritsailRopeCollar[] LuffCollars;
         private CapsuleCollider surfaceMast;
         private SpritsailMastSurface surface;
@@ -24,7 +25,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             root.transform.SetParent(parent: sail.transform, worldPositionStays: false);
             var lines = root.AddComponent<LooseFootedSpritsailLines>();
             lines.Sources = new[] { left, right };
-            lines.Sheets = new LineRenderer[2];
+            lines.Sheets = new RoutedRope[2];
             for (int i = 0; i < 2; i++)
             {
                 lines.Sources[i].gameObject.AddComponent<LooseFootedSpritsailNativeSheetVisual>();
@@ -55,7 +56,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 source: left,
                 name: "Peak lashing"
             );
-            lines.LuffTies = new LineRenderer[7];
+            lines.LuffTies = new RoutedRope[7];
             lines.LuffCollars = new SpritsailRopeCollar[7];
             for (int i = 0; i < lines.LuffTies.Length; i++)
             {
@@ -74,7 +75,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             return lines;
         }
 
-        private static LineRenderer CreateLine(Transform parent, RopeEffect source, string name)
+        private static RoutedRope CreateLine(Transform parent, RopeEffect source, string name)
         {
             var root = new GameObject(name: name);
             root.transform.SetParent(parent: parent, worldPositionStays: false);
@@ -87,8 +88,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             renderer.textureMode = LineTextureMode.Tile;
             renderer.useWorldSpace = true;
             renderer.positionCount = 9;
-            renderer.enabled = false;
-            return renderer;
+            return RoutedRope.Attach(line: renderer);
         }
 
         internal void Draw(
@@ -109,7 +109,8 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             {
                 var source = Sources[i];
                 bool visible = source && source.gameObject.activeInHierarchy;
-                Sheets[i].enabled = visible;
+                if (!visible)
+                    Sheets[i].SetVisible(visible: false);
                 if (visible)
                     Span(
                         line: Sheets[i],
@@ -165,7 +166,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             }
         }
 
-        private static void Span(LineRenderer line, Vector3 start, Vector3 end, float sag)
+        private static void Span(RoutedRope line, Vector3 start, Vector3 end, float sag)
         {
             float depth = (end - start).magnitude * sag;
             for (int i = 0; i < 9; i++)
@@ -176,7 +177,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                     position: Vector3.Lerp(start, end, t) + Vector3.down * (depth * 4 * t * (1 - t))
                 );
             }
-            line.enabled = true;
+            line.SetVisible(visible: true);
         }
 
         internal void Hide()
@@ -184,17 +185,17 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             if (Sheets != null)
                 foreach (var line in Sheets)
                     if (line)
-                        line.enabled = false;
+                        line.SetVisible(visible: false);
             if (LuffTies != null)
                 foreach (var line in LuffTies)
                     if (line)
-                        line.enabled = false;
+                        line.SetVisible(visible: false);
             if (LuffCollars != null)
                 foreach (var collar in LuffCollars)
                     if (collar)
                         collar.Hide();
             if (PeakLashing)
-                PeakLashing.enabled = false;
+                PeakLashing.SetVisible(visible: false);
         }
 
         private void OnDisable() => Hide();

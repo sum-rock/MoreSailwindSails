@@ -1,3 +1,4 @@
+using MoreSailwindSails.Visuals;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
@@ -6,7 +7,7 @@ namespace MoreSailwindSails.Sails.Spritsail
     internal sealed class SpritsailSnotter : MonoBehaviour
     {
         public Material[] Materials;
-        public LineRenderer Purchase;
+        public RoutedRope Purchase;
         public SpritsailRopeCollar PurchaseCollar;
         public RopeEffect ReefSource;
         private SpritsailSnotterMesh rotatingMesh;
@@ -68,7 +69,7 @@ namespace MoreSailwindSails.Sails.Spritsail
             return fitting;
         }
 
-        private static LineRenderer CreateLine(
+        private static RoutedRope CreateLine(
             Transform parent,
             RopeEffect source,
             string name,
@@ -87,7 +88,7 @@ namespace MoreSailwindSails.Sails.Spritsail
             line.textureMode = LineTextureMode.Tile;
             line.useWorldSpace = true;
             line.positionCount = count;
-            return line;
+            return RoutedRope.Attach(line: line);
         }
 
         internal void Pose(
@@ -172,13 +173,14 @@ namespace MoreSailwindSails.Sails.Spritsail
                 radius: sparRadius
                     * Mathf.Lerp(a: 1, b: SpritsailSpritGeometry.EndRadiusRatio, t: 0.8f)
             );
-            Purchase.enabled = ReefSource && ReefSource.gameObject.activeInHierarchy;
-            if (Purchase.enabled)
+            bool purchaseVisible = ReefSource && ReefSource.gameObject.activeInHierarchy;
+            if (purchaseVisible)
             {
                 Purchase.SetPosition(index: 0, position: ReefSource.transform.position);
                 Purchase.SetPosition(index: 1, position: guide);
                 Purchase.SetPosition(index: 2, position: contact);
             }
+            Purchase.SetVisible(visible: purchaseVisible);
         }
 
         private void Refit(float contactRadius, float mastRadius, float pivotDistance)
@@ -214,7 +216,7 @@ namespace MoreSailwindSails.Sails.Spritsail
         internal void Hide()
         {
             if (Purchase)
-                Purchase.enabled = false;
+                Purchase.SetVisible(visible: false);
             if (PurchaseCollar)
                 PurchaseCollar.Hide();
         }
