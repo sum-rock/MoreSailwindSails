@@ -6,6 +6,12 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource
+      Include="../../assets/snotter/snotter.bytes"
+      LogicalName="MoreSailwindSails.Snotter"
+    />
+  </ItemGroup>
+  <ItemGroup>
     <Compile
       Include="../../src/Sails/Spritsail/SpritsailSurfaceSample.cs"
       Link="Spritsail/SpritsailSurfaceSample.cs"

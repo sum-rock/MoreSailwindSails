@@ -9,6 +9,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource
+      Include="../assets/snotter/snotter.bytes"
+      LogicalName="MoreSailwindSails.Snotter"
+    />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="BepInEx">
       <HintPath>$(SailwindDir)/BepInEx/core/BepInEx.dll</HintPath>
       <Private>false</Private>
