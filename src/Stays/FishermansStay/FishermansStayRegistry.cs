@@ -62,9 +62,14 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     none.walkColObject = emptyWalk;
                     none.canInstall = true;
                     variants.Add(none);
-                    foreach (var resolved in groups[index])
+                    foreach (
+                        var configurations in groups[index].GroupBy(r => r.Definition.MountIndex)
+                    )
                     {
-                        var stay = new FishermansStay(boat, resolved);
+                        var stay = new FishermansStay(
+                            boat: boat,
+                            configurations: configurations.ToArray()
+                        );
                         registry.Stays.Add(stay);
                         stay.Create();
                         variants.Add(stay.Option);

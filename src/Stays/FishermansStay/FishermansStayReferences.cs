@@ -16,6 +16,26 @@ namespace MoreSailwindSails.Stays.FishermansStay
         internal BoatPartOption[] Required,
             Forbidden;
 
+        // Resolve fitted parts even while the boat root is inactive during loading.
+        // Actual use still requires activeInHierarchy in FishermansStay.Available.
+        internal bool Fitted(Transform boatRoot)
+        {
+            bool Enabled(Transform item)
+            {
+                while (item && item != boatRoot)
+                {
+                    if (!item.gameObject.activeSelf)
+                        return false;
+                    item = item.parent;
+                }
+                return item == boatRoot;
+            }
+            return Required.All(o => o && Enabled(o.transform))
+                && Forbidden.All(o => o && !Enabled(o.transform))
+                && Guide
+                && Enabled(Guide);
+        }
+
         internal static FishermansStayReferences[][] Resolve(
             BoatRigDefinition profile,
             BoatCustomParts parts,

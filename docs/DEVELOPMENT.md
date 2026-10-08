@@ -788,24 +788,27 @@ Profiles author physical mast IDs, endpoints, active guides, prerequisites,
 exclusions, ancestry and permanent mount IDs. Each boat's `Definition` owns its
 data; resolve `Sections`, `Base` and `SheetCategory` through that profile.
 
-| Boat                         | Part groups | Stay variants | Forward-masthead fallbacks |
-| ---------------------------- | ----------: | ------------: | -------------------------: |
-| Brig                         |           2 |            24 |                          4 |
-| Junk                         |           2 |             9 |                          2 |
-| Jong                         |           5 |             9 |                          0 |
-| Sanbuq                       |           2 |            26 |                          5 |
-| Cog                          |           1 |             3 |                          0 |
-| Shroud                       |           2 |             8 |                          2 |
-| Large dhow (Sailwind 0.39)   |           2 |            14 |                          8 |
-| Gloriana (OldChronian 0.6.0) |           2 |             3 |                          1 |
-| Chronian (OldChronian 0.6.0) |           2 |             2 |                          0 |
-| Caelanor (OldChronian 0.6.0) |           1 |             1 |                          0 |
+| Boat                         | Part groups | Registered stays | Forward-masthead fallbacks |
+| ---------------------------- | ----------: | ---------------: | -------------------------: |
+| Brig                         |           2 |               24 |                          4 |
+| Junk                         |           2 |                9 |                          2 |
+| Jong                         |           5 |                9 |                          0 |
+| Sanbuq                       |           2 |               26 |                          5 |
+| Cog                          |           1 |                3 |                          0 |
+| Shroud                       |           2 |                8 |                          2 |
+| Large dhow (Sailwind 0.39)   |           2 |               14 |                          8 |
+| Gloriana (OldChronian 0.6.0) |           2 |                3 |                          1 |
+| Chronian (OldChronian 0.6.0) |           2 |                2 |                          0 |
+| Caelanor (OldChronian 0.6.0) |           1 |                1 |                          0 |
+| Kakam (90)                   |           1 |                2 |                          0 |
+| Dhow (10)                    |           1 |                1 |                          0 |
 
-The ten profiles provide **99** stay variants. Fisherman support for OldChronian
-is profile-based with no hard mod assembly dependency; Gloriana, Chronian and
-Caelanor have profiles. Spritsails do not require profiles, including on Gallus.
-Exact vectors, prerequisites and ordered control-source lists live in each
-profile, backed by numeric installed-asset fixtures.
+The twelve profiles provide **102** stays across **103** mast-pair
+configurations. Fisherman support for OldChronian is profile-based with no hard
+mod assembly dependency; Gloriana, Chronian and Caelanor have profiles.
+Spritsails do not require profiles, including on Gallus. Exact vectors,
+prerequisites and ordered control-source lists live in each profile, backed by
+numeric installed-asset fixtures.
 
 **Leopard has no Fisherman support:** its BoatRig profile was removed after
 in-game compatibility problems. Profile gates reject Flying Sail fitting and
@@ -833,6 +836,30 @@ Validate profiles and occupied IDs before construction; roll back a boat's new
 stays on failure. Protect occupied stays/supports during invalid previews and
 restore preview state in a finalizer. Normalize stay and walking geometry
 independently to the same endpoints; donor bounds may differ from `mastHeight`.
+
+### Kakam and Dhow
+
+[Kakam.cs](../src/BoatRigs/Kakam.cs) and [Dhow.cs](../src/BoatRigs/Dhow.cs)
+register one main/mizzen part group per boat:
+
+| Boat       | Native name                      | Stay mount    | Physical mast pair | SE donor    |
+| ---------- | -------------------------------- | ------------- | ------------------ | ----------- |
+| Kakam (90) | `BOAT junk small singleroof(90)` | **128 / 129** | **5 → 7 / 6 → 7**  | **62 / 70** |
+| Dhow (10)  | `BOAT dhow small (10)`           | **128**       | **6 or 7 → 51**    | **54**      |
+
+Dhow's short and tall mainmasts share one stay position and menu option.
+Registration groups configurations by mount ID; their labels must match. An
+empty stay selects the fitted pair and updates its support, guide and control
+references. An occupied stay retains its current pair during previews.
+
+All four configurations use the native mizzen guide height and a **70°**
+attachment line; donors need not be fitted. Bermuda mounts are staysail-only and
+cannot provide physical support. Dhow's raked mast **52** is excluded because
+its 70° line produces a negative head slope outside the fitting range.
+
+Dhow sheets use mainmast sources **6/7/54** or mizzen source **51**; halyards
+use the requested mast's own seats. Kakam uses the
+[aft control placements](#kakam-aft-controls) below.
 
 ### Large dhow
 
@@ -952,13 +979,12 @@ rollback or teardown; shared donor assets and live Cloth are untouched.
 ## Winch placement
 
 The native winch placement redesign is **accepted as valid and complete**. It
-supports the ten profiled boats in
-[Boat profiles and stays](#boat-profiles-and-stays) and applies to Flying Sails,
-all three staysail cuts and native sails on Fisherman's Stays. Both spritsail
-types use ordinary native controls independently of these profiles. The
-follow-up architecture cleanup is implemented.
-[Runtime validation](#runtime-validation) separates accepted Brig/Jong evidence
-from later changes and remaining in-game uncertainty.
+supports the boats listed in [Boat profiles and stays](#boat-profiles-and-stays)
+and applies to Flying Sails, all three staysail cuts and native sails on
+Fisherman's Stays. Both spritsail types use ordinary native controls
+independently of these profiles. The follow-up architecture cleanup is
+implemented. [Runtime validation](#runtime-validation) separates accepted
+Brig/Jong evidence from later changes and remaining in-game uncertainty.
 
 ### Placement and ownership
 
@@ -1035,8 +1061,9 @@ mast variants' ordinary reef arrays.
 | Gloriana   |              4 |
 | Chronian   |              6 |
 | Caelanor   |              6 |
+| Kakam      |              1 |
 
-The supported catalog has **76 halyard groups**.
+The supported catalog has **77 halyard groups**.
 
 Unlisted masts retain their original lookup, including Jong's raked foremast and
 unsupported bermuda variants. Cog covers both ordinary mizzen variants; the
@@ -1165,20 +1192,39 @@ when one frees. The requested mast must stay active, and retained placement
 validates the template identity and pose. Support loss releases the claim and
 hides/retries the existing controller.
 
+### Sanbuq reef fallbacks
+
+[Sanbuq.cs](../src/BoatRigs/Sanbuq.cs) defines four base-mast halyard fallbacks
+from **2026-10-07** F9 captures in `BepInEx/LogOutput.log` and `Player.log`.
+Existing native source groups remain first; topmasts and other mast alternatives
+keep their existing sources.
+
+| Requested mast      | Capture | Walking surface               |
+| ------------------- | ------- | ----------------------------- |
+| Mainmast 1 **10**   | 5       | `structure/mast`              |
+| Mainmast 2 **11**   | 3       | `structure/mast_1`            |
+| Mizzenmast 2 **55** | 2       | `SE_cols_sanbuq/mizzen_mast2` |
+| Mizzenmast 3 **69** | 4       | `SE_cols_sanbuq/mizzen_mast`  |
+
+Capture 2 supersedes capture 1 on mizzenmast 2. Exact contacts and normals live
+in the profile. Each seat uses the requested mast's `reefWinch[0]`, whose local
++Z points toward boat **(0, 0, −1)**. The installed mesh rear Z bound
+**−0.063862** gives offsets **0.08191725 m** for native mainmast templates
+(scale **1.282723**) and **0.08191708 m** for SE mizzen templates (scale
+**1.282720**).
+
 ### Manual sheet fallbacks
 
 Every category names a nullable port/starboard fallback pair. Native pairs take
 priority on a new allocation. Each fallback side specifies its own contact
 point, normal, mounting offset, compatible template and support requirements; a
-captured surface point alone is not a finished mounting pose. Never reflect one
-side or generate positions along a rail or mast.
+captured surface point alone is not a finished mounting pose. Do not generate or
+mirror fallback positions at runtime.
 
-Only **Shroud / ForemastFallback** is currently populated, using its previously
-measured forward trim pair. All other category fallbacks remain explicitly null,
-including Jong's separate mainmast fallbacks. This is supported configuration,
-not unfinished redesign work. Any future fallback additions require labeled F9
-captures and visual/reachability confirmation before authoring. Missing vectors
-do not block native placement.
+Authored pairs exist for **Shroud / ForemastFallback** (forward trim) and
+[Kakam / MainmastFallback](#kakam-aft-controls) (aft trim). All other category
+fallbacks are null. Future additions require labeled F9 captures and
+visual/reachability confirmation. Missing vectors do not block native placement.
 
 Null, incomplete or non-finite fallbacks are unavailable as a whole. When native
 pairs exhaust, missing fallback data produces one contextual error per
@@ -1186,6 +1232,26 @@ definition and boat/category during that boat instance's lifetime. Retries
 remain quiet. A valid fallback already reserved by another owner produces
 ordinary exhaustion diagnostics. No default origin placement, partial pair,
 generated strip or rotated mast search remains.
+
+### Kakam aft controls
+
+[Kakam.cs](../src/BoatRigs/Kakam.cs) uses three **2026-10-07** F9 captures from
+`BepInEx/LogOutput.log` and `Player.log`: capture 1 on
+`mast_001/mast_holder_001` for the mizzen halyard, and captures 2/3 on
+`trim_009` for the port/starboard sheets. Exact authored vectors live in the
+profile.
+
+Mainmast variants **5/6** use the aft sheet pair. An empty native source list
+excludes the forward seats; mast **5** left/right angle controls at index **0**
+still provide the clone templates. The captured distances from center, heights
+and fore/aft positions are averaged into symmetric contacts; averaging the
+normals gives both winches parallel orientations. The templates have identical
+rotations and a rear Z bound of **−0.044704**, giving offset **0.044704 m** at
+native scale.
+
+Mizzen **7** tries its own reef array before capture 1's halyard fallback, using
+`reefWinch[0]`. Its local +Z points boat-left. The mesh rear Z bound
+**−0.063862** at scale **0.792** gives offset **0.05057871 m**.
 
 ### Placement logging
 
@@ -1325,8 +1391,8 @@ measurements only, never meshes, textures or assemblies.
 
 `tests/GeometryChecks/FishermansStay/NativeWinchSeats.txt` records installed
 option labels, native/SE shipyard groups and prerequisites, control identities,
-array correspondence and parent-local poses across eleven measured boats
-(including the now profile-free Gallus). These are reference measurements, **not
+array correspondence and parent-local poses across thirteen measured boats
+(including the profile-free Gallus). These are reference measurements, **not
 boat-local fallback vectors**. The inventory was read from installed assets and
 SE's serialized part/option metadata; no proprietary assemblies or extracted
 asset payloads are committed.
@@ -1347,7 +1413,8 @@ searches.
 ### Automated baseline and limits
 
 The **0.3.0-dev** baseline on **2026-10-07**, including profile-free spritsails,
-OldChronian profiles and the architecture cleanup, passed Release with zero
+OldChronian profiles, the architecture cleanup, Kakam/Dhow support, Dhow's
+shared stay, and Kakam/Sanbuq fallbacks, passed Release with zero
 warnings/errors, both suites, CSharpier, Prettier and `git diff --check`.
 AssemblyChecks covers **114** Harmony targets against installed assemblies.
 These results do not establish in-game behavior.
@@ -1356,7 +1423,7 @@ These results do not establish in-game behavior.
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Geometry and forces        | All sail cuts, skin weights, coupled edges, fixed-head/reef poses, spritsail flex and obstruction, collision bounds, force inputs and finite fallbacks; no Cloth simulation                                         |
 | Shipyard and compatibility | IDs/rollback, native IL contracts, patch ordering, filtering/restoration, category paging/scaling, spritsail pre-Awake collider construction, SailInfo reflection and naming; no live menus or Unity initialization |
-| Winch placement            | Ten profiles, 99 stays, 76 halyard groups, exact sources/aliases, atomic pairs, fallbacks, native reclaim, stable reservations, retries, bootstrap and teardown structure; no Unity exception/destruction execution |
+| Winch placement            | All profiled stays and halyard groups, exact sources/aliases, atomic pairs, fallbacks, native reclaim, stable reservations, retries, bootstrap and teardown structure; no Unity exception/destruction execution     |
 | Visuals and diagnostics    | Knot channels, collars, mast-surface query slots, displaced walking frames, overlay occupancy and resource ownership; no rendering, audio startup or interactive validation                                         |
 
 OldChronian profile checks cover measured endpoints/slopes, mast ancestry,
@@ -1367,7 +1434,11 @@ Gallus's absence of Fisherman's support. Spritsail checks cover native control
 slots, conflicts and rake/lean acceptance, transform invariance and expected
 active collision strips. Gloriana fallback checks cover native priority,
 exclusive reservations, stable retention, support loss/recovery and
-template/pose validation.
+template/pose validation. Dhow checks cover one mount for both mast pairs,
+coincident endpoints and all three staysail cuts. Kakam checks cover aft sheet
+selection, symmetric parallel poses, startup templates and halyard mounting
+depth. Sanbuq's fallback addition passed the existing suites; its new mounting
+poses have no dedicated geometry test.
 
 The placement cleanup's synthetic **600-frame / 60 Hz** single-pair fixture
 reduced modeled scan requests **1,200 → 20**, candidate builds **600 → 1** and
@@ -1461,6 +1532,13 @@ Start on **Brig**, then the affected boats, especially **Sanbuq** for cloth,
 tack and mast-surface work. Spritsail fitting is independent of boat profiles;
 Junk, Jong, Cog, Shroud and Baghala need runtime coverage of their eligible mast
 variants, guide clearance, controls, collision and save/reload.
+
+For Kakam and Dhow, check registration, collars, controls, preview/cancel and
+save/reload on both supported mainmast variants. Verify Dhow's single stay
+option follows an empty mast-pair change and protects an occupied pair. Check
+Kakam's aft sheet pair and mizzen halyard fallback, plus Sanbuq's four new
+halyard fallbacks, for seating, reachability and rope routing. These changes
+have no recorded visual acceptance.
 
 For OldChronian, apply the common checklist below plus these profile-specific
 checks. Current profile and collider revisions have no recorded runtime

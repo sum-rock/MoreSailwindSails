@@ -41,6 +41,7 @@ internal static class ProfileChecks
         CheckReadOnly(BoatRigCatalog.All);
         ChronianChecks.Run();
         CaelanorChecks.Run();
+        DhowChecks.Run();
         if (!ReferenceEquals(BoatRigCatalog.All, BoatRigCatalog.All))
             throw new Exception("Catalog is rebuilt on access.");
         foreach (string suffix in new[] { "", "(Clone)", "(Clone)(Clone)" })
@@ -57,6 +58,35 @@ internal static class ProfileChecks
             || Brig.Definition.Sections(-1).Length != 0
         )
             throw new Exception("Profile lookup or ordered mast ancestry changed.");
+
+        foreach (var boat in new[] { Kakam.Definition, Dhow.Definition })
+        {
+            foreach (string suffix in new[] { "", "(Clone)", "(Clone)(Clone)" })
+                if (!ReferenceEquals(BoatRigCatalog.Find(boatName: boat.BoatName + suffix), boat))
+                    throw new Exception("Small boat compatibility lookup failed.");
+            var variants = boat.Stays.Single().Variants;
+            int aft = variants[0].Aft;
+            foreach (int fore in variants.Select(v => v.Fore))
+            foreach (bool hasMain in new[] { false, true })
+            foreach (bool hasMizzen in new[] { false, true })
+            {
+                var active = new HashSet<int>();
+                if (hasMain)
+                    active.Add(fore);
+                if (hasMizzen)
+                    active.Add(aft);
+                int count = variants.Count(v =>
+                    v.Required.All(active.Contains) && !v.Forbidden.Any(active.Contains)
+                );
+                if (count != (hasMain && hasMizzen ? 1 : 0))
+                    throw new Exception("Small boat stay requires its exact physical mast pair.");
+            }
+            if (
+                variants.Any(v => v.Fore >= 55 || v.Aft >= 55)
+                || variants.Any(v => boat.SheetCategory(mast: v.Fore) == null)
+            )
+                throw new Exception("Small boat support included a Bermuda rig or lost controls.");
+        }
 
         var largeDhow = LargeDhow.Definition;
         if (

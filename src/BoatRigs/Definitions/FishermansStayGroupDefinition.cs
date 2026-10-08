@@ -20,6 +20,16 @@ namespace MoreSailwindSails.BoatRigs
             ).ToArray();
             if (string.IsNullOrEmpty(label) || variantsCopy.Length == 0)
                 throw new ArgumentException("Empty Fisherman's Stay group.");
+            // A shared mount registers once; its mast-pair configurations must use
+            // the same menu label and donor assets.
+            foreach (var mount in variantsCopy.GroupBy(v => v.MountIndex))
+                if (
+                    mount.Any(v => v.Label != mount.First().Label || v.Donor != mount.First().Donor)
+                    || mount.Select(v => (v.Fore, v.Aft)).Distinct().Count() != mount.Count()
+                )
+                    throw new ArgumentException(
+                        "Conflicting configurations for one Fisherman's Stay."
+                    );
             Label = label;
             Variants = Array.AsReadOnly(variantsCopy);
         }

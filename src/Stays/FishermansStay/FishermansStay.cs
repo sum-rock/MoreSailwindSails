@@ -16,7 +16,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
         internal BoatPartOption Option;
         internal GameObject WalkObject;
         private readonly BoatRefs boat;
-        private readonly FishermansStayReferences references;
+        private readonly FishermansStayReferences[] configurations;
+        private FishermansStayReferences references;
         internal FishermansStayReferences References => references;
         internal Vector3 HalyardPoint
         {
@@ -55,10 +56,13 @@ namespace MoreSailwindSails.Stays.FishermansStay
         private readonly List<FishermanWinchControls.OwnedWinch> controls =
             new List<FishermanWinchControls.OwnedWinch>();
 
-        internal FishermansStay(BoatRefs boat, FishermansStayReferences references)
+        internal FishermansStay(BoatRefs boat, FishermansStayReferences[] configurations)
         {
             this.boat = boat;
-            this.references = references;
+            this.configurations = configurations;
+            references =
+                configurations.FirstOrDefault(r => r.Fitted(boatRoot: boat.transform))
+                ?? configurations[0];
         }
 
         internal void Create()
@@ -174,6 +178,52 @@ namespace MoreSailwindSails.Stays.FishermansStay
         {
             try
             {
+                // A fitted sail pins the current support through removal previews.
+                if (configurations.Length > 1 && !Mount.sails.Any(s => s))
+                {
+                    var fitted = configurations
+                        .Where(r => r.Fitted(boatRoot: boat.transform))
+                        .ToArray();
+                    if (fitted.Length != 1)
+                    {
+                        fits = false;
+                        Option.canInstall = false;
+                        return;
+                    }
+                    var next = fitted[0];
+                    if (next != references)
+                    {
+                        FishermanWinchControls.Configure(
+                            boat: boat,
+                            owner: Mount.gameObject,
+                            forward: next.Fore,
+                            halyard: next.Aft,
+                            nativeMount: Mount
+                        );
+                        Option.requires = next.Required.ToList();
+                        Option.requiresDisabled = next.Forbidden.ToList();
+                        Mount.mastCols = next
+                            .Required.Select(o => o.GetComponent<CapsuleCollider>())
+                            .Where(c => c)
+                            .ToArray();
+                        for (int i = 0; i < anchors.Count; i++)
+                            if (anchors[i].Item1 == references.Guide)
+                                anchors[i] = Tuple.Create(next.Guide, anchors[i].Item2);
+                        if (attachmentVisual != null)
+                        {
+                            var profile = BoatRigCatalog.Find(boatName: boat.name);
+                            foreSurface = FishermansStayAttachmentVisual.Surface(
+                                mast: next.Fore,
+                                profile: profile
+                            );
+                            aftSurface = FishermansStayAttachmentVisual.Surface(
+                                mast: next.Aft,
+                                profile: profile
+                            );
+                        }
+                        references = next;
+                    }
+                }
                 Place();
                 Option.canInstall = Available;
             }

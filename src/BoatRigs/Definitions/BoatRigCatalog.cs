@@ -20,6 +20,8 @@ namespace MoreSailwindSails.BoatRigs
                 Gloriana.Definition,
                 Chronian.Definition,
                 Caelanor.Definition,
+                Kakam.Definition,
+                Dhow.Definition,
             }
         );
 

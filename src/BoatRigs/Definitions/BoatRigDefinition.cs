@@ -36,7 +36,9 @@ namespace MoreSailwindSails.BoatRigs
                 != supportsCopy.Length
             )
                 throw new ArgumentException("Duplicate mast-pair control source.");
-            var mounts = staysCopy.SelectMany(g => g.Variants).Select(v => v.MountIndex).ToArray();
+            var mounts = staysCopy
+                .SelectMany(g => g.Variants.Select(v => v.MountIndex).Distinct())
+                .ToArray();
             if (mounts.Distinct().Count() != mounts.Length)
                 throw new ArgumentException("Duplicate Fisherman's Stay mount ID.");
             if (

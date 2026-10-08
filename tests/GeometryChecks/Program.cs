@@ -30,6 +30,7 @@ internal static class Program
         Utils.WinchMountOverlayChecks.Run();
         Controls.NativeSeatProfileChecks.Run();
         Controls.HalyardProfileChecks.Run();
+        Controls.KakamWinchChecks.Run();
         Controls.NativeSeatAllocationChecks.Run();
         Controls.NativeSeatPolicyChecks.Run();
         Controls.WinchRefreshChecks.Run();
