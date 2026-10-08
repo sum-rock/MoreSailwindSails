@@ -1201,6 +1201,35 @@ when one frees. The requested mast must stay active, and retained placement
 validates the template identity and pose. Support loss releases the claim and
 hides/retries the existing controller.
 
+### Sanbuq reef fallbacks
+
+[Sanbuq.cs](../src/BoatRigs/Sanbuq.cs) adds one halyard fallback for each of the
+four distinct mast surfaces captured in `BepInEx/LogOutput.log` and `Player.log`
+on **2026-10-07**:
+
+| Requested mast      | Capture | Walking surface               | Contact (boat-local)               |
+| ------------------- | ------- | ----------------------------- | ---------------------------------- |
+| Mainmast 1 **10**   | 5       | `structure/mast`              | `(-0.002824, 3.861896, 4.554796)`  |
+| Mainmast 2 **11**   | 3       | `structure/mast_1`            | `(-0.000560, 4.040192, -0.299039)` |
+| Mizzenmast 2 **55** | 2       | `SE_cols_sanbuq/mizzen_mast2` | `(0.008465, 4.537066, -8.221054)`  |
+| Mizzenmast 3 **69** | 4       | `SE_cols_sanbuq/mizzen_mast`  | `(-0.006912, 4.239334, -5.220303)` |
+
+Capture 2 is the later of two captures on mizzenmast 2 and supersedes capture 1.
+Each fallback preserves its captured contact and normal and uses the requested
+mast's `reefWinch[0]`. All four installed templates point local +Z toward boat
+**(0, 0, −1)**. Their mesh rear Z bound **−0.063862** gives mounting offsets
+**0.08191725 m** for native mainmast templates (scale **1.282723**) and
+**0.08191708 m** for SE mizzen templates (scale **1.282720**).
+
+Existing native source groups remain first. These seats belong only to the four
+captured base masts; topmasts and other mast alternatives retain their existing
+sources. Reservations, support loss and retries use the existing halyard policy.
+In-game seating, reachability and rope routing at these new positions still need
+confirmation; neither automated suite simulates Unity Cloth.
+
+Validation (2026-10-07, **0.3.0-dev**): Release build completed with no warnings
+or errors; GeometryChecks, AssemblyChecks, CSharpier and Prettier passed.
+
 ### Manual sheet fallbacks
 
 Every category names a nullable port/starboard fallback pair. Native pairs take
