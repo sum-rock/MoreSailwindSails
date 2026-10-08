@@ -33,8 +33,13 @@ internal static class NativeSeatProfileChecks
                     "Duplicate source rig."
                 );
                 Check(
-                    category.PhysicalMasts.All(m => category.Sources.Any(s => s == m)),
-                    "Physical variants missing from source pool."
+                    category.PhysicalMasts.All(m => category.Sources.Any(s => s == m))
+                        || (
+                            category.Sources.Count == 0
+                            && category.Fallback?.InvalidSide == null
+                            && category.Fallback != null
+                        ),
+                    "Physical variants missing from source pool without an authored replacement pair."
                 );
                 Check(
                     category.Fallback == null || category.Fallback.InvalidSide == null,

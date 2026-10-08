@@ -1070,8 +1070,9 @@ mast variants' ordinary reef arrays.
 | Gloriana   |              4 |
 | Chronian   |              6 |
 | Caelanor   |              6 |
+| Kakam      |              1 |
 
-The supported catalog has **76 halyard groups**.
+The supported catalog has **77 halyard groups**.
 
 Unlisted masts retain their original lookup, including Jong's raked foremast and
 unsupported bermuda variants. Cog covers both ordinary mizzen variants; the
@@ -1208,12 +1209,13 @@ point, normal, mounting offset, compatible template and support requirements; a
 captured surface point alone is not a finished mounting pose. Never reflect one
 side or generate positions along a rail or mast.
 
-Only **Shroud / ForemastFallback** is currently populated, using its previously
-measured forward trim pair. All other category fallbacks remain explicitly null,
-including Jong's separate mainmast fallbacks. This is supported configuration,
-not unfinished redesign work. Any future fallback additions require labeled F9
-captures and visual/reachability confirmation before authoring. Missing vectors
-do not block native placement.
+**Shroud / ForemastFallback** uses its measured forward trim pair. **Kakam /
+MainmastFallback** uses the aft trim pair described below. Its empty native
+source list deliberately selects that authored pair on every new allocation.
+Templates still come from native mast 5, independently of the placement source
+list. All other category fallbacks remain explicitly null, including Jong's
+separate mainmast fallbacks. Future additions require labeled F9 captures and
+visual/reachability confirmation. Missing vectors do not block native placement.
 
 Null, incomplete or non-finite fallbacks are unavailable as a whole. When native
 pairs exhaust, missing fallback data produces one contextual error per
@@ -1221,6 +1223,43 @@ definition and boat/category during that boat instance's lifetime. Retries
 remain quiet. A valid fallback already reserved by another owner produces
 ordinary exhaustion diagnostics. No default origin placement, partial pair,
 generated strip or rotated mast search remains.
+
+### Kakam aft controls
+
+[Kakam.cs](../src/BoatRigs/Kakam.cs) uses the three F9 captures in the
+2026-10-07 installed `BepInEx/LogOutput.log` and `Player.log`:
+
+| Capture | Contact (boat-local)               | Surface                    | Use                       |
+| ------- | ---------------------------------- | -------------------------- | ------------------------- |
+| 1       | `(-0.000950, 2.005890, -4.232710)` | `mast_001/mast_holder_001` | Mizzen 7 halyard fallback |
+| 2       | `(-0.807933, 2.739764, -6.042981)` | `trim_009`                 | Port sheet                |
+| 3       | `(0.805492, 2.737213, -6.027562)`  | `trim_009`                 | Starboard sheet           |
+
+The sheet contacts are authored at **(±0.8067125, 2.7384885, −6.0352715)**,
+averaging the captures' distances from center, heights and fore/aft positions.
+Both use normal **(0, 0.984682, 0.150002)**, averaging the captured normals to
+keep the pair parallel. Native mast 5 angle templates at index 0 have identical
+rotations and local +Z boat normal **(0.00020555, 0.99987845, 0.01559755)**.
+Their mesh rear Z bound at native scale gives offset **0.044704 m**. Both
+mainmast variants (5/6) select this pair; the native forward seats reported near
+Z **0.472** in the log are excluded from this category's placement sources.
+
+The halyard retains capture 1's contact and normal. Mizzen 7 tries its own reef
+array first, then the captured fallback using `reefWinch[0]`. Its native +Z
+normal points boat-left; mesh rear Z bound **−0.063862** at scale **0.792**
+gives offset **0.05057871 m**. These are measured template mounting depths, with
+no runtime clearance search. All sheet and halyard reservations use existing
+rules.
+
+The log confirms forward native sheet allocation and exhausted mizzen reef seats
+before this change. Automated checks cover profile selection, symmetric parallel
+sheet poses, startup templates and measured mounting depths. In-game
+reachability, visual seating and rope routing at the new positions still need
+confirmation on both mainmast variants; neither automated suite simulates Unity
+Cloth.
+
+Validation (2026-10-07, **0.3.0-dev**): Release build completed with no warnings
+or errors; GeometryChecks, AssemblyChecks, CSharpier and Prettier passed.
 
 ### Placement logging
 

@@ -64,8 +64,8 @@ internal static class GlorianaHalyardChecks
             "Coil mounting depth changed."
         );
         Check(
-            BoatRigCatalog.All.Sum(b => b.HalyardGroups.Count(g => g.Fallback != null)) == 2,
-            "Manual halyard fallback leaked to another mast or boat."
+            Gloriana.Definition.HalyardGroups.Count(g => g.Fallback != null) == 2,
+            "Gloriana manual halyard fallback leaked to another mast."
         );
         foreach (
             var invalid in new[]
