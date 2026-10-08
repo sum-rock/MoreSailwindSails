@@ -55,7 +55,12 @@ internal static class StayChecks
                 "Stay variant coverage changed: " + boat.BoatName
             );
             Check(
-                stays.Select(s => s.MountIndex).SequenceEqual(Enumerable.Range(128, stays.Length)),
+                stays
+                    .Select(s => s.MountIndex)
+                    .Distinct()
+                    .SequenceEqual(
+                        Enumerable.Range(128, stays.Select(s => s.MountIndex).Distinct().Count())
+                    ),
                 "Stable stay mount slots changed."
             );
             foreach (var stay in stays)

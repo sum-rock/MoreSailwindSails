@@ -16,6 +16,7 @@ namespace MoreSailwindSails.BoatRigs
                     aftSections: new[] { 51 }
                 ),
             },
+            // Both mast pairs describe one physical stay and share its menu/mount identity.
             stays: new[]
             {
                 new FishermansStayGroupDefinition(
@@ -25,7 +26,7 @@ namespace MoreSailwindSails.BoatRigs
                         new FishermansStayVariantDefinition(
                             mountIndex: 128,
                             donor: 54,
-                            label: "short mast / mizzen mast",
+                            label: "mainmast / mizzenmast",
                             fore: 6,
                             forePoint: new Vector3(0f, 0f, -0.80807668f),
                             aft: 51,
@@ -36,9 +37,9 @@ namespace MoreSailwindSails.BoatRigs
                             forbidden: new int[0]
                         ),
                         new FishermansStayVariantDefinition(
-                            mountIndex: 129,
+                            mountIndex: 128,
                             donor: 54,
-                            label: "tall mast / mizzen mast",
+                            label: "mainmast / mizzenmast",
                             fore: 7,
                             forePoint: new Vector3(0f, 0f, -4.80807567f),
                             aft: 51,

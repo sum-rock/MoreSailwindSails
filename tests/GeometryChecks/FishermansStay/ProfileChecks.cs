@@ -41,6 +41,7 @@ internal static class ProfileChecks
         CheckReadOnly(BoatRigCatalog.All);
         ChronianChecks.Run();
         CaelanorChecks.Run();
+        DhowChecks.Run();
         if (!ReferenceEquals(BoatRigCatalog.All, BoatRigCatalog.All))
             throw new Exception("Catalog is rebuilt on access.");
         foreach (string suffix in new[] { "", "(Clone)", "(Clone)(Clone)" })

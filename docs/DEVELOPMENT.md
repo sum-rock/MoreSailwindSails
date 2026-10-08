@@ -801,13 +801,14 @@ data; resolve `Sections`, `Base` and `SheetCategory` through that profile.
 | Chronian (OldChronian 0.6.0) |           2 |             2 |                          0 |
 | Caelanor (OldChronian 0.6.0) |           1 |             1 |                          0 |
 | Kakam (90)                   |           1 |             2 |                          0 |
-| Dhow (10)                    |           1 |             2 |                          0 |
+| Dhow (10)                    |           1 |             1 |                          0 |
 
-The twelve profiles provide **103** stay variants. Fisherman support for
-OldChronian is profile-based with no hard mod assembly dependency; Gloriana,
-Chronian and Caelanor have profiles. Spritsails do not require profiles,
-including on Gallus. Exact vectors, prerequisites and ordered control-source
-lists live in each profile, backed by numeric installed-asset fixtures.
+The twelve profiles provide **102** stays across **103** mast-pair
+configurations. Fisherman support for OldChronian is profile-based with no hard
+mod assembly dependency; Gloriana, Chronian and Caelanor have profiles.
+Spritsails do not require profiles, including on Gallus. Exact vectors,
+prerequisites and ordered control-source lists live in each profile, backed by
+numeric installed-asset fixtures.
 
 **Leopard has no Fisherman support:** its BoatRig profile was removed after
 in-game compatibility problems. Profile gates reject Flying Sail fitting and
@@ -841,13 +842,17 @@ independently to the same endpoints; donor bounds may differ from `mastHeight`.
 `Kakam.cs` indexes native `BOAT junk small singleroof(90)` and supplies stays
 **128/129** from physical mainmasts **5/6** to mizzen **7**, using SE donor
 stays **62/70** respectively. `Dhow.cs` indexes `BOAT dhow small (10)` and
-supplies stays **128/129** from short/tall mainmasts **6/7** to SE physical
-mizzen **51**, using donor **54**. Each boat receives one appended main/mizzen
-part group. All four variants use the native mizzen guide height and a **70°**
-attachment line; donors need not be fitted. Bermuda rigs are staysail-only
-mounts and are excluded from physical support. Dhow’s raked mast **52** is
-excluded: its 70° stay line gives a negative head slope in the forward mast
-frame, outside the current staysail fitting range.
+registers one stay **128** for both short/tall mainmast pairs **6/7 → 51**,
+using donor **54**. The two authored configurations share their mount ID and
+label, so registration creates one mainmast/mizzenmast menu option. An empty
+stay follows the fitted pair; an occupied stay retains its support through
+previews. There is no migration for the earlier two-option development build.
+Each boat receives one appended main/mizzen part group. All four mast-pair
+configurations use the native mizzen guide height and a **70°** attachment line;
+donors need not be fitted. Bermuda rigs are staysail-only mounts and are
+excluded from physical support. Dhow’s raked mast **52** is excluded: its 70°
+stay line gives a negative head slope in the forward mast frame, outside the
+current staysail fitting range.
 
 Sheet categories use the physical mainmast alternatives and their native
 middle-stay sources, with the mizzen's own controls in its separate category.
@@ -858,9 +863,11 @@ preview/cancel and save/reload need validation on Brig, then Kakam and Dhow;
 automated checks do not simulate Cloth or establish runtime acceptance.
 
 Release build, both automated suites, CSharpier, Prettier and `git diff --check`
-passed for this addition on **2026-10-07**, with zero build warnings/errors.
-Coverage now includes twelve profiles and **103** stays; the earlier baseline
-below describes the pre-addition catalog.
+passed for this addition and Dhow consolidation on **2026-10-07**, with zero
+build warnings/errors. Runtime shipyard fitting and mast-change previews still
+need validation. Coverage now includes twelve profiles and **102** stays across
+**103** mast-pair configurations; the earlier baseline below describes the
+pre-addition catalog.
 
 ### Large dhow
 
