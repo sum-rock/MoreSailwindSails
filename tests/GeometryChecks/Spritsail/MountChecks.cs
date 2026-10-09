@@ -74,6 +74,7 @@ internal static class MountChecks
                 .Select(eye => radius * (0.85f + eye * 0.05f))
                 .ToArray();
             var axis = new Vector3(1, rake, -rake * 0.5f).normalized;
+            var eyelets = new Vector3[7];
             SpritsailMountGeometry.Fit(
                 luff: luff,
                 mastOrigin: mast,
@@ -81,7 +82,7 @@ internal static class MountChecks
                 radii: radii,
                 vertices: vertices,
                 normals: normals,
-                eyelets: new Vector3[7]
+                eyelets: eyelets
             );
             var referenceVertices = new Vector3[vertices.Length];
             var referenceNormals = new Vector3[vertices.Length];
@@ -120,14 +121,18 @@ internal static class MountChecks
                     );
                 }
             }
+            Vector3 Strip(Vector3 source) =>
+                new SpritsailMountFitData.StripSample(source: source, count: luff.Length).Evaluate(
+                    points: luff,
+                    eyelets: eyelets
+                );
             foreach (float x in new[] { -3f, -2.95f, -1.5f, 0f, 1.5f, 2.95f, 3f })
             {
-                var seam = SpritsailMountGeometry.Strip(
-                    source: new Vector3(x, 0, -0.1f),
-                    luff: luff
-                );
+                var seam = Strip(source: new Vector3(x, 0, -0.1f));
                 var expected =
-                    SpritsailMountGeometry.Luff(points: luff, sourceX: x)
+                    new SpritsailMountFitData.LuffSample(sourceX: x, count: luff.Length).Evaluate(
+                        luff: luff
+                    )
                     + Vector3.forward * SpritsailMountGeometry.SeamOverlap;
                 Require(
                     value: (seam - expected).sqrMagnitude < 1e-10f,
@@ -140,7 +145,7 @@ internal static class MountChecks
                 var edgeOfHole = new Vector3(x + 0.015f, 0, -0.05f);
                 Require(
                     value: (
-                        SpritsailMountGeometry.Strip(source: edgeOfHole, luff: luff)
+                        Strip(source: edgeOfHole)
                         - SpritsailMountGeometry.Eyelet(points: luff, sourceX: x)
                         - Vector3.right * 0.015f
                     ).sqrMagnitude < 1e-10f,

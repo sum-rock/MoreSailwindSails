@@ -23,6 +23,12 @@ internal static class RoutedRopeChecks
         );
         var display = rope.GetMethod(name: "SetVisible", bindingAttr: flags);
         var ensure = rope.GetMethod(name: "EnsureTube", bindingAttr: flags);
+        var line = rope.GetField(name: "Line", bindingAttr: flags);
+        Require(
+            value: line.IsPrivate
+                && line.CustomAttributes.Any(a => a.AttributeType.Name == "SerializeField"),
+            message: "The route renderer must remain private but serialized for cloned sail templates."
+        );
         Require(
             value: Instructions(display)
                 .Any(i =>
@@ -56,6 +62,16 @@ internal static class RoutedRopeChecks
                 && CalledMethods(display).Any(m => m.Name == "get_transpose")
                 && CalledMethods(display).Any(m => m.Name == "RecalculateBounds"),
             message: "World-space rope diameter/normals/bounds must survive scaled parent transforms."
+        );
+        var upload = Instructions(method: display).ToArray();
+        int Call(string name) =>
+            Array.FindIndex(array: upload, match: i => i.Operand is MethodInfo m && m.Name == name);
+        Require(
+            value: Call(name: "Pose") >= 0
+                && Call(name: "get_vertexCount") > Call(name: "Pose")
+                && Call(name: "Clear") > Call(name: "get_vertexCount")
+                && Call(name: "set_triangles") > Call(name: "Clear"),
+            message: "After a failed pose, retry topology must follow the uploaded mesh count, not already-resized buffers; clear/upload only after successful posing."
         );
         foreach (var method in rope.GetMethods(bindingAttr: flags))
         {

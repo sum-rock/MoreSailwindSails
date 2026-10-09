@@ -659,11 +659,10 @@ update when the local luff pose or mast fit changes. Immutable fitting data
 caches strip interpolation/hole-influence weights and rope path samples, curve
 weights and normal coefficients by luff bone count. Each fit computes eyelet
 positions once and shares a mast frame and approach-curve controls across each
-rope's vertices. The fitter retains part-specific operations for offline
-comparison, but the current runtime uses one complete fit per deliberate visual
-revision, followed by one mesh upload/tangent/bounds update and reverse-strip
-refresh. Each consumer acknowledges its own successful revision;
-hidden/bypassed/failed consumers stay pending independently.
+rope's vertices. Each deliberate visual revision uses one complete fit, followed
+by one mesh upload/tangent/bounds update and reverse-strip refresh. Each
+consumer acknowledges its own successful revision; hidden/bypassed/failed
+consumers stay pending independently.
 
 Rigid world draw matrices handle boat motion and parent scaling without
 stretching eyelets or rope thickness. The **2026-10-09** cache revision builds
@@ -776,22 +775,17 @@ mount calls, including other loaded boats, rather than only the player boat.
 surface sampling, geometry fitting, upload/tangent/bounds updates and draw
 submission reported separately. `maxCallMs` is the slowest individual mount
 call, not a whole-frame CPU peak. `refits` and `cacheHitMiss` reveal repeated
-work; `callsPerFrame` indicates the active mount workload. The optimized build
-adds `partsStripEyeletRope` (counts of updated parts) and
-`reasonsInitialLuffEyeletMastRadiusSupport` (counts of fits with each reason).
-`envelopeHitMiss` retains the earlier whole-ring diagnostic field; this revision
-samples rings only on a rebuild, so it records misses there and zero queries on
-reuse. `cacheHitMiss` counts the directional surface queries within those
-rebuilds. `revisionsInitialSheetReefTackFittingSupportReactivate` reports
+work; `callsPerFrame` indicates the active mount workload. `refits` counts
+completed uploads, while `cacheHitMiss` counts directional surface queries
+during rebuilds. `revisionsInitialSheetReefTackFittingSupportReactivate` reports
 logical trigger counts (categories can overlap). `rebuildMountSpritSnotter` and
 `reuseMountSpritSnotter` report each consumer's calculation requests/reuse, not
 GPU work or necessarily mesh uploads. These counters remain active in BYPASS for
-the sprit/snotter: F7 still bypasses only the authored mount. Reason categories
-can overlap; part counts can exceed refit counts. Frame means/maxima and frames
-over 33 ms describe the whole game, including VSync and other mods. `gc0Global`
-is the process-wide generation-zero collection delta, not mount allocation
-attribution. Draw submission timing does not measure GPU completion; the visual
-bypass comparison helps identify additional rendering/shadow cost.
+the sprit/snotter: F7 still bypasses only the authored mount. Frame means/maxima
+and frames over 33 ms describe the whole game, including VSync and other mods.
+`gc0Global` is the process-wide generation-zero collection delta, not mount
+allocation attribution. Draw submission timing does not measure GPU completion;
+the visual bypass comparison helps identify additional rendering/shadow cost.
 Instrumentation adds some overhead and is intended for short captures.
 
 The **2026-10-08** optimized **0.3.0-dev** Release build passed GeometryChecks,
@@ -811,9 +805,9 @@ After 100 warmups, seven alternating rounds of 50 fits measured median costs of
 **2.707 ms/full fit original**, **2.166 ms/full fit optimized** (**1.25×**,
 about 20% less time), and **2.145 ms** for updating all seven ropes only. Fifty
 warmed optimized full fits allocated **zero managed bytes**. These .NET 8 CPU
-timings are not a Unity/Mono frame-rate prediction; savings from updating fewer
-ropes will depend on live refit reasons. The asset, topology and version did not
-change.
+timings are not a Unity/Mono frame-rate prediction. These are historical
+measurements from the selective-fit implementation; the current benchmark
+compares complete fits only. The asset, topology and version did not change.
 
 The subsequent capture with matching installed/build hashes and the new part
 counters measured two NORMAL/BYPASS pairs: **35.94/29.91 ms/frame** and
@@ -857,8 +851,31 @@ mount fitting/sampling/upload time approaches zero. Exercise continuous sheet
 and reef controls, both tack crossings, resizing, installation height, mast
 replacement, hide/show, shipyard preview/cancel, F7 resumption and cloth-rope
 settings toggles. Inspect sprit/snotter/collar placement; accepted sway/settling
-errors should refresh on the next trigger. No live capture of this revision has
-been collected yet.
+errors should refresh on the next trigger. The subsequent Sanbuq ABAB test
+supported retaining deliberate-state caching, but the user still reported worse
+perceived frame rate with two spritsails; its remaining cause is unresolved.
+
+The **2026-10-09** branch review removes the superseded numerical fit-state and
+whole-envelope caches, partial-fit masks and their obsolete diagnostic fields
+(`partsStripEyeletRope`, `reasonsInitialLuffEyeletMastRadiusSupport`,
+`envelopeHitMiss`). The shared logical revision and independent consumer caches
+remain the only visual invalidation policy. The collar now only poses its route;
+the snotter owns drawing. Private serialized renderer/mount references preserve
+template cloning while preventing callers from bypassing the rope update API.
+
+The review also fixes rope topology retry: a rejected pose can resize CPU
+buffers, so a later successful upload determines whether indices need rebuilding
+from the existing mesh vertex count. Mesh clearing happens only after a valid
+pose. Geometry checks retain the frozen reference comparison across sail
+fixtures, bone layouts and changing fitting inputs; warmed fits must allocate no
+managed objects. Structural checks cover upload ordering and serialization. The
+cleanup passed the Release build with zero warnings/errors, both C# check
+suites, all eight asset checks and formatting checks. The updated offline
+benchmark measured **1.953 ms/full fit** versus **2.783 ms** for the reference,
+with zero managed bytes across 50 warmed optimized fits; this does not measure
+Unity frame time. In-game confirmation is still needed on Brig, then Sanbuq,
+particularly flat/3D rope toggling, hide/show and snotter/purchase placement;
+neither suite simulates Unity rendering or Cloth.
 
 ### Sprit obstruction on one tack
 

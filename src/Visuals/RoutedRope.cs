@@ -6,7 +6,8 @@ namespace MoreSailwindSails.Visuals
     // Meshes are allocated lazily per live instance, never shared through prefab cloning.
     internal sealed class RoutedRope : MonoBehaviour
     {
-        public LineRenderer Line;
+        [SerializeField]
+        private LineRenderer Line;
         private Mesh mesh;
         private MeshRenderer tube;
         private Vector3[] points;
@@ -24,7 +25,7 @@ namespace MoreSailwindSails.Visuals
         // Opt-in revision drawing for rigid routes: all existing live consumers retain SetVisible.
         internal void DrawCached(bool visible, Transform anchor, long revision)
         {
-            if (!visible || !anchor || !isActiveAndEnabled)
+            if (!visible || !anchor || !Line || !isActiveAndEnabled)
             {
                 SetVisible(visible: false);
                 return;
@@ -131,7 +132,6 @@ namespace MoreSailwindSails.Visuals
                 points = new Vector3[count];
                 vertices = new Vector3[count * RoutedRopeGeometry.Sides];
                 normals = new Vector3[vertices.Length];
-                mesh.Clear();
             }
             Line.GetPositions(positions: points);
             if (
@@ -154,9 +154,14 @@ namespace MoreSailwindSails.Visuals
                 vertices[i] = worldToLocal.MultiplyPoint3x4(point: origin + vertices[i]);
                 normals[i] = normalToLocal.MultiplyVector(vector: normals[i]).normalized;
             }
+            // A failed pose may already have resized the buffers. Decide topology from
+            // the last uploaded mesh so a later successful retry still installs indices.
+            bool topologyChanged = mesh.vertexCount != vertices.Length;
+            if (topologyChanged)
+                mesh.Clear();
             mesh.vertices = vertices;
             mesh.normals = normals;
-            if (resize)
+            if (topologyChanged)
                 mesh.triangles = RoutedRopeGeometry.Triangles(count: count);
             mesh.RecalculateBounds();
             tube.enabled = true;

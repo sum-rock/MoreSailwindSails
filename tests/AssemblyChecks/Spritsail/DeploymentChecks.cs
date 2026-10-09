@@ -117,6 +117,20 @@ internal static class DeploymentChecks
                 message: "Both rigs must draw the authored mount instead of the old luff coils."
             );
         }
+        foreach (string name in new[] { "Sail", "LuffBones" })
+        {
+            var field = Method(type: "SpritsailMount", name: "Draw")
+                .DeclaringType.GetField(
+                    name: name,
+                    bindingAttr: BindingFlags.Instance | BindingFlags.NonPublic
+                );
+            Require(
+                value: field != null
+                    && field.IsPrivate
+                    && field.CustomAttributes.Any(a => a.AttributeType.Name == "SerializeField"),
+                message: "Mount references must remain serialized for cloned sail templates."
+            );
+        }
         var mountDraw = IlReader
             .CalledMethods(method: Method(type: "SpritsailMount", name: "Draw"))
             .ToArray();

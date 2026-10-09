@@ -119,7 +119,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                 cache.Invalidate();
             wasPurchaseVisible = purchaseVisible;
             bool rebuild = cache.Needs(revision: revision);
-            SpritsailMountProfile.Consumer(part: 2, rebuild: rebuild);
+            SpritsailMountProfile.Consumer(part: SpritsailVisualPart.Snotter, rebuild: rebuild);
             if (rebuild)
             {
                 var localAxis =
@@ -182,8 +182,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                     axis: tip - heel,
                     outward: guide - purchasePoint,
                     radius: sparRadius
-                        * Mathf.Lerp(a: 1, b: SpritsailSpritGeometry.EndRadiusRatio, t: 0.8f),
-                    draw: false
+                        * Mathf.Lerp(a: 1, b: SpritsailSpritGeometry.EndRadiusRatio, t: 0.8f)
                 );
                 if (ReefSource)
                 {

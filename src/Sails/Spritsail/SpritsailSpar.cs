@@ -72,7 +72,7 @@ namespace MoreSailwindSails.Sails.Spritsail
         internal void Pose(Vector3 heel, Vector3 tip, float radius, long revision)
         {
             bool rebuild = cache.Needs(revision: revision);
-            SpritsailMountProfile.Consumer(part: 1, rebuild: rebuild);
+            SpritsailMountProfile.Consumer(part: SpritsailVisualPart.Sprit, rebuild: rebuild);
             if (!rebuild)
                 return;
             radius *= SpritsailSpritGeometry.ThicknessMultiplier;

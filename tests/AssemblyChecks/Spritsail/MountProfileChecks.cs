@@ -26,12 +26,23 @@ internal static class MountProfileChecks
             message: "Profiling must start disabled with normal visuals and no timestamp capture."
         );
         Method(name: "Mark").Invoke(obj: null, parameters: new object[] { 0, 0L });
-        Method(name: "EnvelopeQuery").Invoke(obj: null, parameters: new object[] { true });
         Method(name: "SurfaceQuery").Invoke(obj: null, parameters: new object[] { false });
-        Method(name: "Refit").Invoke(obj: null, parameters: new object[] { 32767, 63 });
+        Method(name: "Refit").Invoke(obj: null, parameters: null);
         Method(name: "Revision").Invoke(obj: null, parameters: new object[] { 127 });
-        Method(name: "Consumer").Invoke(obj: null, parameters: new object[] { 0, true });
-        Method(name: "Consumer").Invoke(obj: null, parameters: new object[] { 2, false });
+        var part = assembly.GetType(
+            name: "MoreSailwindSails.Sails.Spritsail.SpritsailVisualPart",
+            throwOnError: true
+        );
+        Method(name: "Consumer")
+            .Invoke(
+                obj: null,
+                parameters: new object[] { Enum.Parse(enumType: part, value: "Mount"), true }
+            );
+        Method(name: "Consumer")
+            .Invoke(
+                obj: null,
+                parameters: new object[] { Enum.Parse(enumType: part, value: "Snotter"), false }
+            );
         Method(name: "End").Invoke(obj: null, parameters: new object[] { 0L });
         Require(
             value: (int)profile.GetField(name: "calls", bindingAttr: flags).GetValue(obj: null) == 0
@@ -41,27 +52,13 @@ internal static class MountProfileChecks
                     == 0,
             message: "Disabled hooks must not collect samples."
         );
-        foreach (
-            string field in new[]
-            {
-                "fittedParts",
-                "refitReasons",
-                "revisionReasons",
-                "rebuilds",
-                "reuses",
-            }
-        )
+        foreach (string field in new[] { "revisionReasons", "rebuilds", "reuses" })
             Require(
                 value: (
                     (int[])profile.GetField(name: field, bindingAttr: flags).GetValue(obj: null)
                 ).All(n => n == 0),
                 message: "Disabled diagnostics must not count parts or reasons."
             );
-        Require(
-            value: (int)
-                profile.GetField(name: "envelopeHits", bindingAttr: flags).GetValue(obj: null) == 0,
-            message: "Disabled profiling must not collect envelope hits."
-        );
         var mount = assembly.GetType(
             name: "MoreSailwindSails.Sails.Spritsail.SpritsailMount",
             throwOnError: true

@@ -7,8 +7,11 @@ namespace MoreSailwindSails.Sails.Spritsail
     // Owns each live sail's fitted mount mesh; follows existing bones without modifying Cloth.
     internal sealed class SpritsailMount : MonoBehaviour
     {
-        public Sail Sail;
-        public Transform[] LuffBones;
+        [SerializeField]
+        private Sail Sail;
+
+        [SerializeField]
+        private Transform[] LuffBones;
         private Mesh mesh;
         private Vector3[] vertices;
         private Vector3[] normals;
@@ -49,7 +52,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                 // while resizing and reefing update the fitted mesh independently of scale.
                 var frame = Matrix4x4.TRS(pos: cloth.position, q: cloth.rotation, s: Vector3.one);
                 bool rebuild = cache.Needs(revision: revision);
-                SpritsailMountProfile.Consumer(part: 0, rebuild: rebuild);
+                SpritsailMountProfile.Consumer(part: SpritsailVisualPart.Mount, rebuild: rebuild);
                 if (rebuild)
                 {
                     bool surfaceChanged =
@@ -127,7 +130,6 @@ namespace MoreSailwindSails.Sails.Spritsail
                         );
                         var center = origin + axis * Vector3.Dot(lhs: eyelet - origin, rhs: axis);
                         var sampleOrigin = frameToSurface.MultiplyPoint3x4(point: center);
-                        SpritsailMountProfile.EnvelopeQuery(hit: false);
                         float radius = 0;
                         for (int direction = 0; direction < Directions; direction++)
                         {
@@ -151,10 +153,6 @@ namespace MoreSailwindSails.Sails.Spritsail
                         stage: SpritsailMountProfile.Surface,
                         checkpoint: ref checkpoint
                     );
-                    SpritsailMountProfile.Refit(
-                        parts: SpritsailMountGeometry.AllParts,
-                        reasons: surfaceChanged ? SpritsailMountFitState.Support : 0
-                    );
                     SpritsailMountGeometry.Fit(
                         luff: luff,
                         mastOrigin: origin,
@@ -162,8 +160,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                         radii: radii,
                         vertices: vertices,
                         normals: normals,
-                        eyelets: eyelets,
-                        parts: SpritsailMountGeometry.AllParts
+                        eyelets: eyelets
                     );
                     SpritsailMountProfile.Mark(
                         stage: SpritsailMountProfile.Fit,
@@ -180,6 +177,7 @@ namespace MoreSailwindSails.Sails.Spritsail
                     mesh.RecalculateTangents();
                     mesh.RecalculateBounds();
                     cache.Commit(revision: revision);
+                    SpritsailMountProfile.Refit();
                     SpritsailMountProfile.Mark(
                         stage: SpritsailMountProfile.Upload,
                         checkpoint: ref checkpoint

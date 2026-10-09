@@ -3,18 +3,13 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
 {
-    // Draws a close-wound rope collar without changing native rope endpoints or sail physics.
+    // Poses a close-wound collar route; the owning snotter controls its cached drawing.
     internal sealed class SpritsailRopeCollar : MonoBehaviour
     {
         public RoutedRope Rope;
         private const int Segments = 96;
 
-        internal static SpritsailRopeCollar Create(
-            Transform parent,
-            RopeEffect source,
-            string name,
-            float thicknessScale = 1f
-        )
+        internal static SpritsailRopeCollar Create(Transform parent, RopeEffect source, string name)
         {
             var root = new GameObject(name: name);
             root.transform.SetParent(parent: parent, worldPositionStays: false);
@@ -25,7 +20,7 @@ namespace MoreSailwindSails.Sails.Spritsail
             line.startColor = original.startColor;
             line.endColor = original.endColor;
             line.startWidth = line.endWidth =
-                source.ropeWidth * SpritsailSpritGeometry.RopeThicknessMultiplier * thicknessScale;
+                source.ropeWidth * SpritsailSpritGeometry.RopeThicknessMultiplier;
             line.textureMode = LineTextureMode.Tile;
             line.useWorldSpace = true;
             line.positionCount = Segments + 1;
@@ -34,13 +29,7 @@ namespace MoreSailwindSails.Sails.Spritsail
             return collar;
         }
 
-        internal Vector3 Pose(
-            Vector3 center,
-            Vector3 axis,
-            Vector3 outward,
-            float radius,
-            bool draw = true
-        )
+        internal Vector3 Pose(Vector3 center, Vector3 axis, Vector3 outward, float radius)
         {
             axis.Normalize();
             outward = Vector3.ProjectOnPlane(vector: outward, planeNormal: axis).normalized;
@@ -62,8 +51,6 @@ namespace MoreSailwindSails.Sails.Spritsail
                         + axis * ((t - 0.5f) * 3 * width * 1.05f)
                 );
             }
-            if (draw)
-                Rope.SetVisible(visible: true);
             return center + outward * (radius + width * 0.55f);
         }
 
