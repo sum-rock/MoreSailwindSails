@@ -35,6 +35,7 @@ internal static class Program
         ProfileChecks.Run();
         StayChecks.Run();
         CollarChecks.Run();
+        Utils.ProfilingChecks.Run();
         Utils.WinchCaptureChecks.Run();
         Utils.WinchMountOverlayChecks.Run();
         Controls.NativeSeatProfileChecks.Run();

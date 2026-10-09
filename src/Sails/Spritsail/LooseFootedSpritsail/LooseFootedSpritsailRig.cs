@@ -1,4 +1,5 @@
 using System;
+using MoreSailwindSails.Utils.Profiling;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
@@ -379,126 +380,138 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
 
         internal bool RefreshMastFrame()
         {
-            if (
-                !Sail
-                || !MastFrame
-                || Bones == null
-                || Bones.Length != LooseFootedSpritsailGeometry.BoneCount
+            using (
+                PerformanceProfile.Measure(
+                    target: ProfileTarget.Frame,
+                    family: ProfileFamily.LooseFootedSpritsail
+                )
             )
-                return false;
-            var mount = Sail.transform.parent ? Sail.transform.parent.GetComponent<Mast>() : null;
-            if (mount != lastMount)
             {
-                bool wasBound = boundToMast;
-                lastMount = mount;
-                rigging = mount ? LooseFootedSpritsailRigging.For(sail: Sail) : null;
-                if (wasBound && !rigging)
+                if (
+                    !Sail
+                    || !MastFrame
+                    || Bones == null
+                    || Bones.Length != LooseFootedSpritsailGeometry.BoneCount
+                )
+                    return false;
+                var mount = Sail.transform.parent
+                    ? Sail.transform.parent.GetComponent<Mast>()
+                    : null;
+                if (mount != lastMount)
                 {
-                    MastFrame.localPosition = Vector3.zero;
-                    MastFrame.localRotation = Quaternion.identity;
-                    var originalHinge = Sail.GetComponent<HingeJoint>();
-                    originalHinge.axis = OriginalHingeAxis;
-                    originalHinge.anchor = OriginalHingeAnchor;
-                    originalHinge.autoConfigureConnectedAnchor = OriginalAutoAnchor;
+                    bool wasBound = boundToMast;
+                    lastMount = mount;
+                    rigging = mount ? LooseFootedSpritsailRigging.For(sail: Sail) : null;
+                    if (wasBound && !rigging)
+                    {
+                        MastFrame.localPosition = Vector3.zero;
+                        MastFrame.localRotation = Quaternion.identity;
+                        var originalHinge = Sail.GetComponent<HingeJoint>();
+                        originalHinge.axis = OriginalHingeAxis;
+                        originalHinge.anchor = OriginalHingeAnchor;
+                        originalHinge.autoConfigureConnectedAnchor = OriginalAutoAnchor;
+                        refreshRequested = true;
+                    }
+                    boundToMast = false;
+                    bindingDirty = true;
+                }
+                if (!rigging || !rigging.Bind(mast: mount))
+                    return false;
+
+                rigging.LuffSailFrame(
+                    point: out var forePoint,
+                    axis: out var foreAxis,
+                    hingePoint: out var hingePoint
+                );
+                var scaleRoot = Sail.cloth.transform.parent;
+                if (!ValidScale(scale: scaleRoot.localScale))
+                    return false;
+                // Preserve the native saved installation coordinate. Offset the
+                // model onto the offset luff line, but hinge around the mast axis.
+                // The ring, bolt and luff orbit together under native sheeting.
+                var origin = new Vector3(0, 0, Sail.GetCurrentInstallHeight() - mount.mastHeight);
+                var nextPivot =
+                    mount.transform.InverseTransformPoint(position: hingePoint) - origin;
+                var luffPoint = mount.transform.InverseTransformPoint(position: forePoint) - origin;
+                var nextAxis = mount
+                    .transform.InverseTransformDirection(direction: foreAxis)
+                    .normalized;
+                var aftDirection = mount.transform.InverseTransformDirection(
+                    direction: rigging.AftDirection(axis: foreAxis)
+                );
+                var alignment =
+                    Quaternion.LookRotation(
+                        forward: aftDirection,
+                        upwards: Vector3.Cross(aftDirection, nextAxis)
+                    ) * Quaternion.Inverse(rotation: scaleRoot.localRotation);
+                MastFrame.localRotation = alignment;
+                MastFrame.localPosition = LooseFootedSpritsailFrameGeometry.ModelOffset(
+                    pivot: luffPoint,
+                    alignedHead: alignment
+                        * (
+                            scaleRoot.localPosition
+                            + scaleRoot.localRotation
+                                * Vector3.Scale(Corners[0], scaleRoot.localScale)
+                        )
+                );
+                bool changed =
+                    bindingDirty
+                    || !boundToMast
+                    || LooseFootedSpritsailFrameGeometry.PositionChanged(a: nextPivot, b: pivot)
+                    || LooseFootedSpritsailFrameGeometry.PositionChanged(a: nextAxis, b: pivotAxis)
+                    || LooseFootedSpritsailFrameGeometry.PositionChanged(
+                        a: lastScale,
+                        b: scaleRoot.localScale
+                    )
+                    || LooseFootedSpritsailFrameGeometry.PositionChanged(
+                        a: lastFramePosition,
+                        b: MastFrame.localPosition
+                    )
+                    || Quaternion.Angle(a: lastFrameRotation, b: MastFrame.localRotation) > 0.05f;
+                if (changed)
+                {
+                    var body = Sail.GetComponent<Rigidbody>();
+                    var hinge = Sail.GetComponent<HingeJoint>();
+                    if (!boundToMast || GameState.currentShipyard)
+                        body.rotation = mount.transform.rotation;
+                    body.position = hingePoint - body.rotation * nextPivot;
+                    RefreshCollisionStrips();
+                    RefreshClothTravel();
+                    RefreshSparCollision();
+                    var deploymentBounds = DeploymentBounds();
+                    // The struck peak rises above the set head; retain the full bundle bounds.
+                    var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
+                    var bounds = clothRenderer.sharedMesh.bounds;
+                    bounds.Encapsulate(bounds: deploymentBounds);
+                    bounds.Expand(
+                        amount: new Vector3(
+                            -Corners[0].z * 0.3f,
+                            -Corners[0].z * 2.5f,
+                            -Corners[0].z * 0.4f
+                        )
+                    );
+                    clothRenderer.localBounds = bounds;
+                    ReefedRenderer.localBounds = bounds;
+                    hinge.autoConfigureConnectedAnchor = false;
+                    hinge.connectedBody = mount.shipRigidbody;
+                    hinge.axis = nextAxis;
+                    hinge.anchor = nextPivot;
+                    hinge.connectedAnchor = mount.shipRigidbody.transform.InverseTransformPoint(
+                        position: hingePoint
+                    );
+                    if (!boundToMast)
+                        Sail.GetComponent<JibAngleMaster>().UpdateInitialAngle();
+                    pivot = nextPivot;
+                    pivotAxis = nextAxis;
+                    lastScale = scaleRoot.localScale;
+                    lastFramePosition = MastFrame.localPosition;
+                    lastFrameRotation = MastFrame.localRotation;
+                    boundToMast = true;
+                    bindingDirty = false;
                     refreshRequested = true;
                 }
-                boundToMast = false;
-                bindingDirty = true;
+                return true;
             }
-            if (!rigging || !rigging.Bind(mast: mount))
-                return false;
-
-            rigging.LuffSailFrame(
-                point: out var forePoint,
-                axis: out var foreAxis,
-                hingePoint: out var hingePoint
-            );
-            var scaleRoot = Sail.cloth.transform.parent;
-            if (!ValidScale(scale: scaleRoot.localScale))
-                return false;
-            // Preserve the native saved installation coordinate. Offset the
-            // model onto the offset luff line, but hinge around the mast axis.
-            // The ring, bolt and luff orbit together under native sheeting.
-            var origin = new Vector3(0, 0, Sail.GetCurrentInstallHeight() - mount.mastHeight);
-            var nextPivot = mount.transform.InverseTransformPoint(position: hingePoint) - origin;
-            var luffPoint = mount.transform.InverseTransformPoint(position: forePoint) - origin;
-            var nextAxis = mount
-                .transform.InverseTransformDirection(direction: foreAxis)
-                .normalized;
-            var aftDirection = mount.transform.InverseTransformDirection(
-                direction: rigging.AftDirection(axis: foreAxis)
-            );
-            var alignment =
-                Quaternion.LookRotation(
-                    forward: aftDirection,
-                    upwards: Vector3.Cross(aftDirection, nextAxis)
-                ) * Quaternion.Inverse(rotation: scaleRoot.localRotation);
-            MastFrame.localRotation = alignment;
-            MastFrame.localPosition = LooseFootedSpritsailFrameGeometry.ModelOffset(
-                pivot: luffPoint,
-                alignedHead: alignment
-                    * (
-                        scaleRoot.localPosition
-                        + scaleRoot.localRotation * Vector3.Scale(Corners[0], scaleRoot.localScale)
-                    )
-            );
-            bool changed =
-                bindingDirty
-                || !boundToMast
-                || LooseFootedSpritsailFrameGeometry.PositionChanged(a: nextPivot, b: pivot)
-                || LooseFootedSpritsailFrameGeometry.PositionChanged(a: nextAxis, b: pivotAxis)
-                || LooseFootedSpritsailFrameGeometry.PositionChanged(
-                    a: lastScale,
-                    b: scaleRoot.localScale
-                )
-                || LooseFootedSpritsailFrameGeometry.PositionChanged(
-                    a: lastFramePosition,
-                    b: MastFrame.localPosition
-                )
-                || Quaternion.Angle(a: lastFrameRotation, b: MastFrame.localRotation) > 0.05f;
-            if (changed)
-            {
-                var body = Sail.GetComponent<Rigidbody>();
-                var hinge = Sail.GetComponent<HingeJoint>();
-                if (!boundToMast || GameState.currentShipyard)
-                    body.rotation = mount.transform.rotation;
-                body.position = hingePoint - body.rotation * nextPivot;
-                RefreshCollisionStrips();
-                RefreshClothTravel();
-                RefreshSparCollision();
-                var deploymentBounds = DeploymentBounds();
-                // The struck peak rises above the set head; retain the full bundle bounds.
-                var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
-                var bounds = clothRenderer.sharedMesh.bounds;
-                bounds.Encapsulate(bounds: deploymentBounds);
-                bounds.Expand(
-                    amount: new Vector3(
-                        -Corners[0].z * 0.3f,
-                        -Corners[0].z * 2.5f,
-                        -Corners[0].z * 0.4f
-                    )
-                );
-                clothRenderer.localBounds = bounds;
-                ReefedRenderer.localBounds = bounds;
-                hinge.autoConfigureConnectedAnchor = false;
-                hinge.connectedBody = mount.shipRigidbody;
-                hinge.axis = nextAxis;
-                hinge.anchor = nextPivot;
-                hinge.connectedAnchor = mount.shipRigidbody.transform.InverseTransformPoint(
-                    position: hingePoint
-                );
-                if (!boundToMast)
-                    Sail.GetComponent<JibAngleMaster>().UpdateInitialAngle();
-                pivot = nextPivot;
-                pivotAxis = nextAxis;
-                lastScale = scaleRoot.localScale;
-                lastFramePosition = MastFrame.localPosition;
-                lastFrameRotation = MastFrame.localRotation;
-                boundToMast = true;
-                bindingDirty = false;
-                refreshRequested = true;
-            }
-            return true;
         }
 
         private void RefreshCollisionStrips()
@@ -579,23 +592,34 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
 
         internal bool RefreshAerodynamics()
         {
-            if (!Sail || !Sail.windcenter || Bones == null || Bones.Length < 4)
-                return false;
-            if (
-                !LooseFootedSpritsailAerodynamics.TryFrame(
-                    foreHead: Bones[0].position,
-                    foreTack: Bones[2].position,
-                    aftHead: Bones[1].position,
-                    clew: Bones[3].position,
-                    frame: out var frame
+            using (
+                PerformanceProfile.Measure(
+                    target: ProfileTarget.Aerodynamics,
+                    family: ProfileFamily.LooseFootedSpritsail
                 )
             )
-                return false;
-            Sail.windcenter.SetPositionAndRotation(
-                position: frame.Center,
-                rotation: Quaternion.LookRotation(forward: frame.MastAxis, upwards: frame.Normal)
-            );
-            return true;
+            {
+                if (!Sail || !Sail.windcenter || Bones == null || Bones.Length < 4)
+                    return false;
+                if (
+                    !LooseFootedSpritsailAerodynamics.TryFrame(
+                        foreHead: Bones[0].position,
+                        foreTack: Bones[2].position,
+                        aftHead: Bones[1].position,
+                        clew: Bones[3].position,
+                        frame: out var frame
+                    )
+                )
+                    return false;
+                Sail.windcenter.SetPositionAndRotation(
+                    position: frame.Center,
+                    rotation: Quaternion.LookRotation(
+                        forward: frame.MastAxis,
+                        upwards: frame.Normal
+                    )
+                );
+                return true;
+            }
         }
 
         private void UpdateShapeBones(
@@ -676,92 +700,95 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
 
         private void ApplySheetFlex(Vector3 scale, int state, bool visible)
         {
-            if (!visible || state == 0 || !Lines)
+            using (PerformanceProfile.Measure(target: ProfileTarget.SheetFlex))
             {
-                sheetPull = Vector3.zero;
-                return;
-            }
-            var cloth = Sail.cloth.transform;
-            var clew = Vector3.Scale(Bones[3].localPosition, scale);
-            Vector3 Endpoint(int side)
-            {
-                var source = Lines.Sources[side];
-                return source && source.gameObject.activeInHierarchy
-                    ? Vector3.Scale(
-                        cloth.InverseTransformPoint(position: source.transform.position),
-                        scale
-                    )
-                    : clew;
-            }
-            float Load(int side)
-            {
-                var source = Lines.Sources[side];
-                return source && source.gameObject.activeInHierarchy
-                    ? LooseFootedSpritsailFlex.Load(
-                        paidOut: source.currentRopeLength,
-                        routed: source.totalRopeLength
-                    )
-                    : 0;
-            }
-            var requested = LooseFootedSpritsailFlex.Pull(
-                clew: clew,
-                port: Endpoint(side: 0),
-                portLoad: Load(side: 0),
-                starboard: Endpoint(side: 1),
-                starboardLoad: Load(side: 1)
-            );
-            sheetPull = LooseFootedSpritsailFlex.Smooth(
-                previous: sheetPull,
-                target: requested,
-                seconds: Time.deltaTime
-            );
-            for (int column = 0; column < flexFoot.Length; column++)
-                flexFoot[column] = Vector3.Scale(
-                    Bones[
-                        LooseFootedSpritsailGeometry.ShapeBone(
-                            row: LooseFootedSpritsailGeometry.Rows,
-                            column: column
+                if (!visible || state == 0 || !Lines)
+                {
+                    sheetPull = Vector3.zero;
+                    return;
+                }
+                var cloth = Sail.cloth.transform;
+                var clew = Vector3.Scale(Bones[3].localPosition, scale);
+                Vector3 Endpoint(int side)
+                {
+                    var source = Lines.Sources[side];
+                    return source && source.gameObject.activeInHierarchy
+                        ? Vector3.Scale(
+                            cloth.InverseTransformPoint(position: source.transform.position),
+                            scale
                         )
-                    ].localPosition,
-                    scale
+                        : clew;
+                }
+                float Load(int side)
+                {
+                    var source = Lines.Sources[side];
+                    return source && source.gameObject.activeInHierarchy
+                        ? LooseFootedSpritsailFlex.Load(
+                            paidOut: source.currentRopeLength,
+                            routed: source.totalRopeLength
+                        )
+                        : 0;
+                }
+                var requested = LooseFootedSpritsailFlex.Pull(
+                    clew: clew,
+                    port: Endpoint(side: 0),
+                    portLoad: Load(side: 0),
+                    starboard: Endpoint(side: 1),
+                    starboardLoad: Load(side: 1)
                 );
-            for (int row = 0; row < flexLeech.Length; row++)
-                flexLeech[row] = Vector3.Scale(
-                    Bones[LooseFootedSpritsailGeometry.LeechBone(row: row)].localPosition,
-                    scale
+                sheetPull = LooseFootedSpritsailFlex.Smooth(
+                    previous: sheetPull,
+                    target: requested,
+                    seconds: Time.deltaTime
                 );
-            float limit =
-                Vector3.Scale(Corners[3] - Corners[2], scale).magnitude
-                * LooseFootedSpritsailFlex.MaximumDisplacement
-                * SpritsailDeployment.Amount(unroll: Sail.currentUnroll);
-            var delta = Unscale(
-                point: LooseFootedSpritsailFlex.Fit(
-                    requested: sheetPull * limit,
-                    foot: flexFoot,
-                    leech: flexLeech,
-                    limit: limit
-                ),
-                scale: scale
-            );
-            for (int row = 0; row <= LooseFootedSpritsailGeometry.Rows; row++)
-            for (int column = 0; column <= LooseFootedSpritsailGeometry.ShapeColumns; column++)
-            {
-                float u = column / (float)LooseFootedSpritsailGeometry.ShapeColumns;
-                float v = row / (float)LooseFootedSpritsailGeometry.Rows;
-                var rest = Vector3.Lerp(
-                    Vector3.Lerp(Corners[0], Corners[2], v),
-                    Vector3.Lerp(Corners[1], Corners[3], v),
-                    u
+                for (int column = 0; column < flexFoot.Length; column++)
+                    flexFoot[column] = Vector3.Scale(
+                        Bones[
+                            LooseFootedSpritsailGeometry.ShapeBone(
+                                row: LooseFootedSpritsailGeometry.Rows,
+                                column: column
+                            )
+                        ].localPosition,
+                        scale
+                    );
+                for (int row = 0; row < flexLeech.Length; row++)
+                    flexLeech[row] = Vector3.Scale(
+                        Bones[LooseFootedSpritsailGeometry.LeechBone(row: row)].localPosition,
+                        scale
+                    );
+                float limit =
+                    Vector3.Scale(Corners[3] - Corners[2], scale).magnitude
+                    * LooseFootedSpritsailFlex.MaximumDisplacement
+                    * SpritsailDeployment.Amount(unroll: Sail.currentUnroll);
+                var delta = Unscale(
+                    point: LooseFootedSpritsailFlex.Fit(
+                        requested: sheetPull * limit,
+                        foot: flexFoot,
+                        leech: flexLeech,
+                        limit: limit
+                    ),
+                    scale: scale
                 );
-                float weight = LooseFootedSpritsailFlex.Weight(
-                    point: rest,
-                    peak: Corners[1],
-                    tack: Corners[2],
-                    clew: Corners[3]
-                );
-                Bones[
-                    LooseFootedSpritsailGeometry.ShapeBone(row: row, column: column)
-                ].localPosition += delta * weight;
+                for (int row = 0; row <= LooseFootedSpritsailGeometry.Rows; row++)
+                for (int column = 0; column <= LooseFootedSpritsailGeometry.ShapeColumns; column++)
+                {
+                    float u = column / (float)LooseFootedSpritsailGeometry.ShapeColumns;
+                    float v = row / (float)LooseFootedSpritsailGeometry.Rows;
+                    var rest = Vector3.Lerp(
+                        Vector3.Lerp(Corners[0], Corners[2], v),
+                        Vector3.Lerp(Corners[1], Corners[3], v),
+                        u
+                    );
+                    float weight = LooseFootedSpritsailFlex.Weight(
+                        point: rest,
+                        peak: Corners[1],
+                        tack: Corners[2],
+                        clew: Corners[3]
+                    );
+                    Bones[
+                        LooseFootedSpritsailGeometry.ShapeBone(row: row, column: column)
+                    ].localPosition += delta * weight;
+                }
             }
         }
 
@@ -786,147 +813,171 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
 
         private void LateUpdate()
         {
-            if (!Sail || Bones == null || Bones.Length != LooseFootedSpritsailGeometry.BoneCount)
-                return;
-            bool supported = RefreshMastFrame();
-            bool visible = supported && !GameState.currentlyLoading;
-            if (Shadow)
+            using (
+                PerformanceProfile.Measure(
+                    target: ProfileTarget.Rig,
+                    family: ProfileFamily.LooseFootedSpritsail
+                )
+            )
             {
-                var scaleRoot = Sail.cloth.transform.parent;
-                Shadow.localPosition = scaleRoot.localPosition;
-                Shadow.localRotation = scaleRoot.localRotation;
-                Shadow.localScale = scaleRoot.localScale;
-            }
-            int state = LooseFootedSpritsailGeometry.RenderState(unroll: Sail.currentUnroll);
-            var scale = Sail.cloth.transform.lossyScale;
-            if (!ValidScale(scale: scale))
-            {
-                OnDisable();
-                return;
-            }
-            long visualRevision = visualTriggers.Update(
-                sail: Sail,
-                boat: supported ? rigging.Support.Boat.transform : null,
-                mast: supported ? rigging.Support.Mast.GetComponent<CapsuleCollider>() : null,
-                corners: Corners,
-                active: visible
-            );
-            var corners = ScaledCorners(scale: scale);
-            var pose = SpritsailDeployment.Evaluate(corners: corners, unroll: Sail.currentUnroll);
-            Bones[0].localPosition = Unscale(point: pose.Throat, scale: scale);
-            Bones[1].localPosition = Unscale(point: pose.Peak, scale: scale);
-            Bones[2].localPosition = Unscale(point: pose.Tack, scale: scale);
-            Bones[3].localPosition = Unscale(point: pose.Clew, scale: scale);
-            // At full deployment the existing coupled-edge solver preserves foot/leech budgets.
-            // Partial deployment deliberately uses a gathered, non-simulated panel.
-            if (state == 2)
-            {
-                bool fitted = LooseFootedSpritsailTension.Fit(
-                    requested: Bones[3].localPosition,
-                    head: Bones[1].localPosition,
-                    tack: Bones[2].localPosition,
-                    bow: Vector3.zero,
-                    leechLength: (Corners[1] - Corners[3]).magnitude,
-                    footLength: (Corners[2] - Corners[3]).magnitude,
-                    points: leechPoints
-                );
-                if (!fitted && !tensionWarning)
+                if (
+                    !Sail
+                    || Bones == null
+                    || Bones.Length != LooseFootedSpritsailGeometry.BoneCount
+                )
+                    return;
+                bool supported = RefreshMastFrame();
+                bool visible = supported && !GameState.currentlyLoading;
+                if (Shadow)
                 {
-                    Plugin.Log.LogWarning(
-                        data: "LooseFootedSpritsail edge fitting failed; using finite fallback."
-                    );
-                    tensionWarning = true;
+                    var scaleRoot = Sail.cloth.transform.parent;
+                    Shadow.localPosition = scaleRoot.localPosition;
+                    Shadow.localRotation = scaleRoot.localRotation;
+                    Shadow.localScale = scaleRoot.localScale;
                 }
-                for (int row = 0; row <= LooseFootedSpritsailGeometry.Rows; row++)
-                    Bones[LooseFootedSpritsailGeometry.LeechBone(row: row)].localPosition =
-                        leechPoints[LooseFootedSpritsailGeometry.Rows - row];
-            }
-            if (Obstruction)
-                Obstruction.UpdateState(
+                int state = LooseFootedSpritsailGeometry.RenderState(unroll: Sail.currentUnroll);
+                var scale = Sail.cloth.transform.lossyScale;
+                if (!ValidScale(scale: scale))
+                {
+                    OnDisable();
+                    return;
+                }
+                long visualRevision = visualTriggers.Update(
+                    sail: Sail,
                     boat: supported ? rigging.Support.Boat.transform : null,
-                    apparentWind: Sail.apparentWind,
-                    valid: visible && state != 0
+                    mast: supported ? rigging.Support.Mast.GetComponent<CapsuleCollider>() : null,
+                    corners: Corners,
+                    active: visible
                 );
-            UpdateShapeBones(corners: corners, pose: pose, scale: scale, state: state);
-            ApplySheetFlex(scale: scale, state: state, visible: visible);
-            SheetAttachment.localPosition = Vector3.zero;
-            var heel = Sail.cloth.transform.TransformPoint(
-                position: Unscale(point: pose.Heel, scale: scale)
-            );
-            var tip = Sail.cloth.transform.TransformPoint(
-                position: Unscale(point: pose.Tip, scale: scale)
-            );
-            SpritHoistAttachment.position = SpritsailDeployment.PurchasePoint(heel: heel, tip: tip);
-            if (visible)
-                Spar.Pose(
-                    revision: visualRevision,
-                    heel: SpritsailSpritGeometry.ForwardEnd(pivot: heel, tip: tip),
-                    tip: tip,
-                    radius: -Corners[0].z * scale.z * SpritsailSpritGeometry.RadiusFraction
+                Vector3[] corners;
+                SpritsailDeploymentPose pose;
+                using (PerformanceProfile.Measure(target: ProfileTarget.Shape))
+                {
+                    corners = ScaledCorners(scale: scale);
+                    pose = SpritsailDeployment.Evaluate(
+                        corners: corners,
+                        unroll: Sail.currentUnroll
+                    );
+                    Bones[0].localPosition = Unscale(point: pose.Throat, scale: scale);
+                    Bones[1].localPosition = Unscale(point: pose.Peak, scale: scale);
+                    Bones[2].localPosition = Unscale(point: pose.Tack, scale: scale);
+                    Bones[3].localPosition = Unscale(point: pose.Clew, scale: scale);
+                    // At full deployment the existing coupled-edge solver preserves foot/leech budgets.
+                    // Partial deployment deliberately uses a gathered, non-simulated panel.
+                    if (state == 2)
+                    {
+                        bool fitted = LooseFootedSpritsailTension.Fit(
+                            requested: Bones[3].localPosition,
+                            head: Bones[1].localPosition,
+                            tack: Bones[2].localPosition,
+                            bow: Vector3.zero,
+                            leechLength: (Corners[1] - Corners[3]).magnitude,
+                            footLength: (Corners[2] - Corners[3]).magnitude,
+                            points: leechPoints
+                        );
+                        if (!fitted && !tensionWarning)
+                        {
+                            Plugin.Log.LogWarning(
+                                data: "LooseFootedSpritsail edge fitting failed; using finite fallback."
+                            );
+                            tensionWarning = true;
+                        }
+                        for (int row = 0; row <= LooseFootedSpritsailGeometry.Rows; row++)
+                            Bones[LooseFootedSpritsailGeometry.LeechBone(row: row)].localPosition =
+                                leechPoints[LooseFootedSpritsailGeometry.Rows - row];
+                    }
+                    if (Obstruction)
+                        Obstruction.UpdateState(
+                            boat: supported ? rigging.Support.Boat.transform : null,
+                            apparentWind: Sail.apparentWind,
+                            valid: visible && state != 0
+                        );
+                    UpdateShapeBones(corners: corners, pose: pose, scale: scale, state: state);
+                }
+                ApplySheetFlex(scale: scale, state: state, visible: visible);
+                SheetAttachment.localPosition = Vector3.zero;
+                var heel = Sail.cloth.transform.TransformPoint(
+                    position: Unscale(point: pose.Heel, scale: scale)
                 );
-            Spar.SetVisible(visible: visible);
-            if (supported)
-            {
-                rigging.UpdateHalyard(attachment: SpritHoistAttachment);
-                Spar.Snotter.Pose(
-                    revision: visualRevision,
-                    mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
+                var tip = Sail.cloth.transform.TransformPoint(
+                    position: Unscale(point: pose.Tip, scale: scale)
+                );
+                SpritHoistAttachment.position = SpritsailDeployment.PurchasePoint(
+                    heel: heel,
+                    tip: tip
+                );
+                if (visible)
+                    Spar.Pose(
+                        revision: visualRevision,
+                        heel: SpritsailSpritGeometry.ForwardEnd(pivot: heel, tip: tip),
+                        tip: tip,
+                        radius: -Corners[0].z * scale.z * SpritsailSpritGeometry.RadiusFraction
+                    );
+                Spar.SetVisible(visible: visible);
+                if (supported)
+                {
+                    rigging.UpdateHalyard(attachment: SpritHoistAttachment);
+                    Spar.Snotter.Pose(
+                        revision: visualRevision,
+                        mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
+                        heel: heel,
+                        tip: tip,
+                        sparRadius: -Corners[0].z
+                            * scale.z
+                            * SpritsailSpritGeometry.RadiusFraction
+                            * SpritsailSpritGeometry.ThicknessMultiplier,
+                        guide: rigging.Support.Guide.position,
+                        fallbackDirection: Sail.cloth.transform.TransformDirection(
+                            direction: Vector3.up
+                        ),
+                        mountingDirection: rigging.Support.Boat.transform.right,
+                        mastRadius: rigging.SocketRadius,
+                        visible: visible
+                    );
+                }
+                if (visible)
+                    Lines.Draw(
+                        revision: visualRevision,
+                        bones: Bones,
+                        tip: tip,
+                        mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
+                        struck: state == 0
+                    );
+                else
+                    Lines.Hide();
+                float fullArea = SpritsailDeployment.Area(
+                    throat: corners[0],
+                    peak: corners[1],
+                    tack: corners[2],
+                    clew: corners[3]
+                );
+                float area = SpritsailDeployment.ExposedArea(pose: pose);
+                ExposedAreaFraction =
+                    visible && state != 0 ? Mathf.Clamp01(value: area / fullArea) : 0;
+                RefreshAerodynamics();
+                if (refreshRequested || state != lastRenderState)
+                {
+                    Sail.cloth.enabled = false;
+                    Sail.cloth.ClearTransformMotion();
+                    refreshRequested = false;
+                }
+                Sail.cloth.enabled = visible && state == 2;
+                var renderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
+                renderer.enabled = visible && state == 2;
+                ReefedRenderer.sharedMaterial = renderer.sharedMaterial;
+                FurledColorReference.sharedMaterial = renderer.sharedMaterial;
+                ReefedRenderer.enabled = visible && state == 1;
+                Spar.Furled.Pose(
                     heel: heel,
                     tip: tip,
-                    sparRadius: -Corners[0].z
-                        * scale.z
-                        * SpritsailSpritGeometry.RadiusFraction
-                        * SpritsailSpritGeometry.ThicknessMultiplier,
-                    guide: rigging.Support.Guide.position,
-                    fallbackDirection: Sail.cloth.transform.TransformDirection(
-                        direction: Vector3.up
-                    ),
-                    mountingDirection: rigging.Support.Boat.transform.right,
-                    mastRadius: rigging.SocketRadius,
-                    visible: visible
+                    radial: Sail.cloth.transform.TransformDirection(direction: Vector3.up),
+                    heelGap: supported ? rigging.SocketGap : 0,
+                    cloth: renderer.sharedMaterial,
+                    visible: visible && state == 0
                 );
+                FurledColorReference.enabled = false;
+                lastRenderState = state;
             }
-            if (visible)
-                Lines.Draw(
-                    revision: visualRevision,
-                    bones: Bones,
-                    tip: tip,
-                    mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
-                    struck: state == 0
-                );
-            else
-                Lines.Hide();
-            float fullArea = SpritsailDeployment.Area(
-                throat: corners[0],
-                peak: corners[1],
-                tack: corners[2],
-                clew: corners[3]
-            );
-            float area = SpritsailDeployment.ExposedArea(pose: pose);
-            ExposedAreaFraction = visible && state != 0 ? Mathf.Clamp01(value: area / fullArea) : 0;
-            RefreshAerodynamics();
-            if (refreshRequested || state != lastRenderState)
-            {
-                Sail.cloth.enabled = false;
-                Sail.cloth.ClearTransformMotion();
-                refreshRequested = false;
-            }
-            Sail.cloth.enabled = visible && state == 2;
-            var renderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
-            renderer.enabled = visible && state == 2;
-            ReefedRenderer.sharedMaterial = renderer.sharedMaterial;
-            FurledColorReference.sharedMaterial = renderer.sharedMaterial;
-            ReefedRenderer.enabled = visible && state == 1;
-            Spar.Furled.Pose(
-                heel: heel,
-                tip: tip,
-                radial: Sail.cloth.transform.TransformDirection(direction: Vector3.up),
-                heelGap: supported ? rigging.SocketGap : 0,
-                cloth: renderer.sharedMaterial,
-                visible: visible && state == 0
-            );
-            FurledColorReference.enabled = false;
-            lastRenderState = state;
         }
     }
 }

@@ -1,4 +1,5 @@
 using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Utils.Profiling;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
@@ -59,10 +60,10 @@ namespace MoreSailwindSails.Sails.Spritsail
                         .TryGet(origin: origin, direction: ray, radius: out var cachedRadius)
                 )
                 {
-                    SpritsailMountProfile.SurfaceQuery(hit: true);
+                    PerformanceProfile.SurfaceQuery(hit: true);
                     return cachedRadius;
                 }
-                SpritsailMountProfile.SurfaceQuery(hit: false);
+                PerformanceProfile.SurfaceQuery(hit: false);
                 float radius = 0;
                 bool found =
                     vertices != null

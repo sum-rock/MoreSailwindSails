@@ -1,4 +1,5 @@
 using System;
+using MoreSailwindSails.Utils.Profiling;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansStaysail
@@ -267,107 +268,125 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         internal bool RefreshFrame()
         {
-            if (
-                !Sail
-                || !MastFrame
-                || Bones == null
-                || Bones.Length != FishermansStaysailGeometry.BoneCount
+            using (
+                PerformanceProfile.Measure(
+                    target: ProfileTarget.Frame,
+                    family: ProfileFamily.Staysail
+                )
             )
-                return false;
-            var mount = Sail.transform.parent ? Sail.transform.parent.GetComponent<Mast>() : null;
-            if (mount != lastMount)
             {
-                bool wasBound = boundToMast;
-                lastMount = mount;
-                fixedHead = default;
-                rigging = mount ? FishermansStaysailRigging.For(Sail) : null;
-                if (wasBound && !rigging)
+                if (
+                    !Sail
+                    || !MastFrame
+                    || Bones == null
+                    || Bones.Length != FishermansStaysailGeometry.BoneCount
+                )
+                    return false;
+                var mount = Sail.transform.parent
+                    ? Sail.transform.parent.GetComponent<Mast>()
+                    : null;
+                if (mount != lastMount)
                 {
-                    MastFrame.localPosition = Vector3.zero;
-                    MastFrame.localRotation = Quaternion.identity;
-                    var originalHinge = Sail.GetComponent<HingeJoint>();
-                    originalHinge.axis = OriginalHingeAxis;
-                    originalHinge.anchor = OriginalHingeAnchor;
-                    originalHinge.autoConfigureConnectedAnchor = OriginalAutoAnchor;
+                    bool wasBound = boundToMast;
+                    lastMount = mount;
+                    fixedHead = default;
+                    rigging = mount ? FishermansStaysailRigging.For(Sail) : null;
+                    if (wasBound && !rigging)
+                    {
+                        MastFrame.localPosition = Vector3.zero;
+                        MastFrame.localRotation = Quaternion.identity;
+                        var originalHinge = Sail.GetComponent<HingeJoint>();
+                        originalHinge.axis = OriginalHingeAxis;
+                        originalHinge.anchor = OriginalHingeAnchor;
+                        originalHinge.autoConfigureConnectedAnchor = OriginalAutoAnchor;
+                        refreshRequested = true;
+                    }
+                    boundToMast = false;
+                    bindingDirty = true;
+                }
+                if (!rigging || !rigging.Bind(mount))
+                    return false;
+
+                if (!cutInitialized)
+                    InitializeCut(rigging.HeadSlope);
+                rigging.ForeSailFrame(out var forePoint, out var foreAxis);
+                var scaleRoot = Sail.cloth.transform.parent;
+                // Preserve the native saved installation coordinate. Offset the
+                // model so its whole luff sits on the physical forward mast even
+                // when the sail is narrower than the distance between the masts.
+                var origin = new Vector3(0, 0, Sail.GetCurrentInstallHeight() - mount.mastHeight);
+                var nextPivot = mount.transform.InverseTransformPoint(forePoint) - origin;
+                var nextAxis = mount.transform.InverseTransformDirection(foreAxis).normalized;
+                var aftDirection = mount.transform.InverseTransformDirection(
+                    Vector3.ProjectOnPlane(rigging.AftReference - forePoint, foreAxis).normalized
+                );
+                var alignment =
+                    Quaternion.LookRotation(aftDirection, Vector3.Cross(aftDirection, nextAxis))
+                    * Quaternion.Inverse(scaleRoot.localRotation);
+                MastFrame.localRotation = alignment;
+                MastFrame.localPosition = FishermansStaysailFrameGeometry.ModelOffset(
+                    nextPivot,
+                    alignment
+                        * (
+                            scaleRoot.localPosition
+                            + scaleRoot.localRotation
+                                * Vector3.Scale(Corners[0], scaleRoot.localScale)
+                        )
+                );
+                bool changed =
+                    bindingDirty
+                    || !boundToMast
+                    || FishermansStaysailFrameGeometry.PositionChanged(nextPivot, pivot)
+                    || FishermansStaysailFrameGeometry.PositionChanged(nextAxis, pivotAxis)
+                    || FishermansStaysailFrameGeometry.PositionChanged(
+                        lastScale,
+                        scaleRoot.localScale
+                    )
+                    || FishermansStaysailFrameGeometry.PositionChanged(
+                        lastFramePosition,
+                        MastFrame.localPosition
+                    )
+                    || Quaternion.Angle(lastFrameRotation, MastFrame.localRotation) > 0.05f;
+                if (changed)
+                {
+                    var body = Sail.GetComponent<Rigidbody>();
+                    var hinge = Sail.GetComponent<HingeJoint>();
+                    if (!boundToMast || GameState.currentShipyard)
+                        body.rotation = mount.transform.rotation;
+                    body.position = forePoint - body.rotation * nextPivot;
+                    RefreshCollisionStrips();
+                    // The gathered panel stays within its deployed vertical bounds.
+                    var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
+                    var bounds = clothRenderer.sharedMesh.bounds;
+                    bounds.Expand(
+                        new Vector3(
+                            -Corners[0].z * 0.3f,
+                            -Corners[0].z * 2.5f,
+                            -Corners[0].z * 0.4f
+                        )
+                    );
+                    clothRenderer.localBounds = bounds;
+                    ReefedRenderer.localBounds = bounds;
+                    hinge.autoConfigureConnectedAnchor = false;
+                    hinge.connectedBody = mount.shipRigidbody;
+                    hinge.axis = nextAxis;
+                    hinge.anchor = nextPivot;
+                    hinge.connectedAnchor = mount.shipRigidbody.transform.InverseTransformPoint(
+                        forePoint
+                    );
+                    if (!boundToMast)
+                        Sail.GetComponent<JibAngleMaster>().UpdateInitialAngle();
+                    pivot = nextPivot;
+                    pivotAxis = nextAxis;
+                    lastScale = scaleRoot.localScale;
+                    lastFramePosition = MastFrame.localPosition;
+                    lastFrameRotation = MastFrame.localRotation;
+                    boundToMast = true;
+                    bindingDirty = false;
                     refreshRequested = true;
                 }
-                boundToMast = false;
-                bindingDirty = true;
+                return true;
             }
-            if (!rigging || !rigging.Bind(mount))
-                return false;
-
-            if (!cutInitialized)
-                InitializeCut(rigging.HeadSlope);
-            rigging.ForeSailFrame(out var forePoint, out var foreAxis);
-            var scaleRoot = Sail.cloth.transform.parent;
-            // Preserve the native saved installation coordinate. Offset the
-            // model so its whole luff sits on the physical forward mast even
-            // when the sail is narrower than the distance between the masts.
-            var origin = new Vector3(0, 0, Sail.GetCurrentInstallHeight() - mount.mastHeight);
-            var nextPivot = mount.transform.InverseTransformPoint(forePoint) - origin;
-            var nextAxis = mount.transform.InverseTransformDirection(foreAxis).normalized;
-            var aftDirection = mount.transform.InverseTransformDirection(
-                Vector3.ProjectOnPlane(rigging.AftReference - forePoint, foreAxis).normalized
-            );
-            var alignment =
-                Quaternion.LookRotation(aftDirection, Vector3.Cross(aftDirection, nextAxis))
-                * Quaternion.Inverse(scaleRoot.localRotation);
-            MastFrame.localRotation = alignment;
-            MastFrame.localPosition = FishermansStaysailFrameGeometry.ModelOffset(
-                nextPivot,
-                alignment
-                    * (
-                        scaleRoot.localPosition
-                        + scaleRoot.localRotation * Vector3.Scale(Corners[0], scaleRoot.localScale)
-                    )
-            );
-            bool changed =
-                bindingDirty
-                || !boundToMast
-                || FishermansStaysailFrameGeometry.PositionChanged(nextPivot, pivot)
-                || FishermansStaysailFrameGeometry.PositionChanged(nextAxis, pivotAxis)
-                || FishermansStaysailFrameGeometry.PositionChanged(lastScale, scaleRoot.localScale)
-                || FishermansStaysailFrameGeometry.PositionChanged(
-                    lastFramePosition,
-                    MastFrame.localPosition
-                )
-                || Quaternion.Angle(lastFrameRotation, MastFrame.localRotation) > 0.05f;
-            if (changed)
-            {
-                var body = Sail.GetComponent<Rigidbody>();
-                var hinge = Sail.GetComponent<HingeJoint>();
-                if (!boundToMast || GameState.currentShipyard)
-                    body.rotation = mount.transform.rotation;
-                body.position = forePoint - body.rotation * nextPivot;
-                RefreshCollisionStrips();
-                // The gathered panel stays within its deployed vertical bounds.
-                var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
-                var bounds = clothRenderer.sharedMesh.bounds;
-                bounds.Expand(
-                    new Vector3(-Corners[0].z * 0.3f, -Corners[0].z * 2.5f, -Corners[0].z * 0.4f)
-                );
-                clothRenderer.localBounds = bounds;
-                ReefedRenderer.localBounds = bounds;
-                hinge.autoConfigureConnectedAnchor = false;
-                hinge.connectedBody = mount.shipRigidbody;
-                hinge.axis = nextAxis;
-                hinge.anchor = nextPivot;
-                hinge.connectedAnchor = mount.shipRigidbody.transform.InverseTransformPoint(
-                    forePoint
-                );
-                if (!boundToMast)
-                    Sail.GetComponent<JibAngleMaster>().UpdateInitialAngle();
-                pivot = nextPivot;
-                pivotAxis = nextAxis;
-                lastScale = scaleRoot.localScale;
-                lastFramePosition = MastFrame.localPosition;
-                lastFrameRotation = MastFrame.localRotation;
-                boundToMast = true;
-                bindingDirty = false;
-                refreshRequested = true;
-            }
-            return true;
         }
 
         // This runs once per installed/preview instance, before its Cloth is enabled.
@@ -502,23 +521,31 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         internal bool RefreshAerodynamics()
         {
-            if (!Sail || !Sail.windcenter || Bones == null || Bones.Length < 4)
-                return false;
-            if (
-                !FishermansStaysailAerodynamics.TryFrame(
-                    Bones[0].position,
-                    Bones[2].position,
-                    Bones[1].position,
-                    Bones[3].position,
-                    out var frame
+            using (
+                PerformanceProfile.Measure(
+                    target: ProfileTarget.Aerodynamics,
+                    family: ProfileFamily.Staysail
                 )
             )
-                return false;
-            Sail.windcenter.SetPositionAndRotation(
-                frame.Center,
-                Quaternion.LookRotation(frame.MastAxis, frame.Normal)
-            );
-            return true;
+            {
+                if (!Sail || !Sail.windcenter || Bones == null || Bones.Length < 4)
+                    return false;
+                if (
+                    !FishermansStaysailAerodynamics.TryFrame(
+                        Bones[0].position,
+                        Bones[2].position,
+                        Bones[1].position,
+                        Bones[3].position,
+                        out var frame
+                    )
+                )
+                    return false;
+                Sail.windcenter.SetPositionAndRotation(
+                    frame.Center,
+                    Quaternion.LookRotation(frame.MastAxis, frame.Normal)
+                );
+                return true;
+            }
         }
 
         private void UpdateShapeBones()
@@ -595,138 +622,156 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         private void LateUpdate()
         {
-            if (!Sail || Bones == null || Bones.Length != FishermansStaysailGeometry.BoneCount)
-                return;
-            bool supported = RefreshFrame();
-            if (Shadow)
+            using (
+                PerformanceProfile.Measure(
+                    target: ProfileTarget.Rig,
+                    family: ProfileFamily.Staysail
+                )
+            )
             {
-                var scale = Sail.cloth.transform.parent;
-                Shadow.localPosition = scale.localPosition;
-                Shadow.localRotation = scale.localRotation;
-                Shadow.localScale = scale.localScale;
-            }
-            float targetLoad = !supported
-                ? 0
-                : Sail.cloth.transform.InverseTransformDirection(Sail.apparentWind).y
-                    / 8f
-                    * Sail.GetCurrentShadowMult();
-            clothLoad = FishermansStaysailBillow.SmoothLoad(clothLoad, targetLoad, Time.deltaTime);
-            Reefing.Sample(Sail.currentUnroll);
-            for (int i = 0; i < Corners.Length; i++)
-                Bones[i].localPosition = Reefing.Pose(Corners[i], Corners[0], Corners[1]);
-
-            if (supported)
-                for (int index = 0; index <= 2; index += 2)
-                    Bones[index].position = rigging.LuffPoint(Bones[index].position);
-            int state = FishermansStaysailGeometry.RenderState(Sail.currentUnroll);
-            for (int row = 1; row < FishermansStaysailGeometry.Rows; row++)
-                Bones[FishermansStaysailGeometry.LeechBone(row)].localPosition = Vector3.Lerp(
-                    Bones[1].localPosition,
-                    Bones[3].localPosition,
-                    (float)row / FishermansStaysailGeometry.Rows
-                );
-            if (supported)
-            {
-                var neutralHead = NeutralPoint(Corners[1]);
-                var clothTransform = Sail.cloth.transform;
-                rigging.ForeSailFrame(out var forePoint, out var mastAxis);
-                var shape = GetComponent<FishermansStaysailShape>();
-                var fixedAngle = shape.FixedUpperHeadAngle;
-                fixedHead.Update(
-                    Sail.apparentWind,
-                    mastAxis,
-                    rigging.AftReference - forePoint,
-                    Time.deltaTime
-                );
-                var head = FishermansStaysailFixedHead.Position(
-                    neutralHead,
-                    forePoint,
-                    mastAxis,
-                    fixedHead.Side,
-                    fixedAngle,
-                    Sail.currentUnroll
-                );
-                var localHead = clothTransform.InverseTransformPoint(head);
-                var normal = Vector3.Cross(mastAxis, rigging.AftReference - forePoint).normalized;
-                var clew = Bones[3].localPosition;
-                // As the panel gathers, bring its foot back under the neutral
-                // head. A short reefed leech cannot span a fully eased sheet.
-                var neutralClew = NeutralPoint(clew);
-                float sheetAngle = FishermansStaysailTravel.SignedAngle(
-                    rigging.AftReference - forePoint,
-                    clothTransform.forward,
-                    mastAxis
-                );
-                clew = clothTransform.InverseTransformPoint(
-                    FishermansStaysailFrameGeometry.RotateAroundMast(
-                        neutralClew,
-                        forePoint,
-                        mastAxis,
-                        FishermansStaysailFixedHead.LowerAngle(
-                            sheetAngle,
-                            fixedHead.Side * fixedAngle,
-                            Sail.currentUnroll
-                        )
-                    )
-                );
-                var tack = Bones[2].localPosition;
-                bool fitted = FishermansStaysailEdgeFit.Fit(
-                    localHead,
-                    clew,
-                    tack,
-                    clothTransform.InverseTransformDirection(normal),
-                    clothTransform.InverseTransformDirection(Vector3.down),
-                    -Corners[0].z,
-                    clothLoad,
-                    Sail.currentUnroll,
-                    (Corners[1] - Corners[3]).magnitude * Mathf.Max(0.015f, Reefing.Lift),
-                    (clew - tack).magnitude,
-                    leechPoints
-                );
-                if (!fitted && !tensionWarning && state == 2)
+                if (!Sail || Bones == null || Bones.Length != FishermansStaysailGeometry.BoneCount)
+                    return;
+                bool supported = RefreshFrame();
+                if (Shadow)
                 {
-                    Plugin.Log.LogWarning(
-                        "FishermansStaysail corner span exceeds available foot/leech lengths; check sail fit."
-                    );
-                    tensionWarning = true;
+                    var scale = Sail.cloth.transform.parent;
+                    Shadow.localPosition = scale.localPosition;
+                    Shadow.localRotation = scale.localRotation;
+                    Shadow.localScale = scale.localScale;
                 }
-                for (int row = 0; row <= FishermansStaysailGeometry.Rows; row++)
-                    Bones[FishermansStaysailGeometry.LeechBone(row)].localPosition = leechPoints[
-                        FishermansStaysailGeometry.Rows - row
-                    ];
-                HalyardAttachment.localPosition = Vector3.zero;
-                SheetAttachment.localPosition = Vector3.zero;
-                rigging.UpdateHalyard(HalyardAttachment);
+                int state;
+                using (PerformanceProfile.Measure(target: ProfileTarget.Shape))
+                {
+                    float targetLoad = !supported
+                        ? 0
+                        : Sail.cloth.transform.InverseTransformDirection(Sail.apparentWind).y
+                            / 8f
+                            * Sail.GetCurrentShadowMult();
+                    clothLoad = FishermansStaysailBillow.SmoothLoad(
+                        clothLoad,
+                        targetLoad,
+                        Time.deltaTime
+                    );
+                    Reefing.Sample(Sail.currentUnroll);
+                    for (int i = 0; i < Corners.Length; i++)
+                        Bones[i].localPosition = Reefing.Pose(Corners[i], Corners[0], Corners[1]);
+
+                    if (supported)
+                        for (int index = 0; index <= 2; index += 2)
+                            Bones[index].position = rigging.LuffPoint(Bones[index].position);
+                    state = FishermansStaysailGeometry.RenderState(Sail.currentUnroll);
+                    for (int row = 1; row < FishermansStaysailGeometry.Rows; row++)
+                        Bones[FishermansStaysailGeometry.LeechBone(row)].localPosition =
+                            Vector3.Lerp(
+                                Bones[1].localPosition,
+                                Bones[3].localPosition,
+                                (float)row / FishermansStaysailGeometry.Rows
+                            );
+                    if (supported)
+                    {
+                        var neutralHead = NeutralPoint(Corners[1]);
+                        var clothTransform = Sail.cloth.transform;
+                        rigging.ForeSailFrame(out var forePoint, out var mastAxis);
+                        var shape = GetComponent<FishermansStaysailShape>();
+                        var fixedAngle = shape.FixedUpperHeadAngle;
+                        fixedHead.Update(
+                            Sail.apparentWind,
+                            mastAxis,
+                            rigging.AftReference - forePoint,
+                            Time.deltaTime
+                        );
+                        var head = FishermansStaysailFixedHead.Position(
+                            neutralHead,
+                            forePoint,
+                            mastAxis,
+                            fixedHead.Side,
+                            fixedAngle,
+                            Sail.currentUnroll
+                        );
+                        var localHead = clothTransform.InverseTransformPoint(head);
+                        var normal = Vector3
+                            .Cross(mastAxis, rigging.AftReference - forePoint)
+                            .normalized;
+                        var clew = Bones[3].localPosition;
+                        // As the panel gathers, bring its foot back under the neutral
+                        // head. A short reefed leech cannot span a fully eased sheet.
+                        var neutralClew = NeutralPoint(clew);
+                        float sheetAngle = FishermansStaysailTravel.SignedAngle(
+                            rigging.AftReference - forePoint,
+                            clothTransform.forward,
+                            mastAxis
+                        );
+                        clew = clothTransform.InverseTransformPoint(
+                            FishermansStaysailFrameGeometry.RotateAroundMast(
+                                neutralClew,
+                                forePoint,
+                                mastAxis,
+                                FishermansStaysailFixedHead.LowerAngle(
+                                    sheetAngle,
+                                    fixedHead.Side * fixedAngle,
+                                    Sail.currentUnroll
+                                )
+                            )
+                        );
+                        var tack = Bones[2].localPosition;
+                        bool fitted = FishermansStaysailEdgeFit.Fit(
+                            localHead,
+                            clew,
+                            tack,
+                            clothTransform.InverseTransformDirection(normal),
+                            clothTransform.InverseTransformDirection(Vector3.down),
+                            -Corners[0].z,
+                            clothLoad,
+                            Sail.currentUnroll,
+                            (Corners[1] - Corners[3]).magnitude * Mathf.Max(0.015f, Reefing.Lift),
+                            (clew - tack).magnitude,
+                            leechPoints
+                        );
+                        if (!fitted && !tensionWarning && state == 2)
+                        {
+                            Plugin.Log.LogWarning(
+                                "FishermansStaysail corner span exceeds available foot/leech lengths; check sail fit."
+                            );
+                            tensionWarning = true;
+                        }
+                        for (int row = 0; row <= FishermansStaysailGeometry.Rows; row++)
+                            Bones[FishermansStaysailGeometry.LeechBone(row)].localPosition =
+                                leechPoints[FishermansStaysailGeometry.Rows - row];
+                        HalyardAttachment.localPosition = Vector3.zero;
+                        SheetAttachment.localPosition = Vector3.zero;
+                        rigging.UpdateHalyard(HalyardAttachment);
+                    }
+                    UpdateShapeBones();
+                }
+                RefreshAerodynamics();
+                if (refreshRequested || state != lastRenderState)
+                {
+                    // Refresh after applying our corner poses. The donor animator's
+                    // Start never runs, so its RefreshCloth must not be invoked.
+                    Sail.cloth.enabled = false;
+                    Sail.cloth.ClearTransformMotion();
+                    refreshRequested = false;
+                }
+                Sail.cloth.enabled = supported && state == 2;
+                var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
+                bool visible = supported && !GameState.currentlyLoading;
+                // WindCloth writes renderer.enabled in Update; select the correct
+                // renderer here in LateUpdate so the disabled solver cannot leave
+                // stale full-size triangles visible when the sail is struck.
+                clothRenderer.enabled = visible && state == 2;
+                ReefedRenderer.sharedMaterial = clothRenderer.sharedMaterial;
+                FurledColorReference.sharedMaterial = clothRenderer.sharedMaterial;
+                ReefedRenderer.enabled = visible && state == 1;
+                Reefing.DrawBundle(
+                    Bones[0].position,
+                    Bones[1].position,
+                    supported ? rigging.ForeAxis : Sail.cloth.transform.right,
+                    Sail.cloth.transform.parent.localScale.x,
+                    clothRenderer.sharedMaterial,
+                    visible && state == 0
+                );
+                lastRenderState = state;
             }
-            UpdateShapeBones();
-            RefreshAerodynamics();
-            if (refreshRequested || state != lastRenderState)
-            {
-                // Refresh after applying our corner poses. The donor animator's
-                // Start never runs, so its RefreshCloth must not be invoked.
-                Sail.cloth.enabled = false;
-                Sail.cloth.ClearTransformMotion();
-                refreshRequested = false;
-            }
-            Sail.cloth.enabled = supported && state == 2;
-            var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
-            bool visible = supported && !GameState.currentlyLoading;
-            // WindCloth writes renderer.enabled in Update; select the correct
-            // renderer here in LateUpdate so the disabled solver cannot leave
-            // stale full-size triangles visible when the sail is struck.
-            clothRenderer.enabled = visible && state == 2;
-            ReefedRenderer.sharedMaterial = clothRenderer.sharedMaterial;
-            FurledColorReference.sharedMaterial = clothRenderer.sharedMaterial;
-            ReefedRenderer.enabled = visible && state == 1;
-            Reefing.DrawBundle(
-                Bones[0].position,
-                Bones[1].position,
-                supported ? rigging.ForeAxis : Sail.cloth.transform.right,
-                Sail.cloth.transform.parent.localScale.x,
-                clothRenderer.sharedMaterial,
-                visible && state == 0
-            );
-            lastRenderState = state;
         }
     }
 }

@@ -6,6 +6,43 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileTarget.cs"
+      Link="Utils/Profiling/ProfileTarget.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileFamily.cs"
+      Link="Utils/Profiling/ProfileFamily.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileStage.cs"
+      Link="Utils/Profiling/ProfileStage.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileBypass.cs"
+      Link="Utils/Profiling/ProfileBypass.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileCounter.cs"
+      Link="Utils/Profiling/ProfileCounter.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileSelection.cs"
+      Link="Utils/Profiling/ProfileSelection.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileScope.cs"
+      Link="Utils/Profiling/ProfileScope.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileCollector.cs"
+      Link="Utils/Profiling/ProfileCollector.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileSession.cs"
+      Link="Utils/Profiling/ProfileSession.cs"
+    />
+
     <Compile Include="../../src/Visuals/SailVisualState.cs" Link="Visuals/SailVisualState.cs" />
     <Compile
       Include="../../src/Visuals/SailVisualRevision.cs"

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using MoreSailwindSails.Utils.Profiling;
 using MoreSailwindSails.Visuals;
 using UnityEngine;
 
@@ -71,22 +72,25 @@ namespace MoreSailwindSails.Sails.Spritsail
 
         internal void Pose(Vector3 heel, Vector3 tip, float radius, long revision)
         {
-            bool rebuild = cache.Needs(revision: revision);
-            SpritsailMountProfile.Consumer(part: SpritsailVisualPart.Sprit, rebuild: rebuild);
-            if (!rebuild)
-                return;
-            radius *= SpritsailSpritGeometry.ThicknessMultiplier;
-            transform.SetPositionAndRotation(
-                position: heel,
-                rotation: Quaternion.LookRotation(forward: tip - heel)
-            );
-            var parentScale = transform.parent.lossyScale;
-            transform.localScale = new Vector3(
-                radius / parentScale.x,
-                radius / parentScale.y,
-                (tip - heel).magnitude / parentScale.z
-            );
-            cache.Commit(revision: revision);
+            using (PerformanceProfile.Measure(target: ProfileTarget.Sprit))
+            {
+                bool rebuild = cache.Needs(revision: revision);
+                PerformanceProfile.Consumer(target: ProfileTarget.Sprit, rebuild: rebuild);
+                if (!rebuild)
+                    return;
+                radius *= SpritsailSpritGeometry.ThicknessMultiplier;
+                transform.SetPositionAndRotation(
+                    position: heel,
+                    rotation: Quaternion.LookRotation(forward: tip - heel)
+                );
+                var parentScale = transform.parent.lossyScale;
+                transform.localScale = new Vector3(
+                    radius / parentScale.x,
+                    radius / parentScale.y,
+                    (tip - heel).magnitude / parentScale.z
+                );
+                cache.Commit(revision: revision);
+            }
         }
 
         private void OnDisable() => cache.Invalidate();

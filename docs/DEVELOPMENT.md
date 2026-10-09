@@ -126,7 +126,7 @@ feature's `Patches/` directory and `.Patches` namespace.
 | `src/BoatRigs/`                             | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks                                            |
 | `src/Controls/`                             | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning                            |
 | `src/Visuals/`                              | Route-only rope rendering; family code retains all routing, visibility and control decisions                                      |
-| `src/Utils/`                                | Optional, read-only in-game diagnostic tools and their geometry helpers                                                           |
+| `src/Utils/`                                | Optional in-game diagnostics, profiling and their geometry helpers                                                                |
 
 Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
 with one type per file. They retain the `MoreSailwindSails.BoatRigs` namespace.
@@ -706,43 +706,10 @@ Mounts hide while loading, unsupported or struck. Physics, native controls,
 aerodynamic posing, live Cloth, clew sheets, the boomed boom and furled visuals
 continue updating independently.
 
-#### Profiling mount performance
+#### Mount fitting benchmark
 
-Profiling is disabled by default. With the game closed, enable these keys under
-`[Diagnostics]` in `BepInEx/config/com.august.moresailwindsails.cfg`:
-
-```ini
-EnableSpritsailMountProfiling = true
-ToggleSpritsailMountProfiling = F7
-```
-
-**F7** cycles **NORMAL → BYPASS → OFF**. NORMAL records mount CPU stages and
-frame times. BYPASS skips only authored mount fitting/drawing; sprit/snotter
-counters and frame timing continue. OFF or disabling the diagnostic restores
-normal drawing. State is transient; mode changes and ten-second summaries use
-`[MountProfile]` in `BepInEx/LogOutput.log`.
-
-Compare 20–30 seconds of steady sailing in each mode, then repeat with the same
-camera, graphics settings and fitted sails. Measure sheeting/reefing separately.
-Exclude loading, shipyard transitions and initial allocation windows. Reports
-aggregate all loaded boats, including boats other than the player's.
-
-- `mountCpuMsPerFrame` totals mount Draw time, split into setup, surface
-  sampling, fitting, mesh upload and draw submission. `maxCallMs` is the slowest
-  mount call; `callsPerFrame` describes workload.
-- `refits` reports completed uploads / mount Draw calls. `cacheHitMiss` counts
-  hits and misses for directional surface queries during rebuilds.
-- `revisionsInitialSheetReefTackFittingSupportReactivate` counts logical
-  triggers; categories can overlap. `rebuildMountSpritSnotter` and
-  `reuseMountSpritSnotter` count consumer rebuild requests/reuse, not mesh
-  uploads.
-- Frame means/maxima and frames over 33 ms describe the whole game, including
-  VSync and other mods. `gc0Global` is the process-wide generation-zero
-  collection delta.
-
-Draw submission timing does not measure GPU completion. Use the bypass
-comparison to investigate rendering cost, keeping workload drift separate from
-mount cost. Instrumentation adds overhead and is intended for short captures.
+Use [Performance profiling](#performance-profiling) for live CPU/frame captures
+and visual bypass comparisons.
 
 The offline benchmark compares the current full fitter with the frozen original
 on identical inputs, excluding initialization and Unity mesh upload/rendering:
@@ -1803,6 +1770,95 @@ acceptance:
 For placement diagnostics, see [Placement logging](#placement-logging),
 [Capturing proposed winch positions](#capturing-proposed-winch-positions) and
 [Viewing winch mounting points](#viewing-winch-mounting-points).
+
+### Performance profiling
+
+The reusable profiler lives under `src/Utils/Profiling/`. Profiling is disabled
+by default and captures always start OFF. With the game closed, configure
+`[Diagnostics]` in `BepInEx/config/com.august.moresailwindsails.cfg`:
+
+```ini
+EnableProfiling = true
+ToggleProfiling = F7
+ProfileTargets = Rig,Frame,Shape,SheetFlex,Aerodynamics,Ropes,SailMount,Sprit,Snotter,VisualCache
+ProfileBypass = SailMount
+```
+
+`ProfileTargets` accepts comma-separated, case-insensitive names; whitespace and
+duplicates are ignored. `All` selects every category; an empty list records only
+whole-game frame statistics. Unknown entries warn once per configuration change
+and are ignored. `ProfileBypass` is independent of the timing selection:
+
+| Bypass target        | Visual work skipped                                                |
+| -------------------- | ------------------------------------------------------------------ |
+| `None`               | No bypass; F7 toggles NORMAL/OFF                                   |
+| `SailMount`          | Authored Spritsail luff-mount fitting and drawing                  |
+| `Snotter`            | Spritsail snotter fitting/drawing and purchase/collar rope visuals |
+| `SpritsailLiveRopes` | Custom Spritsail peak lashings and loose-footed sheets             |
+
+For a visual target, **F7** cycles **NORMAL → BYPASS → OFF**. Selected timings
+continue in BYPASS. OFF, configuration changes, or disabling the diagnostic
+restore normal visuals; changed configuration returns the capture to OFF.
+Unknown bypass names warn and select `None`. Native controls, rope forces,
+aerodynamic posing, shape bones and live Cloth remain active in every mode.
+Hidden visual consumers retain pending cache updates for resumption. State is
+transient and never saved to the boat. Existing
+`EnableSpritsailMountProfiling`/`ToggleSpritsailMountProfiling` settings migrate
+to the new keys, with explicit new values taking precedence.
+
+| Timing target  | Measured custom CPU work                                                             |
+| -------------- | ------------------------------------------------------------------------------------ |
+| `Rig`          | Entire rig LateUpdate                                                                |
+| `Frame`        | Mast/stay alignment, including physics and collision callers                         |
+| `Shape`        | Deployment and shape preparation, edge fitting, obstruction response and bone posing |
+| `SheetFlex`    | Loose-footed Spritsail sheet-flex calculation/application                            |
+| `Aerodynamics` | Aerodynamic-frame refresh                                                            |
+| `Ropes`        | Custom routing, tube fitting/upload and submission; excludes native ropes            |
+| `SailMount`    | Mount Draw, with Setup/Surface/Fit/Upload/Submit stages                              |
+| `Sprit`        | Cached spar posing                                                                   |
+| `Snotter`      | Snotter fitting, posing and rendering, including purchase/collar work                |
+| `VisualCache`  | Trigger sampling, revision reasons and consumer rebuild/reuse counts                 |
+
+Ten-second summaries and partial windows at transitions use
+`[PerformanceProfile]` in `BepInEx/LogOutput.log`, with session/window IDs,
+mode, bypass and selected targets. Measurements distinguish loose-footed
+Spritsail, boomed Spritsail, Flying Sail and Fisherman's Staysail work across
+**all loaded boats**, including boats other than the player's. Standalone
+lifecycle calls without a family scope are labeled `Unspecified`. Categories
+with no calls have no timing row.
+
+- Each timing row gives calls, calls per rendered frame, CPU milliseconds per
+  rendered frame and maximum call duration. Parent totals include nested
+  categories/stages: **do not add inclusive rows together**. Reentrant work in
+  the same family/category/stage is counted once.
+- Mount counters retain completed uploads and directional surface-cache
+  hits/misses. Surface queries outside measured mount calls are excluded.
+- Visual-cache counters retain
+  Initial/Sheet/Reef/Tack/Fitting/Support/Reactivate reasons and
+  Mount/Sprit/Snotter rebuild/reuse counts. Reasons can overlap; rebuild
+  requests are not completed uploads.
+- Frame mean/max, average FPS and frames over 33 ms describe the whole game,
+  including VSync and other mods. `gc0Global` is the process-wide
+  generation-zero collection delta.
+
+Custom CPU timings do **not** measure Unity's internal Cloth solver or GPU
+completion. Compare 20–30 seconds of steady sailing in NORMAL/BYPASS, then
+repeat with the same camera, graphics settings and fitted sails. Measure
+deployed, furled and continuous sheet/reef input separately. Exclude loading,
+shipyard transitions and initial allocation windows. Instrumentation itself adds
+CPU overhead; use identical timing selections throughout a comparison.
+
+The collector uses typed, disposable scopes and fixed buffers; disabled or
+unselected hooks do not read timestamps, and warmed collection allocates no
+samples or strings. Family context is inherited by shared visuals. Reports and
+configuration parsing occur outside measured scopes. Timing/session tests use a
+deterministic clock; neither automated suite executes Unity rendering or Cloth.
+Release and both check suites passed for the expanded profiler on
+**2026-10-09**, including installed-BepInEx configuration migration and
+allocation-free sampling. Runtime validation remains pending: start on Brig,
+then Sanbuq with two Spritsails, exercising all bypass targets, both tacks,
+controls, full/partial/furled sails and flat/3D ropes. Confirm normal visuals
+resume after stopping, configuration changes and plugin disable.
 
 ### Installed references and logs
 
