@@ -244,12 +244,14 @@ multipliers. They do not copy the flat-line texture onto the tube.
 
 Family code submits the final posed route before selecting visibility. The
 rendering component owns one lazily created mesh per live rope, reuses its
-buffers/topology and compensates for the complete parent transform. Collapsed or
-nonfinite routes are hidden in 3D mode. Missing donor materials warn once, use
-the flat fallback and retry. Mode changes select only one representation;
-disable hides both, and destruction releases only the generated mesh. Shared
-native meshes/materials and sail Cloth are untouched. This rendering primitive
-does not merge family mechanics or resume the deferred calculation extraction.
+buffers/topology and compensates for the complete parent transform. Invalid
+routes never upload a tube mesh. After a failed pose, the next valid upload
+compares against the mesh vertex count to rebuild indices even if CPU buffers
+were already resized. Missing donor materials warn once, use the flat fallback
+and retry. Mode changes select only one representation; disable hides both, and
+destruction releases only the generated mesh. Shared native meshes/materials and
+sail Cloth are untouched. This rendering primitive does not merge family
+mechanics or resume the deferred calculation extraction.
 
 The user's **2026-10-07** report of flat-looking Flying Sail/Spritsail lines
 matches the previous implementation: custom routes always used flat lines and
@@ -499,9 +501,9 @@ instance and fall back to the capsule radius.
 
 The [authored luff mount](#authored-sail-mount-runtime) replaces the seven short
 ties and three-turn mast collars. It hides when struck, leaving the native
-bundle's bindings visible. The upper purchase coil retains its existing normal
-thickness and remains visible when its winch is available. Socket queries retain
-a single cache slot.
+bundle's bindings visible. The upper purchase coil retains normal rope thickness
+and follows snotter visibility; the purchase line additionally requires an
+active reef winch. Socket queries retain a single cache slot.
 
 #### Snotter materials
 
@@ -581,301 +583,208 @@ shading and rigid draw path still need in-game verification; automated checks do
 not simulate Unity Cloth, establish rendered appearance or measure frame-time
 gains.
 
-Start on **Brig**, with both types and marks, then other supported masts,
-especially **Sanbuq**. Check both tacks, reefing/striking and resizing; confirm
-the fixed mounting, rotating sleeve/bolt, mast clearance, sleeve/mounting
-junction and 12-inch extension. Inspect material regions, seams, overlapping
-faces, shadows, luff ties and struck bundles. Verify shipyard previews,
-collisions and save/reload, including fit around tapered or noncircular masts.
+Use the [mount and visual-cache checklist](#mount-and-visual-cache-validation)
+for shared rig validation. Also inspect the fixed mounting, rotating
+sleeve/bolt, sleeve/mounting junction, 12-inch extension, material regions and
+overlapping faces. Verify collision clearance and fit around tapered or
+noncircular masts.
 
 ### Authored sail mount bake
 
-`assets/sail_mount/SailMount.obj` supplies the proposed luff edging, seven
-eyelets and seven mast ropes. Bake it from the repository root:
+`assets/sail_mount/SailMount.obj` contains the luff edging, seven eyelets and
+seven mast ropes. Bake it from the repository root:
 
 ```sh
 blender -b --factory-startup --python-exit-code 1 --python tools/convert_sail_mount.py
 python -m unittest discover -s tests/AssetChecks
 ```
 
-The baker writes `assets/sail_mount/sail_mount.bytes`, using Blender's polygon
-triangulation. It preserves source positions, UVs, corner normals and separate
-part identities; identical vertex attributes are shared only within one part.
-Loose OBJ line records are omitted. Missing parts, invalid indices, nonfinite
-attributes, nonunit normals, degenerate triangles and inconsistent winding fail
-the bake before output is written. Keep the OBJ and baked bytes together in
-version control. AssetChecks verifies source freshness, polygon triangle counts,
-geometry, material regions and preservation of authored attribute values.
+The baker writes `assets/sail_mount/sail_mount.bytes` using Blender polygon
+triangulation. It preserves positions, UVs, corner normals and part identities,
+sharing identical vertex attributes only within a part. Loose OBJ lines are
+omitted. Missing parts, invalid indices, nonfinite attributes, nonunit normals,
+degenerate triangles and inconsistent winding fail before output is written.
+Keep the OBJ and baked bytes together in version control; AssetChecks verifies
+source freshness, triangle counts, material regions and authored attributes.
 
 Use object names `LuffEdge`, `Eyelet_01` through `Eyelet_07`, and `Rope01`
 through `Rope07` (an underscore before the rope number is also accepted). Each
-eyelet must assign faces to both `Brass` and `ThickCloth`; numeric material
-suffixes are accepted. The strip and ropes receive slots by object identity,
-ignoring absent or inherited OBJ material tags. MTL files and texture images are
-not required: slots reserve native material binding for runtime integration.
+eyelet needs both `Brass` and `ThickCloth` face tags; numeric material suffixes
+are accepted. Strip and rope slots come from object identity. MTL files and
+textures are unnecessary because runtime materials come from native assets.
 
-Internal format **MSL1** is little-endian, with a 44-byte header: four magic
-bytes, uint32 vertex count, uint32 index count, and SHA-256 of the source OBJ.
-Each 36-byte vertex stores position (three floats), UV (two floats), normal
-(three floats), and uint32 part ID. Each 16-byte triangle stores three uint32
-vertex indices and a uint32 material ID. Part IDs are **0** for the strip,
-**1–7** for the corresponding eyelets and **8–14** for the corresponding ropes.
-Material IDs are **0 SailCloth**, **1 Brass**, **2 ThickCloth**, **3 Rope**.
-Coordinates remain in the exported frame: the 6 m strip runs along X, spans Z =
--0.1 to 0, and lies at Y = 0. No mast fitting, axis conversion or skinning is
-baked in.
+Internal format **MSL1** is little-endian: a 44-byte header contains four magic
+bytes, uint32 vertex/index counts and the source OBJ's SHA-256. Each 36-byte
+vertex stores position, UV, normal and uint32 part ID; each 16-byte triangle
+stores three uint32 indices and a uint32 material ID. Part IDs are **0** for the
+strip, **1–7** for eyelets and **8–14** for ropes. Material IDs are **0
+SailCloth**, **1 Brass**, **2 ThickCloth**, **3 Rope**. The exported 6 m strip
+runs along X, spans Z = -0.1 to 0 and lies at Y = 0; fitting and axis conversion
+happen at runtime.
 
-The **2026-10-08** bake has **15,015 vertices**, **6,566 triangles** and
-**645,640 bytes**. Triangle slots contain **546 SailCloth**, **728 Brass**,
-**1,680 ThickCloth** and **3,612 Rope** triangles; **112** loose line records
-are omitted. All eight offline asset checks pass. The **0.3.0-dev** DLL embeds
-the bytes as `MoreSailwindSails.SailMount`; ordinary builds require no Blender
-or loose runtime asset files.
+The current bake has **15,015 vertices**, **6,566 triangles** and **645,640
+bytes**: **546 SailCloth**, **728 Brass**, **1,680 ThickCloth** and **3,612
+Rope** triangles, with **112** loose line records omitted. The DLL embeds it as
+`MoreSailwindSails.SailMount`; ordinary builds need neither Blender nor loose
+runtime assets.
 
 ### Authored sail mount runtime
 
-Both loose-footed and boomed Mk.A/B attach the edging to their existing posed
-luff bones. The 10 cm strip extends forward from a 2 mm overlap with the sail;
-its length follows the sail size and current reef pose. Local adjustments keep
-holes aligned with rigid, unscaled eyelets. The strip has separate reverse
-faces/normals for visibility from both tacks. Live sail Cloth topology, bones,
-solver settings, corner positions, controls and forces are unchanged.
+Both loose-footed and boomed Mk.A/B attach the mount to their existing posed
+luff bones. The 10 cm strip extends forward from a 2 mm sail overlap; fitting
+follows sail size and reef pose while keeping holes aligned with rigid eyelets.
+Separate reverse faces/normals make the strip visible from both tacks. The mount
+owns its mesh and does not modify live Cloth topology, bones, solver settings,
+controls or forces.
 
-The source rope loops have a Y/Z elliptical centerline centered at Z = 0.23,
-with radii 0.2/0.275 m. Runtime fitting maps each loop around the carrying mast,
-retaining approximately 16 mm rope diameter. Each rope radius is measured from
-its baked X extent (the loops lie in Y/Z), so thickness edits follow the asset
-without a separate runtime constant. Two curved approach legs pass through the
-eyelet and meet the mast collar; the collar fits a conservative circular
-envelope from 16 directional mast-surface samples at each eyelet's height. This
-accommodates taper; noncircular sections may leave small gaps. Samples share one
-mast mesh snapshot and use separate cache slots. Replacing the mast replaces
-that cache; the established capsule-radius fallback and Sanbuq topmast taper
-remain in use.
+Source rope loops have a Y/Z elliptical centerline centered at Z = 0.23 m, with
+Y/Z radii 0.2/0.275 m. Each loop's baked X extent determines its tube diameter,
+currently about 16 mm. Runtime fitting preserves this thickness and routes two
+approach curves through each eyelet to a circular mast collar. The collar fits
+the largest of 16 directional surface samples at that height, allowing taper but
+potentially leaving gaps around noncircular sections. The 112 directional
+queries share one mast snapshot with separate cache slots; mast/mesh replacement
+refreshes the snapshot. Sampling uses the existing capsule fallback and Sanbuq
+topmast taper.
 
-Each live mount lazily owns one mesh, four material slots and reusable fit
-buffers. Topology is initialized once; positions, normals, tangents and bounds
-update when the local luff pose or mast fit changes. Immutable fitting data
-caches strip interpolation/hole-influence weights and rope path samples, curve
-weights and normal coefficients by luff bone count. Each fit computes eyelet
-positions once and shares a mast frame and approach-curve controls across each
-rope's vertices. Each deliberate visual revision uses one complete fit, followed
-by one mesh upload/tangent/bounds update and reverse-strip refresh. Each
-consumer acknowledges its own successful revision; hidden/bypassed/failed
-consumers stay pending independently.
+Each mount lazily owns one mesh, four material slots and reusable fit buffers.
+Immutable data keyed by luff bone count precomputes strip interpolation and rope
+curve/normal coefficients. Fitting uses local transforms through the cloth and
+mast's common ancestor to avoid subtracting large world positions. Uniform
+ancestor scales cancel shared rotations; nonuniform ancestors retain stretch and
+shear. Unrelated roots use the world-coordinate fallback. A rigid draw matrix
+carries the fitted mesh with the cloth between rebuilds.
 
-Rigid world draw matrices handle boat motion and parent scaling without
-stretching eyelets or rope thickness. The **2026-10-09** cache revision builds
-fitting transforms through the cloth/mast's common ancestor using local TRS
-values, rather than subtracting large world positions. Uniform ancestor scales
-cancel shared rotations exactly; nonuniform ancestors retain their complete
-stretch/shear. Luff bones remain direct children of cloth in both rigs.
-Unrelated roots retain the established world-coordinate fallback. The fitted
-axis follows rotation only, matching native `TransformDirection` behavior.
+Both cloth slots use the current sail material, following recoloring. Brass uses
+prefab **103** (`103 mug metal gold`) material `metal gold`, inspected in
+`sharedassets24.assets`, material **131**, on **2026-10-08**. Rope uses
+`RefsDirectory.clothRopePrefab`'s skinned material. Materials are shared
+read-only; missing materials log once per mount and retry. Generated meshes are
+disposed with their instance. No native assets are redistributed.
 
-The subsequent **2026-10-09** deliberate-state experiment replaces numerical
-invalidation for the mount, sprit and snotter with a shared per-sail revision.
-Each rig samples native sheet controllers' paid-out `currentLength`,
-`currentUnroll`, tack side, authored corner dimensions, saved installation
-height, local sail/ancestor scale products and carrying mast/shared-mesh
-identity once per visual update. Changes use exact comparisons for control and
-fitting values. Tack side uses sail orientation relative to the boat with a ±5°
-hysteresis band and retains the previous side inside the band. Activation,
-support rebinding and rig reactivation force a revision. World translation, boat
+#### Visual caching
+
+`SailVisualRevision` and `SailVisualCache` under `Visuals` provide a reusable
+revision and independent consumer acknowledgements. `SpritsailVisualTriggers`
+reads native inputs once per rig visual update. A revision changes on:
+
+- Sheet controller paid-out `currentLength` or identity changes, and reef
+  `currentUnroll` changes.
+- A tack-side change, using boat-relative sail orientation and a ±5° hysteresis
+  band that retains the previous side inside the band.
+- Authored corner dimensions, installation height, local sail/ancestor scale
+  products, or carrying mast/shared-mesh identity changes.
+- Initial fitting, activation or rig reactivation.
+
+Control and fitting values use exact comparisons. World translation, boat
 rocking/heading, wind load, same-side native sway and sampled radius changes do
-not invalidate. The sampler and consumer cache live under `Visuals` so other
-sail parts can reuse the contract; the Spritsail adapter reads native inputs.
+not invalidate the revision. Temporary visual misalignment during sway or
+control settling is an accepted tradeoff until the next trigger.
 
-On a revision, the mount samples all seven mast envelopes and refits once;
-unchanged revisions skip coordinate construction, surface queries, fitting and
-upload entirely, retaining the current draw matrix and materials. The sprit
-stores its local pose/scale and lets its existing parent carry it. The snotter
-stores its rotating frame relative to the sail, fixed mounting relative to the
-mast, purchase route and collar geometry. Its existing physical-fit thresholds
-still avoid unnecessary mesh uploads inside a revision. Its opt-in
-`RoutedRope.DrawCached` path transports cached routes and draws cached tube
-meshes; flat ropes update world points without reconstructing their routes.
-Display-mode changes/material retries rebuild from the current transported
-route, and invalid tube poses remain retryable. Other routed-rope consumers use
-the original live path.
+On a pending revision, the mount samples all seven mast envelopes, refits the
+complete mesh and uploads positions, normals, tangents, bounds and reverse-strip
+data. Reuse skips sampling, fitting and upload while continuing draw submission
+and material lookup. The sprit retains its local pose/scale. The snotter retains
+its sail-relative rotating frame, mast-relative fixed mounting and rope routes;
+its dimension thresholds still suppress unnecessary mesh uploads during a
+rebuild.
 
-Visibility and materials remain immediate; hidden/loading/unsupported/struck
-mounts do not draw. Purchase reactivation catches up its cached route. Physics,
-aerodynamic posing, native controls, live Cloth, clew sheets, the boomed boom
-and furled visuals remain live. This experiment deliberately accepts temporary
-misalignment during native sway or control settling until another logical
-trigger occurs. Do not infer visual correctness from the automated checks. Owned
-mesh cleanup, mast-surface intersection, capsule/Sanbuq fallback and the four
-native mount materials remain as before.
+The snotter draws its purchase and collar through `RoutedRope.DrawCached`.
+Cached tubes follow their anchor through draw matrices; flat ropes update world
+points from cached routes. Settings changes and material retries use the current
+transported route. Other routed-rope consumers retain live route updates.
+Private serialized renderer/mount references preserve template cloning; route
+setters invalidate the rope cache. The collar only poses its route, leaving
+drawing to the snotter.
 
-Both cloth slots use the current native sail material, following recoloring. The
-brass slot uses prefab **103** (`103 mug metal gold`) material `metal gold`,
-inspected in installed `sharedassets24.assets` material **131** on
-**2026-10-08**. The rope slot uses `RefsDirectory.clothRopePrefab`'s native
-skinned material. Native materials are shared read-only. Missing materials log
-once per mount and retry; no custom textures or proprietary assets are
-redistributed.
-
-GeometryChecks covers both cuts and deployment paths, multiple sail sizes,
-varying mast radii/rakes, seam continuity, hole alignment, rigid eyelets, finite
-normals and rope clearance. A frozen test-only copy of the original fitter
-checks all 288 size/cut/type/reef/rake/radius combinations: positions within
-0.01 mm and normal-vector differences below 0.001. Selective updates also match
-full reference fitting, including different bone counts, support replacement,
-bypass resumption and accumulated small changes. AssemblyChecks guards
-integration in both rigs, embedded data, surface sampling, separate drawing and
-mesh cleanup. An offline posed-mesh render checks the general rope route, not
-native materials or live Cloth. In-game validation remains pending: start on
-**Brig** with all four sails, then **Sanbuq** and affected masts. Check both
-tacks, resizing, partial reefing and striking, especially crowded lower eyelets;
-inspect the seam, rope passage, timber clearance, recoloring, shadows,
-preview/cancel, mast replacement and save/reload. The pre-optimization
-frame-time capture is recorded below; post-optimization in-game validation
-remains pending.
+Each consumer acknowledges only its own successful update; hidden, bypassed or
+failed consumers retain pending work. Purchase reactivation refreshes its route.
+Mounts hide while loading, unsupported or struck. Physics, native controls,
+aerodynamic posing, live Cloth, clew sheets, the boomed boom and furled visuals
+continue updating independently.
 
 #### Profiling mount performance
 
-The user's **2026-10-08** normal/bypass captures identify repeated mount fitting
-as a material CPU cost. In the repeated NORMAL run, 1,588 frames over 85.3
-seconds averaged **53.69 ms/frame**, with two mount calls/frame and **12.79
-ms/frame** inside mount Draw: **10.84 ms** fitting and **1.11 ms** surface
-sampling. The first nine following BYPASS windows (2,221 frames, 90.2 seconds)
-averaged **40.63 ms/frame**. These are frame-weighted means from the existing
-diagnostic build's `LogOutput.log` lines 527–535 and 537–545. Later bypass
-windows fell to roughly 23–25 ms/frame; do not combine that changed workload
-with the earlier comparison or attribute all game lag to mounts. The installed
-DLL matched the diagnostic build when inspected. Startup exceptions and
-weather-service lookup warnings do not establish an additional cause.
-
-The optional profiler is disabled by default. After installing the diagnostic
-build, set these keys under the existing `[Diagnostics]` section of
-`BepInEx/config/com.august.moresailwindsails.cfg`, with the game closed:
+Profiling is disabled by default. With the game closed, enable these keys under
+`[Diagnostics]` in `BepInEx/config/com.august.moresailwindsails.cfg`:
 
 ```ini
 EnableSpritsailMountProfiling = true
 ToggleSpritsailMountProfiling = F7
 ```
 
-Press **F7** to cycle **NORMAL → BYPASS → OFF**. NORMAL records mount CPU
-timings, refit counts, surface-cache hits/misses and overall unscaled frame
-times. BYPASS skips only authored mount fitting/drawing while continuing frame
-timing; the sail, controls and physics continue normally. OFF, disabling the
-diagnostic or disabling the plugin restores normal drawing. The state is
-transient and never saved to the boat. Mode changes and ten-second summaries
-appear with `[MountProfile]` in `BepInEx/LogOutput.log`.
+**F7** cycles **NORMAL → BYPASS → OFF**. NORMAL records mount CPU stages and
+frame times. BYPASS skips only authored mount fitting/drawing; sprit/snotter
+counters and frame timing continue. OFF or disabling the diagnostic restores
+normal drawing. State is transient; mode changes and ten-second summaries use
+`[MountProfile]` in `BepInEx/LogOutput.log`.
 
-Reproduce steady sailing for 20–30 seconds in NORMAL, then the same camera and
-sailing conditions in BYPASS. Cycle through OFF back to NORMAL and repeat to
-check drift. Compare turning and reefing separately; exclude loading/shipyard
-transitions and the first window containing initial mesh allocation. Keep
-graphics settings, other mods and fitted sails consistent. Reports aggregate all
-mount calls, including other loaded boats, rather than only the player boat.
+Compare 20–30 seconds of steady sailing in each mode, then repeat with the same
+camera, graphics settings and fitted sails. Measure sheeting/reefing separately.
+Exclude loading, shipyard transitions and initial allocation windows. Reports
+aggregate all loaded boats, including boats other than the player's.
 
-`mountCpuMsPerFrame` measures aggregate time inside mount Draw, with setup,
-surface sampling, geometry fitting, upload/tangent/bounds updates and draw
-submission reported separately. `maxCallMs` is the slowest individual mount
-call, not a whole-frame CPU peak. `refits` and `cacheHitMiss` reveal repeated
-work; `callsPerFrame` indicates the active mount workload. `refits` counts
-completed uploads, while `cacheHitMiss` counts directional surface queries
-during rebuilds. `revisionsInitialSheetReefTackFittingSupportReactivate` reports
-logical trigger counts (categories can overlap). `rebuildMountSpritSnotter` and
-`reuseMountSpritSnotter` report each consumer's calculation requests/reuse, not
-GPU work or necessarily mesh uploads. These counters remain active in BYPASS for
-the sprit/snotter: F7 still bypasses only the authored mount. Frame means/maxima
-and frames over 33 ms describe the whole game, including VSync and other mods.
-`gc0Global` is the process-wide generation-zero collection delta, not mount
-allocation attribution. Draw submission timing does not measure GPU completion;
-the visual bypass comparison helps identify additional rendering/shadow cost.
-Instrumentation adds some overhead and is intended for short captures.
+- `mountCpuMsPerFrame` totals mount Draw time, split into setup, surface
+  sampling, fitting, mesh upload and draw submission. `maxCallMs` is the slowest
+  mount call; `callsPerFrame` describes workload.
+- `refits` reports completed uploads / mount Draw calls. `cacheHitMiss` counts
+  hits and misses for directional surface queries during rebuilds.
+- `revisionsInitialSheetReefTackFittingSupportReactivate` counts logical
+  triggers; categories can overlap. `rebuildMountSpritSnotter` and
+  `reuseMountSpritSnotter` count consumer rebuild requests/reuse, not mesh
+  uploads.
+- Frame means/maxima and frames over 33 ms describe the whole game, including
+  VSync and other mods. `gc0Global` is the process-wide generation-zero
+  collection delta.
 
-The **2026-10-08** optimized **0.3.0-dev** Release build passed GeometryChecks,
-AssemblyChecks and all eight offline asset checks. AssemblyChecks verifies the
-disabled path, timing-scope cleanup and separation from sail mechanics. Neither
-automated suite measures Unity frame time.
+Draw submission timing does not measure GPU completion. Use the bypass
+comparison to investigate rendering cost, keeping workload drift separate from
+mount cost. Instrumentation adds overhead and is intended for short captures.
 
-The reproducible offline benchmark compares the frozen original fitter against
-the optimized fitter on identical inputs, excluding initialization and Unity
-mesh upload/rendering:
+The offline benchmark compares the current full fitter with the frozen original
+on identical inputs, excluding initialization and Unity mesh upload/rendering:
 
 ```sh
 nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mount
 ```
 
-After 100 warmups, seven alternating rounds of 50 fits measured median costs of
-**2.707 ms/full fit original**, **2.166 ms/full fit optimized** (**1.25×**,
-about 20% less time), and **2.145 ms** for updating all seven ropes only. Fifty
-warmed optimized full fits allocated **zero managed bytes**. These .NET 8 CPU
-timings are not a Unity/Mono frame-rate prediction. These are historical
-measurements from the selective-fit implementation; the current benchmark
-compares complete fits only. The asset, topology and version did not change.
+After 100 warmups, seven alternating rounds of 50 fits on **2026-10-09**
+measured median costs of **1.953 ms/full fit** versus **2.783 ms** for the
+reference. Fifty warmed optimized fits allocated **zero managed bytes**. These
+.NET timings do not predict Unity/Mono frame rate.
 
-The subsequent capture with matching installed/build hashes and the new part
-counters measured two NORMAL/BYPASS pairs: **35.94/29.91 ms/frame** and
-**31.27/27.50 ms/frame** (excluding the later bypass workload drop). Mount CPU
-cost was **5.53** and **3.69 ms/frame**. Across both normal phases, 68 strip
-updates and six eyelet updates accompanied 12,861 individual rope updates;
-mast-frame and sampled-radius changes dominated. Different sailing conditions
-prevent an exact before/after speedup claim. These observations prompted the
-stable-coordinate/envelope cache revision above.
+#### Mount and visual-cache validation
 
-The **2026-10-09** stable-coordinate revision passed the Release build and both
-check suites. Added checks cover rotated/nonuniform metre-sized coordinates,
-remote drawing reuse, real relative mast movement, envelope height/basis/scale/
-fallback invalidation, accumulated changes and local-only frame construction.
-Pure tests do not execute Unity Transform hierarchy composition or Cloth. The
-follow-up live timing capture is recorded below; visual attachment, both tacks,
-reefing, resizing and mast replacement still need targeted validation on Brig,
-then Sanbuq.
+The **0.3.0-dev** cleanup on **2026-10-09** passed Release with zero
+warnings/errors, both C# suites, all eight asset checks and formatting checks.
+GeometryChecks compares the fitter against the frozen reference across **288**
+cut/type/size/reef/rake/radius combinations: positions within **0.01 mm** and
+normal-vector differences below **0.001**. It also checks seams, hole alignment,
+rigid eyelets, mast clearance, alternate bone layouts, relative frames and
+allocation-free warmed fitting. Cache checks cover exact controls, tack
+hysteresis, fitting/support/reactivation, independent pending consumers and zero
+allocations across 1,000 warmed state samples. AssemblyChecks guards
+integration, ownership/serialization, upload ordering, disabled diagnostics and
+separation from live mechanics. Neither suite simulates Unity rendering or
+Cloth.
 
-The stable-coordinate ABAB follow-up had matching installed/build hashes. The
-NORMAL/BYPASS pairs averaged **32.16/28.65 ms/frame** and **37.62/32.38
-ms/frame**, excluding the last changed bypass window. Mount CPU averaged
-**2.42** and **5.64 ms/frame**. Neither normal phase rebuilt strip or eyelets,
-but 9,058 individual rope updates remained; whole-envelope reuse was only
-**16%/10%**. These observations motivated deliberate-state caching. The reported
-temporary staysail-angle/Spritsail-effectiveness issues cleared after restarting
-the game; they are not evidence of a persistent cache regression or its cause.
+Earlier live captures showed repeated mount fitting, especially rope fitting, to
+be a substantial CPU cost. The subsequent Sanbuq ABAB test supported keeping
+deliberate-state caching, but the user still reported worse perceived frame rate
+with two spritsails. The remaining cause is unresolved. Temporary staysail-angle
+and Spritsail-effectiveness issues cleared after restarting; no persistent
+regression was established. Superseded numerical-cache measurements and
+implementation history remain in Git.
 
-The deliberate-state revision passed the Release build, both check suites and
-formatting checks. New pure checks cover continuous exact controls, tack
-hysteresis, fitting/support/reactivation, independent failed/hidden/bypassed
-consumers and zero managed allocations across 1,000 warmed state samples.
-Assembly checks guard each consumer before expensive work, once-per-rig trigger
-sampling, excluded environment/sway inputs, retained live aerodynamic/Cloth
-posing and the opt-in snotter tube path. No Unity rendering/hierarchy simulation
-is performed. The development version remains **0.3.0-dev**.
-
-Install and restart before validating on Brig, then Sanbuq. In steady sailing,
-expect revision/rebuild counts to stop growing while reuse counts continue and
-mount fitting/sampling/upload time approaches zero. Exercise continuous sheet
-and reef controls, both tack crossings, resizing, installation height, mast
-replacement, hide/show, shipyard preview/cancel, F7 resumption and cloth-rope
-settings toggles. Inspect sprit/snotter/collar placement; accepted sway/settling
-errors should refresh on the next trigger. The subsequent Sanbuq ABAB test
-supported retaining deliberate-state caching, but the user still reported worse
-perceived frame rate with two spritsails; its remaining cause is unresolved.
-
-The **2026-10-09** branch review removes the superseded numerical fit-state and
-whole-envelope caches, partial-fit masks and their obsolete diagnostic fields
-(`partsStripEyeletRope`, `reasonsInitialLuffEyeletMastRadiusSupport`,
-`envelopeHitMiss`). The shared logical revision and independent consumer caches
-remain the only visual invalidation policy. The collar now only poses its route;
-the snotter owns drawing. Private serialized renderer/mount references preserve
-template cloning while preventing callers from bypassing the rope update API.
-
-The review also fixes rope topology retry: a rejected pose can resize CPU
-buffers, so a later successful upload determines whether indices need rebuilding
-from the existing mesh vertex count. Mesh clearing happens only after a valid
-pose. Geometry checks retain the frozen reference comparison across sail
-fixtures, bone layouts and changing fitting inputs; warmed fits must allocate no
-managed objects. Structural checks cover upload ordering and serialization. The
-cleanup passed the Release build with zero warnings/errors, both C# check
-suites, all eight asset checks and formatting checks. The updated offline
-benchmark measured **1.953 ms/full fit** versus **2.783 ms** for the reference,
-with zero managed bytes across 50 warmed optimized fits; this does not measure
-Unity frame time. In-game confirmation is still needed on Brig, then Sanbuq,
-particularly flat/3D rope toggling, hide/show and snotter/purchase placement;
-neither suite simulates Unity rendering or Cloth.
+Validate the cleanup on **Brig** with all four sails, then **Sanbuq** and
+affected masts. Check continuous sheet/reef input, both tacks, resizing,
+installation height, mast replacement, hide/show, preview/cancel and
+save/reload. Inspect seam and eyelet alignment, rope passage, timber clearance,
+recoloring and shadows, especially crowded lower eyelets. Exercise F7 resumption
+and flat/3D rope toggling; confirm sprit/snotter/purchase placement. In steady
+sailing, rebuild counts should stop growing and mount fitting/sampling/upload
+time should approach zero. Targeted in-game confirmation of this cleanup remains
+pending.
 
 ### Sprit obstruction on one tack
 
