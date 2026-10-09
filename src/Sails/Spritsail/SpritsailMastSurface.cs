@@ -7,6 +7,9 @@ namespace MoreSailwindSails.Sails.Spritsail
     internal sealed class SpritsailMastSurface
     {
         private readonly MeshFilter filter;
+        private readonly Mesh sourceMesh;
+        internal Transform Frame => filter ? filter.transform : null;
+        internal bool MeshUnchanged => !filter || filter.sharedMesh == sourceMesh;
         private readonly Vector3[] vertices;
         private readonly int[] triangles;
         private bool warned;
@@ -17,6 +20,7 @@ namespace MoreSailwindSails.Sails.Spritsail
         {
             samples = new SpritsailSurfaceSample[sampleCount];
             filter = mast.GetComponent<MeshFilter>();
+            sourceMesh = filter ? filter.sharedMesh : null;
             authoredSanbuqTopmast =
                 mast.orderIndex == 80
                 && filter
@@ -36,10 +40,20 @@ namespace MoreSailwindSails.Sails.Spritsail
             int sampleIndex = 0
         )
         {
+            return RadiusLocal(
+                origin: filter ? filter.transform.InverseTransformPoint(position: center) : center,
+                ray: filter
+                    ? filter.transform.InverseTransformVector(vector: direction)
+                    : direction,
+                fallback: fallback,
+                sampleIndex: sampleIndex
+            );
+        }
+
+        internal float RadiusLocal(Vector3 origin, Vector3 ray, float fallback, int sampleIndex = 0)
+        {
             if (filter)
             {
-                var origin = filter.transform.InverseTransformPoint(position: center);
-                var ray = filter.transform.InverseTransformVector(vector: direction);
                 if (
                     samples[sampleIndex]
                         .TryGet(origin: origin, direction: ray, radius: out var cachedRadius)

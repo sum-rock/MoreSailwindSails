@@ -125,7 +125,7 @@ internal static class DeploymentChecks
                 m.DeclaringType.Name == "SpritsailMastSurface" && m is ConstructorInfo
             )
                 && mountDraw.Any(m =>
-                    m.Name == "Radius" && m.GetParameters().Any(p => p.Name == "sampleIndex")
+                    m.Name == "RadiusLocal" && m.GetParameters().Any(p => p.Name == "sampleIndex")
                 )
                 && mountDraw.Any(m =>
                     m.DeclaringType.Name == "SpritsailMountGeometry" && m.Name == "Fit"

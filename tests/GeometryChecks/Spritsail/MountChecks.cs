@@ -39,6 +39,7 @@ internal static class MountChecks
         foreach (float width in new[] { 1f, 4f, 8f })
         foreach (float radius in new[] { 0.08f, 0.3f, 0.65f })
         foreach (float unroll in new[] { 0.04f, 0.3f, 0.75f, 1f })
+        foreach (float rake in new[] { 0f, 0.2f })
         {
             var corners = definition.Corners(width: width);
             var pose = boomed
@@ -72,13 +73,31 @@ internal static class MountChecks
                 .Range(start: 0, count: 7)
                 .Select(eye => radius * (0.85f + eye * 0.05f))
                 .ToArray();
+            var axis = new Vector3(1, rake, -rake * 0.5f).normalized;
             SpritsailMountGeometry.Fit(
                 luff: luff,
                 mastOrigin: mast,
-                mastAxis: Vector3.right,
+                mastAxis: axis,
                 radii: radii,
                 vertices: vertices,
-                normals: normals
+                normals: normals,
+                eyelets: new Vector3[7]
+            );
+            var referenceVertices = new Vector3[vertices.Length];
+            var referenceNormals = new Vector3[vertices.Length];
+            MountReferenceGeometry.Fit(
+                luff: luff,
+                mastOrigin: mast,
+                mastAxis: axis,
+                radii: radii,
+                vertices: referenceVertices,
+                normals: referenceNormals
+            );
+            MountOptimizationChecks.Equivalent(
+                vertices: vertices,
+                normals: normals,
+                expectedVertices: referenceVertices,
+                expectedNormals: referenceNormals
             );
             for (int i = 0; i < vertices.Length; i++)
             {
@@ -93,10 +112,10 @@ internal static class MountChecks
                 if (SpritsailMountAsset.Parts[i] >= 8)
                 {
                     var radial = point - mast;
+                    radial -= axis * Vector3.Dot(lhs: radial, rhs: axis);
                     float localRadius = radii[SpritsailMountAsset.Parts[i] - 8];
                     Require(
-                        value: radial.y * radial.y + radial.z * radial.z
-                            >= localRadius * localRadius,
+                        value: radial.sqrMagnitude >= localRadius * localRadius,
                         message: "Authored rope must remain outside its mast envelope."
                     );
                 }
@@ -144,8 +163,9 @@ internal static class MountChecks
                 );
             }
         }
+        MountOptimizationChecks.Run();
         Console.WriteLine(
-            "PASS: authored mount topology, both cuts/types, sizes, reef seams, rigid eyelets and mast clearance; no Unity rendering or Cloth simulation."
+            "PASS: reference equivalence, authored mount topology, both cuts/types, sizes, reef seams, rigid eyelets and mast clearance; no Unity rendering or Cloth simulation."
         );
     }
 

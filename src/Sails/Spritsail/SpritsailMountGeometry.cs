@@ -8,11 +8,7 @@ namespace MoreSailwindSails.Sails.Spritsail
     {
         internal const float SeamOverlap = 0.002f;
 
-        // The authored loop is an ellipse in Y/Z, centered at Z=0.23.
-        // Its nose at Z=-0.045 passes through the eyelet centered at -0.05.
-        private const float SourceCenter = 0.23f;
-        private const float SourceSideRadius = 0.2f;
-        private const float SourceLongRadius = 0.275f;
+        internal const int AllParts = (1 << 15) - 1;
 
         internal static Vector3 Luff(Vector3[] points, float sourceX)
         {
@@ -55,140 +51,140 @@ namespace MoreSailwindSails.Sails.Spritsail
             Vector3 mastAxis,
             float[] radii,
             Vector3[] vertices,
-            Vector3[] normals
+            Vector3[] normals,
+            Vector3[] eyelets,
+            int parts = AllParts
         )
         {
-            for (int i = 0; i < SpritsailMountAsset.Positions.Length; i++)
-            {
-                int part = SpritsailMountAsset.Parts[i];
-                var source = SpritsailMountAsset.Positions[i];
-                var normal = SpritsailMountAsset.Normals[i];
-                if (part == 0)
+            var data = SpritsailMountFitData.ForLuffCount(count: luff.Length);
+            for (int eye = 0; eye < 7; eye++)
+                eyelets[eye] =
+                    data.Eyelets[eye].Evaluate(luff: luff)
+                    + Vector3.forward * (SeamOverlap - 0.05f);
+            if ((parts & 1) != 0)
+                for (int j = 0; j < data.Indices[0].Length; j++)
                 {
-                    vertices[i] = Strip(source: source, luff: luff);
-                    var stripTangent =
-                        Strip(source: source + Vector3.right * 0.001f, luff: luff)
-                        - Strip(source: source - Vector3.right * 0.001f, luff: luff);
+                    int i = data.Indices[0][j];
+                    int sample = j * 5;
+                    vertices[i] = data.Strip[sample].Evaluate(points: luff, eyelets: eyelets);
+                    var tangent =
+                        data.Strip[sample + 1].Evaluate(points: luff, eyelets: eyelets)
+                        - data.Strip[sample + 2].Evaluate(points: luff, eyelets: eyelets);
                     var transverse =
-                        Strip(source: source + Vector3.forward * 0.001f, luff: luff)
-                        - Strip(source: source - Vector3.forward * 0.001f, luff: luff);
-                    // Source Z runs toward the mast; runtime cloth Z runs aft.
+                        data.Strip[sample + 3].Evaluate(points: luff, eyelets: eyelets)
+                        - data.Strip[sample + 4].Evaluate(points: luff, eyelets: eyelets);
                     normals[i] = (
-                        Vector3.Cross(lhs: transverse, rhs: stripTangent) / 0.000004f
+                        Vector3.Cross(lhs: transverse, rhs: tangent) / 0.000004f
                     ).normalized;
-                    if (normal.y < 0)
+                    if (SpritsailMountAsset.Normals[i].y < 0)
                         normals[i] = -normals[i];
-                    continue;
                 }
-                int eye = part <= 7 ? part - 1 : part - 8;
-                float centerX = SpritsailMountAsset.EyeletX[eye];
-                var eyelet = Eyelet(points: luff, sourceX: centerX);
-                if (part <= 7)
-                {
-                    // Reflect both Y and Z to preserve winding while the edging extends forward.
-                    vertices[i] =
-                        eyelet + new Vector3(source.x - centerX, -source.y, -(source.z + 0.05f));
-                    normals[i] = new Vector3(normal.x, -normal.y, -normal.z);
+            for (int eye = 0; eye < 7; eye++)
+            {
+                var eyelet = eyelets[eye];
+                if ((parts & (1 << (eye + 1))) != 0)
+                    foreach (int i in data.Indices[eye + 1])
+                    {
+                        var source = SpritsailMountAsset.Positions[i];
+                        var normal = SpritsailMountAsset.Normals[i];
+                        vertices[i] =
+                            eyelet
+                            + new Vector3(
+                                source.x - SpritsailMountAsset.EyeletX[eye],
+                                -source.y,
+                                -(source.z + 0.05f)
+                            );
+                        normals[i] = new Vector3(normal.x, -normal.y, -normal.z);
+                    }
+                if ((parts & (1 << (eye + 8))) == 0)
                     continue;
-                }
                 var center =
                     mastOrigin + mastAxis * Vector3.Dot(lhs: eyelet - mastOrigin, rhs: mastAxis);
                 var outward = (eyelet - center).normalized;
                 var side = Vector3.Cross(lhs: mastAxis, rhs: outward).normalized;
-                var local = source - new Vector3(centerX, 0, 0);
-                // Separate the tube thickness from the fitted path so mast size does not
-                // stretch its cross-section. The supplied smooth normals describe that tube.
                 float ropeRadius = SpritsailMountAsset.RopeRadii[eye];
-                var path = local - normal * ropeRadius;
-                float angle = (float)
-                    Math.Atan2(
-                        path.y / SourceSideRadius,
-                        (SourceCenter - path.z) / SourceLongRadius
-                    );
-                var point = RopePoint(
-                    angle: angle,
+                var frame = new RopeFrame(
                     eyelet: eyelet,
                     center: center,
                     axis: mastAxis,
                     outward: outward,
                     side: side,
-                    radius: radii[eye],
-                    ropeRadius: ropeRadius
+                    fitted: radii[eye] + ropeRadius * 2
                 );
-                var tangent = (
-                    RopePoint(
-                        angle: angle + 0.001f,
-                        eyelet: eyelet,
-                        center: center,
-                        axis: mastAxis,
-                        outward: outward,
-                        side: side,
-                        radius: radii[eye],
-                        ropeRadius: ropeRadius
-                    )
-                    - RopePoint(
-                        angle: angle - 0.001f,
-                        eyelet: eyelet,
-                        center: center,
-                        axis: mastAxis,
-                        outward: outward,
-                        side: side,
-                        radius: radii[eye],
-                        ropeRadius: ropeRadius
-                    )
-                ).normalized;
-                var radial = Vector3.Cross(lhs: tangent, rhs: mastAxis).normalized;
-                var sourceRadial = new Vector3(
-                    0,
-                    path.y / (SourceSideRadius * SourceSideRadius),
-                    (path.z - SourceCenter) / (SourceLongRadius * SourceLongRadius)
-                ).normalized;
-                var sourceTangent = Vector3.Cross(lhs: Vector3.right, rhs: sourceRadial);
-                normals[i] = (
-                    mastAxis * normal.x
-                    + radial * Vector3.Dot(lhs: normal, rhs: sourceRadial)
-                    + tangent * Vector3.Dot(lhs: normal, rhs: sourceTangent)
-                ).normalized;
-                vertices[i] = point + mastAxis * path.x + normals[i] * ropeRadius;
+                for (int j = 0; j < data.Indices[eye + 8].Length; j++)
+                {
+                    int i = data.Indices[eye + 8][j];
+                    ref readonly var source = ref data.Ropes[eye][j];
+                    var point = frame.Point(sample: in source.Point);
+                    var tangent = (
+                        frame.Point(sample: in source.After) - frame.Point(sample: in source.Before)
+                    ).normalized;
+                    var radial = Vector3.Cross(lhs: tangent, rhs: mastAxis).normalized;
+                    normals[i] = (
+                        mastAxis * source.Normal.x
+                        + radial * source.Normal.y
+                        + tangent * source.Normal.z
+                    ).normalized;
+                    vertices[i] = point + mastAxis * source.Axial + normals[i] * ropeRadius;
+                }
             }
         }
 
-        private static Vector3 RopePoint(
-            float angle,
-            Vector3 eyelet,
-            Vector3 center,
-            Vector3 axis,
-            Vector3 outward,
-            Vector3 side,
-            float radius,
-            float ropeRadius
-        )
+        // The two approach curves share these controls for every vertex of one rope.
+        private readonly struct RopeFrame
         {
-            float fitted = radius + ropeRadius * 2;
-            if (Math.Abs(angle) >= Math.PI / 2)
-                return center
-                    + (outward * (float)Math.Cos(angle) + side * (float)Math.Sin(angle)) * fitted;
-            float sign = angle < 0 ? -1 : 1;
-            float t = (float)(Math.Abs(angle) / (Math.PI / 2));
-            float rest = 1 - t;
-            // The two approach legs pass through the hole normal, then meet the
-            // mast collar tangentially. Preserve a short passage before curving.
-            var a = eyelet;
-            var b = eyelet - Vector3.up * (sign * 0.02f);
-            var d = center + side * (sign * fitted);
-            var c = d + outward * (fitted * 0.55f);
-            var point =
-                a * (rest * rest * rest)
-                + b * (3 * rest * rest * t)
-                + c * (3 * rest * t * t)
-                + d * (t * t * t);
-            var axialCenter = center + axis * Vector3.Dot(lhs: point - center, rhs: axis);
-            var radial = point - axialCenter;
-            if (radial.sqrMagnitude < fitted * fitted)
-                point =
-                    axialCenter
-                    + (radial.sqrMagnitude > 0.000001f ? radial.normalized : outward) * fitted;
-            return point;
+            private readonly Vector3 eyelet;
+            private readonly Vector3 center;
+            private readonly Vector3 axis;
+            private readonly Vector3 outward;
+            private readonly Vector3 side;
+            private readonly Vector3 positiveB;
+            private readonly Vector3 positiveC;
+            private readonly Vector3 positiveD;
+            private readonly Vector3 negativeB;
+            private readonly Vector3 negativeC;
+            private readonly Vector3 negativeD;
+            private readonly float fitted;
+
+            internal RopeFrame(
+                Vector3 eyelet,
+                Vector3 center,
+                Vector3 axis,
+                Vector3 outward,
+                Vector3 side,
+                float fitted
+            )
+            {
+                this.eyelet = eyelet;
+                this.center = center;
+                this.axis = axis;
+                this.outward = outward;
+                this.side = side;
+                this.fitted = fitted;
+                positiveB = eyelet - Vector3.up * 0.02f;
+                negativeB = eyelet - Vector3.up * -0.02f;
+                positiveD = center + side * fitted;
+                negativeD = center + side * -fitted;
+                positiveC = positiveD + outward * (fitted * 0.55f);
+                negativeC = negativeD + outward * (fitted * 0.55f);
+            }
+
+            internal Vector3 Point(in SpritsailMountFitData.RopeSample sample)
+            {
+                if (sample.Collar)
+                    return center + (outward * sample.Cos + side * sample.Sin) * fitted;
+                var b = sample.Sign > 0 ? positiveB : negativeB;
+                var c = sample.Sign > 0 ? positiveC : negativeC;
+                var d = sample.Sign > 0 ? positiveD : negativeD;
+                var point = eyelet * sample.A + b * sample.B + c * sample.C + d * sample.D;
+                var axialCenter = center + axis * Vector3.Dot(lhs: point - center, rhs: axis);
+                var radial = point - axialCenter;
+                if (radial.sqrMagnitude < fitted * fitted)
+                    point =
+                        axialCenter
+                        + (radial.sqrMagnitude > 0.000001f ? radial.normalized : outward) * fitted;
+                return point;
+            }
         }
     }
 }

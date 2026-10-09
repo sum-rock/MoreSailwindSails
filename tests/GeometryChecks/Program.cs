@@ -5,8 +5,13 @@ namespace MoreSailwindSails.Tests.GeometryChecks;
 
 internal static class Program
 {
-    private static void Main()
+    private static void Main(string[] args)
     {
+        if (System.Array.IndexOf(array: args, value: "--benchmark-mount") >= 0)
+        {
+            Spritsail.MountOptimizationChecks.Benchmark();
+            return;
+        }
         Visuals.RoutedRopeChecks.Run();
         Spritsail.CategoryChecks.Run();
         Spritsail.BoomedSpritsail.GeometryChecks.Run();
@@ -18,6 +23,7 @@ internal static class Program
         Spritsail.SpritVisualChecks.Run();
         Spritsail.SnotterChecks.Run();
         Spritsail.MountChecks.Run();
+        Spritsail.MountFrameChecks.Run();
         Spritsail.DeploymentChecks.Run();
         Spritsail.ObstructionChecks.Run();
         Spritsail.LooseFootedSpritsail.FlexChecks.Run();

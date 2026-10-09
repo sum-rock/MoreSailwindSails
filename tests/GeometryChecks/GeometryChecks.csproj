@@ -6,6 +6,14 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMountFrame.cs"
+      Link="Spritsail/SpritsailMountFrame.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMountEnvelopeSample.cs"
+      Link="Spritsail/SpritsailMountEnvelopeSample.cs"
+    />
     <EmbeddedResource
       Include="../../assets/sail_mount/sail_mount.bytes"
       LogicalName="MoreSailwindSails.SailMount"
@@ -17,6 +25,14 @@
     <Compile
       Include="../../src/Sails/Spritsail/SpritsailMountGeometry.cs"
       Link="Spritsail/SpritsailMountGeometry.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMountFitData.cs"
+      Link="Spritsail/SpritsailMountFitData.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMountFitState.cs"
+      Link="Spritsail/SpritsailMountFitState.cs"
     />
     <None
       Include="../../assets/snotter/snotter.obj"
