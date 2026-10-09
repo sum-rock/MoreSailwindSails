@@ -22,6 +22,8 @@ namespace MoreSailwindSails
         private ConfigEntry<KeyboardShortcut> captureWinchPosition;
         private ConfigEntry<bool> enableWinchMountOverlay;
         private ConfigEntry<KeyboardShortcut> toggleWinchMountOverlay;
+        private ConfigEntry<bool> enableSpritsailMountProfiling;
+        private ConfigEntry<KeyboardShortcut> toggleSpritsailMountProfiling;
         private Utils.WinchMountOverlay winchMountOverlay;
 
         private void Awake()
@@ -46,6 +48,18 @@ namespace MoreSailwindSails
                 defaultValue: new KeyboardShortcut(KeyCode.F8),
                 description: "Aim at a boat within 10 metres and press to show its winch locations; press again to hide. Requires EnableWinchMountOverlay. Set to None to disable the shortcut."
             );
+            enableSpritsailMountProfiling = Config.Bind(
+                section: "Diagnostics",
+                key: "EnableSpritsailMountProfiling",
+                defaultValue: false,
+                description: "Enable optional mount CPU/frame timing and the mount-only visual A/B shortcut. Logs ten-second summaries."
+            );
+            toggleSpritsailMountProfiling = Config.Bind(
+                section: "Diagnostics",
+                key: "ToggleSpritsailMountProfiling",
+                defaultValue: new KeyboardShortcut(KeyCode.F7),
+                description: "Cycle normal profiling, mount-only visual bypass, and off. Requires EnableSpritsailMountProfiling. Does not change sail physics or saves."
+            );
             var harmony = new Harmony(PluginGuid);
             harmony.PatchAll(typeof(Plugin).Assembly);
             Sails.FishermansStaysail.Patches.FishermansStaysailSailInfoPatch.Install(harmony);
@@ -55,6 +69,11 @@ namespace MoreSailwindSails
 
         private void LateUpdate()
         {
+            Sails.Spritsail.SpritsailMountProfile.Tick(
+                enabled: enableSpritsailMountProfiling.Value,
+                toggle: enableSpritsailMountProfiling.Value
+                    && toggleSpritsailMountProfiling.Value.IsDown()
+            );
             if (captureWinchPosition.Value.IsDown())
                 Utils.LogFallbackWinchPlacement.Capture();
             if (!enableWinchMountOverlay.Value)
@@ -68,7 +87,11 @@ namespace MoreSailwindSails
                 winchMountOverlay.Toggle();
         }
 
-        private void OnDisable() => RemoveOverlay();
+        private void OnDisable()
+        {
+            Sails.Spritsail.SpritsailMountProfile.Stop();
+            RemoveOverlay();
+        }
 
         private void RemoveOverlay()
         {

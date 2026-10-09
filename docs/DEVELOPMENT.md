@@ -679,6 +679,53 @@ reefing and striking, especially crowded lower eyelets; inspect the seam, rope
 passage, timber clearance, recoloring, shadows, preview/cancel, mast replacement
 and save/reload. Runtime frame time has not been measured.
 
+#### Profiling mount performance
+
+The user's **2026-10-08** report of increased lag after the optimized mount is
+an observation, not an attributed bottleneck. The installed DLL matched that
+build when inspected. Logs also contained unrelated-looking startup exceptions
+and weather-service lookup warnings; these do not establish the slowdown's
+cause. Measure the mount before further geometry or caching changes.
+
+The optional profiler is disabled by default. After installing the diagnostic
+build, set these keys under the existing `[Diagnostics]` section of
+`BepInEx/config/com.august.moresailwindsails.cfg`, with the game closed:
+
+```ini
+EnableSpritsailMountProfiling = true
+ToggleSpritsailMountProfiling = F7
+```
+
+Press **F7** to cycle **NORMAL → BYPASS → OFF**. NORMAL records mount CPU
+timings, refit counts, surface-cache hits/misses and overall unscaled frame
+times. BYPASS skips only authored mount fitting/drawing while continuing frame
+timing; the sail, controls and physics continue normally. OFF, disabling the
+diagnostic or disabling the plugin restores normal drawing. The state is
+transient and never saved to the boat. Mode changes and ten-second summaries
+appear with `[MountProfile]` in `BepInEx/LogOutput.log`.
+
+Reproduce steady sailing for 20–30 seconds in NORMAL, then the same camera and
+sailing conditions in BYPASS. Cycle through OFF back to NORMAL and repeat to
+check drift. Compare turning and reefing separately; exclude loading/shipyard
+transitions and the first window containing initial mesh allocation. Keep
+graphics settings, other mods and fitted sails consistent. Reports aggregate all
+mount calls, including other loaded boats, rather than only the player boat.
+
+`mountCpuMsPerFrame` measures aggregate time inside mount Draw, with setup,
+surface sampling, geometry fitting, upload/tangent/bounds updates and draw
+submission reported separately. `maxCallMs` is the slowest individual mount
+call, not a whole-frame CPU peak. `refits` and `cacheHitMiss` reveal repeated
+work; `callsPerFrame` indicates the active mount workload. Frame means/maxima
+and frames over 33 ms describe the whole game, including VSync and other mods.
+`gc0Global` is the process-wide generation-zero collection delta, not mount
+allocation attribution. Draw submission timing does not measure GPU completion;
+the visual bypass comparison helps identify additional rendering/shadow cost.
+Instrumentation adds some overhead and is intended for short captures.
+
+No live profiling capture has been collected yet. AssemblyChecks verifies the
+disabled path, timing-scope cleanup and separation from sail mechanics; neither
+automated suite measures Unity frame time.
+
 ### Sprit obstruction on one tack
 
 Both types set `StarboardAffected = true`, matching the shipyard description.

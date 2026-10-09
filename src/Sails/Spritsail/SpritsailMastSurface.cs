@@ -44,7 +44,11 @@ namespace MoreSailwindSails.Sails.Spritsail
                     samples[sampleIndex]
                         .TryGet(origin: origin, direction: ray, radius: out var cachedRadius)
                 )
+                {
+                    SpritsailMountProfile.SurfaceQuery(hit: true);
                     return cachedRadius;
+                }
+                SpritsailMountProfile.SurfaceQuery(hit: false);
                 float radius = 0;
                 bool found =
                     vertices != null

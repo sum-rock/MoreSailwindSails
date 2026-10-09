@@ -37,123 +37,156 @@ namespace MoreSailwindSails.Sails.Spritsail
 
         internal void Draw(CapsuleCollider mast, float fallbackRadius)
         {
-            if (!isActiveAndEnabled || !mast || !Sail || !Sail.cloth || !ResolveMaterials())
+            if (SpritsailMountProfile.Bypass)
                 return;
-            EnsureMesh();
-            var cloth = Sail.cloth.transform;
-            // Work in a rigid metre-sized frame: boat motion needs only a draw matrix,
-            // while resizing and reefing update the fitted mesh independently of scale.
-            var frame = Matrix4x4.TRS(pos: cloth.position, q: cloth.rotation, s: Vector3.one);
-            var inverse = frame.inverse;
-            var localAxis =
-                mast.direction == 0 ? Vector3.right
-                : mast.direction == 1 ? Vector3.up
-                : Vector3.forward;
-            var worldAxis = mast.transform.TransformDirection(direction: localAxis).normalized;
-            var axis = inverse.MultiplyVector(vector: worldAxis).normalized;
-            var origin = inverse.MultiplyPoint3x4(
-                point: mast.transform.TransformPoint(position: mast.center)
-            );
-            bool changed =
-                !fitted
-                || (origin - previousOrigin).sqrMagnitude > 0.00000001f
-                || (axis - previousAxis).sqrMagnitude > 0.00000001f;
-            for (int row = 0; row < LuffBones.Length; row++)
+            long started = SpritsailMountProfile.Begin();
+            long checkpoint = started;
+            try
             {
-                luff[row] = inverse.MultiplyPoint3x4(point: LuffBones[row].position);
-                changed |= (luff[row] - previousLuff[row]).sqrMagnitude > 0.00000001f;
-            }
-            if (surfaceMast != mast)
-            {
-                surfaceMast = mast;
-                surface = new SpritsailMastSurface(
-                    mast: mast.GetComponent<Mast>(),
-                    sampleCount: 7 * Directions
+                if (!isActiveAndEnabled || !mast || !Sail || !Sail.cloth || !ResolveMaterials())
+                    return;
+                EnsureMesh();
+                var cloth = Sail.cloth.transform;
+                // Work in a rigid metre-sized frame: boat motion needs only a draw matrix,
+                // while resizing and reefing update the fitted mesh independently of scale.
+                var frame = Matrix4x4.TRS(pos: cloth.position, q: cloth.rotation, s: Vector3.one);
+                var inverse = frame.inverse;
+                var localAxis =
+                    mast.direction == 0 ? Vector3.right
+                    : mast.direction == 1 ? Vector3.up
+                    : Vector3.forward;
+                var worldAxis = mast.transform.TransformDirection(direction: localAxis).normalized;
+                var axis = inverse.MultiplyVector(vector: worldAxis).normalized;
+                var origin = inverse.MultiplyPoint3x4(
+                    point: mast.transform.TransformPoint(position: mast.center)
                 );
-                changed = true;
-            }
-            var right = Vector3.Cross(lhs: worldAxis, rhs: cloth.forward).normalized;
-            if (right.sqrMagnitude < 0.001f)
-                right = Vector3.Cross(lhs: worldAxis, rhs: cloth.up).normalized;
-            var forward = Vector3.Cross(lhs: right, rhs: worldAxis).normalized;
-            for (int eye = 0; eye < 7; eye++)
-            {
-                var eyelet = frame.MultiplyPoint3x4(
-                    point: SpritsailMountGeometry.Eyelet(
-                        points: luff,
-                        sourceX: SpritsailMountAsset.EyeletX[eye]
-                    )
-                );
-                var worldOrigin = mast.transform.TransformPoint(position: mast.center);
-                var center =
-                    worldOrigin
-                    + worldAxis * Vector3.Dot(lhs: eyelet - worldOrigin, rhs: worldAxis);
-                float radius = 0;
-                for (int direction = 0; direction < Directions; direction++)
+                bool changed =
+                    !fitted
+                    || (origin - previousOrigin).sqrMagnitude > 0.00000001f
+                    || (axis - previousAxis).sqrMagnitude > 0.00000001f;
+                for (int row = 0; row < LuffBones.Length; row++)
                 {
-                    float angle = direction * 2 * Mathf.PI / Directions;
-                    radius = Mathf.Max(
-                        a: radius,
-                        b: surface.Radius(
-                            center: center,
-                            direction: right * Mathf.Cos(f: angle) + forward * Mathf.Sin(f: angle),
-                            fallback: fallbackRadius,
-                            sampleIndex: eye * Directions + direction
+                    luff[row] = inverse.MultiplyPoint3x4(point: LuffBones[row].position);
+                    changed |= (luff[row] - previousLuff[row]).sqrMagnitude > 0.00000001f;
+                }
+                if (surfaceMast != mast)
+                {
+                    surfaceMast = mast;
+                    surface = new SpritsailMastSurface(
+                        mast: mast.GetComponent<Mast>(),
+                        sampleCount: 7 * Directions
+                    );
+                    changed = true;
+                }
+                SpritsailMountProfile.Mark(
+                    stage: SpritsailMountProfile.Setup,
+                    checkpoint: ref checkpoint
+                );
+                var right = Vector3.Cross(lhs: worldAxis, rhs: cloth.forward).normalized;
+                if (right.sqrMagnitude < 0.001f)
+                    right = Vector3.Cross(lhs: worldAxis, rhs: cloth.up).normalized;
+                var forward = Vector3.Cross(lhs: right, rhs: worldAxis).normalized;
+                for (int eye = 0; eye < 7; eye++)
+                {
+                    var eyelet = frame.MultiplyPoint3x4(
+                        point: SpritsailMountGeometry.Eyelet(
+                            points: luff,
+                            sourceX: SpritsailMountAsset.EyeletX[eye]
                         )
                     );
+                    var worldOrigin = mast.transform.TransformPoint(position: mast.center);
+                    var center =
+                        worldOrigin
+                        + worldAxis * Vector3.Dot(lhs: eyelet - worldOrigin, rhs: worldAxis);
+                    float radius = 0;
+                    for (int direction = 0; direction < Directions; direction++)
+                    {
+                        float angle = direction * 2 * Mathf.PI / Directions;
+                        radius = Mathf.Max(
+                            a: radius,
+                            b: surface.Radius(
+                                center: center,
+                                direction: right * Mathf.Cos(f: angle)
+                                    + forward * Mathf.Sin(f: angle),
+                                fallback: fallbackRadius,
+                                sampleIndex: eye * Directions + direction
+                            )
+                        );
+                    }
+                    if (!SpritsailDeployment.Finite(value: radius) || radius <= 0)
+                        return;
+                    radii[eye] = radius;
+                    changed |= Mathf.Abs(f: radius - previousRadii[eye]) > 0.0001f;
                 }
-                if (!SpritsailDeployment.Finite(value: radius) || radius <= 0)
-                    return;
-                radii[eye] = radius;
-                changed |= Mathf.Abs(f: radius - previousRadii[eye]) > 0.0001f;
-            }
-            if (changed)
-            {
-                SpritsailMountGeometry.Fit(
-                    luff: luff,
-                    mastOrigin: origin,
-                    mastAxis: axis,
-                    radii: radii,
-                    vertices: vertices,
-                    normals: normals
+                SpritsailMountProfile.Mark(
+                    stage: SpritsailMountProfile.Surface,
+                    checkpoint: ref checkpoint
                 );
-                int count = SpritsailMountAsset.Positions.Length;
-                for (int i = 0; i < backVertices.Length; i++)
+                if (changed)
                 {
-                    vertices[count + i] = vertices[backVertices[i]];
-                    normals[count + i] = -normals[backVertices[i]];
+                    SpritsailMountProfile.Refit();
+                    SpritsailMountGeometry.Fit(
+                        luff: luff,
+                        mastOrigin: origin,
+                        mastAxis: axis,
+                        radii: radii,
+                        vertices: vertices,
+                        normals: normals
+                    );
+                    SpritsailMountProfile.Mark(
+                        stage: SpritsailMountProfile.Fit,
+                        checkpoint: ref checkpoint
+                    );
+                    int count = SpritsailMountAsset.Positions.Length;
+                    for (int i = 0; i < backVertices.Length; i++)
+                    {
+                        vertices[count + i] = vertices[backVertices[i]];
+                        normals[count + i] = -normals[backVertices[i]];
+                    }
+                    mesh.vertices = vertices;
+                    mesh.normals = normals;
+                    mesh.RecalculateTangents();
+                    mesh.RecalculateBounds();
+                    System.Array.Copy(
+                        sourceArray: luff,
+                        destinationArray: previousLuff,
+                        length: luff.Length
+                    );
+                    System.Array.Copy(
+                        sourceArray: radii,
+                        destinationArray: previousRadii,
+                        length: radii.Length
+                    );
+                    previousOrigin = origin;
+                    previousAxis = axis;
+                    fitted = true;
+                    SpritsailMountProfile.Mark(
+                        stage: SpritsailMountProfile.Upload,
+                        checkpoint: ref checkpoint
+                    );
                 }
-                mesh.vertices = vertices;
-                mesh.normals = normals;
-                mesh.RecalculateTangents();
-                mesh.RecalculateBounds();
-                System.Array.Copy(
-                    sourceArray: luff,
-                    destinationArray: previousLuff,
-                    length: luff.Length
+                for (int material = 0; material < materials.Length; material++)
+                    Graphics.DrawMesh(
+                        mesh: mesh,
+                        matrix: frame,
+                        material: materials[material],
+                        layer: Sail.gameObject.layer,
+                        camera: null,
+                        submeshIndex: material,
+                        properties: null,
+                        castShadows: true,
+                        receiveShadows: true,
+                        useLightProbes: true
+                    );
+                SpritsailMountProfile.Mark(
+                    stage: SpritsailMountProfile.Submit,
+                    checkpoint: ref checkpoint
                 );
-                System.Array.Copy(
-                    sourceArray: radii,
-                    destinationArray: previousRadii,
-                    length: radii.Length
-                );
-                previousOrigin = origin;
-                previousAxis = axis;
-                fitted = true;
             }
-            for (int material = 0; material < materials.Length; material++)
-                Graphics.DrawMesh(
-                    mesh: mesh,
-                    matrix: frame,
-                    material: materials[material],
-                    layer: Sail.gameObject.layer,
-                    camera: null,
-                    submeshIndex: material,
-                    properties: null,
-                    castShadows: true,
-                    receiveShadows: true,
-                    useLightProbes: true
-                );
+            finally
+            {
+                SpritsailMountProfile.End(started: started);
+            }
         }
 
         private void EnsureMesh()
