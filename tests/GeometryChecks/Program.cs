@@ -17,6 +17,7 @@ internal static class Program
         Spritsail.GallusChecks.Run();
         Spritsail.SpritVisualChecks.Run();
         Spritsail.SnotterChecks.Run();
+        Spritsail.MountChecks.Run();
         Spritsail.DeploymentChecks.Run();
         Spritsail.ObstructionChecks.Run();
         Spritsail.LooseFootedSpritsail.FlexChecks.Run();

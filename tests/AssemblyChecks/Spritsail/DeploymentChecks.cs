@@ -112,17 +112,39 @@ internal static class DeploymentChecks
                 .CalledMethods(method: Method(type: type + "." + type + "Lines", name: "Draw"))
                 .ToArray();
             Require(
-                value: draw.Any(m =>
-                    m is ConstructorInfo
-                    && m.DeclaringType.Name == "SpritsailMastSurface"
-                    && m.GetParameters().Length == 2
-                )
-                    && draw.Any(m =>
-                        m.Name == "Radius" && m.GetParameters().Any(p => p.Name == "sampleIndex")
-                    ),
-                message: "Each rig must allocate and address individual luff-tie surface samples."
+                value: draw.Any(m => m.DeclaringType.Name == "SpritsailMount" && m.Name == "Draw")
+                    && !draw.Any(m => m.DeclaringType.Name == "SpritsailRopeCollar"),
+                message: "Both rigs must draw the authored mount instead of the old luff coils."
             );
         }
+        var mountDraw = IlReader
+            .CalledMethods(method: Method(type: "SpritsailMount", name: "Draw"))
+            .ToArray();
+        Require(
+            value: mountDraw.Any(m =>
+                m.DeclaringType.Name == "SpritsailMastSurface" && m is ConstructorInfo
+            )
+                && mountDraw.Any(m =>
+                    m.Name == "Radius" && m.GetParameters().Any(p => p.Name == "sampleIndex")
+                )
+                && mountDraw.Any(m =>
+                    m.DeclaringType.Name == "SpritsailMountGeometry" && m.Name == "Fit"
+                )
+                && mountDraw.Any(m => m.Name == "DrawMesh")
+                && !mountDraw.Any(m => m.DeclaringType.Name == "Cloth"),
+            message: "Authored mounts must fit sampled timber and draw independently of live Cloth."
+        );
+        Require(
+            value: IlReader
+                .CalledMethods(method: Method(type: "SpritsailMount", name: "OnDestroy"))
+                .Any(m => m.Name == "Destroy"),
+            message: "Live mount meshes need owned cleanup."
+        );
+        using (var mount = assembly.GetManifestResourceStream(name: "MoreSailwindSails.SailMount"))
+            Require(
+                value: mount != null && mount.Length == 645640,
+                message: "The DLL must contain the baked mount."
+            );
         var runtime = IlReader
             .CalledMethods(
                 method: Method(

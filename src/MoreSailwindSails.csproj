@@ -10,6 +10,10 @@
 
   <ItemGroup>
     <EmbeddedResource
+      Include="../assets/sail_mount/sail_mount.bytes"
+      LogicalName="MoreSailwindSails.SailMount"
+    />
+    <EmbeddedResource
       Include="../assets/snotter/snotter.bytes"
       LogicalName="MoreSailwindSails.Snotter"
     />

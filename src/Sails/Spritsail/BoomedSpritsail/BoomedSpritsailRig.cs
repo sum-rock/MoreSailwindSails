@@ -752,7 +752,6 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                     bones: Bones,
                     tip: tip,
                     mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
-                    aft: Sail.cloth.transform.TransformDirection(direction: Vector3.up),
                     struck: state == 0
                 );
             else

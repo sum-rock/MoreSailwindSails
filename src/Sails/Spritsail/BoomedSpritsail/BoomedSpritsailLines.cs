@@ -3,14 +3,11 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
 {
-    // Draws mast ties and the peak lashing; native gaff ropes render the single boom sheet.
+    // Draws the authored mount and peak lashing; native gaff ropes render the single boom sheet.
     internal sealed class BoomedSpritsailLines : MonoBehaviour
     {
         public RoutedRope PeakLashing;
-        public RoutedRope[] LuffTies;
-        public SpritsailRopeCollar[] LuffCollars;
-        private CapsuleCollider surfaceMast;
-        private SpritsailMastSurface surface;
+        public SpritsailMount Mount;
 
         internal static BoomedSpritsailLines Create(Sail sail)
         {
@@ -30,22 +27,11 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 source: source,
                 name: "Peak lashing"
             );
-            lines.LuffTies = new RoutedRope[7];
-            lines.LuffCollars = new SpritsailRopeCollar[7];
-            for (int i = 0; i < lines.LuffTies.Length; i++)
-            {
-                lines.LuffCollars[i] = SpritsailRopeCollar.Create(
-                    parent: root.transform,
-                    source: source,
-                    name: "Luff mast collar " + i,
-                    thicknessScale: 0.8f
-                );
-                lines.LuffTies[i] = CreateLine(
-                    parent: root.transform,
-                    source: source,
-                    name: "Luff tie " + i
-                );
-            }
+            var rig = sail.GetComponent<BoomedSpritsailRig>();
+            var luff = new Transform[BoomedSpritsailGeometry.Rows + 1];
+            for (int row = 0; row < luff.Length; row++)
+                luff[row] = rig.Bones[BoomedSpritsailGeometry.ShapeBone(row: row, column: 0)];
+            lines.Mount = SpritsailMount.Create(sail: sail, luffBones: luff);
             return lines;
         }
 
@@ -65,13 +51,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             return RoutedRope.Attach(line: renderer);
         }
 
-        internal void Draw(
-            Transform[] bones,
-            Vector3 tip,
-            CapsuleCollider mast,
-            Vector3 aft,
-            bool struck
-        )
+        internal void Draw(Transform[] bones, Vector3 tip, CapsuleCollider mast, bool struck)
         {
             if (struck || !mast)
             {
@@ -80,46 +60,10 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 return;
             }
             Span(line: PeakLashing, start: tip, end: bones[1].position, sag: 0.01f);
-            if (surfaceMast != mast)
-            {
-                surfaceMast = mast;
-                surface = new SpritsailMastSurface(
-                    mast: mast.GetComponent<Mast>(),
-                    sampleCount: LuffTies.Length
-                );
-            }
-            for (int i = 0; i < LuffTies.Length; i++)
-            {
-                float row = i * BoomedSpritsailGeometry.Rows / (float)(LuffTies.Length - 1);
-                int lower = Mathf.FloorToInt(row);
-                var point = Vector3.Lerp(
-                    a: bones[BoomedSpritsailGeometry.ShapeBone(row: lower, column: 0)].position,
-                    b: bones[
-                        BoomedSpritsailGeometry.ShapeBone(
-                            row: Mathf.Min(lower + 1, BoomedSpritsailGeometry.Rows),
-                            column: 0
-                        )
-                    ].position,
-                    t: row - lower
-                );
-                var localAxis =
-                    mast.direction == 0 ? Vector3.right
-                    : mast.direction == 1 ? Vector3.up
-                    : Vector3.forward;
-                var axis = mast.transform.TransformDirection(direction: localAxis).normalized;
-                var origin = mast.transform.TransformPoint(position: mast.center);
-                var center = origin + axis * Vector3.Dot(point - origin, axis);
-                var outward = Vector3.ProjectOnPlane(vector: aft, planeNormal: axis).normalized;
-                float radius = surface.Radius(
-                    sampleIndex: i,
-                    center: center,
-                    direction: outward,
-                    fallback: BoomedSpritsailRigging.MastRadius(mast: mast.GetComponent<Mast>())
-                );
-                var start = LuffCollars[i]
-                    .Pose(center: center, axis: axis, outward: outward, radius: radius);
-                Span(line: LuffTies[i], start: start, end: point, sag: 0);
-            }
+            Mount.Draw(
+                mast: mast,
+                fallbackRadius: BoomedSpritsailRigging.MastRadius(mast: mast.GetComponent<Mast>())
+            );
         }
 
         private static void Span(RoutedRope line, Vector3 start, Vector3 end, float sag)
@@ -138,14 +82,6 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
 
         internal void Hide()
         {
-            if (LuffTies != null)
-                foreach (var line in LuffTies)
-                    if (line)
-                        line.SetVisible(visible: false);
-            if (LuffCollars != null)
-                foreach (var collar in LuffCollars)
-                    if (collar)
-                        collar.Hide();
             if (PeakLashing)
                 PeakLashing.SetVisible(visible: false);
         }

@@ -225,12 +225,14 @@ reference. The staysail-specific angle patch remains separate.
 ## Custom rope rendering
 
 Flying Sail sheets, shared spans and fixed ties, plus both Spritsail types'
-custom sheets, lashings, luff ties, mast collars and snotter purchases, follow
-the native `Settings.clothRopes` option. When enabled, `RoutedRope` builds a
-six-sided tube with smooth radial normals along each family's existing route.
-When disabled, it uses the original line material, colors and flat renderer. The
-native boomed Spritsail sheet and Fisherman's Staysail ropes retain their native
-rendering.
+custom sheets, lashings and snotter purchases/collars, follow the native
+`Settings.clothRopes` option. When enabled, `RoutedRope` builds a six-sided tube
+with smooth radial normals along each family's existing route. When disabled, it
+uses the original line material, colors and flat renderer. The native boomed
+Spritsail sheet and Fisherman's Staysail ropes retain their native rendering.
+
+The authored Spritsail luff mount's seven rope meshes remain part of the mount
+in either setting; they use the same native 3D rope material.
 
 The installed plain `3d rope` donor was inspected on **2026-10-07**:
 `sharedassets24.assets` renderer **4503**, mesh **1475**, material **64**
@@ -465,8 +467,8 @@ regardless of sail size or reef pose. Deployment's `Heel` denotes the bolt; only
 the timber and deployed collider extend forward. The sleeve stays centered on
 the mast. The lower mounting follows boat movement and installation height, but
 uses the boat's neutral starboard direction projected perpendicular to the mast,
-so it does not follow tacks. Luff collars, ties and the struck bundle follow the
-rotating sail frame.
+so it does not follow tacks. The authored luff mount and struck bundle follow
+the rotating sail frame.
 
 `SpritsailSnotterGeometry` fits the authored parts to these dimensions:
 
@@ -495,14 +497,11 @@ are disposed with their instance. Mast alignment reuses its resolved axis for
 topmast **80** uses its authored taper. Other misses warn once per surface
 instance and fall back to the capsule radius.
 
-Seven luff ties and three-turn mast collars follow the posed luff. Mast collar
-rope uses **80%** of normal diameter; the upper purchase coil retains normal
-thickness. Each tie has its own mast-local surface-query cache slot, sharing one
-mesh snapshot; changed origin/direction/scale misses the cache and a changed
-mast replaces it. Socket queries retain a single slot. No runtime performance
-improvement has been measured. Luff lines hide when struck, leaving the native
-bundle's bindings visible; the purchase remains visible when its winch is
-available.
+The [authored luff mount](#authored-sail-mount-runtime) replaces the seven short
+ties and three-turn mast collars. It hides when struck, leaving the native
+bundle's bindings visible. The upper purchase coil retains its existing normal
+thickness and remains visible when its winch is available. Socket queries retain
+a single cache slot.
 
 #### Snotter materials
 
@@ -588,6 +587,97 @@ the fixed mounting, rotating sleeve/bolt, mast clearance, sleeve/mounting
 junction and 12-inch extension. Inspect material regions, seams, overlapping
 faces, shadows, luff ties and struck bundles. Verify shipyard previews,
 collisions and save/reload, including fit around tapered or noncircular masts.
+
+### Authored sail mount bake
+
+`assets/sail_mount/SailMount.obj` supplies the proposed luff edging, seven
+eyelets and seven mast ropes. Bake it from the repository root:
+
+```sh
+blender -b --factory-startup --python-exit-code 1 --python tools/convert_sail_mount.py
+python -m unittest discover -s tests/AssetChecks
+```
+
+The baker writes `assets/sail_mount/sail_mount.bytes`, using Blender's polygon
+triangulation. It preserves source positions, UVs, corner normals and separate
+part identities; identical vertex attributes are shared only within one part.
+Loose OBJ line records are omitted. Missing parts, invalid indices, nonfinite
+attributes, nonunit normals, degenerate triangles and inconsistent winding fail
+the bake before output is written. Keep the OBJ and baked bytes together in
+version control. AssetChecks verifies source freshness, polygon triangle counts,
+geometry, material regions and preservation of authored attribute values.
+
+Use object names `LuffEdge`, `Eyelet_01` through `Eyelet_07`, and `Rope01`
+through `Rope07` (an underscore before the rope number is also accepted). Each
+eyelet must assign faces to both `Brass` and `ThickCloth`; numeric material
+suffixes are accepted. The strip and ropes receive slots by object identity,
+ignoring absent or inherited OBJ material tags. MTL files and texture images are
+not required: slots reserve native material binding for runtime integration.
+
+Internal format **MSL1** is little-endian, with a 44-byte header: four magic
+bytes, uint32 vertex count, uint32 index count, and SHA-256 of the source OBJ.
+Each 36-byte vertex stores position (three floats), UV (two floats), normal
+(three floats), and uint32 part ID. Each 16-byte triangle stores three uint32
+vertex indices and a uint32 material ID. Part IDs are **0** for the strip,
+**1–7** for the corresponding eyelets and **8–14** for the corresponding ropes.
+Material IDs are **0 SailCloth**, **1 Brass**, **2 ThickCloth**, **3 Rope**.
+Coordinates remain in the exported frame: the 6 m strip runs along X, spans Z =
+-0.1 to 0, and lies at Y = 0. No mast fitting, axis conversion or skinning is
+baked in.
+
+The **2026-10-08** bake has **15,015 vertices**, **6,566 triangles** and
+**645,640 bytes**. Triangle slots contain **546 SailCloth**, **728 Brass**,
+**1,680 ThickCloth** and **3,612 Rope** triangles; **112** loose line records
+are omitted. All eight offline asset checks pass. The **0.3.0-dev** DLL embeds
+the bytes as `MoreSailwindSails.SailMount`; ordinary builds require no Blender
+or loose runtime asset files.
+
+### Authored sail mount runtime
+
+Both loose-footed and boomed Mk.A/B attach the edging to their existing posed
+luff bones. The 10 cm strip extends forward from a 2 mm overlap with the sail;
+its length follows the sail size and current reef pose. Local adjustments keep
+holes aligned with rigid, unscaled eyelets. The strip has separate reverse
+faces/normals for visibility from both tacks. Live sail Cloth topology, bones,
+solver settings, corner positions, controls and forces are unchanged.
+
+The source rope loops have a Y/Z elliptical centerline centered at Z = 0.23,
+with radii 0.2/0.275 m. Runtime fitting maps each loop around the carrying mast,
+retaining approximately 16 mm rope diameter. Each rope radius is measured from
+its baked X extent (the loops lie in Y/Z), so thickness edits follow the asset
+without a separate runtime constant. Two curved approach legs pass through the
+eyelet and meet the mast collar; the collar fits a conservative circular
+envelope from 16 directional mast-surface samples at each eyelet's height. This
+accommodates taper; noncircular sections may leave small gaps. Samples share one
+mast mesh snapshot and use separate cache slots. Replacing the mast replaces
+that cache; the established capsule-radius fallback and Sanbuq topmast taper
+remain in use.
+
+Each live mount lazily owns one mesh, four material slots and reusable fit
+buffers. Topology is initialized once; positions, normals, tangents and bounds
+update when the local luff pose or mast fit changes. Rigid world draw matrices
+handle boat motion and parent scaling without stretching eyelets or rope
+thickness. Hidden, loading, unsupported and struck sails submit no mount draw;
+instance destruction releases only its owned mesh.
+
+Both cloth slots use the current native sail material, following recoloring. The
+brass slot uses prefab **103** (`103 mug metal gold`) material `metal gold`,
+inspected in installed `sharedassets24.assets` material **131** on
+**2026-10-08**. The rope slot uses `RefsDirectory.clothRopePrefab`'s native
+skinned material. Native materials are shared read-only. Missing materials log
+once per mount and retry; no custom textures or proprietary assets are
+redistributed.
+
+GeometryChecks covers both cuts and deployment paths, multiple sail sizes,
+varying mast radii, seam continuity, hole alignment, rigid eyelets, finite
+normals and rope clearance. AssemblyChecks guards integration in both rigs,
+embedded data, surface sampling, separate drawing and mesh cleanup. An offline
+posed-mesh render checks the general rope route, not native materials or live
+Cloth. In-game validation remains pending: start on **Brig** with all four
+sails, then **Sanbuq** and affected masts. Check both tacks, resizing, partial
+reefing and striking, especially crowded lower eyelets; inspect the seam, rope
+passage, timber clearance, recoloring, shadows, preview/cancel, mast replacement
+and save/reload. Runtime frame time has not been measured.
 
 ### Sprit obstruction on one tack
 
