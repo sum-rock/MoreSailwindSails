@@ -51,7 +51,7 @@ internal static class PrototypeChecks
             .ToArray();
         Require(
             value: !resolver.Any(m => m.DeclaringType.Namespace == "MoreSailwindSails.BoatRigs")
-                && resolver.Any(m => m.Name == "Attachment"),
+                && resolver.Any(m => m.Name == "TryGuides"),
             message: "Spritsail supports use the carrying mast's native attachments without a profile."
         );
         foreach (

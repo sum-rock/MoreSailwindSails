@@ -46,7 +46,7 @@ internal static class DeploymentChecks
             Require(
                 value: !calls.Any(m => m.DeclaringType.Namespace == "MoreSailwindSails.BoatRigs")
                     && calls.Any(m =>
-                        m.DeclaringType.Name == "SpritsailNativeBinding" && m.Name == "Attachment"
+                        m.DeclaringType.Name == "SpritsailNativeBinding" && m.Name == "TryGuides"
                     ),
                 message: "Both spritsail types must resolve native mast attachments without boat profiles."
             );

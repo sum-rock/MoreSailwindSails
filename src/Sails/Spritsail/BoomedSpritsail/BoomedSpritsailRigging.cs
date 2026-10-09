@@ -55,18 +55,16 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 )
             )
                 return false;
-            var lower = SpritsailNativeBinding.Attachment(items: fore.mastReefAtt, index: slot);
-            var upper = SpritsailNativeBinding.Attachment(
-                items: fore.mastReefAttExtension,
-                index: slot
-            );
-            if (!upper)
-                upper = lower;
             if (
-                !lower
-                || !upper
-                || !lower.gameObject.activeInHierarchy
-                || !upper.gameObject.activeInHierarchy
+                !SpritsailNativeBinding.TryGuides(
+                    boat: boat,
+                    mast: collider,
+                    primary: fore.mastReefAtt,
+                    extensions: fore.mastReefAttExtension,
+                    slot: slot,
+                    lower: out var lower,
+                    upper: out var upper
+                )
             )
                 return false;
             pair = new BoomedSpritsailMount

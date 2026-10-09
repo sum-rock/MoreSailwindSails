@@ -372,11 +372,14 @@ exceptions still propagate.
 
 Guides come from the carrying mast's indexed `mastReefAtt` and optional
 `mastReefAttExtension`, falling back to the former when no extension is
-assigned. There is no search through other mast sections. Runtime ancestry
-identifies actual mast/guide-owning parts for removal and preview protection.
-Clearance is measured along the mast axis, and the existing luff/hinge frame
-follows rake. Horizontal/degenerate axes remain invalid for height-based
-fitting.
+assigned. These array names describe native routing roles, not height: order the
+assigned pair along the upward mast axis in boat space. The higher guide sets
+luff/hoist clearance and the purchase route's upper turn; the lower guide
+supplies its preceding turn. There is no search through other slots or mast
+sections. Runtime ancestry identifies actual mast/guide-owning parts for removal
+and preview protection. Clearance is measured along the mast axis, and the
+existing luff/hinge frame follows rake. Horizontal/degenerate axes remain
+invalid for height-based fitting.
 
 Existing prefab IDs, installation coordinates and save fields remain unchanged.
 Loaded arrangements that depended on borrowed fittings or higher profiled guides
@@ -812,7 +815,7 @@ does not change eligibility. The luff and hinge follow that axis; nonfinite,
 degenerate or effectively horizontal axes cannot support the existing
 height-based fitting calculation.
 
-The native slot's assigned guide must be at least **5 cm above the fully raised
+The native slot's higher guide must be at least **5 cm above the fully raised
 purchase**, measured along the mast axis. Otherwise installation reports
 `SPRIT HOIST REQUIRES A HIGHER MAST GUIDE`. Lower or resize the sail, or use a
 mast with a suitable native guide. The actual guide-owning parts remain
@@ -1709,6 +1712,15 @@ save/reload checks, starting on Brig.
   confirmed a native checker Awake exception from empty collider children. Code
   fixes address construction timing and reverse reef control direction;
   successful installation and corrected timing still need an in-game retest.
+- **Junk mainmast guides, 2026-10-09:** the user reported a false
+  `LUFF ABOVE MAST GUIDE` rejection for boomed Mk.B on mainmast 2. Installed
+  `level24` confirms both native mainmasts **10/11** put `mastReefAtt` at boat
+  height **24.3734 m** and `mastReefAttExtension` at **5.0253 m**; every slot
+  uses this reversed-height pair. Both spritsail types now order their assigned
+  pair along the mast before clearance checks and routing. Measured geometry
+  fixtures and assembly integration checks cover the correction; live
+  installation and purchase routing on both Junk mainmasts still need
+  confirmation.
 
 These observations cover specific configurations, not all boats or lifecycle
 transitions. The winch redesign remains accepted; remaining checks concern
@@ -1716,8 +1728,8 @@ regressions and later changes rather than unfinished original placement work.
 
 ### Spritsail native binding revision (2026-10-07)
 
-The profile-free/native-control revision has not been observed in game. Validate
-both types/marks on Brig, then Gallus plumb/raked and Sanbuq; include mixed
+Targeted native-control regression validation remains incomplete. Validate both
+types/marks on Brig, then Gallus plumb/raked and Sanbuq; include mixed
 square/gaff/Fisherman arrangements, reordered sails, missing or occupied native
 slots, guide-owner removal previews, and loading existing spritsails. Check
 native sheet/reef operation and both tacks without Cloth resets. Earlier runtime
