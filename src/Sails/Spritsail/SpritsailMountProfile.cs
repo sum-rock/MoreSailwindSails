@@ -27,6 +27,9 @@ namespace MoreSailwindSails.Sails.Spritsail
         private static int misses;
         private static int envelopeHits;
         private static int envelopeMisses;
+        private static readonly int[] revisionReasons = new int[7];
+        private static readonly int[] rebuilds = new int[3];
+        private static readonly int[] reuses = new int[3];
         private static int frames;
         private static int slowFrames;
         private static int lastFrame = -1;
@@ -132,6 +135,25 @@ namespace MoreSailwindSails.Sails.Spritsail
                 envelopeMisses++;
         }
 
+        internal static void Revision(int reasons)
+        {
+            if (mode == 0)
+                return;
+            for (int i = 0; i < revisionReasons.Length; i++)
+                if ((reasons & (1 << i)) != 0)
+                    revisionReasons[i]++;
+        }
+
+        internal static void Consumer(int part, bool rebuild)
+        {
+            if (mode == 0)
+                return;
+            if (rebuild)
+                rebuilds[part]++;
+            else
+                reuses[part]++;
+        }
+
         internal static void End(long started)
         {
             if (started == 0)
@@ -162,6 +184,9 @@ namespace MoreSailwindSails.Sails.Spritsail
             totalTicks = maxTicks = 0;
             calls = refits = hits = misses = frames = slowFrames = 0;
             envelopeHits = envelopeMisses = 0;
+            Array.Clear(array: revisionReasons, index: 0, length: revisionReasons.Length);
+            Array.Clear(array: rebuilds, index: 0, length: rebuilds.Length);
+            Array.Clear(array: reuses, index: 0, length: reuses.Length);
             frameSeconds = maxFrameSeconds = 0;
             lastFrame = -1;
             initialGc = GC.CollectionCount(generation: 0);
@@ -176,7 +201,7 @@ namespace MoreSailwindSails.Sails.Spritsail
             double perFrame = milliseconds / frames;
             Plugin.Log.LogInfo(
                 data: FormattableString.Invariant(
-                    $"[MountProfile] mode={(mode == 1 ? "NORMAL" : "BYPASS")} frames={frames} frameMeanMs={frameSeconds * 1000 / frames:F2} frameMaxMs={maxFrameSeconds * 1000:F2} over33ms={slowFrames} callsPerFrame={calls / (double)frames:F2} refits={refits}/{calls} partsStripEyeletRope={fittedParts[0]}/{fittedParts[1]}/{fittedParts[2]} reasonsInitialLuffEyeletMastRadiusSupport={refitReasons[0]}/{refitReasons[1]}/{refitReasons[2]}/{refitReasons[3]}/{refitReasons[4]}/{refitReasons[5]} envelopeHitMiss={envelopeHits}/{envelopeMisses} cacheHitMiss={hits}/{misses} mountCpuMsPerFrame={totalTicks * perFrame:F3} maxCallMs={maxTicks * milliseconds:F3} setupMsPerFrame={stages[Setup] * perFrame:F3} surfaceMsPerFrame={stages[Surface] * perFrame:F3} fitMsPerFrame={stages[Fit] * perFrame:F3} uploadMsPerFrame={stages[Upload] * perFrame:F3} submitMsPerFrame={stages[Submit] * perFrame:F3} gc0Global={GC.CollectionCount(generation: 0) - initialGc}"
+                    $"[MountProfile] mode={(mode == 1 ? "NORMAL" : "BYPASS")} frames={frames} frameMeanMs={frameSeconds * 1000 / frames:F2} frameMaxMs={maxFrameSeconds * 1000:F2} over33ms={slowFrames} callsPerFrame={calls / (double)frames:F2} refits={refits}/{calls} partsStripEyeletRope={fittedParts[0]}/{fittedParts[1]}/{fittedParts[2]} reasonsInitialLuffEyeletMastRadiusSupport={refitReasons[0]}/{refitReasons[1]}/{refitReasons[2]}/{refitReasons[3]}/{refitReasons[4]}/{refitReasons[5]} revisionsInitialSheetReefTackFittingSupportReactivate={revisionReasons[0]}/{revisionReasons[1]}/{revisionReasons[2]}/{revisionReasons[3]}/{revisionReasons[4]}/{revisionReasons[5]}/{revisionReasons[6]} rebuildMountSpritSnotter={rebuilds[0]}/{rebuilds[1]}/{rebuilds[2]} reuseMountSpritSnotter={reuses[0]}/{reuses[1]}/{reuses[2]} envelopeHitMiss={envelopeHits}/{envelopeMisses} cacheHitMiss={hits}/{misses} mountCpuMsPerFrame={totalTicks * perFrame:F3} maxCallMs={maxTicks * milliseconds:F3} setupMsPerFrame={stages[Setup] * perFrame:F3} surfaceMsPerFrame={stages[Surface] * perFrame:F3} fitMsPerFrame={stages[Fit] * perFrame:F3} uploadMsPerFrame={stages[Upload] * perFrame:F3} submitMsPerFrame={stages[Submit] * perFrame:F3} gc0Global={GC.CollectionCount(generation: 0) - initialGc}"
                 )
             );
         }

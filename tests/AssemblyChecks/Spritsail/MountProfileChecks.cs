@@ -29,6 +29,9 @@ internal static class MountProfileChecks
         Method(name: "EnvelopeQuery").Invoke(obj: null, parameters: new object[] { true });
         Method(name: "SurfaceQuery").Invoke(obj: null, parameters: new object[] { false });
         Method(name: "Refit").Invoke(obj: null, parameters: new object[] { 32767, 63 });
+        Method(name: "Revision").Invoke(obj: null, parameters: new object[] { 127 });
+        Method(name: "Consumer").Invoke(obj: null, parameters: new object[] { 0, true });
+        Method(name: "Consumer").Invoke(obj: null, parameters: new object[] { 2, false });
         Method(name: "End").Invoke(obj: null, parameters: new object[] { 0L });
         Require(
             value: (int)profile.GetField(name: "calls", bindingAttr: flags).GetValue(obj: null) == 0
@@ -38,7 +41,16 @@ internal static class MountProfileChecks
                     == 0,
             message: "Disabled hooks must not collect samples."
         );
-        foreach (string field in new[] { "fittedParts", "refitReasons" })
+        foreach (
+            string field in new[]
+            {
+                "fittedParts",
+                "refitReasons",
+                "revisionReasons",
+                "rebuilds",
+                "reuses",
+            }
+        )
             Require(
                 value: (
                     (int[])profile.GetField(name: field, bindingAttr: flags).GetValue(obj: null)

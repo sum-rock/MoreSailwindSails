@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using MoreSailwindSails.Visuals;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
@@ -7,6 +8,7 @@ namespace MoreSailwindSails.Sails.Spritsail
     // Renders a procedural rigid sprit using the installed small gaff's timber material.
     internal sealed class SpritsailSpar : MonoBehaviour
     {
+        private readonly SailVisualCache cache = new SailVisualCache();
         public MeshRenderer Renderer;
         public SpritsailSnotter Snotter;
         public SpritsailFurledVisual Furled;
@@ -67,8 +69,12 @@ namespace MoreSailwindSails.Sails.Spritsail
             return mesh;
         }
 
-        internal void Pose(Vector3 heel, Vector3 tip, float radius)
+        internal void Pose(Vector3 heel, Vector3 tip, float radius, long revision)
         {
+            bool rebuild = cache.Needs(revision: revision);
+            SpritsailMountProfile.Consumer(part: 1, rebuild: rebuild);
+            if (!rebuild)
+                return;
             radius *= SpritsailSpritGeometry.ThicknessMultiplier;
             transform.SetPositionAndRotation(
                 position: heel,
@@ -80,7 +86,10 @@ namespace MoreSailwindSails.Sails.Spritsail
                 radius / parentScale.y,
                 (tip - heel).magnitude / parentScale.z
             );
+            cache.Commit(revision: revision);
         }
+
+        private void OnDisable() => cache.Invalidate();
 
         internal void SetVisible(bool visible)
         {

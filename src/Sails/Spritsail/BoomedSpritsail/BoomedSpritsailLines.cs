@@ -51,7 +51,13 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             return RoutedRope.Attach(line: renderer);
         }
 
-        internal void Draw(Transform[] bones, Vector3 tip, CapsuleCollider mast, bool struck)
+        internal void Draw(
+            Transform[] bones,
+            Vector3 tip,
+            CapsuleCollider mast,
+            bool struck,
+            long revision
+        )
         {
             if (struck || !mast)
             {
@@ -61,6 +67,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             }
             Span(line: PeakLashing, start: tip, end: bones[1].position, sag: 0.01f);
             Mount.Draw(
+                revision: revision,
                 mast: mast,
                 fallbackRadius: BoomedSpritsailRigging.MastRadius(mast: mast.GetComponent<Mast>())
             );

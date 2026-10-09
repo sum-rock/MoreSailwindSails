@@ -12,6 +12,11 @@ namespace MoreSailwindSails.Sails.Spritsail
         public RopeEffect ReefSource;
         private SpritsailSnotterMesh rotatingMesh;
         private SpritsailSnotterMesh mountingMesh;
+        private readonly SailVisualCache cache = new SailVisualCache();
+        private Matrix4x4 rotatingFrame;
+        private Matrix4x4 mountingFrame;
+        private Transform mountAnchor;
+        private bool wasPurchaseVisible;
         private float meshContactRadius = -1;
         private float meshPivotDistance = -1;
         private float meshMastRadius = -1;
@@ -100,7 +105,8 @@ namespace MoreSailwindSails.Sails.Spritsail
             Vector3 fallbackDirection,
             Vector3 mountingDirection,
             float mastRadius,
-            bool visible
+            bool visible,
+            long revision
         )
         {
             if (!visible || !mast)
@@ -108,79 +114,105 @@ namespace MoreSailwindSails.Sails.Spritsail
                 Hide();
                 return;
             }
-            var localAxis =
-                mast.direction == 0 ? Vector3.right
-                : mast.direction == 1 ? Vector3.up
-                : Vector3.forward;
-            var axis = mast.transform.TransformDirection(direction: localAxis).normalized;
-            if (Vector3.Dot(axis, tip - heel) < 0)
-                axis = -axis;
-            var origin = mast.transform.TransformPoint(position: mast.center);
-            var center = origin + axis * Vector3.Dot(heel - origin, axis);
-            var forward = Vector3.ProjectOnPlane(vector: heel - center, planeNormal: axis);
-            if (forward.sqrMagnitude < 0.000001f)
-                forward = Vector3.ProjectOnPlane(vector: fallbackDirection, planeNormal: axis);
-            forward.Normalize();
-            var fixedForward = Vector3
-                .ProjectOnPlane(vector: mountingDirection, planeNormal: axis)
-                .normalized;
-            if (fixedForward.sqrMagnitude < 0.000001f)
+            bool purchaseVisible = ReefSource && ReefSource.gameObject.activeInHierarchy;
+            if (purchaseVisible && !wasPurchaseVisible)
+                cache.Invalidate();
+            wasPurchaseVisible = purchaseVisible;
+            bool rebuild = cache.Needs(revision: revision);
+            SpritsailMountProfile.Consumer(part: 2, rebuild: rebuild);
+            if (rebuild)
             {
-                // Mast-local fallback is independent of the sail's current tack.
-                var reference = localAxis == Vector3.right ? Vector3.up : Vector3.right;
-                fixedForward = Vector3
-                    .ProjectOnPlane(
-                        vector: mast.transform.TransformDirection(direction: reference),
-                        planeNormal: axis
-                    )
+                var localAxis =
+                    mast.direction == 0 ? Vector3.right
+                    : mast.direction == 1 ? Vector3.up
+                    : Vector3.forward;
+                var axis = mast.transform.TransformDirection(direction: localAxis).normalized;
+                if (Vector3.Dot(axis, tip - heel) < 0)
+                    axis = -axis;
+                var origin = mast.transform.TransformPoint(position: mast.center);
+                var center = origin + axis * Vector3.Dot(heel - origin, axis);
+                var forward = Vector3.ProjectOnPlane(vector: heel - center, planeNormal: axis);
+                if (forward.sqrMagnitude < 0.000001f)
+                    forward = Vector3.ProjectOnPlane(vector: fallbackDirection, planeNormal: axis);
+                forward.Normalize();
+                var fixedForward = Vector3
+                    .ProjectOnPlane(vector: mountingDirection, planeNormal: axis)
                     .normalized;
-            }
-            float pivotDistance = (heel - center).magnitude;
-            float contactRadius = SpritsailSpritGeometry.RadiusAtPivot(
-                radius: sparRadius,
-                pivotToTip: (tip - heel).magnitude
-            );
-            if (
-                rotatingMesh == null
-                || Mathf.Abs(pivotDistance - meshPivotDistance) > 0.001f
-                || Mathf.Abs(contactRadius - meshContactRadius) > 0.001f
-                || Mathf.Abs(mastRadius - meshMastRadius) > 0.001f
-            )
-                Refit(
-                    contactRadius: contactRadius,
-                    mastRadius: mastRadius,
-                    pivotDistance: pivotDistance
+                if (fixedForward.sqrMagnitude < 0.000001f)
+                {
+                    // Mast-local fallback is independent of the sail's current tack.
+                    var reference = localAxis == Vector3.right ? Vector3.up : Vector3.right;
+                    fixedForward = Vector3
+                        .ProjectOnPlane(
+                            vector: mast.transform.TransformDirection(direction: reference),
+                            planeNormal: axis
+                        )
+                        .normalized;
+                }
+                float pivotDistance = (heel - center).magnitude;
+                float contactRadius = SpritsailSpritGeometry.RadiusAtPivot(
+                    radius: sparRadius,
+                    pivotToTip: (tip - heel).magnitude
                 );
+                if (
+                    rotatingMesh == null
+                    || Mathf.Abs(pivotDistance - meshPivotDistance) > 0.001f
+                    || Mathf.Abs(contactRadius - meshContactRadius) > 0.001f
+                    || Mathf.Abs(mastRadius - meshMastRadius) > 0.001f
+                )
+                    Refit(
+                        contactRadius: contactRadius,
+                        mastRadius: mastRadius,
+                        pivotDistance: pivotDistance
+                    );
+                mountAnchor = mast.transform;
+                rotatingFrame =
+                    transform.parent.worldToLocalMatrix
+                    * SpritsailSnotterGeometry.Frame(center: center, axis: axis, outward: forward);
+                mountingFrame =
+                    mountAnchor.worldToLocalMatrix
+                    * SpritsailSnotterGeometry.Frame(
+                        center: center,
+                        axis: axis,
+                        outward: fixedForward
+                    );
+                var purchasePoint = SpritsailDeployment.PurchasePoint(heel: heel, tip: tip);
+                var contact = PurchaseCollar.Pose(
+                    center: purchasePoint,
+                    axis: tip - heel,
+                    outward: guide - purchasePoint,
+                    radius: sparRadius
+                        * Mathf.Lerp(a: 1, b: SpritsailSpritGeometry.EndRadiusRatio, t: 0.8f),
+                    draw: false
+                );
+                if (ReefSource)
+                {
+                    Purchase.SetPosition(index: 0, position: ReefSource.transform.position);
+                    Purchase.SetPosition(index: 1, position: guide);
+                    Purchase.SetPosition(index: 2, position: contact);
+                }
+                cache.Commit(revision: revision);
+            }
             rotatingMesh.Draw(
-                frame: SpritsailSnotterGeometry.Frame(center: center, axis: axis, outward: forward),
+                frame: transform.parent.localToWorldMatrix * rotatingFrame,
                 materials: Materials,
                 layer: gameObject.layer
             );
             mountingMesh.Draw(
-                frame: SpritsailSnotterGeometry.Frame(
-                    center: center,
-                    axis: axis,
-                    outward: fixedForward
-                ),
+                frame: mountAnchor.localToWorldMatrix * mountingFrame,
                 materials: Materials,
                 layer: gameObject.layer
             );
-            var purchasePoint = SpritsailDeployment.PurchasePoint(heel: heel, tip: tip);
-            var contact = PurchaseCollar.Pose(
-                center: purchasePoint,
-                axis: tip - heel,
-                outward: guide - purchasePoint,
-                radius: sparRadius
-                    * Mathf.Lerp(a: 1, b: SpritsailSpritGeometry.EndRadiusRatio, t: 0.8f)
+            PurchaseCollar.Rope.DrawCached(
+                visible: true,
+                anchor: transform.parent,
+                revision: revision
             );
-            bool purchaseVisible = ReefSource && ReefSource.gameObject.activeInHierarchy;
-            if (purchaseVisible)
-            {
-                Purchase.SetPosition(index: 0, position: ReefSource.transform.position);
-                Purchase.SetPosition(index: 1, position: guide);
-                Purchase.SetPosition(index: 2, position: contact);
-            }
-            Purchase.SetVisible(visible: purchaseVisible);
+            Purchase.DrawCached(
+                visible: purchaseVisible,
+                anchor: transform.parent,
+                revision: revision
+            );
         }
 
         private void Refit(float contactRadius, float mastRadius, float pivotDistance)
@@ -221,7 +253,11 @@ namespace MoreSailwindSails.Sails.Spritsail
                 PurchaseCollar.Hide();
         }
 
-        private void OnDisable() => Hide();
+        private void OnDisable()
+        {
+            cache.Invalidate();
+            Hide();
+        }
 
         private void OnDestroy()
         {

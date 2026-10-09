@@ -6,6 +6,12 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/Visuals/SailVisualState.cs" Link="Visuals/SailVisualState.cs" />
+    <Compile
+      Include="../../src/Visuals/SailVisualRevision.cs"
+      Link="Visuals/SailVisualRevision.cs"
+    />
+    <Compile Include="../../src/Visuals/SailVisualCache.cs" Link="Visuals/SailVisualCache.cs" />
     <Compile
       Include="../../src/Sails/Spritsail/SpritsailMountFrame.cs"
       Link="Spritsail/SpritsailMountFrame.cs"

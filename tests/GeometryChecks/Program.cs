@@ -13,6 +13,7 @@ internal static class Program
             return;
         }
         Visuals.RoutedRopeChecks.Run();
+        Visuals.SailVisualRevisionChecks.Run();
         Spritsail.CategoryChecks.Run();
         Spritsail.BoomedSpritsail.GeometryChecks.Run();
         Spritsail.CollisionChecks.Run();

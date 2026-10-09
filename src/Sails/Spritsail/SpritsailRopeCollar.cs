@@ -34,7 +34,13 @@ namespace MoreSailwindSails.Sails.Spritsail
             return collar;
         }
 
-        internal Vector3 Pose(Vector3 center, Vector3 axis, Vector3 outward, float radius)
+        internal Vector3 Pose(
+            Vector3 center,
+            Vector3 axis,
+            Vector3 outward,
+            float radius,
+            bool draw = true
+        )
         {
             axis.Normalize();
             outward = Vector3.ProjectOnPlane(vector: outward, planeNormal: axis).normalized;
@@ -56,7 +62,8 @@ namespace MoreSailwindSails.Sails.Spritsail
                         + axis * ((t - 0.5f) * 3 * width * 1.05f)
                 );
             }
-            Rope.SetVisible(visible: true);
+            if (draw)
+                Rope.SetVisible(visible: true);
             return center + outward * (radius + width * 0.55f);
         }
 

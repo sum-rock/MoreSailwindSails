@@ -50,6 +50,7 @@ internal static class Program
         Spritsail.TravelChecks.Run(assembly: assembly);
         Spritsail.DeploymentChecks.Run(assembly: assembly);
         Spritsail.MountProfileChecks.Run(assembly: assembly);
+        Spritsail.VisualCacheChecks.Run(assembly: assembly);
         Spritsail.NativeBindingChecks.Run(assembly: assembly);
         Spritsail.ObstructionChecks.Run(assembly: assembly);
         Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run(assembly: assembly);
