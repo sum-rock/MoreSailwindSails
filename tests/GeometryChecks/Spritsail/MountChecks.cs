@@ -86,6 +86,21 @@ internal static class MountChecks
             );
             var referenceVertices = new Vector3[vertices.Length];
             var referenceNormals = new Vector3[vertices.Length];
+            MountCachedReferenceGeometry.Fit(
+                luff: luff,
+                mastOrigin: mast,
+                mastAxis: axis,
+                radii: radii,
+                vertices: referenceVertices,
+                normals: referenceNormals,
+                eyelets: eyelets
+            );
+            MountOptimizationChecks.ExactCached(
+                vertices: vertices,
+                normals: normals,
+                expectedVertices: referenceVertices,
+                expectedNormals: referenceNormals
+            );
             MountReferenceGeometry.Fit(
                 luff: luff,
                 mastOrigin: mast,

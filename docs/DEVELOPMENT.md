@@ -658,6 +658,11 @@ ancestor scales cancel shared rotations; nonuniform ancestors retain stretch and
 shear. Unrelated roots use the world-coordinate fallback. A rigid draw matrix
 carries the fitted mesh with the cloth between rebuilds.
 
+The rope fitter evaluates its hot path with component arithmetic, retaining the
+previous operation order, normalization thresholds and finite-difference
+tangents. This removes repeated Unity `Vector3` operator/property calls without
+changing the curve, normals, topology, surface sampling or cache triggers.
+
 Both cloth slots use the current sail material, following recoloring. Brass uses
 prefab **103** (`103 mug metal gold`) material `metal gold`, inspected in
 `sharedassets24.assets`, material **131**, on **2026-10-08**. Rope uses
@@ -712,16 +717,32 @@ Use [Performance profiling](#performance-profiling) for live CPU/frame captures
 and visual bypass comparisons.
 
 The offline benchmark compares the current full fitter with the frozen original
-on identical inputs, excluding initialization and Unity mesh upload/rendering:
+and the previous cached fitter on identical inputs, excluding initialization and
+Unity mesh upload/rendering:
 
 ```sh
 nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mount
 ```
 
 After 100 warmups, seven alternating rounds of 50 fits on **2026-10-09**
-measured median costs of **1.953 ms/full fit** versus **2.783 ms** for the
-reference. Fifty warmed optimized fits allocated **zero managed bytes**. These
-.NET timings do not predict Unity/Mono frame rate.
+measured **0.774 ms/full fit**, compared with **2.731 ms** for the previous
+cached fitter (**3.53× faster**) and **3.946 ms** for the original. Fifty warmed
+optimized fits allocated **zero managed bytes**. These .NET timings do not
+predict Unity/Mono frame rate.
+
+Release and both check suites passed with zero build warnings/errors. Across the
+**288** geometry fixtures and alternate luff layouts, fitted vertex and normal
+components exactly match the previous cached implementation.
+
+The subsequent Junk capture on **2026-10-09**, with the matching installed DLL,
+recorded **693 rebuilds** over approximately **210 seconds** of sheeting and
+reefing. Mean fitting time per rebuild fell from **7.85 to 2.74 ms** for the
+loose-footed sail and **7.78 to 2.19 ms** for the boomed sail. The previous run
+had only 89 rebuilds, so these are per-rebuild comparisons, not matched-workload
+FPS evidence. No exceptions appeared during the capture. Boomed surface queries
+then averaged **3.84 ms/rebuild**, peaking at **10.17 ms**; uploads averaged
+**1.2–1.4 ms/rebuild** across the two types. Visual clearance, both tacks and
+NORMAL/BYPASS resumption have not yet been confirmed for this fitter.
 
 #### Mount and visual-cache validation
 
