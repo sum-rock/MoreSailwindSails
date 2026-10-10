@@ -863,6 +863,43 @@ bounds include the flex envelope; shipyard colliders use the thin deployed panel
 described above. The load estimate and travel limit remain visual tuning
 parameters.
 
+The Junk profiling capture on **2026-10-09** measured sheet flex at about **1.29
+ms/frame** during the first 4 minutes 20 seconds of sailing. It accounted for
+most of the loose-footed rig's **2.05 ms/frame** custom CPU time; these
+measurements exclude Unity's internal Cloth solver and GPU execution.
+
+The optimized fitter retains the same 17 candidate directions, 18 bisection
+steps, smoothing and edge budgets. Before searching a direction, it computes the
+closest possible point on that candidate's complete displacement segment. A
+candidate is skipped only when this lower error bound exceeds the best fitted
+error, with a relative rounding margin to preserve near ties. Zero requested
+movement returns before sampling edge budgets. No fitted displacement is cached
+across frames: sheet tension and the underlying pose remain live inputs.
+
+Authored-corner flex weights are computed during template setup and serialized
+for live clones. Each frame still poses the base shape first; flex then skips
+fixed bones and zero-displacement writes. This preserves relaxation, endpoint
+posing and the aerodynamic frame without changing Cloth topology.
+
+Release and both check suites passed on **2026-10-09**, with zero build warnings
+or errors. **4,320** fixtures exactly matched a frozen copy of the original
+solver across both marks, scales, reefs, camber, obstruction and sheet
+loads/directions. Checks also cover original bone weights, template
+serialization, pose ordering, edge budgets, mirrored tacks and zero managed
+allocations over 1,000 warmed fits. The offline benchmark is available with:
+
+```sh
+nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-flex
+```
+
+Seven alternating rounds over **2,880** active fixtures measured medians of
+**0.0218 ms/fit** for the reference and **0.0099 ms/fit** optimized (**2.21×**).
+These .NET solver timings exclude Unity bone updates and do not predict game
+frame rate. Runtime validation remains pending: begin on Brig, then repeat the
+Junk capture and check both marks under taut/slack/opposing sheets, tacks,
+reefing, resizing and save/reload. Compare the `SheetFlex` timing with identical
+profiling selections and camera conditions.
+
 ## Boomed spritsail companions
 
 Both marks retain the gaff's ordinary `angleControllerMid`, two-segment sheet

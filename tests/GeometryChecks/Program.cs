@@ -12,6 +12,11 @@ internal static class Program
             Spritsail.MountOptimizationChecks.Benchmark();
             return;
         }
+        if (System.Array.IndexOf(array: args, value: "--benchmark-flex") >= 0)
+        {
+            Spritsail.LooseFootedSpritsail.FlexOptimizationChecks.Benchmark();
+            return;
+        }
         Visuals.RoutedRopeChecks.Run();
         Visuals.SailVisualRevisionChecks.Run();
         Spritsail.CategoryChecks.Run();
@@ -29,6 +34,7 @@ internal static class Program
         Spritsail.DeploymentChecks.Run();
         Spritsail.ObstructionChecks.Run();
         Spritsail.LooseFootedSpritsail.FlexChecks.Run();
+        Spritsail.LooseFootedSpritsail.FlexOptimizationChecks.Run();
         Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run();
         Spritsail.LooseFootedSpritsail.MkB.CutChecks.Run();
         RigChecks.Run();

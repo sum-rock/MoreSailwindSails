@@ -27,6 +27,10 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
         public BoxCollider[] PanelCollisionStrips;
         private float camber = 1;
         private Vector3 sheetPull;
+
+        // Serialized so live clones retain the template's immutable authored-corner weights.
+        [SerializeField]
+        private float[] flexWeights;
         private readonly Vector3[] flexFoot = new Vector3[
             LooseFootedSpritsailGeometry.ShapeColumns + 1
         ];
@@ -88,6 +92,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             rig.Obstruction = sail.gameObject.AddComponent<SpritsailObstruction>();
             rig.Obstruction.StarboardAffected = true;
             rig.Corners = data.Corners;
+            rig.flexWeights = LooseFootedSpritsailFlex.Weights(corners: data.Corners);
             var originalHinge = sail.GetComponent<HingeJoint>();
             rig.OriginalHingeAxis = originalHinge.axis;
             rig.OriginalHingeAnchor = originalHinge.anchor;
@@ -741,6 +746,17 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                     target: requested,
                     seconds: Time.deltaTime
                 );
+                float limit =
+                    Vector3.Scale(Corners[3] - Corners[2], scale).magnitude
+                    * LooseFootedSpritsailFlex.MaximumDisplacement
+                    * SpritsailDeployment.Amount(unroll: Sail.currentUnroll);
+                var displacement = sheetPull * limit;
+                if (
+                    limit <= 0
+                    || displacement.sqrMagnitude
+                        < LooseFootedSpritsailFlex.MinimumDisplacementSquared
+                )
+                    return;
                 for (int column = 0; column < flexFoot.Length; column++)
                     flexFoot[column] = Vector3.Scale(
                         Bones[
@@ -756,39 +772,20 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                         Bones[LooseFootedSpritsailGeometry.LeechBone(row: row)].localPosition,
                         scale
                     );
-                float limit =
-                    Vector3.Scale(Corners[3] - Corners[2], scale).magnitude
-                    * LooseFootedSpritsailFlex.MaximumDisplacement
-                    * SpritsailDeployment.Amount(unroll: Sail.currentUnroll);
                 var delta = Unscale(
                     point: LooseFootedSpritsailFlex.Fit(
-                        requested: sheetPull * limit,
+                        requested: displacement,
                         foot: flexFoot,
                         leech: flexLeech,
                         limit: limit
                     ),
                     scale: scale
                 );
-                for (int row = 0; row <= LooseFootedSpritsailGeometry.Rows; row++)
-                for (int column = 0; column <= LooseFootedSpritsailGeometry.ShapeColumns; column++)
-                {
-                    float u = column / (float)LooseFootedSpritsailGeometry.ShapeColumns;
-                    float v = row / (float)LooseFootedSpritsailGeometry.Rows;
-                    var rest = Vector3.Lerp(
-                        Vector3.Lerp(Corners[0], Corners[2], v),
-                        Vector3.Lerp(Corners[1], Corners[3], v),
-                        u
-                    );
-                    float weight = LooseFootedSpritsailFlex.Weight(
-                        point: rest,
-                        peak: Corners[1],
-                        tack: Corners[2],
-                        clew: Corners[3]
-                    );
-                    Bones[
-                        LooseFootedSpritsailGeometry.ShapeBone(row: row, column: column)
-                    ].localPosition += delta * weight;
-                }
+                if (delta.sqrMagnitude == 0)
+                    return;
+                for (int bone = 0; bone < flexWeights.Length; bone++)
+                    if (flexWeights[bone] > 0)
+                        Bones[bone].localPosition += delta * flexWeights[bone];
             }
         }
 

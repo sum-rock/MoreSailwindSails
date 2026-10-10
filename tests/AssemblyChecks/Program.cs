@@ -54,6 +54,7 @@ internal static class Program
         Spritsail.VisualCacheChecks.Run(assembly: assembly);
         Spritsail.NativeBindingChecks.Run(assembly: assembly);
         Spritsail.ObstructionChecks.Run(assembly: assembly);
+        Spritsail.FlexChecks.Run(assembly: assembly);
         Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run(assembly: assembly);
         Spritsail.LooseFootedSpritsail.MarkChecks.Run(assembly: assembly);
         Compatibility.TextureCatalogChecks.Run(assembly);
