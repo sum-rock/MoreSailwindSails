@@ -5,6 +5,19 @@ See [README.md](../README.md) for features and player instructions and
 reference, verification procedures and
 [current validation status](#runtime-validation); resolved history is in Git.
 
+## Technical reference
+
+| Area                                     | Reference                                                                                |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Plugin identity, versions and prefab IDs | [Release and manual installation](#release-and-manual-installation)                      |
+| Directories, namespaces and test layout  | [Source organization](#source-organization)                                              |
+| Cloth, templates, controls and Harmony   | [Runtime safeguards](#runtime-safeguards)                                                |
+| Sail-family mechanics                    | [Flying Sail](#flying-sail), [Spritsails](#spritsails-category), [Staysails](#staysails) |
+| Authored stays and boat support          | [Boat profiles and stays](#boat-profiles-and-stays)                                      |
+| Native seats and manual fallback pairs   | [Winch placement](#winch-placement)                                                      |
+| Game checks and observed behavior        | [Runtime validation](#runtime-validation)                                                |
+| Profiling, installed references and logs | [Local investigation](#local-investigation)                                              |
+
 ## Build and automated checks
 
 The pinned Nix flake supports **x86_64 Linux** with .NET 8; the plugin targets
@@ -136,9 +149,10 @@ null fallbacks and flags. Keep one class per file with a responsibility comment.
 Preserve authored values and ordering when changing argument style.
 
 Add future sail families under their own `src/Sails/<Family>/` directory. Keep
-existing families independently editable;
-[shared-helper extraction is deferred](CLEANUP.md). Runtime mesh/object labels
-use the family or mark prefix; preserve donor hierarchy names.
+Flying Sail and staysail mechanics independently editable; new families need not
+follow either design. [Shared-helper extraction is deferred](CLEANUP.md), while
+existing shared winch controls remain in use. Runtime mesh/object labels use the
+family or mark prefix; preserve donor hierarchy names.
 
 Spritsails keep shared type mechanics under `src/Sails/Spritsail/<Type>/`.
 `LooseFootedSpritsail/` owns its rig, patches, prefab builder and geometry;
@@ -498,14 +512,11 @@ detached renderer objects, colliders or Rigidbodies for the fitting; both meshes
 are disposed with their instance. Mast alignment reuses its resolved axis for
 `AftDirection` in both spritsail families.
 
-`SpritsailMastSurface` owns an immutable `SpritsailMastGeometry` snapshot of
-readable mast triangle origins and edges. Uncached rays reuse those edges and
-evaluate intersections with component arithmetic, preserving triangle order,
-two-sided nearest-positive hits, barycentric tolerances and transformed ray
-length. Mesh vertex/index arrays are not retained after snapshot construction.
-The exact sample cache and visual revision triggers are unchanged. Known
-unreadable Sanbuq topmast **80** uses its authored taper; other misses warn once
-per surface instance and fall back to the capsule radius.
+`SpritsailMastSurface` caches readable mast triangle origins and edges for
+allocation-free ray queries. Intersections preserve nearest-positive hits, edge
+tolerances and transformed ray length. Known unreadable Sanbuq topmast **80**
+uses its authored taper; other misses warn once per surface instance and fall
+back to the capsule radius.
 
 The [authored luff mount](#authored-sail-mount-runtime) replaces the seven short
 ties and three-turn mast collars. It hides when struck, leaving the native
@@ -663,10 +674,9 @@ ancestor scales cancel shared rotations; nonuniform ancestors retain stretch and
 shear. Unrelated roots use the world-coordinate fallback. A rigid draw matrix
 carries the fitted mesh with the cloth between rebuilds.
 
-The rope fitter evaluates its hot path with component arithmetic, retaining the
-previous operation order, normalization thresholds and finite-difference
-tangents. This removes repeated Unity `Vector3` operator/property calls without
-changing the curve, normals, topology, surface sampling or cache triggers.
+The rope fitter uses component arithmetic to reduce Unity `Vector3` call
+overhead while preserving fitted positions, normals and finite-difference
+tangents.
 
 Both cloth slots use the current sail material, following recoloring. Brass uses
 prefab **103** (`103 mug metal gold`) material `metal gold`, inspected in
@@ -716,119 +726,23 @@ Mounts hide while loading, unsupported or struck. Physics, native controls,
 aerodynamic posing, live Cloth, clew sheets, the boomed boom and furled visuals
 continue updating independently.
 
-#### Mount fitting benchmark
-
-Use [Performance profiling](#performance-profiling) for live CPU/frame captures
-and visual bypass comparisons.
-
-The offline benchmark compares the current full fitter with the frozen original
-and the previous cached fitter on identical inputs, excluding initialization and
-Unity mesh upload/rendering:
-
-```sh
-nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mount
-```
-
-After 100 warmups, seven alternating rounds of 50 fits on **2026-10-09**
-measured **0.774 ms/full fit**, compared with **2.731 ms** for the previous
-cached fitter (**3.53× faster**) and **3.946 ms** for the original. Fifty warmed
-optimized fits allocated **zero managed bytes**. These .NET timings do not
-predict Unity/Mono frame rate.
-
-Release and both check suites passed with zero build warnings/errors. Across the
-**288** geometry fixtures and alternate luff layouts, fitted vertex and normal
-components exactly match the previous cached implementation.
-
-The subsequent Junk capture on **2026-10-09**, with the matching installed DLL,
-recorded **693 rebuilds** over approximately **210 seconds** of sheeting and
-reefing. Mean fitting time per rebuild fell from **7.85 to 2.74 ms** for the
-loose-footed sail and **7.78 to 2.19 ms** for the boomed sail. The previous run
-had only 89 rebuilds, so these are per-rebuild comparisons, not matched-workload
-FPS evidence. No exceptions appeared during the capture. Boomed surface queries
-then averaged **3.84 ms/rebuild**, peaking at **10.17 ms**; uploads averaged
-**1.2–1.4 ms/rebuild** across the two types. Visual clearance, both tacks and
-NORMAL/BYPASS resumption have not yet been confirmed for this fitter.
-
-#### Mast intersection benchmark
-
-The intersection benchmark compares the frozen preceding triangle scan with the
-snapshot-based scan on synthetic tapered, elliptical timbers. Each batch casts
-112 rays (seven eyelet heights × 16 directions), bypassing the result cache.
-Initialization, Unity transforms, rendering and mesh uploads are excluded:
-
-```sh
-nix develop -c env DOTNET_TieredCompilation=0 dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mast
-```
-
-With tiered compilation disabled, 100 warmups and seven alternating rounds of
-100 batches on **2026-10-09**, median batch times were:
-
-| Triangles | Previous scan | Snapshot scan | Speedup |
-| --------- | ------------- | ------------- | ------- |
-| 16        | 0.0064 ms     | 0.0053 ms     | 1.21×   |
-| 128       | 0.0434 ms     | 0.0330 ms     | 1.31×   |
-| 1,024     | 0.3847 ms     | 0.2651 ms     | 1.45×   |
-
-GeometryChecks compares **36,000** varied rays across three mast axes, three
-mesh densities and both windings against the preceding implementation, with
-exact hit/distance equality. Additional cases cover triangle edges, determinant
-tolerances, degenerate triangles, nearest positive hits, empty meshes,
-transformed ray length and independent replacement snapshots. Repeated queries
-allocate zero managed bytes. AssemblyChecks verifies construction-time snapshot
-preparation and query-time reuse of the snapshot and sample cache.
-
-These .NET measurements do not predict Unity/Mono frame rate. Release and both
-check suites passed. The subsequent **0.3.0-dev** capture, with a matching
-installed DLL, recorded **870 rebuilds** (657 loose-footed, 213 boomed) in
-approximately **230 seconds** of active sailing. Windows 24 onward were excluded
-from the active comparison because Frame-call counts indicated a transition to
-paused physics. Boomed surface time fell from **3.84 to 1.08 ms/rebuild** (72%),
-and its maximum call fell from **10.17 to 3.30 ms**. Boomed mount total maximum
-fell from **18.27 to 11.42 ms**. The surface cache miss share increased from
-about 82% to 92%, so additional cache hits do not explain the improvement.
-Boomed fitting and upload then averaged **2.78** and **1.44 ms/rebuild**
-respectively. Workloads differ; the **48.4 FPS** average versus **48.8 FPS**
-previously does not establish an overall frame-rate gain. Neither log showed
-warnings or exceptions during the capture; mast-surface fallback warnings
-occurred before profiling began.
-
-Visual validation remains unconfirmed: start on Brig, then affected boats,
-inspect collar/socket clearance on both tacks and after NORMAL/BYPASS
-resumption. Include Sanbuq to check the unreadable topmast fallback. Live Cloth
-behavior is outside the automated suites.
-
 #### Mount and visual-cache validation
 
-The **0.3.0-dev** cleanup on **2026-10-09** passed Release with zero
-warnings/errors, both C# suites, all eight asset checks and formatting checks.
-GeometryChecks compares the fitter against the frozen reference across **288**
-cut/type/size/reef/rake/radius combinations: positions within **0.01 mm** and
-normal-vector differences below **0.001**. It also checks seams, hole alignment,
-rigid eyelets, mast clearance, alternate bone layouts, relative frames and
-allocation-free warmed fitting. Cache checks cover exact controls, tack
-hysteresis, fitting/support/reactivation, independent pending consumers and zero
-allocations across 1,000 warmed state samples. AssemblyChecks guards
-integration, ownership/serialization, upload ordering, disabled diagnostics and
-separation from live mechanics. Neither suite simulates Unity rendering or
-Cloth.
+Automated checks cover reference geometry equivalence, seams, eyelet alignment,
+mast clearance, local frames, cache invalidation, template cloning and
+allocation-free warmed fitting. Release and both check suites passed for
+**0.3.0-dev** on **2026-10-09**. Live CPU improvements are recorded under
+[Performance results](#performance-results); visual and lifecycle checks remain
+unconfirmed.
 
-Earlier live captures showed repeated mount fitting, especially rope fitting, to
-be a substantial CPU cost. The subsequent Sanbuq ABAB test supported keeping
-deliberate-state caching, but the user still reported worse perceived frame rate
-with two spritsails. The remaining cause is unresolved. Temporary staysail-angle
-and Spritsail-effectiveness issues cleared after restarting; no persistent
-regression was established. Superseded numerical-cache measurements and
-implementation history remain in Git.
-
-Validate the cleanup on **Brig** with all four sails, then **Sanbuq** and
-affected masts. Check continuous sheet/reef input, both tacks, resizing,
-installation height, mast replacement, hide/show, preview/cancel and
-save/reload. Inspect seam and eyelet alignment, rope passage, timber clearance,
-recoloring and shadows, especially crowded lower eyelets. Exercise F7 resumption
-and flat/3D rope toggling; confirm sprit/snotter/purchase placement. In steady
-sailing, rebuild counts should stop growing and mount fitting/sampling/upload
-time should approach zero. Targeted in-game confirmation of this cleanup remains
-pending.
+Start on **Brig**, then **Sanbuq** and affected masts. Check sheet/reef input,
+both tacks, resizing, mast replacement, hide/show, preview/cancel and
+save/reload. Inspect seams, eyelets, collar/socket clearance, recoloring and
+shadows. Exercise F7 resumption and flat/3D ropes, including
+sprit/snotter/purchase placement and the Sanbuq unreadable-topmast fallback.
+With controls unchanged, rebuild counts should remain stable and mount
+fitting/sampling/upload work should stop. Neither automated suite simulates
+Unity Cloth or rendering.
 
 ### Sprit obstruction on one tack
 
@@ -937,42 +851,18 @@ bounds include the flex envelope; shipyard colliders use the thin deployed panel
 described above. The load estimate and travel limit remain visual tuning
 parameters.
 
-The Junk profiling capture on **2026-10-09** measured sheet flex at about **1.29
-ms/frame** during the first 4 minutes 20 seconds of sailing. It accounted for
-most of the loose-footed rig's **2.05 ms/frame** custom CPU time; these
-measurements exclude Unity's internal Cloth solver and GPU execution.
+The fitter retains 17 candidate directions and 18 bisection steps, skipping a
+candidate only when its closest possible point cannot improve the current fit
+(with a rounding margin for near ties). Zero movement skips edge sampling.
+Authored-corner bone weights are computed once and serialized for live clones;
+fixed bones and zero-displacement writes are skipped. Base posing still runs
+first, and tension/displacement remain live inputs rather than cached results.
 
-The optimized fitter retains the same 17 candidate directions, 18 bisection
-steps, smoothing and edge budgets. Before searching a direction, it computes the
-closest possible point on that candidate's complete displacement segment. A
-candidate is skipped only when this lower error bound exceeds the best fitted
-error, with a relative rounding margin to preserve near ties. Zero requested
-movement returns before sampling edge budgets. No fitted displacement is cached
-across frames: sheet tension and the underlying pose remain live inputs.
-
-Authored-corner flex weights are computed during template setup and serialized
-for live clones. Each frame still poses the base shape first; flex then skips
-fixed bones and zero-displacement writes. This preserves relaxation, endpoint
-posing and the aerodynamic frame without changing Cloth topology.
-
-Release and both check suites passed on **2026-10-09**, with zero build warnings
-or errors. **4,320** fixtures exactly matched a frozen copy of the original
-solver across both marks, scales, reefs, camber, obstruction and sheet
-loads/directions. Checks also cover original bone weights, template
-serialization, pose ordering, edge budgets, mirrored tacks and zero managed
-allocations over 1,000 warmed fits. The offline benchmark is available with:
-
-```sh
-nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-flex
-```
-
-Seven alternating rounds over **2,880** active fixtures measured medians of
-**0.0218 ms/fit** for the reference and **0.0099 ms/fit** optimized (**2.21×**).
-These .NET solver timings exclude Unity bone updates and do not predict game
-frame rate. Runtime validation remains pending: begin on Brig, then repeat the
-Junk capture and check both marks under taut/slack/opposing sheets, tacks,
-reefing, resizing and save/reload. Compare the `SheetFlex` timing with identical
-profiling selections and camera conditions.
+Reference comparisons cover **4,320** cases plus bone weights, pose ordering,
+edge budgets and allocation-free warmed fitting. See
+[Performance profiling](#performance-profiling) for benchmarks and measured
+improvements. Visual validation still needs taut/slack/opposing sheets, tacks,
+reefing, resizing and save/reload on both marks.
 
 ## Boomed spritsail companions
 
@@ -1884,92 +1774,115 @@ For placement diagnostics, see [Placement logging](#placement-logging),
 
 ### Performance profiling
 
-The reusable profiler lives under `src/Utils/Profiling/`. Profiling is disabled
-by default and captures always start OFF. With the game closed, configure
-`[Diagnostics]` in `BepInEx/config/com.august.moresailwindsails.cfg`:
+The profiler lives under `src/Utils/Profiling/` and is disabled by default. With
+the game closed, set `[Diagnostics]` in
+`BepInEx/config/com.august.moresailwindsails.cfg`:
 
 ```ini
 EnableProfiling = true
 ToggleProfiling = F7
-ProfileTargets = Rig,Frame,Shape,SheetFlex,Aerodynamics,Ropes,SailMount,Sprit,Snotter,VisualCache
+ProfileTargets = All
 ProfileBypass = SailMount
 ```
 
-`ProfileTargets` accepts comma-separated, case-insensitive names; whitespace and
-duplicates are ignored. `All` selects every category; an empty list records only
-whole-game frame statistics. Unknown entries warn once per configuration change
-and are ignored. `ProfileBypass` is independent of the timing selection:
+`ProfileTargets` accepts the comma-separated names below, ignoring case,
+whitespace and duplicates. `All` selects every category; an empty value records
+only whole-game frame statistics. Unknown names warn and are ignored.
 
-| Bypass target        | Visual work skipped                                                |
-| -------------------- | ------------------------------------------------------------------ |
-| `None`               | No bypass; F7 toggles NORMAL/OFF                                   |
-| `SailMount`          | Authored Spritsail luff-mount fitting and drawing                  |
-| `Snotter`            | Spritsail snotter fitting/drawing and purchase/collar rope visuals |
-| `SpritsailLiveRopes` | Custom Spritsail peak lashings and loose-footed sheets             |
+| Target         | Custom CPU work measured                                             |
+| -------------- | -------------------------------------------------------------------- |
+| `Rig`          | Entire rig LateUpdate                                                |
+| `Frame`        | Mast/stay alignment, including physics and collision callers         |
+| `Shape`        | Deployment, edge fitting, obstruction response and bone posing       |
+| `SheetFlex`    | Loose-footed sheet-flex fitting and application                      |
+| `Aerodynamics` | Aerodynamic-frame refresh                                            |
+| `Ropes`        | Custom rope routing, fitting, upload and draw submission             |
+| `SailMount`    | Mount Setup, Surface, Fit, Upload and Submit stages                  |
+| `Sprit`        | Cached spar posing                                                   |
+| `Snotter`      | Fitting, posing and draw submission, including purchase/collar ropes |
+| `VisualCache`  | Trigger checks, revision reasons and rebuild/reuse counts            |
 
-For a visual target, **F7** cycles **NORMAL → BYPASS → OFF**. Selected timings
-continue in BYPASS. OFF, configuration changes, or disabling the diagnostic
-restore normal visuals; changed configuration returns the capture to OFF.
-Unknown bypass names warn and select `None`. Native controls, rope forces,
-aerodynamic posing, shape bones and live Cloth remain active in every mode.
-Hidden visual consumers retain pending cache updates for resumption. State is
-transient and never saved to the boat. Existing
-`EnableSpritsailMountProfiling`/`ToggleSpritsailMountProfiling` settings migrate
-to the new keys, with explicit new values taking precedence.
+Captures start OFF. **F7** cycles **NORMAL → BYPASS → OFF**; with bypass `None`,
+it toggles NORMAL/OFF. Bypass selection is independent of timing targets:
 
-| Timing target  | Measured custom CPU work                                                             |
-| -------------- | ------------------------------------------------------------------------------------ |
-| `Rig`          | Entire rig LateUpdate                                                                |
-| `Frame`        | Mast/stay alignment, including physics and collision callers                         |
-| `Shape`        | Deployment and shape preparation, edge fitting, obstruction response and bone posing |
-| `SheetFlex`    | Loose-footed Spritsail sheet-flex calculation/application                            |
-| `Aerodynamics` | Aerodynamic-frame refresh                                                            |
-| `Ropes`        | Custom routing, tube fitting/upload and submission; excludes native ropes            |
-| `SailMount`    | Mount Draw, with Setup/Surface/Fit/Upload/Submit stages                              |
-| `Sprit`        | Cached spar posing                                                                   |
-| `Snotter`      | Snotter fitting, posing and rendering, including purchase/collar work                |
-| `VisualCache`  | Trigger sampling, revision reasons and consumer rebuild/reuse counts                 |
+| `ProfileBypass`      | Visual work skipped                                      |
+| -------------------- | -------------------------------------------------------- |
+| `None`               | Nothing                                                  |
+| `SailMount`          | Authored luff-mount fitting and drawing                  |
+| `Snotter`            | Snotter fitting/drawing and purchase/collar rope visuals |
+| `SpritsailLiveRopes` | Custom peak lashings and loose-footed sheets             |
 
-Ten-second summaries and partial windows at transitions use
-`[PerformanceProfile]` in `BepInEx/LogOutput.log`, with session/window IDs,
-mode, bypass and selected targets. Measurements distinguish loose-footed
-Spritsail, boomed Spritsail, Flying Sail and Fisherman's Staysail work across
-**all loaded boats**, including boats other than the player's. Standalone
-lifecycle calls without a family scope are labeled `Unspecified`. Categories
-with no calls have no timing row.
+Timings continue in BYPASS; sail mechanics and Cloth stay active. Stopping,
+changing configuration or disabling the diagnostic restores normal visuals.
+Configuration changes return captures to OFF; invalid bypass names select
+`None`. Legacy `EnableSpritsailMountProfiling`/`ToggleSpritsailMountProfiling`
+settings migrate to the new keys unless explicit new values exist.
 
-- Each timing row gives calls, calls per rendered frame, CPU milliseconds per
-  rendered frame and maximum call duration. Parent totals include nested
-  categories/stages: **do not add inclusive rows together**. Reentrant work in
-  the same family/category/stage is counted once.
-- Mount counters retain completed uploads and directional surface-cache
-  hits/misses. Surface queries outside measured mount calls are excluded.
-- Visual-cache counters retain
-  Initial/Sheet/Reef/Tack/Fitting/Support/Reactivate reasons and
-  Mount/Sprit/Snotter rebuild/reuse counts. Reasons can overlap; rebuild
-  requests are not completed uploads.
-- Frame mean/max, average FPS and frames over 33 ms describe the whole game,
-  including VSync and other mods. `gc0Global` is the process-wide
-  generation-zero collection delta.
+#### Reading captures
 
-Custom CPU timings do **not** measure Unity's internal Cloth solver or GPU
-completion. Compare 20–30 seconds of steady sailing in NORMAL/BYPASS, then
-repeat with the same camera, graphics settings and fitted sails. Measure
-deployed, furled and continuous sheet/reef input separately. Exclude loading,
-shipyard transitions and initial allocation windows. Instrumentation itself adds
-CPU overhead; use identical timing selections throughout a comparison.
+`[PerformanceProfile]` entries in `BepInEx/LogOutput.log` summarize ten-second
+windows and partial windows at mode changes. They distinguish sail families
+across **all loaded boats**, not just the player's boat.
 
-The collector uses typed, disposable scopes and fixed buffers; disabled or
-unselected hooks do not read timestamps, and warmed collection allocates no
-samples or strings. Family context is inherited by shared visuals. Reports and
-configuration parsing occur outside measured scopes. Timing/session tests use a
-deterministic clock; neither automated suite executes Unity rendering or Cloth.
-Release and both check suites passed for the expanded profiler on
-**2026-10-09**, including installed-BepInEx configuration migration and
-allocation-free sampling. Runtime validation remains pending: start on Brig,
-then Sanbuq with two Spritsails, exercising all bypass targets, both tacks,
-controls, full/partial/furled sails and flat/3D ropes. Confirm normal visuals
-resume after stopping, configuration changes and plugin disable.
+- CPU rows report calls, milliseconds per frame and maximum call duration.
+  Timings include nested work: **do not add parent and child rows together**.
+  They exclude Unity's Cloth solver and GPU completion.
+- `SailMount` Upload includes reverse-strip copying, position/normal assignment,
+  tangent recalculation and bounds recalculation; it is not a GPU-transfer
+  timer.
+- Counters track completed mount uploads, mount surface-cache hits/misses,
+  visual revision reasons and consumer rebuild/reuse. A rebuild request does not
+  necessarily upload a mesh.
+- FPS, frame mean/max, frames over 33 ms and `gc0Global` describe the whole
+  game. The GC counter is process-wide; summaries cannot attribute allocations
+  or establish whether a collection caused a particular hitch.
+
+For ABAB comparisons, record 20–30 seconds each of NORMAL/BYPASS and repeat,
+keeping camera, graphics settings, fitted sails and timing selections unchanged.
+Test steady sailing, furled sails and continuous sheet/reef input separately;
+exclude pauses, loading, shipyard transitions and initial allocations. Compare
+rebuild stages per call when control activity differs:
+`ms per rebuild ≈ sum(cpuMsPerFrame × frames) / sum(stage calls)`.
+
+Warmed collection uses fixed buffers without per-sample allocation; reporting
+and configuration parsing allocate outside timed scopes. Instrumentation still
+adds overhead. Automated checks cover timing, sessions and configuration
+migration. In-game captures confirm logging; visual restoration across every
+bypass target, configuration change and plugin disable still needs validation.
+
+#### Offline benchmarks
+
+Run from the repository root in the pinned environment:
+
+```sh
+nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-flex
+nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mount
+nix develop -c env DOTNET_TieredCompilation=0 dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mast
+```
+
+These compare current calculations with frozen reference implementations,
+excluding initialization, Unity mesh uploads and rendering. The mast benchmark
+uses synthetic tapered timbers and 112 uncached rays per batch; tiered
+compilation is disabled to avoid changing JIT optimization during measurement.
+Offline .NET timings do not predict Unity/Mono frame rate.
+
+#### Performance results
+
+Junk captures on **2026-10-09** confirmed lower custom CPU costs after each
+optimization, with matching installed DLLs:
+
+| Work                        | Before          | After               |
+| --------------------------- | --------------- | ------------------- |
+| Loose-footed sheet flex     | 1.29 ms/frame   | about 0.59 ms/frame |
+| Loose-footed mount fitting  | 7.85 ms/rebuild | 2.74 ms/rebuild     |
+| Boomed mount fitting        | 7.78 ms/rebuild | 2.19 ms/rebuild     |
+| Boomed mast-surface queries | 3.84 ms/rebuild | 1.08 ms/rebuild     |
+
+The latest capture contained **870 rebuilds over 230 seconds**. Average FPS
+remained about **48**; differing workloads do not establish an overall FPS gain.
+Periodic stutter remains unresolved. Neither triangle count nor smooth shading
+has been established as its cause. Keep visual validation separate from these
+CPU measurements; detailed benchmark and capture history is retained in Git.
 
 ### Installed references and logs
 
