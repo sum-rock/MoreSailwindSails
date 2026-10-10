@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
 {
-    // Remembers the actual native binding slot before other families restore the full sail order.
+    // Retains the native binding slot and resolves its assigned guides without borrowing fittings.
     internal sealed class SpritsailNativeBinding : MonoBehaviour
     {
         internal Mast Mast { get; private set; }
@@ -25,6 +25,46 @@ namespace MoreSailwindSails.Sails.Spritsail
 
         internal static Transform Attachment(Transform[] items, int index) =>
             SpritsailControlSlots.At(items: items, index: index);
+
+        internal static bool TryGuides(
+            BoatRefs boat,
+            CapsuleCollider mast,
+            Transform[] primary,
+            Transform[] extensions,
+            int slot,
+            out Transform lower,
+            out Transform upper
+        )
+        {
+            lower = Attachment(items: primary, index: slot);
+            upper = Attachment(items: extensions, index: slot);
+            if (!upper)
+                upper = lower;
+            if (
+                !lower
+                || !upper
+                || !lower.gameObject.activeInHierarchy
+                || !upper.gameObject.activeInHierarchy
+            )
+                return false;
+            if (
+                SpritsailMastAlignment.ExtensionIsLower(
+                    primary: boat.transform.InverseTransformPoint(position: lower.position),
+                    extension: boat.transform.InverseTransformPoint(position: upper.position),
+                    boatLocalAxis: boat.transform.InverseTransformVector(
+                        vector: mast.transform.TransformVector(
+                            vector: SpritsailMastAlignment.LocalAxis(direction: mast.direction)
+                        )
+                    )
+                )
+            )
+            {
+                var swap = lower;
+                lower = upper;
+                upper = swap;
+            }
+            return true;
+        }
 
         internal void Capture(Mast mast, int slot, string error)
         {

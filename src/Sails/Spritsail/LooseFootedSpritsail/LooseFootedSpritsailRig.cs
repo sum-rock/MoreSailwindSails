@@ -32,6 +32,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
         private readonly Vector3[] flexLeech = new Vector3[LooseFootedSpritsailGeometry.Rows + 1];
         private bool tensionWarning;
         private readonly Vector3[] leechPoints = new Vector3[LooseFootedSpritsailGeometry.Rows + 1];
+        private readonly SpritsailVisualTriggers visualTriggers = new SpritsailVisualTriggers();
         private int lastRenderState = -1;
         private LooseFootedSpritsailRigging rigging;
         private Mast lastMount;
@@ -44,7 +45,11 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
         private Vector3 lastFramePosition;
         private Quaternion lastFrameRotation;
 
-        private void OnEnable() => bindingDirty = true;
+        private void OnEnable()
+        {
+            bindingDirty = true;
+            visualTriggers.Reset();
+        }
 
         private void FixedUpdate() => RefreshMastFrame();
 
@@ -799,6 +804,13 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 OnDisable();
                 return;
             }
+            long visualRevision = visualTriggers.Update(
+                sail: Sail,
+                boat: supported ? rigging.Support.Boat.transform : null,
+                mast: supported ? rigging.Support.Mast.GetComponent<CapsuleCollider>() : null,
+                corners: Corners,
+                active: visible
+            );
             var corners = ScaledCorners(scale: scale);
             var pose = SpritsailDeployment.Evaluate(corners: corners, unroll: Sail.currentUnroll);
             Bones[0].localPosition = Unscale(point: pose.Throat, scale: scale);
@@ -845,16 +857,19 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 position: Unscale(point: pose.Tip, scale: scale)
             );
             SpritHoistAttachment.position = SpritsailDeployment.PurchasePoint(heel: heel, tip: tip);
-            Spar.Pose(
-                heel: SpritsailSpritGeometry.ForwardEnd(pivot: heel, tip: tip),
-                tip: tip,
-                radius: -Corners[0].z * scale.z * SpritsailSpritGeometry.RadiusFraction
-            );
+            if (visible)
+                Spar.Pose(
+                    revision: visualRevision,
+                    heel: SpritsailSpritGeometry.ForwardEnd(pivot: heel, tip: tip),
+                    tip: tip,
+                    radius: -Corners[0].z * scale.z * SpritsailSpritGeometry.RadiusFraction
+                );
             Spar.SetVisible(visible: visible);
             if (supported)
             {
                 rigging.UpdateHalyard(attachment: SpritHoistAttachment);
                 Spar.Snotter.Pose(
+                    revision: visualRevision,
                     mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
                     heel: heel,
                     tip: tip,
@@ -873,10 +888,10 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             }
             if (visible)
                 Lines.Draw(
+                    revision: visualRevision,
                     bones: Bones,
                     tip: tip,
                     mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
-                    aft: Sail.cloth.transform.TransformDirection(direction: Vector3.up),
                     struck: state == 0
                 );
             else

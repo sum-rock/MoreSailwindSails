@@ -117,6 +117,34 @@ internal static class NativeBindingChecks
                 message: "Spritsails must not depend on boat profiles or Fisherman's control allocation: "
                     + type.Name
             );
+        var guideResolver = assembly
+            .GetType(name: family + "SpritsailNativeBinding", throwOnError: true)
+            .GetMethod(name: "TryGuides", bindingAttr: all);
+        var guideCalls = IlReader.CalledMethods(method: guideResolver).ToArray();
+        Require(
+            condition: guideCalls.Count(m => m.Name == "Attachment") == 2
+                && guideCalls.Any(m => m.Name == "ExtensionIsLower")
+                && !guideCalls.Any(m => m.Name.Contains("GetComponents")),
+            message: "Resolve only the assigned native guide pair, ordered along the mast; never search other slots or supports."
+        );
+        foreach (string type in new[] { "LooseFootedSpritsail", "BoomedSpritsail" })
+        {
+            var rigging = assembly.GetType(
+                name: family + type + "." + type + "Rigging",
+                throwOnError: true
+            );
+            Require(
+                condition: IlReader
+                    .CalledMethods(method: rigging.GetMethod(name: "TryResolve", bindingAttr: all))
+                    .Any(m => m == guideResolver)
+                    && IlReader
+                        .CalledMethods(
+                            method: rigging.GetMethod(name: "InstallError", bindingAttr: all)
+                        )
+                        .Any(m => m.Name == "TryResolve"),
+                message: "Both spritsail fitting checks and runtime routes must use the same ordered guide pair."
+            );
+        }
         Console.WriteLine(
             "PASS (structural): native spritsail binding, slot capture ordering, no list filtering, reference restoration, retained controllers and profile independence. Unity binding/exception recovery not executed."
         );

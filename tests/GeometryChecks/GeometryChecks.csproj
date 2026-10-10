@@ -6,6 +6,32 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/Visuals/SailVisualState.cs" Link="Visuals/SailVisualState.cs" />
+    <Compile
+      Include="../../src/Visuals/SailVisualRevision.cs"
+      Link="Visuals/SailVisualRevision.cs"
+    />
+    <Compile Include="../../src/Visuals/SailVisualCache.cs" Link="Visuals/SailVisualCache.cs" />
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMountFrame.cs"
+      Link="Spritsail/SpritsailMountFrame.cs"
+    />
+    <EmbeddedResource
+      Include="../../assets/sail_mount/sail_mount.bytes"
+      LogicalName="MoreSailwindSails.SailMount"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMountAsset.cs"
+      Link="Spritsail/SpritsailMountAsset.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMountGeometry.cs"
+      Link="Spritsail/SpritsailMountGeometry.cs"
+    />
+    <Compile
+      Include="../../src/Sails/Spritsail/SpritsailMountFitData.cs"
+      Link="Spritsail/SpritsailMountFitData.cs"
+    />
     <None
       Include="../../assets/snotter/snotter.obj"
       Link="SnotterSource/snotter.obj"

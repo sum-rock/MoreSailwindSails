@@ -6,13 +6,85 @@ namespace MoreSailwindSails.Visuals
     // Meshes are allocated lazily per live instance, never shared through prefab cloning.
     internal sealed class RoutedRope : MonoBehaviour
     {
-        public LineRenderer Line;
+        [SerializeField]
+        private LineRenderer Line;
         private Mesh mesh;
         private MeshRenderer tube;
         private Vector3[] points;
         private Vector3[] vertices;
         private Vector3[] normals;
         private static bool warnedMissingMaterial;
+        private long cachedRevision = -1;
+        private Transform cachedAnchor;
+        private Vector3[] anchorPoints;
+        private Vector3[] worldPoints;
+        private Matrix4x4 anchorToTube;
+        private bool cachedTube;
+        private bool posedTube;
+
+        // Opt-in revision drawing for rigid routes: all existing live consumers retain SetVisible.
+        internal void DrawCached(bool visible, Transform anchor, long revision)
+        {
+            if (!visible || !anchor || !Line || !isActiveAndEnabled)
+            {
+                SetVisible(visible: false);
+                return;
+            }
+            bool useTube = Settings.clothRopes;
+            bool routeChanged = cachedRevision != revision || cachedAnchor != anchor;
+            if (routeChanged)
+            {
+                int count = Line.positionCount;
+                if (anchorPoints == null || anchorPoints.Length != count)
+                {
+                    anchorPoints = new Vector3[count];
+                    worldPoints = new Vector3[count];
+                }
+                Line.GetPositions(positions: worldPoints);
+                for (int i = 0; i < count; i++)
+                    anchorPoints[i] = anchor.InverseTransformPoint(position: worldPoints[i]);
+                cachedAnchor = anchor;
+                cachedRevision = revision;
+            }
+            if (useTube && (routeChanged || !cachedTube || !tube))
+            {
+                // Settings/material retries must bake from the current transported route.
+                for (int i = 0; i < anchorPoints.Length; i++)
+                    worldPoints[i] = anchor.TransformPoint(position: anchorPoints[i]);
+                Line.SetPositions(positions: worldPoints);
+                SetVisible(visible: true);
+                cachedTube = tube && posedTube;
+                if (cachedTube)
+                    anchorToTube = anchor.worldToLocalMatrix * tube.transform.localToWorldMatrix;
+                else
+                    useTube = false;
+            }
+            else if (!useTube)
+                cachedTube = false;
+            if (tube)
+                tube.enabled = false;
+            Line.enabled = !useTube;
+            if (useTube)
+                Graphics.DrawMesh(
+                    mesh: mesh,
+                    matrix: anchor.localToWorldMatrix * anchorToTube,
+                    material: tube.sharedMaterial,
+                    layer: gameObject.layer,
+                    camera: null,
+                    submeshIndex: 0,
+                    properties: null,
+                    castShadows: tube.shadowCastingMode
+                        != UnityEngine.Rendering.ShadowCastingMode.Off,
+                    receiveShadows: tube.receiveShadows,
+                    useLightProbes: true
+                );
+            else
+            {
+                for (int i = 0; i < anchorPoints.Length; i++)
+                    worldPoints[i] = anchor.TransformPoint(position: anchorPoints[i]);
+                Line.SetPositions(positions: worldPoints);
+            }
+        }
 
         internal float Width => Line.startWidth;
 
@@ -24,13 +96,21 @@ namespace MoreSailwindSails.Visuals
             return rope;
         }
 
-        internal void SetPosition(int index, Vector3 position) =>
+        internal void SetPosition(int index, Vector3 position)
+        {
             Line.SetPosition(index: index, position: position);
+            cachedRevision = -1;
+        }
 
-        internal void SetPositions(Vector3[] positions) => Line.SetPositions(positions: positions);
+        internal void SetPositions(Vector3[] positions)
+        {
+            Line.SetPositions(positions: positions);
+            cachedRevision = -1;
+        }
 
         internal void SetVisible(bool visible)
         {
+            posedTube = false;
             if (Line)
                 Line.enabled = false;
             if (tube)
@@ -52,7 +132,6 @@ namespace MoreSailwindSails.Visuals
                 points = new Vector3[count];
                 vertices = new Vector3[count * RoutedRopeGeometry.Sides];
                 normals = new Vector3[vertices.Length];
-                mesh.Clear();
             }
             Line.GetPositions(positions: points);
             if (
@@ -75,12 +154,18 @@ namespace MoreSailwindSails.Visuals
                 vertices[i] = worldToLocal.MultiplyPoint3x4(point: origin + vertices[i]);
                 normals[i] = normalToLocal.MultiplyVector(vector: normals[i]).normalized;
             }
+            // A failed pose may already have resized the buffers. Decide topology from
+            // the last uploaded mesh so a later successful retry still installs indices.
+            bool topologyChanged = mesh.vertexCount != vertices.Length;
+            if (topologyChanged)
+                mesh.Clear();
             mesh.vertices = vertices;
             mesh.normals = normals;
-            if (resize)
+            if (topologyChanged)
                 mesh.triangles = RoutedRopeGeometry.Triangles(count: count);
             mesh.RecalculateBounds();
             tube.enabled = true;
+            posedTube = true;
         }
 
         private bool EnsureTube()

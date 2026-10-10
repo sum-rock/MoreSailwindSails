@@ -10,10 +10,7 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
         public RoutedRope[] Sheets;
         public RoutedRope PeakLashing;
         public RopeEffect ReefSource;
-        public RoutedRope[] LuffTies;
-        public SpritsailRopeCollar[] LuffCollars;
-        private CapsuleCollider surfaceMast;
-        private SpritsailMastSurface surface;
+        public SpritsailMount Mount;
 
         internal static LooseFootedSpritsailLines Create(
             Sail sail,
@@ -56,22 +53,11 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 source: left,
                 name: "Peak lashing"
             );
-            lines.LuffTies = new RoutedRope[7];
-            lines.LuffCollars = new SpritsailRopeCollar[7];
-            for (int i = 0; i < lines.LuffTies.Length; i++)
-            {
-                lines.LuffCollars[i] = SpritsailRopeCollar.Create(
-                    parent: root.transform,
-                    source: left,
-                    name: "Luff mast collar " + i,
-                    thicknessScale: 0.8f
-                );
-                lines.LuffTies[i] = CreateLine(
-                    parent: root.transform,
-                    source: left,
-                    name: "Luff tie " + i
-                );
-            }
+            var rig = sail.GetComponent<LooseFootedSpritsailRig>();
+            var luff = new Transform[LooseFootedSpritsailGeometry.Rows + 1];
+            for (int row = 0; row < luff.Length; row++)
+                luff[row] = rig.Bones[LooseFootedSpritsailGeometry.ShapeBone(row: row, column: 0)];
+            lines.Mount = SpritsailMount.Create(sail: sail, luffBones: luff);
             return lines;
         }
 
@@ -95,8 +81,8 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             Transform[] bones,
             Vector3 tip,
             CapsuleCollider mast,
-            Vector3 aft,
-            bool struck
+            bool struck,
+            long revision
         )
         {
             if (struck || !mast)
@@ -120,50 +106,13 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                     );
             }
             Span(line: PeakLashing, start: tip, end: bones[1].position, sag: 0.01f);
-            if (surfaceMast != mast)
-            {
-                surfaceMast = mast;
-                surface = new SpritsailMastSurface(
-                    mast: mast.GetComponent<Mast>(),
-                    sampleCount: LuffTies.Length
-                );
-            }
-            for (int i = 0; i < LuffTies.Length; i++)
-            {
-                float row = i * LooseFootedSpritsailGeometry.Rows / (float)(LuffTies.Length - 1);
-                int lower = Mathf.FloorToInt(row);
-                var point = Vector3.Lerp(
-                    a: bones[
-                        LooseFootedSpritsailGeometry.ShapeBone(row: lower, column: 0)
-                    ].position,
-                    b: bones[
-                        LooseFootedSpritsailGeometry.ShapeBone(
-                            row: Mathf.Min(lower + 1, LooseFootedSpritsailGeometry.Rows),
-                            column: 0
-                        )
-                    ].position,
-                    t: row - lower
-                );
-                var localAxis =
-                    mast.direction == 0 ? Vector3.right
-                    : mast.direction == 1 ? Vector3.up
-                    : Vector3.forward;
-                var axis = mast.transform.TransformDirection(direction: localAxis).normalized;
-                var origin = mast.transform.TransformPoint(position: mast.center);
-                var center = origin + axis * Vector3.Dot(point - origin, axis);
-                var outward = Vector3.ProjectOnPlane(vector: aft, planeNormal: axis).normalized;
-                float radius = surface.Radius(
-                    sampleIndex: i,
-                    center: center,
-                    direction: outward,
-                    fallback: LooseFootedSpritsailRigging.MastRadius(
-                        mast: mast.GetComponent<Mast>()
-                    )
-                );
-                var start = LuffCollars[i]
-                    .Pose(center: center, axis: axis, outward: outward, radius: radius);
-                Span(line: LuffTies[i], start: start, end: point, sag: 0);
-            }
+            Mount.Draw(
+                revision: revision,
+                mast: mast,
+                fallbackRadius: LooseFootedSpritsailRigging.MastRadius(
+                    mast: mast.GetComponent<Mast>()
+                )
+            );
         }
 
         private static void Span(RoutedRope line, Vector3 start, Vector3 end, float sag)
@@ -186,14 +135,6 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 foreach (var line in Sheets)
                     if (line)
                         line.SetVisible(visible: false);
-            if (LuffTies != null)
-                foreach (var line in LuffTies)
-                    if (line)
-                        line.SetVisible(visible: false);
-            if (LuffCollars != null)
-                foreach (var collar in LuffCollars)
-                    if (collar)
-                        collar.Hide();
             if (PeakLashing)
                 PeakLashing.SetVisible(visible: false);
         }

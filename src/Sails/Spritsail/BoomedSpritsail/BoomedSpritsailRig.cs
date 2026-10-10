@@ -26,6 +26,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
         public Transform Shadow;
         public BoxCollider[] PanelCollisionStrips;
         private float camber = 1;
+        private readonly SpritsailVisualTriggers visualTriggers = new SpritsailVisualTriggers();
         private int lastRenderState = -1;
         private BoomedSpritsailRigging rigging;
         private Mast lastMount;
@@ -38,7 +39,11 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
         private Vector3 lastFramePosition;
         private Quaternion lastFrameRotation;
 
-        private void OnEnable() => bindingDirty = true;
+        private void OnEnable()
+        {
+            bindingDirty = true;
+            visualTriggers.Reset();
+        }
 
         private void FixedUpdate() => RefreshMastFrame();
 
@@ -691,6 +696,13 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 OnDisable();
                 return;
             }
+            long visualRevision = visualTriggers.Update(
+                sail: Sail,
+                boat: supported ? rigging.Support.Boat.transform : null,
+                mast: supported ? rigging.Support.Mast.GetComponent<CapsuleCollider>() : null,
+                corners: Corners,
+                active: visible
+            );
             var corners = ScaledCorners(scale: scale);
             var pose = BoomedSpritsailDeployment.Evaluate(
                 corners: corners,
@@ -715,11 +727,13 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 position: Unscale(point: pose.Tip, scale: scale)
             );
             SpritHoistAttachment.position = SpritsailDeployment.PurchasePoint(heel: heel, tip: tip);
-            Spar.Pose(
-                heel: SpritsailSpritGeometry.ForwardEnd(pivot: heel, tip: tip),
-                tip: tip,
-                radius: -Corners[0].z * scale.z * SpritsailSpritGeometry.RadiusFraction
-            );
+            if (visible)
+                Spar.Pose(
+                    revision: visualRevision,
+                    heel: SpritsailSpritGeometry.ForwardEnd(pivot: heel, tip: tip),
+                    tip: tip,
+                    radius: -Corners[0].z * scale.z * SpritsailSpritGeometry.RadiusFraction
+                );
             Spar.SetVisible(visible: visible);
             Boom.Pose(
                 heel: Bones[2].position,
@@ -731,6 +745,7 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             {
                 rigging.UpdateHalyard(attachment: SpritHoistAttachment);
                 Spar.Snotter.Pose(
+                    revision: visualRevision,
                     mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
                     heel: heel,
                     tip: tip,
@@ -749,10 +764,10 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             }
             if (visible)
                 Lines.Draw(
+                    revision: visualRevision,
                     bones: Bones,
                     tip: tip,
                     mast: rigging.Support.Mast.GetComponent<CapsuleCollider>(),
-                    aft: Sail.cloth.transform.TransformDirection(direction: Vector3.up),
                     struck: state == 0
                 );
             else
