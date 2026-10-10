@@ -7,6 +7,11 @@ internal static class Program
 {
     private static void Main(string[] args)
     {
+        if (System.Array.IndexOf(array: args, value: "--benchmark-mast") >= 0)
+        {
+            Spritsail.MastIntersectionChecks.Benchmark();
+            return;
+        }
         if (System.Array.IndexOf(array: args, value: "--benchmark-mount") >= 0)
         {
             Spritsail.MountOptimizationChecks.Benchmark();
@@ -28,6 +33,7 @@ internal static class Program
         Spritsail.NativeControlChecks.Run();
         Spritsail.GallusChecks.Run();
         Spritsail.SpritVisualChecks.Run();
+        Spritsail.MastIntersectionChecks.Run();
         Spritsail.SnotterChecks.Run();
         Spritsail.MountChecks.Run();
         Spritsail.MountFrameChecks.Run();

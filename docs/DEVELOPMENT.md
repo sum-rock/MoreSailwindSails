@@ -498,9 +498,14 @@ detached renderer objects, colliders or Rigidbodies for the fitting; both meshes
 are disposed with their instance. Mast alignment reuses its resolved axis for
 `AftDirection` in both spritsail families.
 
-`SpritsailMastSurface` snapshots readable mast vertices; known unreadable Sanbuq
-topmast **80** uses its authored taper. Other misses warn once per surface
-instance and fall back to the capsule radius.
+`SpritsailMastSurface` owns an immutable `SpritsailMastGeometry` snapshot of
+readable mast triangle origins and edges. Uncached rays reuse those edges and
+evaluate intersections with component arithmetic, preserving triangle order,
+two-sided nearest-positive hits, barycentric tolerances and transformed ray
+length. Mesh vertex/index arrays are not retained after snapshot construction.
+The exact sample cache and visual revision triggers are unchanged. Known
+unreadable Sanbuq topmast **80** uses its authored taper; other misses warn once
+per surface instance and fall back to the capsule radius.
 
 The [authored luff mount](#authored-sail-mount-runtime) replaces the seven short
 ties and three-turn mast collars. It hides when struck, leaving the native
@@ -743,6 +748,54 @@ FPS evidence. No exceptions appeared during the capture. Boomed surface queries
 then averaged **3.84 ms/rebuild**, peaking at **10.17 ms**; uploads averaged
 **1.2–1.4 ms/rebuild** across the two types. Visual clearance, both tacks and
 NORMAL/BYPASS resumption have not yet been confirmed for this fitter.
+
+#### Mast intersection benchmark
+
+The intersection benchmark compares the frozen preceding triangle scan with the
+snapshot-based scan on synthetic tapered, elliptical timbers. Each batch casts
+112 rays (seven eyelet heights × 16 directions), bypassing the result cache.
+Initialization, Unity transforms, rendering and mesh uploads are excluded:
+
+```sh
+nix develop -c env DOTNET_TieredCompilation=0 dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mast
+```
+
+With tiered compilation disabled, 100 warmups and seven alternating rounds of
+100 batches on **2026-10-09**, median batch times were:
+
+| Triangles | Previous scan | Snapshot scan | Speedup |
+| --------- | ------------- | ------------- | ------- |
+| 16        | 0.0064 ms     | 0.0053 ms     | 1.21×   |
+| 128       | 0.0434 ms     | 0.0330 ms     | 1.31×   |
+| 1,024     | 0.3847 ms     | 0.2651 ms     | 1.45×   |
+
+GeometryChecks compares **36,000** varied rays across three mast axes, three
+mesh densities and both windings against the preceding implementation, with
+exact hit/distance equality. Additional cases cover triangle edges, determinant
+tolerances, degenerate triangles, nearest positive hits, empty meshes,
+transformed ray length and independent replacement snapshots. Repeated queries
+allocate zero managed bytes. AssemblyChecks verifies construction-time snapshot
+preparation and query-time reuse of the snapshot and sample cache.
+
+These .NET measurements do not predict Unity/Mono frame rate. Release and both
+check suites passed. The subsequent **0.3.0-dev** capture, with a matching
+installed DLL, recorded **870 rebuilds** (657 loose-footed, 213 boomed) in
+approximately **230 seconds** of active sailing. Windows 24 onward were excluded
+from the active comparison because Frame-call counts indicated a transition to
+paused physics. Boomed surface time fell from **3.84 to 1.08 ms/rebuild** (72%),
+and its maximum call fell from **10.17 to 3.30 ms**. Boomed mount total maximum
+fell from **18.27 to 11.42 ms**. The surface cache miss share increased from
+about 82% to 92%, so additional cache hits do not explain the improvement.
+Boomed fitting and upload then averaged **2.78** and **1.44 ms/rebuild**
+respectively. Workloads differ; the **48.4 FPS** average versus **48.8 FPS**
+previously does not establish an overall frame-rate gain. Neither log showed
+warnings or exceptions during the capture; mast-surface fallback warnings
+occurred before profiling began.
+
+Visual validation remains unconfirmed: start on Brig, then affected boats,
+inspect collar/socket clearance on both tacks and after NORMAL/BYPASS
+resumption. Include Sanbuq to check the unreadable topmast fallback. Live Cloth
+behavior is outside the automated suites.
 
 #### Mount and visual-cache validation
 

@@ -134,6 +134,29 @@ internal static class DeploymentChecks
         var mountDraw = IlReader
             .CalledMethods(method: Method(type: "SpritsailMount", name: "Draw"))
             .ToArray();
+        var surfaceConstructor = assembly
+            .GetType(name: family + "SpritsailMastSurface", throwOnError: true)
+            .GetConstructors(bindingAttr: all)
+            .Single();
+        Require(
+            value: IlReader
+                .CalledMethods(method: surfaceConstructor)
+                .Any(m => m.DeclaringType.Name == "SpritsailMastGeometry" && m is ConstructorInfo),
+            message: "Each mast surface must prepare its intersection snapshot at construction."
+        );
+        var surfaceQuery = IlReader
+            .CalledMethods(method: Method(type: "SpritsailMastSurface", name: "RadiusLocal"))
+            .ToArray();
+        Require(
+            value: surfaceQuery.Any(m =>
+                m.DeclaringType.Name == "SpritsailMastGeometry" && m.Name == "TryDistance"
+            )
+                && surfaceQuery.Any(m =>
+                    m.DeclaringType.Name == "SpritsailSurfaceSample" && m.Name == "TryGet"
+                )
+                && !surfaceQuery.Any(m => m is ConstructorInfo || m.DeclaringType.Name == "Mesh"),
+            message: "Surface queries must reuse the snapshot and exact sample cache without reading native mesh data."
+        );
         Require(
             value: mountDraw.Any(m =>
                 m.DeclaringType.Name == "SpritsailMastSurface" && m is ConstructorInfo
