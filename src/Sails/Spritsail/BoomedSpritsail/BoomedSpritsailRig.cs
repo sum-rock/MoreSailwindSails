@@ -26,6 +26,9 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
         public bool OriginalAutoAnchor;
         public Transform Shadow;
         public BoxCollider[] PanelCollisionStrips;
+
+        // Scratch storage belongs to this rig; callers consume it before the next calculation.
+        private readonly Vector3[] scaledCorners = new Vector3[4];
         private float camber = 1;
         private readonly SpritsailVisualTriggers visualTriggers = new SpritsailVisualTriggers();
         private int lastRenderState = -1;
@@ -376,14 +379,12 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
             return envelope;
         }
 
-        private Vector3[] ScaledCorners(Vector3 scale) =>
-            new[]
-            {
-                Vector3.Scale(Corners[0], scale),
-                Vector3.Scale(Corners[1], scale),
-                Vector3.Scale(Corners[2], scale),
-                Vector3.Scale(Corners[3], scale),
-            };
+        private Vector3[] ScaledCorners(Vector3 scale)
+        {
+            for (int i = 0; i < scaledCorners.Length; i++)
+                scaledCorners[i] = Vector3.Scale(a: Corners[i], b: scale);
+            return scaledCorners;
+        }
 
         private static bool ValidScale(Vector3 scale) =>
             SpritsailDeployment.Finite(value: scale.x)

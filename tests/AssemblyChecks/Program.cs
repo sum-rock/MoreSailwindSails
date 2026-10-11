@@ -49,6 +49,7 @@ internal static class Program
         Spritsail.ShipyardPlacementChecks.Run(assembly: assembly);
         Spritsail.TravelChecks.Run(assembly: assembly);
         Spritsail.DeploymentChecks.Run(assembly: assembly);
+        Spritsail.AllocationChecks.Run(assembly: assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
         Spritsail.VisualCacheChecks.Run(assembly: assembly);
