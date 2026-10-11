@@ -1910,6 +1910,13 @@ Periodic stutter remains unresolved. Neither triangle count nor smooth shading
 has been established as its cause. Keep visual validation separate from these
 CPU measurements; detailed benchmark and capture history is retained in Git.
 
+The [spritsail hitching investigation](SPRITSAIL_HITCHING.md) consolidates the
+matched gaff comparisons, historical-build limitations, native-binding rollback
+and hidden-native-rope ABAB results. The latest bypass improved average FPS by
+roughly 4–5% but did not reduce long intervals. Their GC association remains;
+the allocating code and actual GC pause duration are unidentified. Use that
+record for evidence, diagnostic boundaries and remaining leads.
+
 ### Installed references and logs
 
 Game directory: `/home/august/.local/share/Steam/steamapps/common/Sailwind`.
