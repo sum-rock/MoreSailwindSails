@@ -9,6 +9,7 @@ namespace MoreSailwindSails.Utils.Profiling
         private readonly int generation;
         private readonly int index;
         private readonly long started;
+        private readonly long allocationStart;
         private readonly ProfileFamily previous;
 
         internal ProfileScope(
@@ -16,6 +17,7 @@ namespace MoreSailwindSails.Utils.Profiling
             int generation,
             int index,
             long started,
+            long allocationStart,
             ProfileFamily previous
         )
         {
@@ -23,6 +25,7 @@ namespace MoreSailwindSails.Utils.Profiling
             this.generation = generation;
             this.index = index;
             this.started = started;
+            this.allocationStart = allocationStart;
             this.previous = previous;
         }
 
@@ -31,6 +34,7 @@ namespace MoreSailwindSails.Utils.Profiling
                 generation: generation,
                 index: index,
                 started: started,
+                allocationStart: allocationStart,
                 previous: previous
             );
     }

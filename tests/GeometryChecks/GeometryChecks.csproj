@@ -7,6 +7,26 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Utils/Profiling/ProfileReport.cs"
+      Link="Utils/Profiling/ProfileReport.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileIntervals.cs"
+      Link="Utils/Profiling/ProfileIntervals.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileHitch.cs"
+      Link="Utils/Profiling/ProfileHitch.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileIntervalStats.cs"
+      Link="Utils/Profiling/ProfileIntervalStats.cs"
+    />
+    <Compile
+      Include="../../src/Utils/Profiling/ProfileAllocationCounter.cs"
+      Link="Utils/Profiling/ProfileAllocationCounter.cs"
+    />
+    <Compile
       Include="../../src/Utils/Profiling/ProfileTarget.cs"
       Link="Utils/Profiling/ProfileTarget.cs"
     />

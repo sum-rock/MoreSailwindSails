@@ -9,7 +9,8 @@ namespace MoreSailwindSails.Utils.Profiling
     internal static class PerformanceProfile
     {
         private static readonly ProfileCollector collector = new ProfileCollector(
-            timestamp: Stopwatch.GetTimestamp
+            timestamp: Stopwatch.GetTimestamp,
+            allocatedBytes: ProfileAllocationCounter.TryCreate(runtime: typeof(GC))
         );
         private static readonly ProfileSession session = new ProfileSession(
             collector: collector,

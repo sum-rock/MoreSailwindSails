@@ -13,6 +13,7 @@ internal static class ProfilingChecks
         Selection();
         Timing();
         Sessions();
+        ProfilingGcChecks.Run();
         Console.WriteLine(
             "PASS: profiling selections, inclusive timing, attribution, exception cleanup, mode/window transitions, and allocation-free warmed collection."
         );

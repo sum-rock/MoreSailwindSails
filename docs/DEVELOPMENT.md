@@ -1834,8 +1834,18 @@ across **all loaded boats**, not just the player's boat.
   visual revision reasons and consumer rebuild/reuse. A rebuild request does not
   necessarily upload a mesh.
 - FPS, frame mean/max, frames over 33 ms and `gc0Global` describe the whole
-  game. The GC counter is process-wide; summaries cannot attribute allocations
-  or establish whether a collection caused a particular hitch.
+  game. The GC counter is process-wide.
+- Tick intervals report count, mean/max and counts over 50/100 ms separately
+  with and without GC. Up to eight longest intervals over 50 ms include their
+  capture-relative end time and collection delta. These correlate collections
+  with hitches; they do **not** measure GC pause duration. Intervals crossing
+  capture, mode/configuration or report boundaries are excluded and counted.
+  Frame statistics and `gc0Global` remain unfiltered.
+- Scoped allocation bytes (total and maximum per call) are inclusive and
+  available only when the runtime provides
+  `GC.GetAllocatedBytesForCurrentThread`. The installed Mono runtime lacks it
+  and reports `allocations=unavailable`; heap growth is not used as a
+  substitute.
 
 For ABAB comparisons, record 20–30 seconds each of NORMAL/BYPASS and repeat,
 keeping camera, graphics settings, fitted sails and timing selections unchanged.

@@ -16,6 +16,30 @@ namespace MoreSailwindSails.Utils.Profiling
                     $"{prefix} scope=all-loaded-boats frames={session.Frames} frameMeanMs={session.FrameSeconds * 1000 / session.Frames:F2} frameMaxMs={session.MaxFrameSeconds * 1000:F2} fps={(session.FrameSeconds > 0 ? session.Frames / session.FrameSeconds : 0):F2} over33ms={session.SlowFrames} gc0Global={session.GcCollections} targets={Names(selection: session.Collector.Selection)} cpu=inclusive-not-additive excludes=Unity-Cloth-and-GPU"
                 )
             );
+            log(
+                $"{prefix} allocations={(session.Collector.AllocationsAvailable ? "current-thread-inclusive-not-additive" : "unavailable")} sampling=tick-intervals-not-GC-pause-duration excludedIntervals={session.Intervals.Excluded}"
+            );
+            WriteIntervals(
+                prefix: prefix,
+                group: "with-GC",
+                stats: session.Intervals.WithGc,
+                log: log
+            );
+            WriteIntervals(
+                prefix: prefix,
+                group: "without-GC",
+                stats: session.Intervals.WithoutGc,
+                log: log
+            );
+            for (int i = 0; i < session.Intervals.LongestCount; i++)
+            {
+                var hitch = session.Intervals.Longest[i];
+                log(
+                    FormattableString.Invariant(
+                        $"{prefix} longestInterval={i + 1} captureEndSeconds={hitch.EndSeconds:F3} intervalMs={hitch.Seconds * 1000:F2} gc0Delta={hitch.Collections}"
+                    )
+                );
+            }
             double milliseconds = 1000.0 / Stopwatch.Frequency;
             for (var family = ProfileFamily.Unspecified; family < ProfileFamily.Count; family++)
             {
@@ -33,9 +57,14 @@ namespace MoreSailwindSails.Utils.Profiling
                         int calls = session.Collector.Calls[index];
                         if (calls == 0)
                             continue;
+                        string allocations = session.Collector.AllocationsAvailable
+                            ? FormattableString.Invariant(
+                                $" allocatedBytes={session.Collector.AllocatedBytes[index]} maxCallAllocatedBytes={session.Collector.MaximumAllocatedBytes[index]}"
+                            )
+                            : "";
                         log(
                             FormattableString.Invariant(
-                                $"{prefix} family={family} target={target} stage={stage} calls={calls} callsPerFrame={calls / (double)session.Frames:F2} cpuMsPerFrame={session.Collector.Ticks[index] * milliseconds / session.Frames:F3} maxCallMs={session.Collector.Maximum[index] * milliseconds:F3}"
+                                $"{prefix} family={family} target={target} stage={stage} calls={calls} callsPerFrame={calls / (double)session.Frames:F2} cpuMsPerFrame={session.Collector.Ticks[index] * milliseconds / session.Frames:F3} maxCallMs={session.Collector.Maximum[index] * milliseconds:F3}{allocations}"
                             )
                         );
                     }
@@ -57,6 +86,18 @@ namespace MoreSailwindSails.Utils.Profiling
                     log($"{prefix} family={family} counters:{counters}");
             }
         }
+
+        private static void WriteIntervals(
+            string prefix,
+            string group,
+            ProfileIntervalStats stats,
+            Action<string> log
+        ) =>
+            log(
+                FormattableString.Invariant(
+                    $"{prefix} intervalGroup={group} intervals={stats.Count} meanMs={(stats.Count > 0 ? stats.Seconds * 1000 / stats.Count : 0):F2} maxMs={stats.Maximum * 1000:F2} over50ms={stats.Over50} over100ms={stats.Over100}"
+                )
+            );
 
         internal static string Names(int selection)
         {

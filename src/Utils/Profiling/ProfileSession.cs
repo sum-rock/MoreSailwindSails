@@ -6,6 +6,7 @@ namespace MoreSailwindSails.Utils.Profiling
     internal sealed class ProfileSession
     {
         internal readonly ProfileCollector Collector;
+        internal readonly ProfileIntervals Intervals = new ProfileIntervals();
         private readonly Action<ProfileSession> report;
         private double windowStart;
         private int lastFrame = -1;
@@ -46,6 +47,7 @@ namespace MoreSailwindSails.Utils.Profiling
             if (Mode != 0 && lastFrame != frame)
             {
                 lastFrame = frame;
+                Intervals.Sample(now: now, gc: gc);
                 Frames++;
                 FrameSeconds += seconds;
                 MaxFrameSeconds = Math.Max(MaxFrameSeconds, seconds);
@@ -61,6 +63,7 @@ namespace MoreSailwindSails.Utils.Profiling
                 {
                     SessionId++;
                     WindowId = 0;
+                    Intervals.Start(now: now);
                 }
                 Reset(now: now, gc: gc);
                 Collector.Active = Mode != 0;
@@ -89,6 +92,8 @@ namespace MoreSailwindSails.Utils.Profiling
         private void Reset(double now, int gc)
         {
             Collector.Clear();
+            // The next interval crosses logging or a capture boundary; seed it, do not measure it.
+            Intervals.Clear();
             Frames = SlowFrames = GcCollections = 0;
             FrameSeconds = MaxFrameSeconds = 0;
             initialGc = gc;

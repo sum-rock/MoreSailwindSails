@@ -2,7 +2,7 @@ using System;
 
 namespace MoreSailwindSails.Utils.Profiling
 {
-    // Allocation-free inclusive CPU aggregation, independent of Unity and log formatting.
+    // Allocation-free inclusive CPU/allocation aggregation, independent of Unity and logging.
     internal sealed class ProfileCollector
     {
         private const int StageCount = (int)ProfileStage.Count;
@@ -10,18 +10,27 @@ namespace MoreSailwindSails.Utils.Profiling
         internal const int SampleCount = (int)ProfileFamily.Count * TargetCount * StageCount;
         internal readonly long[] Ticks = new long[SampleCount];
         internal readonly long[] Maximum = new long[SampleCount];
+        internal readonly long[] AllocatedBytes = new long[SampleCount];
+        internal readonly long[] MaximumAllocatedBytes = new long[SampleCount];
         internal readonly int[] Calls = new int[SampleCount];
         internal readonly int[] Counters = new int[
             (int)ProfileFamily.Count * (int)ProfileCounter.Count
         ];
         private readonly bool[] measuring = new bool[SampleCount];
         private readonly Func<long> timestamp;
+        private readonly Func<long> allocatedBytes;
         private int generation;
         private ProfileFamily family;
         internal bool Active { get; set; }
         internal int Selection { get; set; }
 
-        internal ProfileCollector(Func<long> timestamp) => this.timestamp = timestamp;
+        internal bool AllocationsAvailable => allocatedBytes != null;
+
+        internal ProfileCollector(Func<long> timestamp, Func<long> allocatedBytes = null)
+        {
+            this.timestamp = timestamp;
+            this.allocatedBytes = allocatedBytes;
+        }
 
         internal static int Index(
             ProfileFamily family,
@@ -53,11 +62,18 @@ namespace MoreSailwindSails.Utils.Profiling
                 generation: generation,
                 index: measure ? index : -1,
                 started: measure ? timestamp() : 0,
+                allocationStart: measure && AllocationsAvailable ? allocatedBytes() : 0,
                 previous: previous
             );
         }
 
-        internal void End(int generation, int index, long started, ProfileFamily previous)
+        internal void End(
+            int generation,
+            int index,
+            long started,
+            long allocationStart,
+            ProfileFamily previous
+        )
         {
             if (generation != this.generation)
                 return;
@@ -66,6 +82,12 @@ namespace MoreSailwindSails.Utils.Profiling
                 long elapsed = Math.Max(0, timestamp() - started);
                 Ticks[index] += elapsed;
                 Maximum[index] = Math.Max(Maximum[index], elapsed);
+                if (AllocationsAvailable)
+                {
+                    long bytes = Math.Max(0, allocatedBytes() - allocationStart);
+                    AllocatedBytes[index] += bytes;
+                    MaximumAllocatedBytes[index] = Math.Max(MaximumAllocatedBytes[index], bytes);
+                }
                 Calls[index]++;
                 measuring[index] = false;
             }
@@ -93,6 +115,8 @@ namespace MoreSailwindSails.Utils.Profiling
             family = ProfileFamily.Unspecified;
             Array.Clear(Ticks, 0, Ticks.Length);
             Array.Clear(Maximum, 0, Maximum.Length);
+            Array.Clear(AllocatedBytes, 0, AllocatedBytes.Length);
+            Array.Clear(MaximumAllocatedBytes, 0, MaximumAllocatedBytes.Length);
             Array.Clear(Calls, 0, Calls.Length);
             Array.Clear(Counters, 0, Counters.Length);
             Array.Clear(measuring, 0, measuring.Length);
