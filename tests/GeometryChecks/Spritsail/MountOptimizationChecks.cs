@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Spritsail;
 
-// Compares precomputed fitting across bone layouts and benchmarks the frozen original fitter.
+// Compares fitted geometry across bone layouts and benchmarks both frozen predecessor fitters.
 internal static class MountOptimizationChecks
 {
     internal static void Equivalent(
@@ -21,6 +21,25 @@ internal static class MountOptimizationChecks
                 value: (vertices[i] - expectedVertices[i]).sqrMagnitude < 1e-10f
                     && (normals[i] - expectedNormals[i]).sqrMagnitude < 1e-6f,
                 message: $"Optimized mount must match original positions/normals at vertex {i}: position={(vertices[i] - expectedVertices[i]).magnitude}, normal={(normals[i] - expectedNormals[i]).magnitude}."
+            );
+    }
+
+    internal static void ExactCached(
+        Vector3[] vertices,
+        Vector3[] normals,
+        Vector3[] expectedVertices,
+        Vector3[] expectedNormals
+    )
+    {
+        for (int i = 0; i < vertices.Length; i++)
+            Require(
+                value: vertices[i].x == expectedVertices[i].x
+                    && vertices[i].y == expectedVertices[i].y
+                    && vertices[i].z == expectedVertices[i].z
+                    && normals[i].x == expectedNormals[i].x
+                    && normals[i].y == expectedNormals[i].y
+                    && normals[i].z == expectedNormals[i].z,
+                message: $"Scalar fitting changed the previous cached result at vertex {i}."
             );
     }
 
@@ -57,6 +76,21 @@ internal static class MountOptimizationChecks
             for (int step = 0; step < 4; step++)
             {
                 Fit();
+                MountCachedReferenceGeometry.Fit(
+                    luff: luff,
+                    mastOrigin: origin,
+                    mastAxis: axis,
+                    radii: radii,
+                    vertices: expectedVertices,
+                    normals: expectedNormals,
+                    eyelets: eyelets
+                );
+                ExactCached(
+                    vertices: vertices,
+                    normals: normals,
+                    expectedVertices: expectedVertices,
+                    expectedNormals: expectedNormals
+                );
                 MountReferenceGeometry.Fit(
                     luff: luff,
                     mastOrigin: origin,
@@ -86,7 +120,7 @@ internal static class MountOptimizationChecks
             );
         }
         Console.WriteLine(
-            "PASS: precomputed full fits match the reference across changing luff/mast inputs and bone layouts, with allocation-free warmed fitting."
+            "PASS: scalar full fits exactly match the previous cached fitter and remain equivalent to the original across changing luff/mast inputs and bone layouts, with allocation-free warmed fitting."
         );
     }
 
@@ -99,9 +133,19 @@ internal static class MountOptimizationChecks
         var vertices = new Vector3[SpritsailMountAsset.Positions.Length];
         var normals = new Vector3[vertices.Length];
         var eyes = new Vector3[7];
-        void Fit(bool original)
+        void Fit(bool original, bool cached = false)
         {
-            if (original)
+            if (cached)
+                MountCachedReferenceGeometry.Fit(
+                    luff: luff,
+                    mastOrigin: origin,
+                    mastAxis: axis,
+                    radii: radii,
+                    vertices: vertices,
+                    normals: normals,
+                    eyelets: eyes
+                );
+            else if (original)
                 MountReferenceGeometry.Fit(
                     luff: luff,
                     mastOrigin: origin,
@@ -125,15 +169,17 @@ internal static class MountOptimizationChecks
         {
             Fit(original: true);
             Fit(original: false);
+            Fit(original: false, cached: true);
         }
         var originalTimes = new double[7];
         var optimizedTimes = new double[7];
+        var cachedTimes = new double[7];
         const int iterations = 50;
-        double Measure(bool original)
+        double Measure(bool original, bool cached = false)
         {
             long start = Stopwatch.GetTimestamp();
             for (int i = 0; i < iterations; i++)
-                Fit(original: original);
+                Fit(original: original, cached: cached);
             return (Stopwatch.GetTimestamp() - start) * 1000.0 / Stopwatch.Frequency / iterations;
         }
         for (int round = 0; round < 7; round++)
@@ -142,11 +188,13 @@ internal static class MountOptimizationChecks
             if (round % 2 == 0)
             {
                 originalTimes[round] = Measure(original: true);
+                cachedTimes[round] = Measure(original: false, cached: true);
                 optimizedTimes[round] = Measure(original: false);
             }
             else
             {
                 optimizedTimes[round] = Measure(original: false);
+                cachedTimes[round] = Measure(original: false, cached: true);
                 originalTimes[round] = Measure(original: true);
             }
         }
@@ -156,10 +204,11 @@ internal static class MountOptimizationChecks
         allocated = GC.GetAllocatedBytesForCurrentThread() - allocated;
         Array.Sort(array: originalTimes);
         Array.Sort(array: optimizedTimes);
+        Array.Sort(array: cachedTimes);
         Require(value: allocated == 0, message: "Warm fitting must not allocate managed objects.");
         Console.WriteLine(
             FormattableString.Invariant(
-                $"Mount fitting benchmark (.NET, no Unity rendering): median original={originalTimes[3]:F3} ms/full fit optimized={optimizedTimes[3]:F3} ms/full fit speedup={originalTimes[3] / optimizedTimes[3]:F2}x allocated={allocated} bytes/{iterations} optimized fits; 7 alternating rounds x {iterations}, after 100 warmups."
+                $"Mount fitting benchmark (.NET, no Unity rendering): median original={originalTimes[3]:F3} ms/full fit previousCached={cachedTimes[3]:F3} ms/full fit optimized={optimizedTimes[3]:F3} ms/full fit speedupVsPrevious={cachedTimes[3] / optimizedTimes[3]:F2}x speedup={originalTimes[3] / optimizedTimes[3]:F2}x allocated={allocated} bytes/{iterations} optimized fits; 7 alternating rounds x {iterations}, after 100 warmups."
             )
         );
     }

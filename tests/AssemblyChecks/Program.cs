@@ -49,10 +49,14 @@ internal static class Program
         Spritsail.ShipyardPlacementChecks.Run(assembly: assembly);
         Spritsail.TravelChecks.Run(assembly: assembly);
         Spritsail.DeploymentChecks.Run(assembly: assembly);
-        Spritsail.MountProfileChecks.Run(assembly: assembly);
+        Spritsail.AllocationChecks.Run(assembly: assembly);
+        Utils.ProfileIntegrationChecks.Run(assembly: assembly);
+        Spritsail.HiddenNativeRopeChecks.Run(assembly: assembly);
+        Utils.ProfileConfigurationChecks.Run(assembly: assembly);
         Spritsail.VisualCacheChecks.Run(assembly: assembly);
         Spritsail.NativeBindingChecks.Run(assembly: assembly);
         Spritsail.ObstructionChecks.Run(assembly: assembly);
+        Spritsail.FlexChecks.Run(assembly: assembly);
         Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run(assembly: assembly);
         Spritsail.LooseFootedSpritsail.MarkChecks.Run(assembly: assembly);
         Compatibility.TextureCatalogChecks.Run(assembly);

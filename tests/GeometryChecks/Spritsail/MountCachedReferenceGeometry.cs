@@ -1,10 +1,10 @@
-using System;
+using MoreSailwindSails.Sails.Spritsail;
 using UnityEngine;
 
-namespace MoreSailwindSails.Sails.Spritsail
+namespace MoreSailwindSails.Tests.GeometryChecks.Spritsail
 {
-    // Fits the authored edging to an existing luff and its rope loops to the physical mast.
-    internal static class SpritsailMountGeometry
+    // Frozen cached fitter before scalar rope evaluation, for regression comparisons and benchmarks.
+    internal static class MountCachedReferenceGeometry
     {
         internal const float SeamOverlap = 0.002f;
 
@@ -77,12 +77,17 @@ namespace MoreSailwindSails.Sails.Spritsail
                 {
                     int i = data.Indices[eye + 8][j];
                     ref readonly var source = ref data.Ropes[eye][j];
-                    frame.FitVertex(
-                        source: in source,
-                        ropeRadius: ropeRadius,
-                        vertex: out vertices[i],
-                        normal: out normals[i]
-                    );
+                    var point = frame.Point(sample: in source.Point);
+                    var tangent = (
+                        frame.Point(sample: in source.After) - frame.Point(sample: in source.Before)
+                    ).normalized;
+                    var radial = Vector3.Cross(lhs: tangent, rhs: mastAxis).normalized;
+                    normals[i] = (
+                        mastAxis * source.Normal.x
+                        + radial * source.Normal.y
+                        + tangent * source.Normal.z
+                    ).normalized;
+                    vertices[i] = point + mastAxis * source.Axial + normals[i] * ropeRadius;
                 }
             }
         }
@@ -126,94 +131,21 @@ namespace MoreSailwindSails.Sails.Spritsail
                 negativeC = negativeD + outward * (fitted * 0.55f);
             }
 
-            // Keep the original operation order and finite-difference tangent, but avoid
-            // repeated Vector3 operators/properties in the per-vertex Mono hot path.
-            internal void FitVertex(
-                in SpritsailMountFitData.RopeVertex source,
-                float ropeRadius,
-                out Vector3 vertex,
-                out Vector3 normal
-            )
-            {
-                var point = Point(sample: in source.Point);
-                var after = Point(sample: in source.After);
-                var before = Point(sample: in source.Before);
-                float tx = after.x - before.x,
-                    ty = after.y - before.y,
-                    tz = after.z - before.z;
-                Normalize(x: ref tx, y: ref ty, z: ref tz);
-                float rx = ty * axis.z - tz * axis.y;
-                float ry = tz * axis.x - tx * axis.z;
-                float rz = tx * axis.y - ty * axis.x;
-                Normalize(x: ref rx, y: ref ry, z: ref rz);
-                float nx = axis.x * source.Normal.x + rx * source.Normal.y + tx * source.Normal.z;
-                float ny = axis.y * source.Normal.x + ry * source.Normal.y + ty * source.Normal.z;
-                float nz = axis.z * source.Normal.x + rz * source.Normal.y + tz * source.Normal.z;
-                Normalize(x: ref nx, y: ref ny, z: ref nz);
-                normal = new Vector3(nx, ny, nz);
-                vertex = new Vector3(
-                    point.x + axis.x * source.Axial + nx * ropeRadius,
-                    point.y + axis.y * source.Axial + ny * ropeRadius,
-                    point.z + axis.z * source.Axial + nz * ropeRadius
-                );
-            }
-
-            private static void Normalize(ref float x, ref float y, ref float z)
-            {
-                float length = (float)Math.Sqrt(x * x + y * y + z * z);
-                if (length > 1e-5f)
-                {
-                    x /= length;
-                    y /= length;
-                    z /= length;
-                }
-                else
-                    x = y = z = 0;
-            }
-
-            private Vector3 Point(in SpritsailMountFitData.RopeSample sample)
+            internal Vector3 Point(in SpritsailMountFitData.RopeSample sample)
             {
                 if (sample.Collar)
-                    return new Vector3(
-                        center.x + (outward.x * sample.Cos + side.x * sample.Sin) * fitted,
-                        center.y + (outward.y * sample.Cos + side.y * sample.Sin) * fitted,
-                        center.z + (outward.z * sample.Cos + side.z * sample.Sin) * fitted
-                    );
+                    return center + (outward * sample.Cos + side * sample.Sin) * fitted;
                 var b = sample.Sign > 0 ? positiveB : negativeB;
                 var c = sample.Sign > 0 ? positiveC : negativeC;
                 var d = sample.Sign > 0 ? positiveD : negativeD;
-                float x = eyelet.x * sample.A + b.x * sample.B + c.x * sample.C + d.x * sample.D;
-                float y = eyelet.y * sample.A + b.y * sample.B + c.y * sample.C + d.y * sample.D;
-                float z = eyelet.z * sample.A + b.z * sample.B + c.z * sample.C + d.z * sample.D;
-                float along =
-                    (x - center.x) * axis.x + (y - center.y) * axis.y + (z - center.z) * axis.z;
-                float cx = center.x + axis.x * along,
-                    cy = center.y + axis.y * along,
-                    cz = center.z + axis.z * along;
-                float rx = x - cx,
-                    ry = y - cy,
-                    rz = z - cz;
-                float squared = rx * rx + ry * ry + rz * rz;
-                if (squared < fitted * fitted)
-                {
-                    if (squared > 0.000001f)
-                    {
-                        float length = (float)Math.Sqrt(squared);
-                        rx /= length;
-                        ry /= length;
-                        rz /= length;
-                    }
-                    else
-                    {
-                        rx = outward.x;
-                        ry = outward.y;
-                        rz = outward.z;
-                    }
-                    x = cx + rx * fitted;
-                    y = cy + ry * fitted;
-                    z = cz + rz * fitted;
-                }
-                return new Vector3(x, y, z);
+                var point = eyelet * sample.A + b * sample.B + c * sample.C + d * sample.D;
+                var axialCenter = center + axis * Vector3.Dot(lhs: point - center, rhs: axis);
+                var radial = point - axialCenter;
+                if (radial.sqrMagnitude < fitted * fitted)
+                    point =
+                        axialCenter
+                        + (radial.sqrMagnitude > 0.000001f ? radial.normalized : outward) * fitted;
+                return point;
             }
         }
     }

@@ -132,13 +132,12 @@ internal static class SpritVisualChecks
             4,
             7,
         };
+        var geometry = new SpritsailMastGeometry(vertices: taper, triangles: faces);
         foreach (float height in new[] { 0.1f, 1f, 1.9f })
         foreach (float directionScale in new[] { 0.5f, 1f, 2f })
         {
             Require(
-                value: SpritsailMastGeometry.TryDistance(
-                    vertices: taper,
-                    triangles: faces,
+                value: geometry.TryDistance(
                     origin: new Vector3(0, 0, height),
                     direction: Vector3.right * directionScale,
                     distance: out var distance

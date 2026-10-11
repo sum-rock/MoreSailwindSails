@@ -1,13 +1,13 @@
 using System;
+using MoreSailwindSails.Sails.Spritsail;
 using UnityEngine;
 
-namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
+namespace MoreSailwindSails.Tests.GeometryChecks.Spritsail.LooseFootedSpritsail
 {
-    // Fits sheet-driven lower-panel curvature within the existing foot and leech arc budgets.
-    internal static class LooseFootedSpritsailFlex
+    // Frozen pre-optimization solver for differential correctness checks and offline benchmarks.
+    internal static class FlexReference
     {
         internal const float MaximumDisplacement = 0.15f;
-        internal const float MinimumDisplacementSquared = 1e-12f;
 
         private static float Clamp(float value) => Math.Max(0, Math.Min(1, value));
 
@@ -76,30 +76,6 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
             return t * t;
         }
 
-        // Authored-corner weights are invariant under the runtime pose and sail scale.
-        internal static float[] Weights(Vector3[] corners)
-        {
-            var weights = new float[LooseFootedSpritsailGeometry.BoneCount];
-            for (int row = 0; row <= LooseFootedSpritsailGeometry.Rows; row++)
-            for (int column = 0; column <= LooseFootedSpritsailGeometry.ShapeColumns; column++)
-            {
-                float u = column / (float)LooseFootedSpritsailGeometry.ShapeColumns;
-                float v = row / (float)LooseFootedSpritsailGeometry.Rows;
-                var rest = Vector3.Lerp(
-                    Vector3.Lerp(corners[0], corners[2], v),
-                    Vector3.Lerp(corners[1], corners[3], v),
-                    u
-                );
-                weights[LooseFootedSpritsailGeometry.ShapeBone(row: row, column: column)] = Weight(
-                    point: rest,
-                    peak: corners[1],
-                    tack: corners[2],
-                    clew: corners[3]
-                );
-            }
-            return weights;
-        }
-
         internal static float Arc(Vector3[] edge, Vector3 displacement)
         {
             float length = 0;
@@ -126,9 +102,6 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 || leech.Length < 2
             )
                 return Vector3.zero;
-            requested = Limit(value: requested, limit: limit);
-            if (requested.sqrMagnitude < MinimumDisplacementSquared)
-                return Vector3.zero;
             float footBudget = Arc(edge: foot, displacement: Vector3.zero);
             float leechBudget = Arc(edge: leech, displacement: Vector3.zero);
             if (
@@ -136,28 +109,21 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 || !SpritsailDeployment.Finite(value: leechBudget)
             )
                 return Vector3.zero;
+            requested = Limit(value: requested, limit: limit);
+            if (requested.sqrMagnitude < 1e-12f)
+                return Vector3.zero;
             var inward = ((foot[0] + leech[0]) * 0.5f - foot[foot.Length - 1]).normalized;
             var best = Vector3.zero;
             float error = requested.sqrMagnitude;
-            float requestedLength = requested.magnitude;
-            double pruningMargin = 1e-6 * requested.sqrMagnitude;
             // A little in-plane gathering buys arc length for the transverse curve.
             // For each direction, arc length is convex in displacement, so bisection is safe.
             for (int candidate = 0; candidate <= 16; candidate++)
             {
                 var direction = Limit(
-                    value: requested + inward * (requestedLength * candidate / 16f),
+                    value: requested + inward * (requested.magnitude * candidate / 16f),
                     limit: limit
                 );
                 if (Vector3.Dot(direction, requested) <= 0)
-                    continue;
-                // Even the closest point on this candidate's complete [0, 1] segment
-                // must improve the incumbent before edge constraints can be worth testing.
-                // A relative margin retains near ties despite float rounding in the old fit.
-                if (
-                    ClosestError(requested: requested, direction: direction)
-                    > error + pruningMargin
-                )
                     continue;
                 float low = 0,
                     high = 1;
@@ -182,24 +148,6 @@ namespace MoreSailwindSails.Sails.Spritsail.LooseFootedSpritsail
                 }
             }
             return best;
-        }
-
-        private static double ClosestError(Vector3 requested, Vector3 direction)
-        {
-            double x = direction.x,
-                y = direction.y,
-                z = direction.z;
-            double squared = x * x + y * y + z * z;
-            if (squared == 0)
-                return requested.sqrMagnitude;
-            double t = Math.Max(
-                0,
-                Math.Min(1, (x * requested.x + y * requested.y + z * requested.z) / squared)
-            );
-            x = x * t - requested.x;
-            y = y * t - requested.y;
-            z = z * t - requested.z;
-            return x * x + y * y + z * z;
         }
 
         private static Vector3 Limit(Vector3 value, float limit) =>

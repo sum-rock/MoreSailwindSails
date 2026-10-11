@@ -1,3 +1,4 @@
+using MoreSailwindSails.Utils.Profiling;
 using MoreSailwindSails.Visuals;
 using UnityEngine;
 
@@ -86,84 +87,92 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             bool struck
         )
         {
-            var controls = Vector3.zero;
-            float sharedSlack = 1;
-            int active = 0;
-            for (int side = 0; side < NativeSheets.Length; side++)
+            using (
+                PerformanceProfile.Measure(
+                    target: ProfileTarget.Ropes,
+                    family: ProfileFamily.FlyingSail
+                )
+            )
             {
-                var source = NativeSheets[side];
-                if (!source || !source.gameObject.activeInHierarchy)
-                    continue;
-                controls += source.transform.position;
-                sharedSlack = Mathf.Min(sharedSlack, Slack(source));
-                active++;
-            }
-            if (active == 0)
-            {
-                Hide();
-                return;
-            }
-            controls /= active;
-            var head = bones[1].position;
-            var clew = bones[3].position;
-            var top = bones[0].position;
-            var tack = bones[2].position;
-            var headDirection = head - top;
-            var footDirection = clew - tack;
-            float headLength = (head - top).magnitude;
-            float footLength = (clew - tack).magnitude;
-            if (struck)
-            {
-                LuffTies.Hide();
-                if (Knots)
-                    Knots.Hide();
-                foreach (var span in SharedSpans)
-                    span.SetVisible(visible: false);
-            }
-            else
-            {
-                LuffTies.Draw(aftDirection);
-                if (Knots)
-                    Knots.Draw(bones, aftGuide, controls, aftDirection);
-                DrawSpan(
-                    SharedSpans[0],
-                    top,
-                    head,
-                    aftDirection,
-                    headDirection,
-                    FishermansFlyingSailFrameGeometry.TieLength,
-                    headLength,
-                    sharedSlack
-                );
-                DrawDirectSpan(SharedSpans[1], head, aftGuide, sharedSlack);
-                DrawSpan(
-                    SharedSpans[2],
-                    tack,
-                    clew,
-                    aftDirection,
-                    footDirection,
-                    FishermansFlyingSailFrameGeometry.TieLength,
-                    footLength,
-                    sharedSlack
-                );
-            }
-            for (int side = 0; side < NativeSheets.Length; side++)
-            {
-                var source = NativeSheets[side];
-                if (!source || !source.gameObject.activeInHierarchy)
+                var controls = Vector3.zero;
+                float sharedSlack = 1;
+                int active = 0;
+                for (int side = 0; side < NativeSheets.Length; side++)
                 {
-                    UpperSheets[side].SetVisible(visible: false);
-                    LowerSheets[side].SetVisible(visible: false);
-                    continue;
+                    var source = NativeSheets[side];
+                    if (!source || !source.gameObject.activeInHierarchy)
+                        continue;
+                    controls += source.transform.position;
+                    sharedSlack = Mathf.Min(sharedSlack, Slack(source));
+                    active++;
                 }
-                var control = source.transform.position;
-                DrawDirectSpan(UpperSheets[side], aftGuide, control, Slack(source));
-                DrawDirectSpan(
-                    LowerSheets[side],
-                    struck ? foreGuide : clew,
-                    control,
-                    Slack(source)
-                );
+                if (active == 0)
+                {
+                    Hide();
+                    return;
+                }
+                controls /= active;
+                var head = bones[1].position;
+                var clew = bones[3].position;
+                var top = bones[0].position;
+                var tack = bones[2].position;
+                var headDirection = head - top;
+                var footDirection = clew - tack;
+                float headLength = (head - top).magnitude;
+                float footLength = (clew - tack).magnitude;
+                if (struck)
+                {
+                    LuffTies.Hide();
+                    if (Knots)
+                        Knots.Hide();
+                    foreach (var span in SharedSpans)
+                        span.SetVisible(visible: false);
+                }
+                else
+                {
+                    LuffTies.Draw(aftDirection);
+                    if (Knots)
+                        Knots.Draw(bones, aftGuide, controls, aftDirection);
+                    DrawSpan(
+                        SharedSpans[0],
+                        top,
+                        head,
+                        aftDirection,
+                        headDirection,
+                        FishermansFlyingSailFrameGeometry.TieLength,
+                        headLength,
+                        sharedSlack
+                    );
+                    DrawDirectSpan(SharedSpans[1], head, aftGuide, sharedSlack);
+                    DrawSpan(
+                        SharedSpans[2],
+                        tack,
+                        clew,
+                        aftDirection,
+                        footDirection,
+                        FishermansFlyingSailFrameGeometry.TieLength,
+                        footLength,
+                        sharedSlack
+                    );
+                }
+                for (int side = 0; side < NativeSheets.Length; side++)
+                {
+                    var source = NativeSheets[side];
+                    if (!source || !source.gameObject.activeInHierarchy)
+                    {
+                        UpperSheets[side].SetVisible(visible: false);
+                        LowerSheets[side].SetVisible(visible: false);
+                        continue;
+                    }
+                    var control = source.transform.position;
+                    DrawDirectSpan(UpperSheets[side], aftGuide, control, Slack(source));
+                    DrawDirectSpan(
+                        LowerSheets[side],
+                        struck ? foreGuide : clew,
+                        control,
+                        Slack(source)
+                    );
+                }
             }
         }
 

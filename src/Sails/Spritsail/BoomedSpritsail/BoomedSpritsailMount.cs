@@ -1,4 +1,4 @@
-using System.Linq;
+using System;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
@@ -11,13 +11,26 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
         internal Transform Guide,
             LowerGuide;
         internal BoatPartOption[] Parts;
-        internal bool Active =>
-            Mast
-            && Mast.gameObject.activeInHierarchy
-            && LowerGuide
-            && LowerGuide.gameObject.activeInHierarchy
-            && Guide
-            && Guide.gameObject.activeInHierarchy
-            && Parts.All(predicate: p => p && p.gameObject.activeInHierarchy);
+        internal bool Active
+        {
+            get
+            {
+                if (
+                    !Mast
+                    || !Mast.gameObject.activeInHierarchy
+                    || !LowerGuide
+                    || !LowerGuide.gameObject.activeInHierarchy
+                    || !Guide
+                    || !Guide.gameObject.activeInHierarchy
+                )
+                    return false;
+                if (Parts == null)
+                    throw new ArgumentNullException(paramName: nameof(Parts));
+                for (int i = 0; i < Parts.Length; i++)
+                    if (!Parts[i] || !Parts[i].gameObject.activeInHierarchy)
+                        return false;
+                return true;
+            }
+        }
     }
 }

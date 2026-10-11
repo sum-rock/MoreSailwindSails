@@ -7,9 +7,19 @@ internal static class Program
 {
     private static void Main(string[] args)
     {
+        if (System.Array.IndexOf(array: args, value: "--benchmark-mast") >= 0)
+        {
+            Spritsail.MastIntersectionChecks.Benchmark();
+            return;
+        }
         if (System.Array.IndexOf(array: args, value: "--benchmark-mount") >= 0)
         {
             Spritsail.MountOptimizationChecks.Benchmark();
+            return;
+        }
+        if (System.Array.IndexOf(array: args, value: "--benchmark-flex") >= 0)
+        {
+            Spritsail.LooseFootedSpritsail.FlexOptimizationChecks.Benchmark();
             return;
         }
         Visuals.RoutedRopeChecks.Run();
@@ -23,18 +33,21 @@ internal static class Program
         Spritsail.NativeControlChecks.Run();
         Spritsail.GallusChecks.Run();
         Spritsail.SpritVisualChecks.Run();
+        Spritsail.MastIntersectionChecks.Run();
         Spritsail.SnotterChecks.Run();
         Spritsail.MountChecks.Run();
         Spritsail.MountFrameChecks.Run();
         Spritsail.DeploymentChecks.Run();
         Spritsail.ObstructionChecks.Run();
         Spritsail.LooseFootedSpritsail.FlexChecks.Run();
+        Spritsail.LooseFootedSpritsail.FlexOptimizationChecks.Run();
         Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run();
         Spritsail.LooseFootedSpritsail.MkB.CutChecks.Run();
         RigChecks.Run();
         ProfileChecks.Run();
         StayChecks.Run();
         CollarChecks.Run();
+        Utils.ProfilingChecks.Run();
         Utils.WinchCaptureChecks.Run();
         Utils.WinchMountOverlayChecks.Run();
         Controls.NativeSeatProfileChecks.Run();

@@ -1,17 +1,17 @@
 using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Utils.Profiling;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.Spritsail
 {
-    // Caches read-only mast vertices so a fitted socket seats on timber rather than its collision capsule.
+    // Owns a mast intersection snapshot and exact sample cache for timber seating.
     internal sealed class SpritsailMastSurface
     {
         private readonly MeshFilter filter;
         private readonly Mesh sourceMesh;
         internal Transform Frame => filter ? filter.transform : null;
         internal bool MeshUnchanged => !filter || filter.sharedMesh == sourceMesh;
-        private readonly Vector3[] vertices;
-        private readonly int[] triangles;
+        private readonly SpritsailMastGeometry geometry;
         private bool warned;
         private readonly bool authoredSanbuqTopmast;
         private readonly SpritsailSurfaceSample[] samples;
@@ -28,8 +28,10 @@ namespace MoreSailwindSails.Sails.Spritsail
                 && filter.sharedMesh.name == "mizzen_topmast_sanbuq";
             if (filter && filter.sharedMesh && filter.sharedMesh.isReadable)
             {
-                vertices = filter.sharedMesh.vertices;
-                triangles = filter.sharedMesh.triangles;
+                geometry = new SpritsailMastGeometry(
+                    vertices: sourceMesh.vertices,
+                    triangles: sourceMesh.triangles
+                );
             }
         }
 
@@ -59,20 +61,14 @@ namespace MoreSailwindSails.Sails.Spritsail
                         .TryGet(origin: origin, direction: ray, radius: out var cachedRadius)
                 )
                 {
-                    SpritsailMountProfile.SurfaceQuery(hit: true);
+                    PerformanceProfile.SurfaceQuery(hit: true);
                     return cachedRadius;
                 }
-                SpritsailMountProfile.SurfaceQuery(hit: false);
+                PerformanceProfile.SurfaceQuery(hit: false);
                 float radius = 0;
                 bool found =
-                    vertices != null
-                    && SpritsailMastGeometry.TryDistance(
-                        vertices: vertices,
-                        triangles: triangles,
-                        origin: origin,
-                        direction: ray,
-                        distance: out radius
-                    );
+                    geometry != null
+                    && geometry.TryDistance(origin: origin, direction: ray, distance: out radius);
                 if (
                     !found
                     && authoredSanbuqTopmast

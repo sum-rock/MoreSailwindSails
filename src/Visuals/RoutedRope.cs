@@ -1,3 +1,4 @@
+using MoreSailwindSails.Utils.Profiling;
 using UnityEngine;
 
 namespace MoreSailwindSails.Visuals
@@ -25,64 +26,68 @@ namespace MoreSailwindSails.Visuals
         // Opt-in revision drawing for rigid routes: all existing live consumers retain SetVisible.
         internal void DrawCached(bool visible, Transform anchor, long revision)
         {
-            if (!visible || !anchor || !Line || !isActiveAndEnabled)
+            using (PerformanceProfile.Measure(target: ProfileTarget.Ropes))
             {
-                SetVisible(visible: false);
-                return;
-            }
-            bool useTube = Settings.clothRopes;
-            bool routeChanged = cachedRevision != revision || cachedAnchor != anchor;
-            if (routeChanged)
-            {
-                int count = Line.positionCount;
-                if (anchorPoints == null || anchorPoints.Length != count)
+                if (!visible || !anchor || !Line || !isActiveAndEnabled)
                 {
-                    anchorPoints = new Vector3[count];
-                    worldPoints = new Vector3[count];
+                    SetVisible(visible: false);
+                    return;
                 }
-                Line.GetPositions(positions: worldPoints);
-                for (int i = 0; i < count; i++)
-                    anchorPoints[i] = anchor.InverseTransformPoint(position: worldPoints[i]);
-                cachedAnchor = anchor;
-                cachedRevision = revision;
-            }
-            if (useTube && (routeChanged || !cachedTube || !tube))
-            {
-                // Settings/material retries must bake from the current transported route.
-                for (int i = 0; i < anchorPoints.Length; i++)
-                    worldPoints[i] = anchor.TransformPoint(position: anchorPoints[i]);
-                Line.SetPositions(positions: worldPoints);
-                SetVisible(visible: true);
-                cachedTube = tube && posedTube;
-                if (cachedTube)
-                    anchorToTube = anchor.worldToLocalMatrix * tube.transform.localToWorldMatrix;
+                bool useTube = Settings.clothRopes;
+                bool routeChanged = cachedRevision != revision || cachedAnchor != anchor;
+                if (routeChanged)
+                {
+                    int count = Line.positionCount;
+                    if (anchorPoints == null || anchorPoints.Length != count)
+                    {
+                        anchorPoints = new Vector3[count];
+                        worldPoints = new Vector3[count];
+                    }
+                    Line.GetPositions(positions: worldPoints);
+                    for (int i = 0; i < count; i++)
+                        anchorPoints[i] = anchor.InverseTransformPoint(position: worldPoints[i]);
+                    cachedAnchor = anchor;
+                    cachedRevision = revision;
+                }
+                if (useTube && (routeChanged || !cachedTube || !tube))
+                {
+                    // Settings/material retries must bake from the current transported route.
+                    for (int i = 0; i < anchorPoints.Length; i++)
+                        worldPoints[i] = anchor.TransformPoint(position: anchorPoints[i]);
+                    Line.SetPositions(positions: worldPoints);
+                    SetVisible(visible: true);
+                    cachedTube = tube && posedTube;
+                    if (cachedTube)
+                        anchorToTube =
+                            anchor.worldToLocalMatrix * tube.transform.localToWorldMatrix;
+                    else
+                        useTube = false;
+                }
+                else if (!useTube)
+                    cachedTube = false;
+                if (tube)
+                    tube.enabled = false;
+                Line.enabled = !useTube;
+                if (useTube)
+                    Graphics.DrawMesh(
+                        mesh: mesh,
+                        matrix: anchor.localToWorldMatrix * anchorToTube,
+                        material: tube.sharedMaterial,
+                        layer: gameObject.layer,
+                        camera: null,
+                        submeshIndex: 0,
+                        properties: null,
+                        castShadows: tube.shadowCastingMode
+                            != UnityEngine.Rendering.ShadowCastingMode.Off,
+                        receiveShadows: tube.receiveShadows,
+                        useLightProbes: true
+                    );
                 else
-                    useTube = false;
-            }
-            else if (!useTube)
-                cachedTube = false;
-            if (tube)
-                tube.enabled = false;
-            Line.enabled = !useTube;
-            if (useTube)
-                Graphics.DrawMesh(
-                    mesh: mesh,
-                    matrix: anchor.localToWorldMatrix * anchorToTube,
-                    material: tube.sharedMaterial,
-                    layer: gameObject.layer,
-                    camera: null,
-                    submeshIndex: 0,
-                    properties: null,
-                    castShadows: tube.shadowCastingMode
-                        != UnityEngine.Rendering.ShadowCastingMode.Off,
-                    receiveShadows: tube.receiveShadows,
-                    useLightProbes: true
-                );
-            else
-            {
-                for (int i = 0; i < anchorPoints.Length; i++)
-                    worldPoints[i] = anchor.TransformPoint(position: anchorPoints[i]);
-                Line.SetPositions(positions: worldPoints);
+                {
+                    for (int i = 0; i < anchorPoints.Length; i++)
+                        worldPoints[i] = anchor.TransformPoint(position: anchorPoints[i]);
+                    Line.SetPositions(positions: worldPoints);
+                }
             }
         }
 
@@ -110,62 +115,65 @@ namespace MoreSailwindSails.Visuals
 
         internal void SetVisible(bool visible)
         {
-            posedTube = false;
-            if (Line)
-                Line.enabled = false;
-            if (tube)
-                tube.enabled = false;
-            if (!visible || !Line || !isActiveAndEnabled)
-                return;
-            if (!Settings.clothRopes || !EnsureTube())
+            using (PerformanceProfile.Measure(target: ProfileTarget.Ropes))
             {
-                Line.enabled = true;
-                return;
-            }
+                posedTube = false;
+                if (Line)
+                    Line.enabled = false;
+                if (tube)
+                    tube.enabled = false;
+                if (!visible || !Line || !isActiveAndEnabled)
+                    return;
+                if (!Settings.clothRopes || !EnsureTube())
+                {
+                    Line.enabled = true;
+                    return;
+                }
 
-            int count = Line.positionCount;
-            if (count < 2)
-                return;
-            bool resize = points == null || points.Length != count;
-            if (resize)
-            {
-                points = new Vector3[count];
-                vertices = new Vector3[count * RoutedRopeGeometry.Sides];
-                normals = new Vector3[vertices.Length];
-            }
-            Line.GetPositions(positions: points);
-            if (
-                !RoutedRopeGeometry.Pose(
-                    points: points,
-                    diameter: Width,
-                    vertices: vertices,
-                    normals: normals
+                int count = Line.positionCount;
+                if (count < 2)
+                    return;
+                bool resize = points == null || points.Length != count;
+                if (resize)
+                {
+                    points = new Vector3[count];
+                    vertices = new Vector3[count * RoutedRopeGeometry.Sides];
+                    normals = new Vector3[vertices.Length];
+                }
+                Line.GetPositions(positions: points);
+                if (
+                    !RoutedRopeGeometry.Pose(
+                        points: points,
+                        diameter: Width,
+                        vertices: vertices,
+                        normals: normals
+                    )
                 )
-            )
-                return;
+                    return;
 
-            // Compensate for the complete parent transform, including nonuniform sail scaling.
-            // The line's coordinates and diameter are world-space, as in the native fallback.
-            var worldToLocal = tube.transform.worldToLocalMatrix;
-            var normalToLocal = tube.transform.localToWorldMatrix.transpose;
-            var origin = points[0];
-            for (int i = 0; i < vertices.Length; i++)
-            {
-                vertices[i] = worldToLocal.MultiplyPoint3x4(point: origin + vertices[i]);
-                normals[i] = normalToLocal.MultiplyVector(vector: normals[i]).normalized;
+                // Compensate for the complete parent transform, including nonuniform sail scaling.
+                // The line's coordinates and diameter are world-space, as in the native fallback.
+                var worldToLocal = tube.transform.worldToLocalMatrix;
+                var normalToLocal = tube.transform.localToWorldMatrix.transpose;
+                var origin = points[0];
+                for (int i = 0; i < vertices.Length; i++)
+                {
+                    vertices[i] = worldToLocal.MultiplyPoint3x4(point: origin + vertices[i]);
+                    normals[i] = normalToLocal.MultiplyVector(vector: normals[i]).normalized;
+                }
+                // A failed pose may already have resized the buffers. Decide topology from
+                // the last uploaded mesh so a later successful retry still installs indices.
+                bool topologyChanged = mesh.vertexCount != vertices.Length;
+                if (topologyChanged)
+                    mesh.Clear();
+                mesh.vertices = vertices;
+                mesh.normals = normals;
+                if (topologyChanged)
+                    mesh.triangles = RoutedRopeGeometry.Triangles(count: count);
+                mesh.RecalculateBounds();
+                tube.enabled = true;
+                posedTube = true;
             }
-            // A failed pose may already have resized the buffers. Decide topology from
-            // the last uploaded mesh so a later successful retry still installs indices.
-            bool topologyChanged = mesh.vertexCount != vertices.Length;
-            if (topologyChanged)
-                mesh.Clear();
-            mesh.vertices = vertices;
-            mesh.normals = normals;
-            if (topologyChanged)
-                mesh.triangles = RoutedRopeGeometry.Triangles(count: count);
-            mesh.RecalculateBounds();
-            tube.enabled = true;
-            posedTube = true;
         }
 
         private bool EnsureTube()

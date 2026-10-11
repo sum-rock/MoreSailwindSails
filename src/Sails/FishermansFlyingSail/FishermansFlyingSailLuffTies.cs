@@ -1,3 +1,4 @@
+using MoreSailwindSails.Utils.Profiling;
 using MoreSailwindSails.Visuals;
 using UnityEngine;
 
@@ -39,16 +40,24 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
 
         internal void Draw(Vector3 aftDirection)
         {
-            for (int i = 0; i < Ropes.Length; i++)
+            using (
+                PerformanceProfile.Measure(
+                    target: ProfileTarget.Ropes,
+                    family: ProfileFamily.FlyingSail
+                )
+            )
             {
-                var corner = CornerEnds[i].position;
-                MastEnds[i].position = FishermansFlyingSailFrameGeometry.TieAnchor(
-                    corner,
-                    aftDirection
-                );
-                Ropes[i].SetPosition(0, MastEnds[i].position);
-                Ropes[i].SetPosition(1, corner);
-                Ropes[i].SetVisible(visible: true);
+                for (int i = 0; i < Ropes.Length; i++)
+                {
+                    var corner = CornerEnds[i].position;
+                    MastEnds[i].position = FishermansFlyingSailFrameGeometry.TieAnchor(
+                        corner,
+                        aftDirection
+                    );
+                    Ropes[i].SetPosition(0, MastEnds[i].position);
+                    Ropes[i].SetPosition(1, corner);
+                    Ropes[i].SetVisible(visible: true);
+                }
             }
         }
 

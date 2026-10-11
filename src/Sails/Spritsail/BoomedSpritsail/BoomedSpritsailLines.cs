@@ -1,3 +1,4 @@
+using MoreSailwindSails.Utils.Profiling;
 using MoreSailwindSails.Visuals;
 using UnityEngine;
 
@@ -65,7 +66,12 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
                 Hide();
                 return;
             }
-            Span(line: PeakLashing, start: tip, end: bones[1].position, sag: 0.01f);
+            if (PerformanceProfile.IsBypassed(target: ProfileBypass.SpritsailLiveRopes))
+                Hide();
+            else
+            {
+                Span(line: PeakLashing, start: tip, end: bones[1].position, sag: 0.01f);
+            }
             Mount.Draw(
                 revision: revision,
                 mast: mast,
@@ -75,16 +81,20 @@ namespace MoreSailwindSails.Sails.Spritsail.BoomedSpritsail
 
         private static void Span(RoutedRope line, Vector3 start, Vector3 end, float sag)
         {
-            float depth = (end - start).magnitude * sag;
-            for (int i = 0; i < 9; i++)
+            using (PerformanceProfile.Measure(target: ProfileTarget.Ropes))
             {
-                float t = i / 8f;
-                line.SetPosition(
-                    index: i,
-                    position: Vector3.Lerp(start, end, t) + Vector3.down * (depth * 4 * t * (1 - t))
-                );
+                float depth = (end - start).magnitude * sag;
+                for (int i = 0; i < 9; i++)
+                {
+                    float t = i / 8f;
+                    line.SetPosition(
+                        index: i,
+                        position: Vector3.Lerp(start, end, t)
+                            + Vector3.down * (depth * 4 * t * (1 - t))
+                    );
+                }
+                line.SetVisible(visible: true);
             }
-            line.SetVisible(visible: true);
         }
 
         internal void Hide()
