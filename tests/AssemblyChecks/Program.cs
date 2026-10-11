@@ -51,6 +51,7 @@ internal static class Program
         Spritsail.DeploymentChecks.Run(assembly: assembly);
         Spritsail.AllocationChecks.Run(assembly: assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
+        Spritsail.HiddenNativeRopeChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
         Spritsail.VisualCacheChecks.Run(assembly: assembly);
         Spritsail.NativeBindingChecks.Run(assembly: assembly);

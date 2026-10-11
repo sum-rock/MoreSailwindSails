@@ -7,5 +7,6 @@ namespace MoreSailwindSails.Utils.Profiling
         SailMount,
         Snotter,
         SpritsailLiveRopes,
+        HiddenNativeRopes,
     }
 }

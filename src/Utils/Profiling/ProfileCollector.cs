@@ -94,10 +94,18 @@ namespace MoreSailwindSails.Utils.Profiling
             family = previous;
         }
 
-        internal void Count(ProfileTarget target, ProfileCounter counter)
+        internal void Count(
+            ProfileTarget target,
+            ProfileCounter counter,
+            ProfileFamily owner = ProfileFamily.Unspecified
+        )
         {
             if (Selected(target: target))
-                Counters[(int)family * (int)ProfileCounter.Count + (int)counter]++;
+                Counters[
+                    (int)(owner == ProfileFamily.Unspecified ? family : owner)
+                        * (int)ProfileCounter.Count
+                        + (int)counter
+                ]++;
         }
 
         internal void SurfaceQuery(bool hit)

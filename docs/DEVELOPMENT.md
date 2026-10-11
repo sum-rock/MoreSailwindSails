@@ -1805,18 +1805,34 @@ only whole-game frame statistics. Unknown names warn and are ignored.
 Captures start OFF. **F7** cycles **NORMAL → BYPASS → OFF**; with bypass `None`,
 it toggles NORMAL/OFF. Bypass selection is independent of timing targets:
 
-| `ProfileBypass`      | Visual work skipped                                      |
-| -------------------- | -------------------------------------------------------- |
-| `None`               | Nothing                                                  |
-| `SailMount`          | Authored luff-mount fitting and drawing                  |
-| `Snotter`            | Snotter fitting/drawing and purchase/collar rope visuals |
-| `SpritsailLiveRopes` | Custom peak lashings and loose-footed sheets             |
+| `ProfileBypass`      | Visual work skipped                                           |
+| -------------------- | ------------------------------------------------------------- |
+| `None`               | Nothing                                                       |
+| `SailMount`          | Authored luff-mount fitting and drawing                       |
+| `Snotter`            | Snotter fitting/drawing and purchase/collar rope visuals      |
+| `SpritsailLiveRopes` | Custom peak lashings and loose-footed sheets                  |
+| `HiddenNativeRopes`  | Replaced native spritsail line generation and 3D rope updates |
 
 Timings continue in BYPASS; sail mechanics and Cloth stay active. Stopping,
 changing configuration or disabling the diagnostic restores normal visuals.
 Configuration changes return captures to OFF; invalid bypass names select
 `None`. Legacy `EnableSpritsailMountProfiling`/`ToggleSpritsailMountProfiling`
 settings migrate to the new keys unless explicit new values exist.
+
+`HiddenNativeRopes` skips native visual work after attachment, length-limit and
+tension updates. Only ropes already marked for suppression qualify; custom
+ropes, the visible boomed sheet and other sail families retain their rendering.
+Native settings cleanup and the existing hiding postfixes still run. This tests
+updates, not the cost of retaining hidden rope objects or creating them at
+startup. No visible change is expected when switching this bypass.
+
+Select `Ropes` or `All` to record `HiddenNativeVisualUpdates` in NORMAL and
+`HiddenNativeVisualSkips` in BYPASS, attributed to each spritsail family. These
+count visits to the native visual block; its CPU time is not included in the
+custom `Ropes` timing. Missing skip counts make the comparison inconclusive. For
+this test, sail for 60 seconds each in NORMAL and BYPASS and repeat. Press F7
+twice to pass through OFF when returning from BYPASS to NORMAL; finish with one
+press from BYPASS to OFF. Keep the same sails, camera and settings.
 
 #### Reading captures
 

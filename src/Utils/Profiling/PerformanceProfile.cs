@@ -65,7 +65,7 @@ namespace MoreSailwindSails.Utils.Profiling
                 section: "Diagnostics",
                 key: "ProfileBypass",
                 defaultValue: "SailMount",
-                description: "One visual comparison: None, SailMount, Snotter (including purchase/collar), or SpritsailLiveRopes (custom sheets/lashings). Sail mechanics continue."
+                description: "One visual comparison: None, SailMount, Snotter (including purchase/collar), SpritsailLiveRopes (custom sheets/lashings), or HiddenNativeRopes (replaced native rope visuals). Sail mechanics continue."
             );
             enabled.SettingChanged += Changed;
             shortcut.SettingChanged += Changed;
@@ -84,8 +84,13 @@ namespace MoreSailwindSails.Utils.Profiling
 
         internal static bool IsBypassed(ProfileBypass target) => session.IsBypassed(target: target);
 
-        internal static void Count(ProfileTarget target, ProfileCounter counter) =>
-            collector.Count(target: target, counter: counter);
+        internal static bool Selected(ProfileTarget target) => collector.Selected(target: target);
+
+        internal static void Count(
+            ProfileTarget target,
+            ProfileCounter counter,
+            ProfileFamily owner = ProfileFamily.Unspecified
+        ) => collector.Count(target: target, counter: counter, owner: owner);
 
         internal static void SurfaceQuery(bool hit) => collector.SurfaceQuery(hit: hit);
 

@@ -19,6 +19,8 @@ namespace MoreSailwindSails.Utils.Profiling
         SpritReuse,
         SnotterRebuild,
         SnotterReuse,
+        HiddenNativeVisualUpdates,
+        HiddenNativeVisualSkips,
         Count,
     }
 }

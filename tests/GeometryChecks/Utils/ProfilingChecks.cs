@@ -12,6 +12,7 @@ internal static class ProfilingChecks
     {
         Selection();
         Timing();
+        ExplicitCounters();
         Sessions();
         ProfilingGcChecks.Run();
         Console.WriteLine(
@@ -46,6 +47,11 @@ internal static class ProfilingChecks
             ProfileSelection.ParseBypass(text: " sNoTtEr ", warn: warnings.Add)
                 == ProfileBypass.Snotter,
             "Bypass names ignore case/whitespace."
+        );
+        Check(
+            ProfileSelection.ParseBypass(text: " hiddenNATIVERopes ", warn: warnings.Add)
+                == ProfileBypass.HiddenNativeRopes,
+            "Hidden native rope visuals are an explicit selectable bypass."
         );
         Check(
             ProfileSelection.ParseBypass(text: "Rig", warn: warnings.Add) == ProfileBypass.None,
@@ -213,6 +219,59 @@ internal static class ProfilingChecks
         );
     }
 
+    private static void ExplicitCounters()
+    {
+        var collector = new ProfileCollector(timestamp: () => 0)
+        {
+            Active = true,
+            Selection = 1 << (int)ProfileTarget.Ropes,
+        };
+        int Counter(ProfileFamily family, ProfileCounter counter) =>
+            collector.Counters[(int)family * (int)ProfileCounter.Count + (int)counter];
+        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.Staysail))
+        {
+            collector.Count(
+                target: ProfileTarget.Ropes,
+                counter: ProfileCounter.HiddenNativeVisualSkips,
+                owner: ProfileFamily.LooseFootedSpritsail
+            );
+            collector.Count(
+                target: ProfileTarget.Ropes,
+                counter: ProfileCounter.HiddenNativeVisualUpdates
+            );
+        }
+        Check(
+            Counter(ProfileFamily.LooseFootedSpritsail, ProfileCounter.HiddenNativeVisualSkips) == 1
+                && Counter(ProfileFamily.Staysail, ProfileCounter.HiddenNativeVisualUpdates) == 1,
+            "Native callbacks can name their family without altering scope attribution."
+        );
+        void Sample() =>
+            collector.Count(
+                target: ProfileTarget.Ropes,
+                counter: ProfileCounter.HiddenNativeVisualUpdates,
+                owner: ProfileFamily.BoomedSpritsail
+            );
+        for (int i = 0; i < 100; i++)
+            Sample();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1000; i++)
+            Sample();
+        Check(
+            GC.GetAllocatedBytesForCurrentThread() == before,
+            "Explicit-family native visual counters allocate no managed memory."
+        );
+        collector.Selection = 0;
+        Sample();
+        collector.Selection = ProfileSelection.All;
+        collector.Active = false;
+        Sample();
+        Check(
+            Counter(ProfileFamily.BoomedSpritsail, ProfileCounter.HiddenNativeVisualUpdates)
+                == 1100,
+            "Unselected and inactive counters record nothing."
+        );
+    }
+
     private static void Sessions()
     {
         var collector = new ProfileCollector(timestamp: () => 0);
@@ -266,6 +325,7 @@ internal static class ProfilingChecks
                 ProfileBypass.SailMount,
                 ProfileBypass.Snotter,
                 ProfileBypass.SpritsailLiveRopes,
+                ProfileBypass.HiddenNativeRopes,
             }
         )
         {
