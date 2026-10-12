@@ -10,7 +10,11 @@ take precedence over historical design choices.
 - Use named arguments rather than positional arguments whenever possible to
   improve readability.
 - Prefer one class per file as a rule and describe the responsibility of the
-  class within a code comment at the top of the file.
+  class within a code comment at the top of the file. Stay/sail feature patches
+  are an exception: group their top-level patch classes by integration
+  responsibility in one file per integration within each feature's `Patches/`
+  directory. Include a file responsibility comment and class responsibility
+  comments.
 - Update `README.md` only when the user explicitly requests a README change.
   Feature, bug-fix, release and general documentation work do not imply
   permission to edit it; put technical and validation updates in
