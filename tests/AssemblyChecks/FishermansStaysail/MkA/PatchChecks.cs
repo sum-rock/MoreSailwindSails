@@ -74,13 +74,13 @@ internal static class PatchChecks
         var newSail = Patch("NewSail", "Postfix");
         if (
             !CalledMethods(newSail)
-                .Any(m => m.DeclaringType.Name == "SailScaler" && m.Name == "SetScaleAbs")
+                .Any(m => m.DeclaringType.Name == "Sail" && m.Name == "LoadScale")
             || !newSail
                 .GetCustomAttribute<HarmonyAfter>()
                 .info.after.Contains("com.nandbrew.shipyardexpansion")
         )
             throw new Exception(
-                "New Mk.A size must use SE scaling after its shipyard initialization."
+                "New Mk.A size must use native scaling after shipyard initialization."
             );
         foreach (
             var type in assembly
@@ -91,7 +91,7 @@ internal static class PatchChecks
             if (
                 method != newSail
                 && CalledMethods(method)
-                    .Any(m => m.DeclaringType.Name == "SailScaler" && m.Name == "SetScaleAbs")
+                    .Any(m => m.DeclaringType.Name == "Sail" && m.Name == "LoadScale")
             )
                 throw new Exception(
                     "Default size must not override existing sail sizes: " + type.Name

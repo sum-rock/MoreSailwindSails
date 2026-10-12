@@ -6,6 +6,10 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <None
+      Update="FishermansStay/NativeRigAvailability.txt"
+      CopyToOutputDirectory="PreserveNewest"
+    />
     <Compile
       Include="../../src/Utils/Profiling/ProfileReport.cs"
       Link="Utils/Profiling/ProfileReport.cs"

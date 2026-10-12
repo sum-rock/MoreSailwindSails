@@ -21,9 +21,9 @@ reference, verification procedures and
 ## Build and automated checks
 
 The pinned Nix flake supports **x86_64 Linux** with .NET 8; the plugin targets
-`netstandard2.0`. Install Sailwind, BepInEx 5 and Shipyard Expansion locally.
-The build references their installed assemblies, including HarmonyX and Unity;
-no Unity editor or separate asset bundle is required.
+`netstandard2.0`. Install Sailwind and BepInEx 5 locally. Shipyard Expansion is
+optional. The build references installed game, BepInEx, HarmonyX and Unity
+assemblies; no Unity editor or separate asset bundle is required.
 
 From the repository root, restore a fresh checkout:
 
@@ -127,24 +127,22 @@ feature's `Patches/` directory and `.Patches` namespace.
 
 Stay/sail feature patches use one file per integration responsibility, with
 multiple top-level patch classes per file. Filenames combine `Stay`, `Staysail`
-or `FlyingSail` with `SailwindPatches.cs`, `ShipyardExpansionPatches.cs` or
-`NANDFixesPatches.cs`; staysails also have `StaysailSailInfoPatches.cs`.
+or `FlyingSail` with `SailwindPatches.cs` or `NANDFixesPatches.cs`; staysails
+also have `StaysailSailInfoPatches.cs`.
 
 - **Sailwind:** native fitting, movement, collision, controls, cloth,
   aerodynamics, travel, support protection, refresh and shipyard availability.
-- **Shipyard Expansion:** direct SE patches and supporting native hooks. Stay
-  registration, save capacity, load preparation and mount buttons belong here;
-  sail prefab registration, new-sail initialization and textures do too.
-  Staysail fitting and movement remain in Sailwind.
+- Native registration, new-sail initialization, stay save capacity, load
+  preparation and shipyard navigation also belong in **Sailwind**. Optional SE
+  ordering annotations preserve coexistence without referencing SE types.
 - **NANDFixes:** order-text wrapping that prevents recursive long-line handling.
 - **SailInfo:** optional staysail angle reporting.
 
-Classify by integration responsibility, not just the target method's assembly or
-an ordering annotation. Prefab registration depends on SE-prepared source
-components and retains its AllSailsAllShipyards ordering constraint within the
-SE group. Shared `Compatibility/Patches/` and `Controls/Patches/` retain their
-own organization. Preserve patch class names, namespaces and Harmony metadata
-when regrouping files; the existing discovery and reflection checks use them.
+Classify by integration responsibility. Registration follows optional SE donor
+and rig initialization and precedes All Sails inventory caching. Shared
+`Compatibility/Patches/` and `Controls/Patches/` retain their existing layout.
+Preserve patch class names, namespaces and Harmony metadata when regrouping
+files; the existing discovery and reflection checks use them.
 
 | Location                          | Responsibility                                                                                                      |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -187,9 +185,9 @@ resolve full type names: update both when moving or renaming code.
   mirrored-mesh experiment passed geometry checks but detached/reset in game.
   Initialization and existing furl/render refreshes serve separate purposes.
 - Construct templates under inactive parents with fresh Cloth for new topology.
-  Preserve the donor Animator as SE's scaling reference and the hierarchy
-  expected by `SailShadowCol`. Template-owned and instance-owned meshes have
-  distinct lifetimes. Never mirror collider transforms using negative scale.
+  Preserve the donor Animator for optional SE scaling and the hierarchy expected
+  by `SailShadowCol`. Template-owned and instance-owned meshes have distinct
+  lifetimes. Never mirror collider transforms using negative scale.
 - Rope endpoints are independent leaves: native `RopeEffect` calls `LookAt` on
   them and must not rotate skin bones. Preserve coupled edge fitting and finite
   fallbacks.
@@ -209,15 +207,10 @@ resolve full type names: update both when moving or renaming code.
 - Each family retains its iterative order-text guard before NANDFixes. HarmonyX
   runs later prefixes even after `false`: append wrapped lines to the native
   list and consume input so later prefixes cannot recurse on it.
-- New sails use native white palette **11** and SE's named plain texture
-  **ParticleCloudWhite**. Preserve saved colors, recoloring and the hidden
-  color-reference renderer; scope plain texture/selector/material guards to
-  custom sails. Never change donor/shared assets. With **Shipyard Expansion
-  0.12.1**, texture selections and allowed options are strings, and the catalog
-  is a name-keyed dictionary. The compatibility patch registers the native plain
-  texture before prefab setup without changing other catalog entries. The former
-  numeric texture-zero ordering helper is no longer used. This build targets the
-  new API and does not support SE 0.11.1.
+- New sails use native white palette **11** and inherit donor textures. Preserve
+  saved colors, native recoloring and the hidden color-reference renderer. SE
+  may supply pattern selection when installed; MSS does not edit its catalog or
+  restrict textures. Never change donor/shared assets.
 
 ### Sailwind 0.39 audio
 
@@ -291,8 +284,8 @@ switching, Unity rendering and performance remain unverified.
   the luff. The isosceles trapezoid has luff `2 × width`, head rising **20°**
   aft, foot falling **20°** aft and aft edge about `2.728 × width`. Derive edge
   budgets, area, bounds and shadow samples from this cut. New selections use
-  `SailScaler.SetScaleAbs(1f, 1f)` after SE initialization; preserve saved
-  sizes.
+  native `Sail.LoadScale(y: 1f, z: 1f)` after optional SE initialization;
+  preserve saved sizes.
 - Retain **85%** upper-corner sheeting response with coupled foot/leech fitting.
   The attempted 60% response caused in-game creases and was reverted.
 - Pivot around the offset luff. Two fixed **0.4572 m (18-inch)** ties hold its
@@ -355,12 +348,13 @@ identify the incompatible channel and available diagnostic context.
 
 ## Staysails
 
-All marks fit registered Fisherman's Stays. Register after SE and before All
-Sails caches its inventory. Each mark's `FishermansStaysailShape` supplies
-geometry and owned-asset prefixes for template and instance creation; do not
-reintroduce separate geometry/prefix arguments. The family builder owns donor
-**110** and template slope **20°**; first binding creates the owned mesh for the
-actual stay slope before enabling Cloth. Mesh and bind poses then stay fixed.
+All marks fit registered Fisherman's Stays. Register after optional SE and
+before All Sails caches its inventory. Each mark's `FishermansStaysailShape`
+supplies geometry and owned-asset prefixes for template and instance creation;
+do not reintroduce separate geometry/prefix arguments. The family builder owns
+donor **110** and template slope **20°**; first binding creates the owned mesh
+for the actual stay slope before enabling Cloth. Mesh and bind poses then stay
+fixed.
 
 | Cut  | Geometry in the forward-mast frame                                                   |
 | ---- | ------------------------------------------------------------------------------------ |
@@ -378,9 +372,10 @@ downward from the stay's forward endpoint. Retain **15 cm** head/aft-mast
 clearances, spar-length/span fitting and native collision checks. Collision
 strips use lowest head/highest foot with **5 cm** edge margins; disable strips
 too shallow for margins plus **1 cm** height or clipped below **1 mm** width.
-New selections start at **50% width/height** through SE after initialization. SE
-controls the scaling mode; MSS no longer forces uniform scaling. Loaded sails
-continue to restore their saved SE dimensions.
+New selections start at **50% width/height** through native `Sail.LoadScale`.
+Native scaling and persistence handle installations without SE; when installed,
+SE patches those same native APIs. MSS does not force a scaling mode or replace
+saved sizes with new-sail defaults.
 
 ### Fixed head and reefing
 
@@ -463,13 +458,16 @@ axis to the attachment height while preserving the native radial offset. Native
 guides remain unchanged and must be active. Boat-specific checks own measured
 endpoint/slope assertions; shared checks cover guide alignment and fitting.
 
-Append groups/options after SE initializes customization; never reorder save
-slots. Reserve mount IDs **128–255** and expand capacity to **256** without
+Append groups/options after native and optional SE customization; never reorder
+save slots. Reserve mount IDs **128–255** and expand capacity to **256** without
 shrinking larger arrays. Missing old-save/cancellation entries restore **None**.
-Validate profiles and occupied IDs before construction; roll back a boat's new
-stays on failure. Protect occupied stays/supports during invalid previews and
-restore preview state in a finalizer. Normalize stay and walking geometry
-independently to the same endpoints; donor bounds may differ from `mastHeight`.
+Keep unavailable variants in their original option slots; missing donors,
+required masts or guides disable that variant rather than reject the boat.
+Missing excluded parts impose no restriction. Validate geometry and occupied IDs
+before construction; roll back a boat's new stays on failure. Protect occupied
+stays/supports during invalid previews and restore preview state in a finalizer.
+Normalize stay and walking geometry independently to the same endpoints; donor
+bounds may differ from `mastHeight`.
 
 ### Kakam and Dhow
 
@@ -1043,12 +1041,11 @@ visual cache/bypass support. Flying Sail, all three staysail cuts, boat
 profiles, shared rope rendering and CPU/frame profiling remain.
 
 Release builds with zero warnings/errors, and both check suites pass.
-AssemblyChecks covers **61** Harmony targets against installed assemblies after
-the subsequent removal of the staysail scaler patch. No in-game validation was
-performed for this removal. Verify shipyard fitting, controls, save/reload and
-the simplified F7 capture toggle on Brig before wider runtime testing. Saves
-containing removed experimental prefabs are outside this branch's supported
-runtime validation.
+AssemblyChecks now covers **58** Harmony targets against installed native
+assemblies. No in-game validation was performed for this removal. Verify
+shipyard fitting, controls, save/reload and the simplified F7 capture toggle on
+Brig before wider runtime testing. Saves containing removed experimental prefabs
+are outside this branch's supported runtime validation.
 
 | Area                       | Coverage and limitation                                                                                                                                                                                         |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1077,59 +1074,67 @@ or total allocation measurements. The separate installed-asset collar audit
 covered **160 cases** (both ends of 40 variants in visual/walking forms); it
 does not establish visual acceptance.
 
-### Shipyard Expansion 0.12.1 compatibility
+### Optional Shipyard Expansion
 
-The 0.2.2 texture compatibility fix is incorporated into **0.3.0-dev**. Both
-Fisherman families use SE 0.12.1's named texture catalog, string selections and
-string allowed-option lists. The obsolete numeric catalog-order helper and
-fixture are removed; installed assembly checks cover the named API and each
-family's plain-texture guard. SE **0.12.1 is required**; the dependency
-declaration intentionally has no minimum-version loading guard.
+**0.3.0-dev** has no SE assembly reference or SE patch targets. Its soft BepInEx
+dependency retains load order when SE is installed. AssemblyChecks rejects
+attempts to resolve `ShipyardExpansion` or `SE_Bridge` and verifies the built
+plugin's dependency metadata. The default size calls use native
+`Sail.LoadScale`: 50% for staysails and 100% for Flying Sail. The native save
+loader restores sizes through the same API; SE supplies its own behavior when
+installed. No scaler, texture catalog or replacement save format is added.
 
-On **2026-10-12**, **0.3.0-dev** stops clearing SE's `rotatablePart` during
-staysail prefab configuration and `SailScaler.Awake`. SE determines fitting
-rotation availability and behavior. This reduces SE coupling, but SE is still
-required. The installed SE implementation falls back to the sail root when
-`rotatablePart` is null, so clearing it did not fully prevent rotation.
+Appearance inherits the donor texture with native white recoloring and shared
+reefed material references. SE pattern selection is unrestricted. Prefab IDs
+400–403 and stay mount IDs 128–255 are preserved. SE-only rigging is not
+recreated: missing variants retain unavailable option entries, preserving the
+positions of later options. Native `CanInstall` ignores the `canInstall` field,
+so the existing MSS installation guard explicitly rejects these entries.
 
-Automated validation passed: pinned Prettier and CSharpier checks, Release build
-with zero warnings/errors, GeometryChecks and AssemblyChecks (62 Harmony
-targets). The user confirmed that the rotation restriction removal works on
-**2026-10-12**; no boat, sail-cut or save/reload coverage was specified.
+A read-only **2026-10-12** audit of installed Sailwind 0.39 `level24` identified
+**29** native-only candidate stays: Brig **6**, Junk **4**, Jong **3**, Sanbuq
+**2** and Baghala **14**. Cog, Kakam and Dhow's current stays require SE-added
+parts; their unavailable entries do not prevent other profiles from registering.
+The numeric `NativeRigAvailability.txt` fixture records registered mast IDs and
+expected candidate mount IDs. Donor walking roots, paired sheets and required
+aft guides were also inspected. Mod-added boats still need their providing mods.
+This is asset evidence, not live construction or fit validation.
 
-The subsequent **0.3.0-dev** change also removes both `flippable = false`
-assignments from staysail prefab configuration and `SailScaler.Awake`, leaving
-SE to determine flip availability and behavior. Uniform scaling remained at that
-stage. The same automated checks passed for this change, with zero build
-warnings/errors. The user also confirmed that removing the flip restrictions
-works on **2026-10-12**; no boat, sail-cut or save/reload coverage was
-specified. Removing these restrictions does not guarantee rotation or flip
-controls appear for every sail category.
+The installed native shipyard has 48 mast selectors and eight parts rows. MSS
+extends selectors to at least 256 and, when more parts rows are needed, clones
+native rows into pages with previous/next arrows and a page counter. Native
+option indices, error labels and order processing still use the full arrays.
+Paging follows the current boat/category and is not installed when SE supplies
+its own navigation.
 
-The next **0.3.0-dev** change removes the `SailScaler.Awake` postfix and the
-prefab-time `ScaleType.Uniform` assignment. The staysail rig class no longer
-references SE types. New-sail size calls remain: 50% for staysails and 100% for
-Flying Sail. SE remains required for scaling and other integrations.
+On **2026-10-12**, the Release build and both check suites passed with the
+installed references and with an isolated reference directory containing only
+the game and BepInEx assemblies (no plugins). Builds reported zero warnings or
+errors. Checks covered 58 native Harmony targets and all 29 native candidate
+stays. Optional SailInfo signature checks passed with installed references and
+were skipped in the isolated run.
 
-Pinned formatting checks, the Release build and both check suites passed for
-this removal, with zero build warnings/errors and 61 Harmony targets.
+On **2026-10-12**, the user confirmed that removing the rotation, flip and
+forced-uniform scaling restrictions works. No boat, sail-cut or save/reload
+coverage was specified. These observations precede the native scaling, texture,
+partial-profile and paging changes; those have no in-game validation recorded
+yet.
 
-Installed SE inspection shows that donor 110 uses `ScaleType.Jib`, and
-`SailScaler.Awake` only assigns scaling modes for its listed prefab IDs. It does
-not reset an inherited mode for custom IDs. Cloned staysails may therefore offer
-independent width/height scaling after removal of the override; this requires
-in-game verification. On Brig, check all three cuts with uniform and independent
-resizing, fitting/collision, order completion/cancel, save/reload, reefing and
-sheet controls. Existing uniformly sized sails should retain their dimensions;
-live restoration and stretched sail behavior remain unverified.
+Use separate, consistent mod configurations for validation: native game plus
+MSS, and SE plus MSS. Start with Brig, then the other available boat profiles.
+Check menu reachability beyond eight groups, category/boat switching, later
+valid variants after unavailable entries, rejection of unavailable orders,
+initial sizes, resizing, textures/colors, reefing, sheets, order completion and
+cancellation, save/reload and old snapshots. Confirm the original donor sails
+and SE's own pages still work. Automated checks cannot exercise Unity
+initialization, material updates, page layout or live save restoration.
 
-On **2026-10-04**, the original failed development session logged a
-`MissingFieldException` for `SailTextureChanger.sailTextures`, interrupting
-`PrefabsDirectory.Start`. A later SE scale exception interrupted save loading;
-incomplete prefab initialization is a suspected consequence. The user then
-successfully loaded a save upgraded from MSS 0.2.1 / SE 0.11.1 to MSS 0.2.2 / SE
-0.12.1 and observed no disappearing sails or bad textures. That observation
-covers the tested save, not general save migration and downgrade compatibility.
+Removing SE from an existing SE-equipped save is outside this change's supported
+migration scope. Part selections are positional, and SE stores additional sail
+state. Keep the mod setup stable for an existing save; MSS does not reinterpret
+SE parts, patterns or nonuniform sail state after removal. The **2026-10-04**
+successful MSS 0.2.1 / SE 0.11.1 to MSS 0.2.2 / SE 0.12.1 upgrade observation
+remains historical evidence for that tested save only.
 
 ### Confirmed game observations
 

@@ -374,4 +374,50 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
             hinge.limits = limits;
         }
     }
+
+    // Applies initial custom sail size and placement after native and optional SE initialization.
+    [HarmonyPatch(typeof(ShipyardSailInstaller), "AddNewSail")]
+    internal static class FishermansStaysailNewSailPatch
+    {
+        [HarmonyPostfix]
+        [HarmonyAfter("com.nandbrew.shipyardexpansion")]
+        private static void Postfix(ShipyardSailInstaller __instance, GameObject sailObject)
+        {
+            var rig = sailObject.GetComponent<FishermansStaysailRig>();
+            if (!rig)
+                return;
+            var mast = __instance.GetCurrentMast();
+            var sail = rig.Sail;
+            // Native AddNewSail chooses the shipyard's first palette entry.
+            // Use the existing white swatch for this sail's initial selection.
+            sail.ChangeSailColor(FishermansStaysailAppearance.WhiteColorIndex);
+            // Only new shipyard selections get the smaller initial size.
+            // Loaded sails continue to restore their saved SE dimensions.
+            sail.LoadScale(y: 0.5f, z: 0.5f);
+            sail.ChangeInstallHeight(mast.mastHeight - sail.GetCurrentInstallHeight());
+            sail.UpdateInstallPosition();
+            sail.currentUnroll = 1f;
+            rig.RefreshFrame();
+            mast.UpdateControllerAttachments();
+            ShipyardUI.instance.UpdateDescriptionText();
+            GameState.currentShipyard.UpdateOrder();
+        }
+    }
+
+    // Registers custom prefabs from the native donor after optional SE initialization.
+    [HarmonyPatch(typeof(PrefabsDirectory), "Start")]
+    internal static class FishermansStaysailRegistrationPatch
+    {
+        // When installed, let SE initialize donors first. Register before
+        // All Sails captures the prefab array for its cached menu pages.
+        [HarmonyPostfix]
+        [HarmonyAfter("com.nandbrew.shipyardexpansion")]
+        [HarmonyBefore("NatoriusG.AllSailsAllShipyards")]
+        private static void Postfix(PrefabsDirectory __instance)
+        {
+            FishermansStaysailMkA.Register(__instance);
+            FishermansStaysailMkB.Register(__instance);
+            FishermansStaysailMkC.Register(__instance);
+        }
+    }
 }

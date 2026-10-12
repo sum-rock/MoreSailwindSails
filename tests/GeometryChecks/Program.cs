@@ -10,6 +10,7 @@ internal static class Program
         Visuals.RoutedRopeChecks.Run();
         RigChecks.Run();
         ProfileChecks.Run();
+        NativeAvailabilityChecks.Run();
         StayChecks.Run();
         CollarChecks.Run();
         Utils.ProfilingChecks.Run();

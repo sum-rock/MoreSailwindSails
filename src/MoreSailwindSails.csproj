@@ -33,10 +33,6 @@
       <HintPath>$(SailwindDir)/Sailwind_Data/Managed/Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
-    <Reference Include="ShipyardExpansion">
-      <HintPath>$(SailwindDir)/BepInEx/plugins/ShipyardExpansion/ShipyardExpansion.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>$(SailwindDir)/Sailwind_Data/Managed/UnityEngine.AnimationModule.dll</HintPath>
       <Private>false</Private>

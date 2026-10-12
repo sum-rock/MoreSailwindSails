@@ -1,3 +1,4 @@
+// Defines one authored stay configuration and its required installed rigging.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,5 +78,9 @@ namespace MoreSailwindSails.BoatRigs
             && !float.IsInfinity(point.y)
             && !float.IsNaN(point.z)
             && !float.IsInfinity(point.z);
+
+        // Missing required assets disable this variant; absent exclusions impose no constraint.
+        internal bool HasRequiredParts(Func<int, bool> present) =>
+            present(Donor) && Required.All(present);
     }
 }

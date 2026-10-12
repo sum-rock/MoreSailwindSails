@@ -1,3 +1,4 @@
+// Registers stable stay option slots and owns their construction and cleanup.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,29 +48,30 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 for (int index = 0; index < groups.Length; index++)
                 {
                     var variants = new List<BoatPartOption>();
-                    var empty = FishermansStay.NewInactive("FishermansStay None", boat.transform);
-                    var emptyWalk = FishermansStay.NewInactive(
-                        "FishermansStay None Walk",
-                        boat.walkCol
+                    var none = registry.CreateEmptyOption(
+                        label: "(no Fisherman's Stay: " + profile.Stays[index].Label + ")",
+                        canInstall: true
                     );
-                    registry.AuxiliaryObjects.Add(empty);
-                    registry.AuxiliaryObjects.Add(emptyWalk);
-                    var none = empty.AddComponent<BoatPartOption>();
-                    none.optionName = "(no Fisherman's Stay: " + profile.Stays[index].Label + ")";
-                    none.requires = new List<BoatPartOption>();
-                    none.requiresDisabled = new List<BoatPartOption>();
-                    none.childOptions = new GameObject[0];
-                    none.walkColObject = emptyWalk;
-                    none.canInstall = true;
                     variants.Add(none);
                     foreach (
                         var configurations in groups[index].GroupBy(r => r.Definition.MountIndex)
                     )
                     {
-                        var stay = new FishermansStay(
-                            boat: boat,
-                            configurations: configurations.ToArray()
-                        );
+                        var available = configurations.Where(r => r.Donor).ToArray();
+                        if (available.Length == 0)
+                        {
+                            variants.Add(
+                                registry.CreateEmptyOption(
+                                    label: FishermansStay.DisplayName
+                                        + " ("
+                                        + configurations.First().Definition.Label
+                                        + "; unavailable rigging)",
+                                    canInstall: false
+                                )
+                            );
+                            continue;
+                        }
+                        var stay = new FishermansStay(boat: boat, configurations: available);
                         registry.Stays.Add(stay);
                         stay.Create();
                         variants.Add(stay.Option);
@@ -82,8 +84,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
                             partOptions = variants,
                         }
                     );
-                    empty.SetActive(true);
-                    emptyWalk.SetActive(true);
+                    none.gameObject.SetActive(true);
+                    none.walkColObject.SetActive(true);
                 }
                 // Awake must see complete references and register each fixed ID,
                 // including variants that are initially disabled.
@@ -125,6 +127,24 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     $"Fisherman's Stay profile rejected for {boat.name}: {exception}"
                 );
             }
+        }
+
+        // Empty options retain their native save slot without creating a phantom mast.
+        private BoatPartOption CreateEmptyOption(string label, bool canInstall)
+        {
+            var boat = GetComponent<BoatRefs>();
+            var empty = FishermansStay.NewInactive(label, boat.transform);
+            var walk = FishermansStay.NewInactive(label + " Walk", boat.walkCol);
+            AuxiliaryObjects.Add(empty);
+            AuxiliaryObjects.Add(walk);
+            var option = empty.AddComponent<BoatPartOption>();
+            option.optionName = label;
+            option.requires = new List<BoatPartOption>();
+            option.requiresDisabled = new List<BoatPartOption>();
+            option.childOptions = new GameObject[0];
+            option.walkColObject = walk;
+            option.canInstall = canInstall;
+            return option;
         }
 
         internal void PrepareSnapshot(IReadOnlyList<int> savedOptions)
