@@ -5,9 +5,6 @@ using System.IO;
 using System.Linq;
 using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Sails.FishermansStaysail;
-using MoreSailwindSails.Sails.FishermansStaysail.MkA;
-using MoreSailwindSails.Sails.FishermansStaysail.MkB;
-using MoreSailwindSails.Sails.FishermansStaysail.MkC;
 using MoreSailwindSails.Stays.FishermansStay;
 using UnityEngine;
 
@@ -19,15 +16,13 @@ internal static class CutChecks
     {
         foreach (float width in new[] { 0.25f, 3f, 13.8f, 40f })
         {
-            var mesh = FishermansStaysailMkAGeometry.Create(width);
+            var mesh = BehaviorCases.CreateA(width);
             var c = mesh.Corners;
             Near(Angle(c[1] - c[0], c[2] - c[0]), 110, 0.001f, "head angle");
             Near(Angle(c[0] - c[2], c[3] - c[2]), 110, 0.001f, "tack angle");
             Near((c[1] - c[3]).magnitude / width, 1.7279405f, 0.0001f, "leech proportion");
             CheckMesh(mesh, width);
-            if (
-                ReferenceEquals(mesh.Vertices, FishermansStaysailMkAGeometry.Create(width).Vertices)
-            )
+            if (ReferenceEquals(mesh.Vertices, BehaviorCases.CreateA(width).Vertices))
                 throw new Exception("Mk.A cuts share mutable arrays.");
             var points = new Vector3[33];
             if (
@@ -49,7 +44,7 @@ internal static class CutChecks
             bool rejected = false;
             try
             {
-                FishermansStaysailMkAGeometry.Create(bad);
+                BehaviorCases.CreateA(bad);
             }
             catch (ArgumentException)
             {
@@ -193,8 +188,16 @@ internal static class CutChecks
                 throw new Exception("Invalid authored aft support chain.");
             var direction = aft.Point(stay.AftPoint) - fore.Point(stay.ForePoint);
             var axis = (fore.Top - fore.Bottom).normalized;
+            var forePoint = fore.Point(stay.ForePoint);
+            var onMast = forePoint + axis * 7;
+            var projected = FishermansStaysailFrameGeometry.ProjectOntoMast(
+                point: onMast + Vector3.Cross(axis, Vector3.forward) * 3,
+                forePoint: forePoint,
+                axis: axis
+            );
+            Near((projected - onMast).magnitude, 0, 1e-5f, "translated/raked mast projection");
             float slope = FishermansStaysailInstallationGeometry.HeadSlope(direction, axis);
-            var mesh = FishermansStaysailMkAGeometry.Create(5, slope);
+            var mesh = BehaviorCases.CreateA(5, slope);
             var transverse = Vector3.ProjectOnPlane(direction, axis).normalized;
             var head = mesh.Corners[1] - mesh.Corners[0];
             var physical = axis * head.x + transverse * head.z;
@@ -225,9 +228,9 @@ internal static class CutChecks
                 foreach (
                     var cut in new Func<float, float, FishermansStaysailMeshData>[]
                     {
-                        FishermansStaysailMkAGeometry.Create,
-                        FishermansStaysailMkBGeometry.Create,
-                        FishermansStaysailMkCGeometry.Create,
+                        BehaviorCases.CreateA,
+                        BehaviorCases.CreateB,
+                        BehaviorCases.CreateC,
                     }
                 )
                 {

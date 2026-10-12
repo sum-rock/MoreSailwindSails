@@ -17,21 +17,21 @@ internal static class BakedMeshChecks
         Check(
             cut: "A",
             bake: FishermansStaysailMkABakedMesh.Create,
-            create: FishermansStaysailMkAGeometry.Create,
+            create: BehaviorCases.CreateA,
             luffRatio: 1,
             footSlope: -20
         );
         Check(
             cut: "B",
             bake: FishermansStaysailMkBBakedMesh.Create,
-            create: FishermansStaysailMkBGeometry.Create,
+            create: BehaviorCases.CreateB,
             luffRatio: 1,
             footSlope: 0
         );
         Check(
             cut: "C",
             bake: FishermansStaysailMkCBakedMesh.Create,
-            create: FishermansStaysailMkCGeometry.Create,
+            create: BehaviorCases.CreateC,
             luffRatio: 1.5f,
             footSlope: 40
         );
@@ -73,6 +73,35 @@ internal static class BakedMeshChecks
         foreach (float slope in new[] { 0f, 5f, 20f, 40f, 80f })
         {
             var fitted = create(width, slope);
+            var samples = FishermansStaysailShadowGeometry.Samples(vertices: fitted.Vertices);
+            int[] indices = { 0, 12, 24, 400, 412, 424, 800, 812, 824 };
+            if (samples.Length != indices.Length)
+                throw new Exception("Shadow ray count changed.");
+            for (int i = 0; i < indices.Length; i++)
+            {
+                var expectedSample = fitted.Vertices[indices[i]];
+                expectedSample.y = 0;
+                Near((samples[i] - expectedSample).magnitude, 0, 0, "neutral shadow sample order");
+            }
+            var bounds = new Bounds(fitted.Vertices[0], Vector3.zero);
+            foreach (var vertex in fitted.Vertices)
+                bounds.Encapsulate(vertex);
+            var shadowBounds = FishermansStaysailShadowGeometry.ColliderBounds(clothBounds: bounds);
+            Near(
+                (shadowBounds.center - new Vector3(bounds.center.x, 0, bounds.center.z)).magnitude,
+                0,
+                0,
+                "shadow center"
+            );
+            Near(
+                (
+                    shadowBounds.size
+                    - new Vector3(bounds.size.x, bounds.size.y * 2 + 0.1f, bounds.size.z)
+                ).magnitude,
+                0,
+                0,
+                "shadow envelope"
+            );
             // Compare with the legacy analytical surface to guard fitting/physics compatibility.
             float rise = width * (float)Math.Tan(slope * Math.PI / 180);
             float footFore = -width * luffRatio;
@@ -169,7 +198,7 @@ internal static class BakedMeshChecks
         )
             throw new Exception("Fitting mutated the baked source.");
         Console.WriteLine(
-            $"PASS: baked Mk.{cut} topology, legacy surface, nominal authored UVs, proportional fitted UVs and independent arrays."
+            $"PASS: baked Mk.{cut} topology, legacy surface, nominal authored UVs, proportional fitted UVs, shadow samples/bounds and independent arrays."
         );
     }
 

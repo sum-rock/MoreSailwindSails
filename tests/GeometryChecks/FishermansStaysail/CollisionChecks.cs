@@ -1,8 +1,5 @@
 using System;
 using MoreSailwindSails.Sails.FishermansStaysail;
-using MoreSailwindSails.Sails.FishermansStaysail.MkA;
-using MoreSailwindSails.Sails.FishermansStaysail.MkB;
-using MoreSailwindSails.Sails.FishermansStaysail.MkC;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail;
@@ -13,9 +10,9 @@ internal static class CollisionChecks
     {
         var marks = new (string Name, Func<float, float, FishermansStaysailMeshData> Create)[]
         {
-            ("Mk.A", FishermansStaysailMkAGeometry.Create),
-            ("Mk.B", FishermansStaysailMkBGeometry.Create),
-            ("Mk.C", FishermansStaysailMkCGeometry.Create),
+            ("Mk.A", BehaviorCases.CreateA),
+            ("Mk.B", BehaviorCases.CreateB),
+            ("Mk.C", BehaviorCases.CreateC),
         };
         foreach (var mark in marks)
         foreach (float width in new[] { 0.25f, 3f, 13.8f, 100f })
@@ -84,7 +81,7 @@ internal static class CollisionChecks
             if (clearance < width && enabled == 0)
                 throw new Exception(mark.Name + " lost all usable collision strips.");
         }
-        var clipped = FishermansStaysailMkCGeometry.Create(3).Corners;
+        var clipped = BehaviorCases.CreateC(3).Corners;
         float lastEnd =
             3f * (FishermansStaysailGeometry.Columns - 0.05f) / FishermansStaysailGeometry.Columns;
         if (

@@ -31,10 +31,12 @@ internal static class ReefingChecks
 
     private static void CheckReef(BehaviorCases.Mark mark, float width, float slope, float t)
     {
-        // Installed brig jib reef clip's fold-bone endpoint scales.
-        var open = Vector3.one * 0.9988177f;
-        var closed = Vector3.one * 0.03956151f;
+        // Exercise normalized motion independently of the donor's animation curve.
+        var open = new Vector3(2, 5, -3);
+        var closed = new Vector3(-1, 2, 4);
         var corners = mark.Create(width, slope).Corners;
+        foreach (var corner in corners)
+            BehaviorCases.Near(corner.y, 0, 0, "reef corners have no spread to scale");
         float amount = FishermansStaysailReefingGeometry.Progress(
             Vector3.Lerp(closed, open, t),
             closed,
@@ -49,14 +51,12 @@ internal static class ReefingChecks
                 head,
                 corners[0],
                 corners[1],
-                amount,
                 amount
             );
             var posedFoot = FishermansStaysailReefingGeometry.Pose(
                 foot,
                 corners[0],
                 corners[1],
-                amount,
                 amount
             );
             BehaviorCases.Near((posedHead - head).magnitude, 0, 1e-5f, "reef head stays in place");
@@ -90,14 +90,12 @@ internal static class ReefingChecks
                             corners[2],
                             corners[0],
                             corners[1],
-                            amount,
                             amount
                         );
                         var clew = FishermansStaysailReefingGeometry.Pose(
                             corners[3],
                             corners[0],
                             corners[1],
-                            amount,
                             amount
                         );
                         clew = FishermansStaysailFrameGeometry.RotateAroundMast(

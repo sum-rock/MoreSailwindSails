@@ -197,12 +197,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 var box = shadow.GetComponent<BoxCollider>();
                 if (box)
                 {
-                    box.center = new Vector3(mesh.bounds.center.x, 0, mesh.bounds.center.z);
-                    box.size = new Vector3(
-                        mesh.bounds.size.x,
-                        mesh.bounds.size.y * 2 + 0.1f,
-                        mesh.bounds.size.z
+                    var bounds = FishermansStaysailShadowGeometry.ColliderBounds(
+                        clothBounds: mesh.bounds
                     );
+                    box.center = bounds.center;
+                    box.size = bounds.size;
                 }
             }
             var reefed = new GameObject("FishermansStaysail reefing cloth");
@@ -415,32 +414,17 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             {
                 var filter = Shadow.GetComponent<MeshFilter>();
                 instanceShadow = UnityEngine.Object.Instantiate(filter.sharedMesh);
-                var samples = new Vector3[9];
-                for (int row = 0; row < 3; row++)
-                for (int col = 0; col < 3; col++)
-                {
-                    samples[row * 3 + col] = data.Vertices[
-                        row
-                            * (FishermansStaysailGeometry.Rows / 2)
-                            * (FishermansStaysailGeometry.Columns + 1)
-                            + col * (FishermansStaysailGeometry.Columns / 2)
-                    ];
-                    samples[row * 3 + col].y = 0;
-                }
-                instanceShadow.vertices = samples;
+                instanceShadow.vertices = FishermansStaysailShadowGeometry.Samples(
+                    vertices: data.Vertices
+                );
                 instanceShadow.RecalculateBounds();
                 filter.sharedMesh = instanceShadow;
                 var box = Shadow.GetComponent<BoxCollider>();
-                box.center = new Vector3(
-                    instanceMesh.bounds.center.x,
-                    0,
-                    instanceMesh.bounds.center.z
+                var bounds = FishermansStaysailShadowGeometry.ColliderBounds(
+                    clothBounds: instanceMesh.bounds
                 );
-                box.size = new Vector3(
-                    instanceMesh.bounds.size.x,
-                    instanceMesh.bounds.size.y * 2 + 0.1f,
-                    instanceMesh.bounds.size.z
-                );
+                box.center = bounds.center;
+                box.size = bounds.size;
             }
             cutInitialized = true;
             Sail.SetSailArea();
@@ -560,13 +544,21 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             );
             camber = FishermansStaysailBillow.SmoothLoad(camber, camberSide, Time.deltaTime);
             float deployedCamber = camber * FishermansStaysailBillow.Deployment(Sail.currentUnroll);
+            bool supported = rigging != null && rigging.Pair != null && rigging.Pair.Active;
+            var forePoint = supported ? rigging.ForePoint : Vector3.zero;
+            var foreAxis = supported ? rigging.ForeAxis : Vector3.zero;
+            var clothTransform = Sail.cloth.transform;
             for (int row = 0; row <= FishermansStaysailGeometry.Rows; row++)
             {
                 float v = (float)row / FishermansStaysailGeometry.Rows;
                 var fore = Vector3.Lerp(Bones[0].localPosition, Bones[2].localPosition, v);
-                if (rigging != null && rigging.Pair != null && rigging.Pair.Active)
-                    fore = Sail.cloth.transform.InverseTransformPoint(
-                        rigging.LuffPoint(Sail.cloth.transform.TransformPoint(fore))
+                if (supported)
+                    fore = clothTransform.InverseTransformPoint(
+                        FishermansStaysailFrameGeometry.ProjectOntoMast(
+                            point: clothTransform.TransformPoint(fore),
+                            forePoint: forePoint,
+                            axis: foreAxis
+                        )
                     );
                 var aft = Bones[FishermansStaysailGeometry.LeechBone(row)].localPosition;
                 for (int column = 0; column < FishermansStaysailGeometry.ShapeColumns; column++)
@@ -669,8 +661,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                         var neutralHead = NeutralPoint(Corners[1]);
                         var clothTransform = Sail.cloth.transform;
                         rigging.ForeSailFrame(out var forePoint, out var mastAxis);
-                        var shape = GetComponent<FishermansStaysailShape>();
-                        var fixedAngle = shape.FixedUpperHeadAngle;
+                        const float fixedAngle = FishermansStaysailFixedHead.DeployedAngle;
                         fixedHead.Update(
                             Sail.apparentWind,
                             mastAxis,

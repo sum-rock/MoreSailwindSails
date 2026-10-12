@@ -97,22 +97,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 mesh.RecalculateTangents();
                 mesh.RecalculateBounds();
                 shadowMesh = new Mesh { name = objectPrefix + " Shadow Samples" };
-                // Native shadow checking casts one ray per vertex per frame.
-                // Use a coarse 3x3 sample grid, not all 825 cloth vertices.
-                var shadowPoints = new Vector3[9];
-                for (int row = 0; row < 3; row++)
-                for (int col = 0; col < 3; col++)
-                {
-                    shadowPoints[row * 3 + col] = geometry.Vertices[
-                        row
-                            * (FishermansStaysailGeometry.Rows / 2)
-                            * (FishermansStaysailGeometry.Columns + 1)
-                            + col * (FishermansStaysailGeometry.Columns / 2)
-                    ];
-                    // Fixed center-plane samples are neutral between tacks.
-                    shadowPoints[row * 3 + col].y = 0;
-                }
-                shadowMesh.vertices = shadowPoints;
+                shadowMesh.vertices = FishermansStaysailShadowGeometry.Samples(
+                    vertices: geometry.Vertices
+                );
                 shadowMesh.triangles = new[]
                 {
                     0,

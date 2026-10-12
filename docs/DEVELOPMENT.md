@@ -433,16 +433,20 @@ dimensions/topology, non-planar vertices, transforms, modifiers, shape keys,
 seams and distorted UVs. Changing these requires coordinated rig and bake
 validation changes. Quads split along the existing runtime diagonal.
 
-All three cuts select fresh baked arrays through their existing geometry entry
-points and call `FishermansStaysailMeshFitting.Fit`. The shared fitter validates
-width/slope, scales the cut, adjusts the head to the actual stay slope, projects
-UVs from the fitted bounds and adds the existing rest camber. UV bounds use the
-lowest foot corner, which differs between A and C. Nominal mappings agree with
-the baked UVs. `FishermansStaysailGeometry.Create` is removed; the remaining
-geometry helpers supply skinning, Cloth constraints, bone indices and centroids.
-Frame and installation geometry still handle mast-relative positioning,
-clearances and collisions. `FishermansStaysailMeshData` owns one instance's
-arrays.
+Each shape component selects its baked arrays and calls
+`FishermansStaysailMeshFitting.Fit` directly; the three per-cut geometry
+wrappers and their unused dimension constants are removed. The shared fitter
+validates width/slope, scales the cut, adjusts the head to the actual stay
+slope, projects UVs from the fitted bounds and adds the existing rest camber. UV
+bounds use the lowest foot corner, which differs between A and C. Nominal
+mappings agree with the baked UVs. `FishermansStaysailGeometry.Create` is
+removed; the remaining geometry helpers supply skinning, Cloth constraints, bone
+indices and centroids. Frame and installation geometry still handle
+mast-relative positioning, clearances and collisions.
+`FishermansStaysailMeshData` owns one instance's arrays.
+`FishermansStaysailShadowGeometry` supplies the same nine center-plane shadow
+samples and collider bounds to template construction and instance fitting; mesh
+ownership and cleanup stay with those callers.
 
 Initialization assigns the fitted mesh and UVs before recalculating tangents and
 enabling Cloth. Tacks and reefing do not rewrite them. Base dimensions, prefab
@@ -482,6 +486,8 @@ blender --background assets/staysails/fishermans_staysail_mkb.blend --python-exi
 - Upper aft target is **14° × clamped currentUnroll** leeward: **14°/7°/0°** at
   full/half/zero deployment. Rotate the neutral head about the fore-mast axis,
   preserving height/span and independence from lower sheets and wind strength.
+  `FishermansStaysailFixedHead.DeployedAngle` owns the shared 14° constant;
+  shapes no longer expose identical per-cut angle properties.
 - Select tacks from apparent wind projected on
   `Cross(mastAxis, neutralAftDirection)`. A **±0.6 m/s** deadband retains the
   previous side; indeterminate initialization defaults positive. Smooth
@@ -491,13 +497,19 @@ blender --background assets/staysails/fishermans_staysail_mkb.blend --python-exi
   a **12%-width** head peak. Interior travel is capped near **60%** of local
   camber plus foot/leech allowances and clew taper. Opposite-tack skin tests did
   not reproduce Sanbuq's reported asymmetry; excess travel was a suspected
-  contributor, not a confirmed Cloth-level cause.
+  contributor, not a confirmed Cloth-level cause. Each bone update resolves
+  support validity, fore point and axis once before the row loop. Luff
+  projection shares the frame-geometry formula; these values are local to the
+  update, so support changes are still observed without a persistent cache.
 - Reef **upward** using the brig jib's native `reef` clip/controller and
   `furled__sail_cloth_jib` mesh from `sharedassets15.assets`. Sample an
   inactive, stripped animation hierarchy at `1 - currentUnroll`, with no live
   donor scripts or colliders. Preserve animation binding paths and donor
   Animator; disable the original reef component so it cannot compete with custom
-  rendering.
+  rendering. Only the rope-position channel is normalized for vertical lift.
+  Fold-scale sampling and `Spread` were removed: reef posing receives the four
+  corners, all with Y = 0, so multiplying their Y by spread had no effect.
+  Interior camber continues to be applied separately by the bone update.
 - The lower corner gathers toward the reefed head angle. Below **4%**
   deployment, show the recolorable native bundle fitted between posed head
   endpoints, returning to neutral at full furl. Above it use the sampled panel
@@ -1143,10 +1155,22 @@ independent analytical outlines and verifies legacy topology, nominal UV
 agreement, proportional fitted UVs over widths **0.25–100** and slopes
 **0–80°**, invalid inputs, independent arrays and existing rig cases across all
 **103** stays. AssemblyChecks verifies all three entry points consume their bake
-through the shared fitter, procedural creation is absent, and mesh/UV assignment
-remains confined to initialization. The Release build reported zero
-warnings/errors and both .NET suites passed. Pinned CSharpier and Prettier
-checks also passed.
+directly through the shared fitter, procedural creation and per-cut wrappers are
+absent, and mesh/UV assignment remains confined to initialization. The Release
+build reported zero warnings/errors and both .NET suites passed. Pinned
+CSharpier and Prettier checks also passed.
+
+The subsequent **2026-10-12** cleanup removed inactive reef-spread sampling and
+per-cut geometry wrappers, shared shadow calculations and captured the luff
+frame once per bone update. The Release build (zero warnings/errors), both .NET
+suites, pinned CSharpier/Prettier and diff checks passed. Added coverage
+verifies zero-Y reef corners, shadow sample order/bounds across all three cuts,
+and projection onto translated/raked mast frames. Assembly checks cover direct
+shape fitting, shared head policy and the captured-frame call structure.
+Production C# shrank by **37 lines**, test C# by **8**, and the test project by
+**8** (including the new shadow helper). Assets and generated mesh data did not
+change. Blender checks were not rerun for this cleanup. No new in-game
+observations were made.
 
 The user confirmed A's baked shape looks correct in game, then confirmed the
 plain white default works after the donor-atlas mismatch was identified. No

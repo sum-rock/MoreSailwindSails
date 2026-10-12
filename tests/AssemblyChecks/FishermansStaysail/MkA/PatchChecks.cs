@@ -31,23 +31,6 @@ internal static class PatchChecks
         )
             throw new Exception("Mk.A save identity changed.");
         var registration = Patch("Registration", "Postfix");
-        foreach (string cut in new[] { "A", "B", "C" })
-        {
-            var create = CalledMethods(
-                    Method($"Mk{cut}.FishermansStaysailMk{cut}Geometry", "Create")
-                )
-                .ToArray();
-            if (
-                !create.Any(m =>
-                    m.DeclaringType.Name == $"FishermansStaysailMk{cut}BakedMesh"
-                    && m.Name == "Create"
-                )
-                || !create.Any(m =>
-                    m.DeclaringType.Name == "FishermansStaysailMeshFitting" && m.Name == "Fit"
-                )
-            )
-                throw new Exception($"Mk.{cut} must consume its bake through the shared fitter.");
-        }
         if (Method("FishermansStaysailGeometry", "Create") != null)
             throw new Exception("Procedural staysail mesh creation must be removed.");
         if (
@@ -95,6 +78,17 @@ internal static class PatchChecks
                 )
         )
             throw new Exception("Mk.A is not sampling the actual native reef animation.");
+        if (
+            Type("FishermansStaysailReefing").GetProperty("Spread", all) != null
+            || Type("FishermansStaysailReefing").GetField("FoldBone", all) != null
+        )
+            throw new Exception("Unused reef spread sampling returned.");
+        var shaping = CalledMethods(Method("FishermansStaysailRig", "UpdateShapeBones")).ToArray();
+        foreach (string getter in new[] { "get_Active", "get_ForePoint", "get_ForeAxis" })
+            if (shaping.Count(m => m.Name == getter) != 1)
+                throw new Exception("Resolve the luff frame once per bone update: " + getter);
+        if (shaping.Any(m => m.Name == "LuffPoint"))
+            throw new Exception("Bone updates must project with the captured mast frame.");
         var newSail = Patch("NewSail", "Postfix");
         if (
             !CalledMethods(newSail)
@@ -167,21 +161,13 @@ internal static class PatchChecks
             || !lateUpdate.Any(m =>
                 m.DeclaringType.Name == "FishermansStaysailFixedHead" && m.Name == "Position"
             )
-            || !lateUpdate.Any(m => m.Name == "get_FixedUpperHeadAngle")
-            || Type("MkA.FishermansStaysailMkAShape")
-                .GetProperty("FixedUpperHeadAngle", all)
-                .DeclaringType != Type("MkA.FishermansStaysailMkAShape")
-            || Type("FishermansStaysailShape").GetProperty("FixedUpperHeadAngle", all).PropertyType
-                != typeof(float)
-            || !Type("FishermansStaysailShape")
-                .GetProperty("FixedUpperHeadAngle", all)
-                .GetMethod.IsAbstract
+            || Type("FishermansStaysailShape").GetProperty("FixedUpperHeadAngle", all) != null
             || Type("FishermansStaysailShape").GetProperty("UpperCornerTrim", all) != null
             || Type("FishermansStaysailFrameGeometry").GetMethod("UpperHead", all) != null
             || assembly.GetType(family + "FishermansStaysailUpperTrim") != null
             || (float)
-                Type("MkA.FishermansStaysailMkAGeometry")
-                    .GetField("FixedUpperHeadAngle", all)
+                Type("FishermansStaysailFixedHead")
+                    .GetField("DeployedAngle", all)
                     .GetRawConstantValue() != 14f
         )
             throw new Exception(
