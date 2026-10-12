@@ -2,9 +2,7 @@ using System;
 using System.Linq;
 using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Sails.FishermansStaysail;
-using MoreSailwindSails.Sails.FishermansStaysail.MkA;
-using MoreSailwindSails.Sails.FishermansStaysail.MkB;
-using MoreSailwindSails.Sails.FishermansStaysail.MkC;
+using MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
@@ -42,9 +40,9 @@ internal static class DhowChecks
             foreach (
                 var cut in new Func<float, float, FishermansStaysailMeshData>[]
                 {
-                    FishermansStaysailMkAGeometry.Create,
-                    FishermansStaysailMkBGeometry.Create,
-                    FishermansStaysailMkCGeometry.Create,
+                    BehaviorCases.CreateA,
+                    BehaviorCases.CreateB,
+                    BehaviorCases.CreateC,
                 }
             )
             {

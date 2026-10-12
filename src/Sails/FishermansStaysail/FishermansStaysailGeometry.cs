@@ -1,20 +1,9 @@
+// Supplies shared skinning, constraints, camber and centroids for fitted baked cuts.
 using System;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansStaysail
 {
-    internal sealed class FishermansStaysailMeshData
-    {
-        internal Vector3[] Vertices;
-        internal Vector2[] UV;
-        internal int[] Triangles;
-        internal BoneWeight[] Weights;
-        internal ClothSkinningCoefficient[] Constraints;
-        internal Vector3[] Corners;
-        internal Vector3[] BonePositions;
-        internal Vector3 Center;
-    }
-
     internal static class FishermansStaysailGeometry
     {
         internal const int Columns = 24;
@@ -23,25 +12,21 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         internal const int ShapeStride = Columns / ShapeColumns;
         internal const int BoneCount = (ShapeColumns + 1) * (Rows + 1);
 
-        // Sail mount frame: +X is up, -Z points toward the forward mast.
-        // Corner order: top fore, top aft, bottom fore, bottom aft.
-        internal static FishermansStaysailMeshData Create(float width, Vector3[] corners)
+        internal static void ValidateWidth(float width)
         {
             if (float.IsNaN(width) || float.IsInfinity(width) || width < 0.25f || width > 100f)
                 throw new ArgumentException(
                     "Expected a finite sail width between 0.25 and 100 metres."
                 );
-            if (corners[0].x <= corners[2].x || corners[1].x <= corners[3].x)
-                throw new ArgumentException("Stay slope leaves no positive luff or leech.");
-            var data = new FishermansStaysailMeshData
-            {
-                Vertices = new Vector3[(Columns + 1) * (Rows + 1)],
-                UV = new Vector2[(Columns + 1) * (Rows + 1)],
-                Weights = new BoneWeight[(Columns + 1) * (Rows + 1)],
-                Constraints = new ClothSkinningCoefficient[(Columns + 1) * (Rows + 1)],
-                Triangles = new int[Columns * Rows * 6],
-                Corners = (Vector3[])corners.Clone(),
-            };
+        }
+
+        // Fitted baked cuts arrive with their final rest surface.
+        internal static FishermansStaysailMeshData Finish(
+            float width,
+            FishermansStaysailMeshData data
+        )
+        {
+            var corners = data.Corners;
             data.BonePositions = new Vector3[BoneCount];
             for (int row = 0; row <= Rows; row++)
             for (int column = 0; column <= ShapeColumns; column++)
@@ -56,52 +41,32 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                             v
                         )
                         .x,
-                    RestCamber(width, u, v),
+                    RestCamber(width: width, u: u, v: v),
                     -width * (1 - u)
                 );
             }
+            data.Weights = new BoneWeight[data.Vertices.Length];
+            data.Constraints = new ClothSkinningCoefficient[data.Vertices.Length];
             for (int row = 0; row <= Rows; row++)
             for (int col = 0; col <= Columns; col++)
             {
                 float u = (float)col / Columns,
                     v = (float)row / Rows;
                 int i = row * (Columns + 1) + col;
-                data.Vertices[i] = new Vector3(
-                    Vector3
-                        .Lerp(
-                            Vector3.Lerp(corners[0], corners[1], u),
-                            Vector3.Lerp(corners[2], corners[3], u),
-                            v
-                        )
-                        .x,
-                    RestCamber(width, u, v),
-                    -width * (1 - u)
-                );
-                data.UV[i] = new Vector2(u, 1 - v);
                 int left = Math.Min(ShapeColumns - 1, col / ShapeStride);
                 float blend = (float)(col - left * ShapeStride) / ShapeStride;
                 data.Weights[i] = ShapeWeights(
-                    ShapeBone(row, left),
-                    ShapeBone(row, left + 1),
-                    blend
+                    left: ShapeBone(row, left),
+                    right: ShapeBone(row, left + 1),
+                    blend: blend
                 );
-                // The entire luff follows the fore mast. Aft corner targets are
-                // controlled by sheets, never attached to the stay.
+                // The entire luff and the two sheet-controlled aft corners are pinned.
                 bool pinned = col == 0 || (col == Columns && (row == 0 || row == Rows));
                 data.Constraints[i] = new ClothSkinningCoefficient
                 {
                     maxDistance = pinned ? 0 : FishermansStaysailBillow.ClothTravel(width, u, v),
                     collisionSphereDistance = 0,
                 };
-                if (row == Rows || col == Columns)
-                    continue;
-                int t = (row * Columns + col) * 6;
-                data.Triangles[t] = i;
-                data.Triangles[t + 1] = i + Columns + 1;
-                data.Triangles[t + 2] = i + 1;
-                data.Triangles[t + 3] = i + 1;
-                data.Triangles[t + 4] = i + Columns + 1;
-                data.Triangles[t + 5] = i + Columns + 2;
             }
             // Area-weighted centroid, also used for the aerodynamic force point.
             float area = 0;

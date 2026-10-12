@@ -7,6 +7,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
     // rotating cloth transform or load magnitude is used to set the angle.
     internal struct FishermansStaysailFixedHead
     {
+        internal const float DeployedAngle = 14f;
         private int targetSide;
         internal float Side { get; private set; }
 

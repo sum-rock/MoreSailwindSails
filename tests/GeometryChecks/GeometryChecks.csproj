@@ -6,6 +6,10 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <None
+      Update="FishermansStay/NativeRigAvailability.txt"
+      CopyToOutputDirectory="PreserveNewest"
+    />
     <Compile
       Include="../../src/Utils/Profiling/ProfileReport.cs"
       Link="Utils/Profiling/ProfileReport.cs"
@@ -225,16 +229,24 @@
       Link="FishermansStaysail/FishermansStaysailOrderText.cs"
     />
     <Compile
-      Include="../../src/Sails/FishermansStaysail/MkA/FishermansStaysailMkAGeometry.cs"
-      Link="FishermansStaysail/MkA/FishermansStaysailMkAGeometry.cs"
+      Include="../../src/Sails/FishermansStaysail/MkA/FishermansStaysailMkABakedMesh.g.cs"
+      Link="FishermansStaysail/MkA/FishermansStaysailMkABakedMesh.g.cs"
     />
     <Compile
-      Include="../../src/Sails/FishermansStaysail/MkB/FishermansStaysailMkBGeometry.cs"
-      Link="FishermansStaysail/MkB/FishermansStaysailMkBGeometry.cs"
+      Include="../../src/Sails/FishermansStaysail/FishermansStaysailMeshData.cs"
+      Link="FishermansStaysail/FishermansStaysailMeshData.cs"
     />
     <Compile
-      Include="../../src/Sails/FishermansStaysail/MkC/FishermansStaysailMkCGeometry.cs"
-      Link="FishermansStaysail/MkC/FishermansStaysailMkCGeometry.cs"
+      Include="../../src/Sails/FishermansStaysail/FishermansStaysailMeshFitting.cs"
+      Link="FishermansStaysail/FishermansStaysailMeshFitting.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansStaysail/MkB/FishermansStaysailMkBBakedMesh.g.cs"
+      Link="FishermansStaysail/MkB/FishermansStaysailMkBBakedMesh.g.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansStaysail/MkC/FishermansStaysailMkCBakedMesh.g.cs"
+      Link="FishermansStaysail/MkC/FishermansStaysailMkCBakedMesh.g.cs"
     />
     <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailEdgeFit.cs"
@@ -243,6 +255,18 @@
     <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailFixedHead.cs"
       Link="FishermansStaysail/FishermansStaysailFixedHead.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansStaysail/FishermansStaysailShadowGeometry.cs"
+      Link="FishermansStaysail/FishermansStaysailShadowGeometry.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailMeshData.cs"
+      Link="FishermansFlyingSail/FishermansFlyingSailMeshData.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailBakedMesh.g.cs"
+      Link="FishermansFlyingSail/FishermansFlyingSailBakedMesh.g.cs"
     />
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(SailwindDir)/Sailwind_Data/Managed/UnityEngine.CoreModule.dll</HintPath>

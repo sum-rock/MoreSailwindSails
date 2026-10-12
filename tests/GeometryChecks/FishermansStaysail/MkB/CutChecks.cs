@@ -1,7 +1,5 @@
 using System;
 using MoreSailwindSails.Sails.FishermansStaysail;
-using MoreSailwindSails.Sails.FishermansStaysail.MkA;
-using MoreSailwindSails.Sails.FishermansStaysail.MkB;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail.MkB;
@@ -13,8 +11,8 @@ internal static class CutChecks
         foreach (float width in new[] { 0.25f, 3f, 13.8f, 40f })
         foreach (float slope in new[] { 0f, 8.483f, 20f, 45f, 75f })
         {
-            var mesh = FishermansStaysailMkBGeometry.Create(width, slope);
-            var a = FishermansStaysailMkAGeometry.Create(width, slope).Corners;
+            var mesh = BehaviorCases.CreateB(width, slope);
+            var a = BehaviorCases.CreateA(width, slope).Corners;
             var c = mesh.Corners;
             Near((c[0] - a[0]).magnitude, 0, 1e-6f, "fore head");
             Near((c[1] - a[1]).magnitude, 0, 1e-6f, "aft head");
@@ -78,23 +76,18 @@ internal static class CutChecks
                 )
             )
                 throw new Exception("Mk.B nominal sheet and leech cannot fit.");
-            var furledFore = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], 0, 0);
-            var furledAft = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], 0, 0);
+            var furledFore = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], 0);
+            var furledAft = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], 0);
             if (furledFore.x <= c[2].x || furledAft.x <= c[3].x)
                 throw new Exception("Mk.B foot does not gather toward the head.");
         }
-        if (
-            ReferenceEquals(
-                FishermansStaysailMkBGeometry.Create(3).Vertices,
-                FishermansStaysailMkBGeometry.Create(3).Vertices
-            )
-        )
+        if (ReferenceEquals(BehaviorCases.CreateB(3).Vertices, BehaviorCases.CreateB(3).Vertices))
             throw new Exception("Mk.B cuts share mutable vertices.");
         foreach (float bad in new[] { 0f, -1f, float.NaN, float.PositiveInfinity, 101f })
         {
             try
             {
-                FishermansStaysailMkBGeometry.Create(bad);
+                BehaviorCases.CreateB(bad);
             }
             catch (ArgumentException)
             {

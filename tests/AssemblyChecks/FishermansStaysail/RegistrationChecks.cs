@@ -38,7 +38,7 @@ internal static class RegistrationChecks
         {
             var definition = Type(mark + ".FishermansStaysail" + mark);
             var shape = Type(mark + ".FishermansStaysail" + mark + "Shape");
-            var geometry = Type(mark + ".FishermansStaysail" + mark + "Geometry");
+            var baked = Type(mark + ".FishermansStaysail" + mark + "BakedMesh");
             var registrationCalls = CalledMethods(definition.GetMethod("Register", all)).ToArray();
             var factoryCall = registrationCalls.Single(m =>
                 m.DeclaringType == prefab && m.Name == "Register"
@@ -46,7 +46,6 @@ internal static class RegistrationChecks
             if (
                 !factoryCall.IsGenericMethod
                 || factoryCall.GetGenericArguments().Single() != shape
-                || registrationCalls.Any(m => m.DeclaringType == geometry)
                 || definition.GetField("SourceIndex", all) != null
             )
                 throw new Exception(
@@ -56,14 +55,18 @@ internal static class RegistrationChecks
 
             var cutCalls = CalledMethods(shape.GetMethod("Create", all)).ToArray();
             if (
-                cutCalls.Length != 1
-                || cutCalls[0].DeclaringType != geometry
+                cutCalls.Length != 2
+                || cutCalls[0].DeclaringType != baked
                 || cutCalls[0].Name != "Create"
-                || (float)geometry.GetMethod("Create", all).GetParameters()[1].DefaultValue != 20f
+                || cutCalls[1].DeclaringType != Type("FishermansStaysailMeshFitting")
+                || cutCalls[1].Name != "Fit"
+                || assembly.GetType(family + mark + ".FishermansStaysail" + mark + "Geometry")
+                    != null
             )
                 throw new Exception(
-                    mark + " shape no longer forwards to its original cut and nominal slope."
+                    mark + " shape must fit its bake directly, without a geometry wrapper."
                 );
+
             var prefix = shape.GetProperty("ObjectPrefix", all).GetMethod;
             if (
                 !Instructions(prefix)

@@ -10,6 +10,7 @@ internal static class Program
         Visuals.RoutedRopeChecks.Run();
         RigChecks.Run();
         ProfileChecks.Run();
+        NativeAvailabilityChecks.Run();
         StayChecks.Run();
         CollarChecks.Run();
         Utils.ProfilingChecks.Run();
@@ -31,7 +32,9 @@ internal static class Program
         ShapingChecks.Run();
         AerodynamicChecks.Run();
         MeshChecks.Run();
+        BakedMeshChecks.Run();
         FishermansStaysail.MkA.CutChecks.Run();
+        FishermansStaysail.BakedMeshChecks.Run();
         FishermansStaysail.MkB.CutChecks.Run();
         FishermansStaysail.MkC.CutChecks.Run();
         FishermansStaysail.CollisionChecks.Run();

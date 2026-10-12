@@ -1,7 +1,5 @@
 using System;
 using MoreSailwindSails.Sails.FishermansStaysail;
-using MoreSailwindSails.Sails.FishermansStaysail.MkA;
-using MoreSailwindSails.Sails.FishermansStaysail.MkC;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail.MkC;
@@ -13,8 +11,8 @@ internal static class CutChecks
         foreach (float width in new[] { 0.25f, 3f, 13.8f, 40f, 100f })
         foreach (float slope in new[] { 0f, 8.483f, 20f, 45f, 75f, 80f })
         {
-            var mesh = FishermansStaysailMkCGeometry.Create(width, slope);
-            var a = FishermansStaysailMkAGeometry.Create(width, slope).Corners;
+            var mesh = BehaviorCases.CreateC(width, slope);
+            var a = BehaviorCases.CreateA(width, slope).Corners;
             var c = mesh.Corners;
             Near((c[0] - a[0]).magnitude, 0, 1e-6f, "fore head");
             Near((c[1] - a[1]).magnitude, 0, 1e-6f, "aft head");
@@ -97,23 +95,18 @@ internal static class CutChecks
                 )
             )
                 throw new Exception("Mk.C nominal sheet and leech cannot fit.");
-            var furledFore = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], 0, 0);
-            var furledAft = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], 0, 0);
+            var furledFore = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], 0);
+            var furledAft = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], 0);
             if (furledFore.x <= c[2].x || furledAft.x <= c[3].x)
                 throw new Exception("Mk.C foot does not gather toward the head.");
         }
-        if (
-            ReferenceEquals(
-                FishermansStaysailMkCGeometry.Create(3).Vertices,
-                FishermansStaysailMkCGeometry.Create(3).Vertices
-            )
-        )
+        if (ReferenceEquals(BehaviorCases.CreateC(3).Vertices, BehaviorCases.CreateC(3).Vertices))
             throw new Exception("Mk.C cuts share mutable vertices.");
         foreach (float bad in new[] { 0f, -1f, float.NaN, float.PositiveInfinity, 101f })
         {
             try
             {
-                FishermansStaysailMkCGeometry.Create(bad);
+                BehaviorCases.CreateC(bad);
             }
             catch (ArgumentException)
             {
@@ -134,7 +127,7 @@ internal static class CutChecks
         {
             try
             {
-                FishermansStaysailMkCGeometry.Create(3, bad);
+                BehaviorCases.CreateC(3, bad);
             }
             catch (ArgumentException)
             {
@@ -142,7 +135,7 @@ internal static class CutChecks
             }
             throw new Exception("Mk.C accepted an invalid head slope.");
         }
-        var nominal = FishermansStaysailMkCGeometry.Create(3).Corners;
+        var nominal = BehaviorCases.CreateC(3).Corners;
         Near(
             (float)(Math.Atan2(nominal[1].x - nominal[0].x, 3) * 180 / Math.PI),
             20,

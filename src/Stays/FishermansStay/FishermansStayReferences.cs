@@ -1,3 +1,4 @@
+// Resolves authored stay references while retaining unavailable variant identities.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,8 +64,10 @@ namespace MoreSailwindSails.Stays.FishermansStay
             // Supporting endpoints and required sections still use Physical above.
             BoatPartOption ExcludedOption(int index)
             {
-                if (!masts.TryGetValue(index, out var mast) || !mast.GetComponent<BoatPartOption>())
-                    throw new InvalidOperationException($"Missing excluded rig option {index}.");
+                if (!masts.TryGetValue(index, out var mast))
+                    return null;
+                if (!mast.GetComponent<BoatPartOption>())
+                    throw new InvalidOperationException($"Invalid excluded rig option {index}.");
                 return mast.GetComponent<BoatPartOption>();
             }
             return profile
@@ -73,17 +76,24 @@ namespace MoreSailwindSails.Stays.FishermansStay
                         .Variants.Select(definition =>
                         {
                             if (
-                                !masts.TryGetValue(definition.Donor, out var donor)
-                                || !donor.onlyStaysails
-                                || !donor.walkColMast
-                                || !boat.walkCol
-                                || (
-                                    boat.masts.Length > definition.MountIndex
-                                    && boat.masts[definition.MountIndex]
-                                )
+                                boat.masts.Length > definition.MountIndex
+                                && boat.masts[definition.MountIndex]
                             )
                                 throw new InvalidOperationException(
-                                    $"Missing donor {definition.Donor} or occupied mount {definition.MountIndex}."
+                                    $"Occupied mount {definition.MountIndex}."
+                                );
+                            // Keep a reference entry for absent optional rigging so saved
+                            // option positions never shift when an earlier variant is unavailable.
+                            var unavailable = new FishermansStayReferences
+                            {
+                                Definition = definition,
+                            };
+                            if (!definition.HasRequiredParts(present: masts.ContainsKey))
+                                return unavailable;
+                            var donor = masts[definition.Donor];
+                            if (!donor.onlyStaysails || !donor.walkColMast || !boat.walkCol)
+                                throw new InvalidOperationException(
+                                    $"Invalid donor {definition.Donor}."
                                 );
                             var fore = Physical(definition.Fore);
                             var aft = Physical(definition.Aft);
@@ -95,9 +105,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                                 || definition.GuideIndex >= guides.Length
                                 || !guides[definition.GuideIndex]
                             )
-                                throw new InvalidOperationException(
-                                    $"Missing authored halyard guide on mast {definition.Aft}."
-                                );
+                                return unavailable;
                             CheckPoint(fore, definition.ForePoint);
                             CheckPoint(aft, definition.AftPoint);
                             FishermansStayGeometry.Span(
@@ -116,7 +124,10 @@ namespace MoreSailwindSails.Stays.FishermansStay
                                         Physical(i).GetComponent<BoatPartOption>()
                                     )
                                     .ToArray(),
-                                Forbidden = definition.Forbidden.Select(ExcludedOption).ToArray(),
+                                Forbidden = definition
+                                    .Forbidden.Select(ExcludedOption)
+                                    .Where(o => o)
+                                    .ToArray(),
                             };
                         })
                         .ToArray()

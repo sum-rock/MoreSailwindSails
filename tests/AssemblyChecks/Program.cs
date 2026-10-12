@@ -25,10 +25,11 @@ internal static class Program
         {
             Path.Combine(gameDir, "Sailwind_Data/Managed"),
             Path.Combine(gameDir, "BepInEx/core"),
-            Path.Combine(gameDir, "BepInEx/plugins/ShipyardExpansion"),
         };
         AssemblyLoadContext.Default.Resolving += (context, name) =>
         {
+            if (name.Name is "ShipyardExpansion" or "SE_Bridge")
+                throw new Exception("Assembly checks must run without resolving SE: " + name.Name);
             foreach (var dir in libraryDirs)
             {
                 var file = Path.Combine(dir, name.Name + ".dll");
@@ -46,7 +47,7 @@ internal static class Program
         HarmonySignatureChecks.Run(assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
-        Compatibility.TextureCatalogChecks.Run(assembly);
+        Compatibility.NativeAppearanceChecks.Run(assembly);
         Compatibility.SailInfoNamesChecks.Run(assembly: assembly, gameDir: gameDir);
         FlyingSailChecks.Run(assembly);
         StayChecks.Run(assembly);

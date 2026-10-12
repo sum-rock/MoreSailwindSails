@@ -25,6 +25,20 @@ take precedence over historical design choices.
 - Use installed assemblies/assets as the behavioral reference; upstream source
   may differ. Never commit proprietary assemblies or extracted game assets.
 
+## Guidlines
+
+- Always drive to simplicity. Choices should be made preserve straight forward
+  code paths with minimal complexity.
+- Avoid patching external dependencies.
+- Ask for clarification from the user if directives appear to require complex
+  implementation.
+- Resist changes that would break save compatability relative to the last tagged
+  release.
+- Record technical and architectual decisions in
+  [DEVELOPMENT](docs/DEVELOPMENT.md). Write clearly and concisely. When adding
+  to the document on a subject already present, squash the content to eliminate
+  duplication.
+
 ## Verification and handoff
 
 Use the pinned Nix formatting environment and the
@@ -37,8 +51,7 @@ not change dependencies to bypass first-time restore/network failures.
 
 Report automated results separately from observed game behavior. Follow the
 [runtime validation guidance](docs/DEVELOPMENT.md#runtime-validation) and keep
-validation notes current when user observations confirm or contradict an
-approach.
+validation notes current.
 
 At handoff, report the version, changes, checks actually run, remaining in-game
 uncertainty and built DLL path when applicable.

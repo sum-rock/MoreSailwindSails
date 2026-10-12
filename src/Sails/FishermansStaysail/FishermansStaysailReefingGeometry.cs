@@ -18,23 +18,16 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             );
         }
 
-        internal static Vector3 Pose(
-            Vector3 point,
-            Vector3 foreHead,
-            Vector3 aftHead,
-            float lift,
-            float spread
-        )
+        internal static Vector3 Pose(Vector3 point, Vector3 foreHead, Vector3 aftHead, float lift)
         {
             lift = Math.Max(0, Math.Min(1, lift));
-            spread = Math.Max(0.015f, Math.Min(1, spread));
             // Keep the entire head span in place. Each column gathers upward
             // to the sloping head, rather than shrinking toward a single corner.
             float along = (point.z - foreHead.z) / (aftHead.z - foreHead.z);
             var head = Vector3.Lerp(foreHead, aftHead, along);
             return new Vector3(
                 head.x + (point.x - head.x) * Math.Max(0.015f, lift),
-                point.y * spread,
+                point.y,
                 point.z
             );
         }

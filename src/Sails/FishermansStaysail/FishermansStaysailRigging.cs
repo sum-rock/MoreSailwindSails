@@ -211,7 +211,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         // Reefing stays on the fitted section: the foot travels up to the head.
         internal Vector3 LuffPoint(Vector3 requested) =>
-            ForePoint + ForeAxis * Vector3.Dot(requested - ForePoint, ForeAxis);
+            FishermansStaysailFrameGeometry.ProjectOntoMast(
+                point: requested,
+                forePoint: ForePoint,
+                axis: ForeAxis
+            );
 
         internal void AttachControls()
         {
