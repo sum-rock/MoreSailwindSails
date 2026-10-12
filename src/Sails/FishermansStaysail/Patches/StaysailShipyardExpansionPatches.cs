@@ -46,7 +46,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
         }
     }
 
-    // Configures Shipyard Expansion scaling and fitting controls for staysails.
+    // Keeps Shipyard Expansion scaling uniform for staysails.
     [HarmonyPatch(typeof(SailScaler), "Awake")]
     internal static class FishermansStaysailScalerPatch
     {
@@ -56,7 +56,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
             if (!__instance.GetComponent<FishermansStaysailRig>())
                 return;
             __instance.scaleType = ScaleType.Uniform;
-            __instance.flippable = false;
         }
     }
 
