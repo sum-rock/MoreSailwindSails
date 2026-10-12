@@ -6,13 +6,8 @@ namespace MoreSailwindSails.Utils.Profiling
         Rig,
         Frame,
         Shape,
-        SheetFlex,
         Aerodynamics,
         Ropes,
-        SailMount,
-        Sprit,
-        Snotter,
-        VisualCache,
         Count,
     }
 }

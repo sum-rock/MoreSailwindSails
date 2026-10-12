@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace MoreSailwindSails.Tests.AssemblyChecks.Utils;
 
-// Executes migration against the installed BepInEx config implementation, using temporary files only.
+// Checks profiling defaults and explicit settings against the installed BepInEx config implementation, using temporary files only.
 internal static class ProfileConfigurationChecks
 {
     internal static void Run(Assembly assembly)
@@ -41,36 +41,18 @@ internal static class ProfileConfigurationChecks
                     || Value("shortcut").ToString() != expectedShortcut
                 )
                     throw new InvalidOperationException(
-                        "Incorrect profiling migration for " + name
+                        "Incorrect profiling configuration for " + name
                     );
                 configType.GetMethod("Save").Invoke(config, null);
                 var saved = File.ReadAllText(path);
-                if (
-                    saved.Contains("EnableSpritsailMountProfiling")
-                    || saved.Contains("ToggleSpritsailMountProfiling")
-                )
-                    throw new InvalidOperationException(
-                        "Obsolete profiling keys remained after migration."
-                    );
-                if (
-                    !saved.Contains("ProfileTargets = ")
-                    || !saved.Contains("ProfileBypass = SailMount")
-                )
-                    throw new InvalidOperationException(
-                        "New target/bypass defaults were not persisted."
-                    );
+                if (!saved.Contains("ProfileTargets = "))
+                    throw new InvalidOperationException("Target defaults were not persisted.");
             }
             Check(name: "fresh", input: "", expectedEnabled: false, expectedShortcut: "F7");
             Check(
-                name: "legacy",
-                input: "EnableSpritsailMountProfiling = true\nToggleSpritsailMountProfiling = F6\n",
-                expectedEnabled: true,
-                expectedShortcut: "F6"
-            );
-            Check(
                 name: "explicit",
-                input: "EnableSpritsailMountProfiling = true\nToggleSpritsailMountProfiling = F6\nEnableProfiling = false\nToggleProfiling = F5\n",
-                expectedEnabled: false,
+                input: "EnableProfiling = true\nToggleProfiling = F5\n",
+                expectedEnabled: true,
                 expectedShortcut: "F5"
             );
         }
@@ -79,7 +61,7 @@ internal static class ProfileConfigurationChecks
             Directory.Delete(directory, recursive: true);
         }
         Console.WriteLine(
-            "PASS: fresh profiling defaults, legacy migration, new-key precedence, and obsolete-key removal using installed BepInEx configuration."
+            "PASS: fresh profiling defaults and explicit settings using installed BepInEx configuration."
         );
     }
 }

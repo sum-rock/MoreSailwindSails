@@ -106,7 +106,7 @@ internal static class ProfilingGcChecks
                 ProfileReport.Write(session: s, log: logs.Add);
             }
         );
-        session.Configure(selection: ProfileSelection.All, bypass: ProfileBypass.Snotter);
+        session.Configure(selection: ProfileSelection.All);
         void Tick(int frame, double now, int gc, bool toggle = false) =>
             session.Tick(
                 enabled: true,
@@ -138,18 +138,19 @@ internal static class ProfilingGcChecks
         );
         Tick(frame: 6, now: 112.125, gc: 6, toggle: true);
         Check(
-            reports.Last() == (1, 0, 1) && session.Mode == 2,
+            reports.Last() == (1, 0, 1) && session.Mode == 0,
             "Mode transitions flush only the old mode's intervals."
         );
-        Tick(frame: 7, now: 114, gc: 10);
-        Tick(frame: 8, now: 114.125, gc: 10);
+        Tick(frame: 7, now: 113, gc: 9, toggle: true);
+        Tick(frame: 8, now: 114, gc: 10);
+        Tick(frame: 9, now: 114.125, gc: 10);
         Check(
             session.Intervals.Excluded == 1
                 && session.Intervals.WithoutGc.Count == 1
-                && session.Intervals.Longest[0].EndSeconds == 14.125,
-            "A mode change excludes transition logging but retains capture-relative timestamps."
+                && session.Intervals.Longest[0].EndSeconds == 1.125,
+            "A new capture excludes transition logging and resets capture-relative timestamps."
         );
-        session.Configure(selection: 0, bypass: ProfileBypass.None);
+        session.Configure(selection: 0);
         Check(
             session.Mode == 0 && session.Intervals.LongestCount == 0,
             "Configuration changes clear correlation state."
@@ -189,7 +190,7 @@ internal static class ProfilingGcChecks
         using (collector.Begin(target: ProfileTarget.Rig)) { }
         Check(reads == 0, "Disabled and unselected scopes never read the allocation counter.");
         collector.Selection = ProfileSelection.All;
-        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.BoomedSpritsail))
+        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.Staysail))
         {
             bytes = 10;
             using (collector.Begin(target: ProfileTarget.Shape))
@@ -197,12 +198,9 @@ internal static class ProfilingGcChecks
                 bytes = 30;
             bytes = 40;
         }
-        int rig = ProfileCollector.Index(
-            family: ProfileFamily.BoomedSpritsail,
-            target: ProfileTarget.Rig
-        );
+        int rig = ProfileCollector.Index(family: ProfileFamily.Staysail, target: ProfileTarget.Rig);
         int shape = ProfileCollector.Index(
-            family: ProfileFamily.BoomedSpritsail,
+            family: ProfileFamily.Staysail,
             target: ProfileTarget.Shape
         );
         Check(
@@ -212,7 +210,7 @@ internal static class ProfilingGcChecks
                 && collector.AllocatedBytes[shape] == 20,
             "Allocation totals are inclusive; identical nested categories coalesce."
         );
-        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.BoomedSpritsail))
+        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.Staysail))
             bytes += 5;
         Check(
             collector.AllocatedBytes[rig] == 45 && collector.MaximumAllocatedBytes[rig] == 40,

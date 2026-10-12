@@ -72,8 +72,6 @@ internal static class TextureCatalogChecks
             {
                 "FishermansFlyingSail.FishermansFlyingSail",
                 "FishermansStaysail.FishermansStaysail",
-                "Spritsail.LooseFootedSpritsail.LooseFootedSpritsail",
-                "Spritsail.BoomedSpritsail.BoomedSpritsail",
             }
         )
         {

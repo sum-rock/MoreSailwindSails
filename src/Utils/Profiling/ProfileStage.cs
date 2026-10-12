@@ -4,11 +4,6 @@ namespace MoreSailwindSails.Utils.Profiling
     internal enum ProfileStage
     {
         Total,
-        Setup,
-        Surface,
-        Fit,
-        Upload,
-        Submit,
         Count,
     }
 }

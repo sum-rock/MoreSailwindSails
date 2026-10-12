@@ -14,7 +14,6 @@ namespace MoreSailwindSails.Utils.Profiling
         internal int Mode { get; private set; }
         internal int SessionId { get; private set; }
         internal int WindowId { get; private set; }
-        internal ProfileBypass Bypass { get; private set; }
         internal int Frames { get; private set; }
         internal int SlowFrames { get; private set; }
         internal double FrameSeconds { get; private set; }
@@ -27,15 +26,11 @@ namespace MoreSailwindSails.Utils.Profiling
             this.report = report;
         }
 
-        internal void Configure(int selection, ProfileBypass bypass)
+        internal void Configure(int selection)
         {
             Stop();
             Collector.Selection = selection;
-            Bypass = bypass;
         }
-
-        internal bool IsBypassed(ProfileBypass target) =>
-            Mode == 2 && target != ProfileBypass.None && Bypass == target;
 
         internal void Tick(bool enabled, bool toggle, int frame, double seconds, double now, int gc)
         {
@@ -58,7 +53,7 @@ namespace MoreSailwindSails.Utils.Profiling
             if (toggle)
             {
                 Flush();
-                Mode = (Mode + 1) % (Bypass == ProfileBypass.None ? 2 : 3);
+                Mode = (Mode + 1) % 2;
                 if (Mode == 1)
                 {
                     SessionId++;

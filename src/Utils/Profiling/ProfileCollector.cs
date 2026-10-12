@@ -13,9 +13,6 @@ namespace MoreSailwindSails.Utils.Profiling
         internal readonly long[] AllocatedBytes = new long[SampleCount];
         internal readonly long[] MaximumAllocatedBytes = new long[SampleCount];
         internal readonly int[] Calls = new int[SampleCount];
-        internal readonly int[] Counters = new int[
-            (int)ProfileFamily.Count * (int)ProfileCounter.Count
-        ];
         private readonly bool[] measuring = new bool[SampleCount];
         private readonly Func<long> timestamp;
         private readonly Func<long> allocatedBytes;
@@ -94,29 +91,6 @@ namespace MoreSailwindSails.Utils.Profiling
             family = previous;
         }
 
-        internal void Count(
-            ProfileTarget target,
-            ProfileCounter counter,
-            ProfileFamily owner = ProfileFamily.Unspecified
-        )
-        {
-            if (Selected(target: target))
-                Counters[
-                    (int)(owner == ProfileFamily.Unspecified ? family : owner)
-                        * (int)ProfileCounter.Count
-                        + (int)counter
-                ]++;
-        }
-
-        internal void SurfaceQuery(bool hit)
-        {
-            if (Active && measuring[Index(family: family, target: ProfileTarget.SailMount)])
-                Count(
-                    target: ProfileTarget.SailMount,
-                    counter: hit ? ProfileCounter.SurfaceHits : ProfileCounter.SurfaceMisses
-                );
-        }
-
         internal void Clear()
         {
             generation++;
@@ -126,7 +100,6 @@ namespace MoreSailwindSails.Utils.Profiling
             Array.Clear(AllocatedBytes, 0, AllocatedBytes.Length);
             Array.Clear(MaximumAllocatedBytes, 0, MaximumAllocatedBytes.Length);
             Array.Clear(Calls, 0, Calls.Length);
-            Array.Clear(Counters, 0, Counters.Length);
             Array.Clear(measuring, 0, measuring.Length);
         }
     }

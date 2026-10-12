@@ -7,16 +7,16 @@ reference, verification procedures and
 
 ## Technical reference
 
-| Area                                     | Reference                                                                                |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------- |
-| Plugin identity, versions and prefab IDs | [Release and manual installation](#release-and-manual-installation)                      |
-| Directories, namespaces and test layout  | [Source organization](#source-organization)                                              |
-| Cloth, templates, controls and Harmony   | [Runtime safeguards](#runtime-safeguards)                                                |
-| Sail-family mechanics                    | [Flying Sail](#flying-sail), [Spritsails](#spritsails-category), [Staysails](#staysails) |
-| Authored stays and boat support          | [Boat profiles and stays](#boat-profiles-and-stays)                                      |
-| Native seats and manual fallback pairs   | [Winch placement](#winch-placement)                                                      |
-| Game checks and observed behavior        | [Runtime validation](#runtime-validation)                                                |
-| Profiling, installed references and logs | [Local investigation](#local-investigation)                                              |
+| Area                                     | Reference                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------- |
+| Plugin identity, versions and prefab IDs | [Release and manual installation](#release-and-manual-installation) |
+| Directories, namespaces and test layout  | [Source organization](#source-organization)                         |
+| Cloth, templates, controls and Harmony   | [Runtime safeguards](#runtime-safeguards)                           |
+| Sail-family mechanics                    | [Flying Sail](#flying-sail), [Staysails](#staysails)                |
+| Authored stays and boat support          | [Boat profiles and stays](#boat-profiles-and-stays)                 |
+| Native seats and manual fallback pairs   | [Winch placement](#winch-placement)                                 |
+| Game checks and observed behavior        | [Runtime validation](#runtime-validation)                           |
+| Profiling, installed references and logs | [Local investigation](#local-investigation)                         |
 
 ## Build and automated checks
 
@@ -95,8 +95,6 @@ IDs:
 | ----------------------------- | --------------- |
 | Flying Sail                   | **400**         |
 | Fisherman's Staysail Mk.A/B/C | **401/402/403** |
-| Loose-footed Spritsail Mk.A/B | **404/405**     |
-| Boomed Spritsail Mk.A/B       | **406/407**     |
 | Fisherman's Stay mounts       | **128–255**     |
 
 Distribute only the plugin DLL. Builds/checks do not install it, alter saves or
@@ -127,19 +125,16 @@ The solution includes the plugin and both check projects. Feature namespaces
 follow their directories under `MoreSailwindSails`; Harmony patches live in each
 feature's `Patches/` directory and `.Patches` namespace.
 
-| Location                                    | Responsibility                                                                                                                    |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `src/Plugin.cs`                             | Identity, dependencies, Harmony discovery and optional SailInfo integrations                                                      |
-| `src/Sails/FishermansFlyingSail/`           | Mast-mounted sail registration, rig, geometry, tension, billow and aerodynamics                                                   |
-| `src/Sails/FishermansStaysail/`             | Family prefab builder, rig, fixed head, edge fitting and reefing; `MkA/`, `MkB/`, `MkC/` supply cuts and identities               |
-| `src/Sails/Spritsail/`                      | Category identity, family catalog, native control binding, balance rules, shipyard browsing and optional All Sails integration    |
-| `src/Sails/Spritsail/LooseFootedSpritsail/` | Shared loose-footed rig, geometry and patches; `MkA/` and `MkB/` supply shape and identity                                        |
-| `src/Sails/Spritsail/BoomedSpritsail/`      | Independent boom-supported rig, native single-sheet controls and lifting-boom deployment; `MkA/` and `MkB/` supply companion cuts |
-| `src/Stays/FishermansStay/`                 | Independent mounts, registration, previews, controls and save compatibility                                                       |
-| `src/BoatRigs/`                             | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks                                            |
-| `src/Controls/`                             | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning                            |
-| `src/Visuals/`                              | Route-only rope rendering; family code retains all routing, visibility and control decisions                                      |
-| `src/Utils/`                                | Optional in-game diagnostics, profiling and their geometry helpers                                                                |
+| Location                          | Responsibility                                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `src/Plugin.cs`                   | Identity, dependencies, Harmony discovery and optional SailInfo integrations                                        |
+| `src/Sails/FishermansFlyingSail/` | Mast-mounted sail registration, rig, geometry, tension, billow and aerodynamics                                     |
+| `src/Sails/FishermansStaysail/`   | Family prefab builder, rig, fixed head, edge fitting and reefing; `MkA/`, `MkB/`, `MkC/` supply cuts and identities |
+| `src/Stays/FishermansStay/`       | Independent mounts, registration, previews, controls and save compatibility                                         |
+| `src/BoatRigs/`                   | One class per boat owns supports, stays, mast ancestry, sheet categories and fallbacks                              |
+| `src/Controls/`                   | Native seat discovery, separate sheet/halyard resolvers, atomic reservations and owned control cloning              |
+| `src/Visuals/`                    | Shared native-setting-aware routed rope rendering and geometry                                                      |
+| `src/Utils/`                      | Optional in-game diagnostics, profiling and their geometry helpers                                                  |
 
 Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
 with one type per file. They retain the `MoreSailwindSails.BoatRigs` namespace.
@@ -153,14 +148,6 @@ Flying Sail and staysail mechanics independently editable; new families need not
 follow either design. [Shared-helper extraction is deferred](CLEANUP.md), while
 existing shared winch controls remain in use. Runtime mesh/object labels use the
 family or mark prefix; preserve donor hierarchy names.
-
-Spritsails keep shared type mechanics under `src/Sails/Spritsail/<Type>/`.
-`LooseFootedSpritsail/` owns its rig, patches, prefab builder and geometry;
-`MkA/` and `MkB/` contain only cut and identity definitions. Sprit/socket
-geometry and loose-footed rigid-sprit deployment remain shared at the Spritsails
-family level. `BoomedSpritsail/` owns coordinated boom/sprit deployment with a
-fixed tack and rigid foot; it reuses family spar, fitting, collar, obstruction
-and furled visuals. Broader cross-family helper extraction remains deferred.
 
 Both check suites mirror feature directories and namespaces under
 `MoreSailwindSails.Tests.<Suite>.<Feature>`. Staysail behavior is parameterized
@@ -189,16 +176,13 @@ resolve full type names: update both when moving or renaming code.
   unless evidence warrants a change.
 - Filter sails with custom paired controls only during native control binding
   and restore the full list in a finalizer. Capacity, collision, overlap and
-  saves must see all sails. Boomed spritsails use native single-sheet binding
-  and must remain in the native list.
+  saves must see all sails.
 - Fisherman families resolve authored, connected **active** mast
-  sections/guides. Spritsails resolve their carrying mast and native assigned
-  guides. Registration and previews can precede activation; protect occupied
-  stays and actual support parts.
-- Clamp fisherman sail travel to **±40°** and spritsail travel to **±89°** after
-  native controller updates, preserving tighter limits without snapping
-  transforms. Paired sheets use `JibAngleMaster.Update`; boomed spritsails use
-  the ordinary angle controller's `LateUpdate`.
+  sections/guides. Registration and previews can precede activation; protect
+  occupied stays and actual support parts.
+- Clamp fisherman sail travel to **±40°** after native controller updates,
+  preserving tighter limits without snapping transforms. Paired sheets use
+  `JibAngleMaster.Update`.
 - Each family retains its iterative order-text guard before NANDFixes. HarmonyX
   runs later prefixes even after `false`: append wrapped lines to the native
   list and consume input so later prefixes cannot recurse on it.
@@ -223,11 +207,10 @@ snap initialization; no native audio methods are patched.
 ### SailInfo hover names
 
 Optional integration, inspected against **SailInfo 1.2.1**, supplies grouped
-`Fisherman's Flying Sail` / `Fisherman's Staysail` labels and mark-specific
-loose-footed/boomed spritsail labels. Standard, Historical and Simple Positional
-modes use these names. SailInfo retains name-off settings, HUD formatting,
-halyard suffix and numeric readouts; vanilla names and `Sail.sailName` are
-unchanged.
+`Fisherman's Flying Sail` / `Fisherman's Staysail` labels. Standard, Historical
+and Simple Positional modes use these names. SailInfo retains name-off settings,
+HUD formatting, halyard suffix and numeric readouts; vanilla names and
+`Sail.sailName` are unchanged.
 
 `Compatibility.Patches.SailInfoNamesPatch` validates the parameterless
 string-returning `WinchInfoSail.SailName()` and instance `Sail sailComponent`
@@ -238,23 +221,19 @@ reference. The staysail-specific angle patch remains separate.
 
 ## Custom rope rendering
 
-Flying Sail sheets, shared spans and fixed ties, plus both Spritsail types'
-custom sheets, lashings and snotter purchases/collars, follow the native
+Flying Sail sheets, shared spans and fixed ties follow the native
 `Settings.clothRopes` option. When enabled, `RoutedRope` builds a six-sided tube
 with smooth radial normals along each family's existing route. When disabled, it
-uses the original line material, colors and flat renderer. The native boomed
-Spritsail sheet and Fisherman's Staysail ropes retain their native rendering.
-
-The authored Spritsail luff mount's seven rope meshes remain part of the mount
-in either setting; they use the same native 3D rope material.
+uses the original line material, colors and flat renderer. Fisherman's Staysail
+ropes retain their native rendering.
 
 The installed plain `3d rope` donor was inspected on **2026-10-07**:
 `sharedassets24.assets` renderer **4503**, mesh **1475**, material **64**
 (`rope static`). It has **66 vertices**, eleven six-vertex rings, a **0.02 m**
 source radius, smooth radial normals and no UVs or assigned textures. Custom
 tubes reuse this donor's material and shadow settings at runtime and retain
-their existing authored world-space diameters, including spritsail thickness
-multipliers. They do not copy the flat-line texture onto the tube.
+their existing authored world-space diameters. They do not copy the flat-line
+texture onto the tube.
 
 Family code submits the final posed route before selecting visibility. The
 rendering component owns one lazily created mesh per live rope, reuses its
@@ -267,18 +246,17 @@ destruction releases only the generated mesh. Shared native meshes/materials and
 sail Cloth are untouched. This rendering primitive does not merge family
 mechanics or resume the deferred calculation extraction.
 
-The user's **2026-10-07** report of flat-looking Flying Sail/Spritsail lines
-matches the previous implementation: custom routes always used flat lines and
-suppressed native 3D visuals. The new geometry checks cover diameter, normals,
-winding, coils, bends, translations and degenerate routes; assembly checks cover
-native setting/material access, route integration, resource ownership and
-physics isolation. These do not establish visual acceptance. Validate on Brig
-first, then Sanbuq: compare with adjacent native ropes from several camera
-angles, toggle 3D ropes both ways, resize, trim/tack, reef/strike, lose/recover
-supports, preview/cancel shipyard changes and reload. Check both Spritsail types
-and marks, coil continuity, knots, shading, thickness, duplicate/missing lines
-and cleanup. Runtime switching, Unity rendering and performance remain
-unverified.
+The user's **2026-10-07** report of flat-looking Flying Sail lines matches the
+previous implementation: custom routes always used flat lines and suppressed
+native 3D visuals. The new geometry checks cover diameter, normals, winding,
+coils, bends, translations and degenerate routes; assembly checks cover native
+setting/material access, route integration, resource ownership and physics
+isolation. These do not establish visual acceptance. Validate on Brig first,
+then Sanbuq: compare with adjacent native ropes from several camera angles,
+toggle 3D ropes both ways, resize, trim/tack, reef/strike, lose/recover
+supports, preview/cancel shipyard changes and reload. Check coil continuity,
+knots, shading, thickness, duplicate/missing lines and cleanup. Runtime
+switching, Unity rendering and performance remain unverified.
 
 ## Flying Sail
 
@@ -351,540 +329,6 @@ safely. Do not generate substitute UVs or normals or modify shared donor assets.
 Each template attempt logs donor/mesh identity, source count/readability, baked
 channel counts, material compatibility and the selected policy. Failures
 identify the incompatible channel and available diagnostic context.
-
-## Spritsails category
-
-Spritsails use mod-owned `SailCategory` **6**; the native enum is unchanged. The
-family catalog validates native/foreign category conflicts and prefab ownership
-before registration, and rolls back failed candidates. Family balance patches
-require both category 6 and a registered prefab ID. Type-specific patches
-recognize their rig component. Mark definitions supply cut and identity;
-loose-footed and boomed mechanics remain independently editable.
-
-All four marks fit ordinary physical masts directly from native mast data,
-including raked masts and boats without a MoreSailwindSails profile. Native
-square-only and stay-only restrictions remain. A usable capsule collider, active
-native rope guides, sufficient guide clearance and native control slots are
-required. No aft mast or Fisherman's Stay is needed. Availability does not
-establish in-game validation of each rig.
-
-Both types use native `Mast.UpdateControllerAttachments` binding by sail order:
-boomed sails use `midAngleWinch`, loose-footed sails use `leftAngleWinch` and
-`rightAngleWinch`, and both use `reefWinch`. Category 6 and `squareSail = false`
-remain unchanged; loose-footed sails do not share square-topsail trim. There are
-no spritsail winch clones, borrowed fittings or profile fallbacks.
-
-The binding guard runs after Fisherman filters and records the native slot and
-its assigned guides before the full sail order is restored. It leaves sails in
-the list. Missing or conflicting slots temporarily suppress only that
-spritsail's controller/attachment references; a finalizer restores the
-references and keeps unbound controllers inactive without deleting their input
-state. Native square sails claim pair zero even above a loose-footed sail: this
-conflict is rejected. Malformed mast winch arrays skip native binding with a
-diagnostic because native setup dereferences every entry. Other native
-exceptions still propagate.
-
-Guides come from the carrying mast's indexed `mastReefAtt` and optional
-`mastReefAttExtension`, falling back to the former when no extension is
-assigned. These array names describe native routing roles, not height: order the
-assigned pair along the upward mast axis in boat space. The higher guide sets
-luff/hoist clearance and the purchase route's upper turn; the lower guide
-supplies its preceding turn. There is no search through other slots or mast
-sections. Runtime ancestry identifies actual mast/guide-owning parts for removal
-and preview protection. Clearance is measured along the mast axis, and the
-existing luff/hinge frame follows rake. Horizontal/degenerate axes remain
-invalid for height-based fitting.
-
-Existing prefab IDs, installation coordinates and save fields remain unchanged.
-Loaded arrangements that depended on borrowed fittings or higher profiled guides
-may require refitting. No save migration or automatic repositioning is
-performed.
-
-### Balance and physics defaults
-
-| Setting                | Current value                                                                    |
-| ---------------------- | -------------------------------------------------------------------------------- |
-| Loose-footed price     | `GetSailArea() × 9 × 1.29`; between equal-area gaff (1.25) and junk (1.33)       |
-| Boomed price           | Loose-footed formula multiplied by **1.10**                                      |
-| Loose-footed boat mass | `GetRealSailPower() × 40`, matching gaff/junk                                    |
-| Boomed boat mass       | Loose-footed formula multiplied by **1.20**                                      |
-| Propulsion             | `[Spritsails] AppliedForceMultiplier`, default **0.75**                          |
-| Starboard penalty      | `[Spritsails] ObstructedTackForceMultiplier`, default **0.90**                   |
-| Sail Rigidbody         | Mass **0.1**, angular drag **1** for both types; separate from carried boat mass |
-| Scaling                | Uniform SE scaling; no shipyard rotation or jib flipping                         |
-| Travel                 | **±89°**, retaining tighter collision and sheet limits                           |
-
-`AppliedForceMultiplier` accepts finite, nonnegative values, including zero;
-invalid values use 0.75. It scales propulsion-local power once in
-`Sail.ApplyForce`, including the native final force report. It does not alter
-area, boat mass or other families. The junk coefficient does not copy junk
-upwind efficiency: both types retain brig jib 110's upwind efficiency and sail
-amplifier. Configuration values are read during force calculation; external file
-edits require normal BepInEx reload/restart.
-
-Native extended mast height excludes category 6; type-specific height patches
-report the scaled luff. Spritsails do not join square topsail angle
-coordination. Shadow boxes are ordinary triggers. Only the square/gaff
-vertical-overlap exception maps spritsails to gaff, in both installation orders;
-physical collision checks remain active. Force and overlap transpilers reject
-unexpected native IL patterns, and never temporarily change the sail category.
-
-### Browsing and registration
-
-Family-level shipyard Awake and document-opening patches insert all registered
-spritsails through `SpritsailCatalog`. Registration follows SE initialization
-and precedes All Sails caching. The menu clones Other and fits seven categories
-inside its original six-row footprint. Spritsails appear only in their category.
-Native browsing uses a family pager sized to the available buttons; the optional
-All Sails adapter builds filtered 12-entry pages in its typed cache. Selection
-and reopening reset the page; empty/shrinking lists clamp it. All Sails has no
-hard assembly reference, but its installed reflection contract is checked.
-
-A final family `AddNewSail` postfix runs after SE and type-specific sizing, sets
-the installation coordinate to `GetScaledHeight()`, then calls native
-`MoveHeldSail(0)` to refresh attachments, order and collision. This places the
-foot at the mast base; coordinate zero would put it below the mast. Existing
-sizes and ordinary vertical adjustment are retained. SE's `rotatablePart` is
-explicitly cleared; its rotation buttons and no-target guards handle the rest.
-
-### Marks and donor assets
-
-| Type         | Mk.A / Mk.B IDs | Construction donor                        | Controls                                   |
-| ------------ | --------------- | ----------------------------------------- | ------------------------------------------ |
-| Loose-footed | **404 / 405**   | Brig jib **110**, `sharedassets15.assets` | Two independent clew sheets and deployment |
-| Boomed       | **406 / 407**   | Full gaff **15**, `sharedassets1.assets`  | One boom sheet and deployment              |
-
-Base width is jib 110's `installHeight / 3`, with luff **1.6 × width** and foot
-rising **0.08 × width** aft. Mk.A has a **105°** throat: peak reach **1.0 ×
-width**, rise **tan(15°) × width** and projected area approximately **1.693975 ×
-width²**. Mk.B starts from a **135°** throat and straight foot **1.25 times**
-the head, then stretches horizontally by **30%** while retaining corner heights.
-Its final angle/ratio differ from those base values. Boomed marks match their
-loose-footed companions' deployed corners and default sizing. Camber and
-collision clipping derive from the actual cut.
-
-Templates own procedural cloth, shadow and spar meshes; the boom shares its
-sail's spar mesh. Donors retain their Animator, WindCloth, audio and shadow
-contracts. Gaff 15's `boom_gaff_top` supplies timber material for both types;
-gaff **119** supplies the read-only `furled__sail_cloth_back` mesh and its
-cloth/rope submeshes. Only the cloth material slot follows recoloring. No game
-assets are redistributed or modified.
-
-### Shared sprit and snotter visuals
-
-The rigid sprit has a **1.03** thickness multiplier, end radii **85%** of its
-middle radius and separate flat-cap vertices. Its bolt pivot sits one-quarter up
-the deployed luff, initially starboard of the mast. The sheeting hinge lies on
-the **mast axis**: tacking rotates the sleeve, bolt, sprit and offset luff
-around it. Reefing pivots the sprit about the bolt; equal side-lashing offsets
-at both ends keep it **perpendicular to the bolt**, including when struck. The
-peak remains lashed beside the tip, and the purchase attaches **90%** of the
-distance from bolt to tip.
-
-The forward end extends **12 inches (0.3048 m)** along the sprit from the bolt,
-regardless of sail size or reef pose. Deployment's `Heel` denotes the bolt; only
-the timber and deployed collider extend forward. The sleeve stays centered on
-the mast. The lower mounting follows boat movement and installation height, but
-uses the boat's neutral starboard direction projected perpendicular to the mast,
-so it does not follow tacks. The authored luff mount and struck bundle follow
-the rotating sail frame.
-
-`SpritsailSnotterGeometry` fits the authored parts to these dimensions:
-
-- Sleeve opening: **5 mm** minimum clearance from the sampled mast radius.
-- Luff: **3 mm** outside the sleeve envelope. The bolt pivot adds one maximum
-  sprit radius, matching the peak's side-lashing offset.
-- Lower mounting: **outside diameter = mast diameter + 8 inches (0.2032 m)**.
-  Its radial scale is independent; its vertical scale matches the sleeve,
-  preserving their junction at source Y = -1.
-- Bolt: the head begins **1 mm** beyond the tapered sprit surface at the pivot;
-  its tip projects **5 mm** beyond that surface. Shaft and head lengths are
-  fitted separately, with thickness based on the sprit's local radius.
-
-Each instance lazily owns two rigid meshes: sleeve/bolt and lower mounting, with
-wood and metal submeshes in each. Topology and UVs are initialized once;
-positions and inverse-transpose fitted normals update when dimensions change.
-Only tangents and bounds are recalculated, preserving Blender's smooth/sharp
-normals. Each visible rig `LateUpdate` submits world frames through
-`Graphics.DrawMesh`, with shadows and light probes enabled. This avoids ordinary
-per-frame mesh uploads and distortion from nonuniform parent scale. There are no
-detached renderer objects, colliders or Rigidbodies for the fitting; both meshes
-are disposed with their instance. Mast alignment reuses its resolved axis for
-`AftDirection` in both spritsail families.
-
-`SpritsailMastSurface` caches readable mast triangle origins and edges for
-allocation-free ray queries. Intersections preserve nearest-positive hits, edge
-tolerances and transformed ray length. Known unreadable Sanbuq topmast **80**
-uses its authored taper; other misses warn once per surface instance and fall
-back to the capsule radius.
-
-The [authored luff mount](#authored-sail-mount-runtime) replaces the seven short
-ties and three-turn mast collars. It hides when struck, leaving the native
-bundle's bindings visible. The upper purchase coil retains normal rope thickness
-and follows snotter visibility; the purchase line additionally requires an
-active reef winch. Socket queries retain a single cache slot.
-
-#### Snotter materials
-
-`SpritsailSnotterMaterials` couples native donor selection with UV mapping. It
-searches the specified prefab's mesh renderers, including inactive children:
-
-| Face tag   | Native material and donor               | UV policy                                 |
-| ---------- | --------------------------------------- | ----------------------------------------- |
-| `DarkWood` | `dhow_medium_paint`, sail prefab **62** | Map 0–1 into U 0.350–0.352, V 0.870–0.900 |
-| `Metal`    | Lantern `metal2`, item prefab **114**   | Preserve exported UVs                     |
-
-The wood patch is the dark-brown vertical mast trim in Sailwind 0.39's Sanbuq
-atlas. Keep exported wood UVs inside **0–1**. Native materials and their shader
-settings remain unchanged; the sprit retains its gaff timber material.
-
-Missing donors log a warning and use untextured fallbacks built with the gaff
-material's Standard shader, without copying its wood maps. Wood uses matte RGB
-**(0.12, 0.065, 0.035)**. Metal matches lantern `metal2`: RGB **(0.11035956,
-0.14488259, 0.1509434)**, metallic **0.51**, smoothness **0.4**. The creating
-template owns and disposes fallback materials; its clones share them. Native
-materials are neither modified nor destroyed.
-
-#### Authoring and baking the snotter
-
-Keep all three objects in `assets/snotter/snotter.obj`, named exactly
-**`Sleave`**, **`Bolt`** and **`Mounting`**. Use Y up, with the bolt pointing
-along -X and centered at Y = Z = 0. Export UVs, finite unit normals and material
-assignments. Tag every face `DarkWood` or `Metal`; numeric suffixes such as
-`.001` are accepted. The baker reads OBJ `usemtl` tags, not MTL colors or
-textures, and rejects unknown or missing assignments.
-
-The baker measures the sleeve's inner facets and outer envelope, mounting radius
-and bolt endpoints. Set `boltHeadInner` in `assets/snotter/snotter.fit.json` to
-the shaft/head transition's **negated source X coordinate (`-x`)**; it must lie
-between the bolt endpoints and match an exported bolt vertex plane. Remodeling
-updates the source and marker rather than C# measurement constants; physical
-clearances remain runtime policy.
-
-After exporting, run from the repository root:
-
-```sh
-blender -b --python tools/convert_snotter.py
-python -m unittest discover -s tests/AssetChecks
-```
-
-The converter uses Blender triangulation, preserves UV seams and per-corner
-normals, and rejects degenerate triangles or winding inconsistent with normals.
-It removes exact duplicate faces with matching positions, UVs, normals, part and
-material. Coincident faces within a part that differ in attributes produce a
-warning naming the object and OBJ lines; both faces remain for author review.
-The current source retains overlapping metal quads on `Mounting` at lines **861
-and 876** with different shading attributes. Resolve them in Blender if
-unwanted; inspect for flicker or shading artifacts in game.
-
-The current bake has **3,164 vertices and 1,634 triangles**: **164 DarkWood**
-and **1,470 Metal**. Internal format `MSN6` uses a 100-byte header with counts,
-six fit dimensions and SHA-256 hashes of the OBJ and marker file; each vertex
-stores position, UV, normal and part in 36 bytes, and each triangle stores three
-indices and a material in 16 bytes. GeometryChecks detects changed source or
-marker files without a rebake. Keep the OBJ, marker and generated
-`snotter.bytes` in version control. Ordinary .NET builds embed the checked-in
-bytes and require neither Blender nor loose runtime assets.
-
-#### Snotter validation
-
-The branch's **0.3.0-dev** Release build passed with zero warnings/errors; asset
-checks, GeometryChecks and AssemblyChecks passed. Checks cover source freshness,
-material/topology preservation, independent mesh data, fitted normals and UVs,
-dimensions across mast/sprit sizes, boat motion, tacking, reefing, the
-perpendicular sprit and 12-inch extension. Assembly checks guard mesh ownership
-and the separation of refitting from ordinary drawing.
-
-The user confirmed sleeve, bolt and sprit placement and accepted the 8-inch
-mounting allowance. Their **2026-10-06** wood-grain feedback established the
-dark-brown mast trim as the appearance reference. The current finishes, smooth
-shading and rigid draw path still need in-game verification; automated checks do
-not simulate Unity Cloth, establish rendered appearance or measure frame-time
-gains.
-
-Use the [mount and visual-cache checklist](#mount-and-visual-cache-validation)
-for shared rig validation. Also inspect the fixed mounting, rotating
-sleeve/bolt, sleeve/mounting junction, 12-inch extension, material regions and
-overlapping faces. Verify collision clearance and fit around tapered or
-noncircular masts.
-
-### Authored sail mount bake
-
-`assets/sail_mount/SailMount.obj` contains the luff edging, seven eyelets and
-seven mast ropes. Bake it from the repository root:
-
-```sh
-blender -b --factory-startup --python-exit-code 1 --python tools/convert_sail_mount.py
-python -m unittest discover -s tests/AssetChecks
-```
-
-The baker writes `assets/sail_mount/sail_mount.bytes` using Blender polygon
-triangulation. It preserves positions, UVs, corner normals and part identities,
-sharing identical vertex attributes only within a part. Loose OBJ lines are
-omitted. Missing parts, invalid indices, nonfinite attributes, nonunit normals,
-degenerate triangles and inconsistent winding fail before output is written.
-Keep the OBJ and baked bytes together in version control; AssetChecks verifies
-source freshness, triangle counts, material regions and authored attributes.
-
-Use object names `LuffEdge`, `Eyelet_01` through `Eyelet_07`, and `Rope01`
-through `Rope07` (an underscore before the rope number is also accepted). Each
-eyelet needs both `Brass` and `ThickCloth` face tags; numeric material suffixes
-are accepted. Strip and rope slots come from object identity. MTL files and
-textures are unnecessary because runtime materials come from native assets.
-
-Internal format **MSL1** is little-endian: a 44-byte header contains four magic
-bytes, uint32 vertex/index counts and the source OBJ's SHA-256. Each 36-byte
-vertex stores position, UV, normal and uint32 part ID; each 16-byte triangle
-stores three uint32 indices and a uint32 material ID. Part IDs are **0** for the
-strip, **1–7** for eyelets and **8–14** for ropes. Material IDs are **0
-SailCloth**, **1 Brass**, **2 ThickCloth**, **3 Rope**. The exported 6 m strip
-runs along X, spans Z = -0.1 to 0 and lies at Y = 0; fitting and axis conversion
-happen at runtime.
-
-The current bake has **15,015 vertices**, **6,566 triangles** and **645,640
-bytes**: **546 SailCloth**, **728 Brass**, **1,680 ThickCloth** and **3,612
-Rope** triangles, with **112** loose line records omitted. The DLL embeds it as
-`MoreSailwindSails.SailMount`; ordinary builds need neither Blender nor loose
-runtime assets.
-
-### Authored sail mount runtime
-
-Both loose-footed and boomed Mk.A/B attach the mount to their existing posed
-luff bones. The 10 cm strip extends forward from a 2 mm sail overlap; fitting
-follows sail size and reef pose while keeping holes aligned with rigid eyelets.
-Separate reverse faces/normals make the strip visible from both tacks. The mount
-owns its mesh and does not modify live Cloth topology, bones, solver settings,
-controls or forces.
-
-Source rope loops have a Y/Z elliptical centerline centered at Z = 0.23 m, with
-Y/Z radii 0.2/0.275 m. Each loop's baked X extent determines its tube diameter,
-currently about 16 mm. Runtime fitting preserves this thickness and routes two
-approach curves through each eyelet to a circular mast collar. The collar fits
-the largest of 16 directional surface samples at that height, allowing taper but
-potentially leaving gaps around noncircular sections. The 112 directional
-queries share one mast snapshot with separate cache slots; mast/mesh replacement
-refreshes the snapshot. Sampling uses the existing capsule fallback and Sanbuq
-topmast taper.
-
-Each mount lazily owns one mesh, four material slots and reusable fit buffers.
-Immutable data keyed by luff bone count precomputes strip interpolation and rope
-curve/normal coefficients. Fitting uses local transforms through the cloth and
-mast's common ancestor to avoid subtracting large world positions. Uniform
-ancestor scales cancel shared rotations; nonuniform ancestors retain stretch and
-shear. Unrelated roots use the world-coordinate fallback. A rigid draw matrix
-carries the fitted mesh with the cloth between rebuilds.
-
-The rope fitter uses component arithmetic to reduce Unity `Vector3` call
-overhead while preserving fitted positions, normals and finite-difference
-tangents.
-
-Both cloth slots use the current sail material, following recoloring. Brass uses
-prefab **103** (`103 mug metal gold`) material `metal gold`, inspected in
-`sharedassets24.assets`, material **131**, on **2026-10-08**. Rope uses
-`RefsDirectory.clothRopePrefab`'s skinned material. Materials are shared
-read-only; missing materials log once per mount and retry. Generated meshes are
-disposed with their instance. No native assets are redistributed.
-
-#### Visual caching
-
-`SailVisualRevision` and `SailVisualCache` under `Visuals` provide a reusable
-revision and independent consumer acknowledgements. `SpritsailVisualTriggers`
-reads native inputs once per rig visual update. A revision changes on:
-
-- Sheet controller paid-out `currentLength` or identity changes, and reef
-  `currentUnroll` changes.
-- A tack-side change, using boat-relative sail orientation and a ±5° hysteresis
-  band that retains the previous side inside the band.
-- Authored corner dimensions, installation height, local sail/ancestor scale
-  products, or carrying mast/shared-mesh identity changes.
-- Initial fitting, activation or rig reactivation.
-
-Control and fitting values use exact comparisons. World translation, boat
-rocking/heading, wind load, same-side native sway and sampled radius changes do
-not invalidate the revision. Temporary visual misalignment during sway or
-control settling is an accepted tradeoff until the next trigger.
-
-On a pending revision, the mount samples all seven mast envelopes, refits the
-complete mesh and uploads positions, normals, tangents, bounds and reverse-strip
-data. Reuse skips sampling, fitting and upload while continuing draw submission
-and material lookup. The sprit retains its local pose/scale. The snotter retains
-its sail-relative rotating frame, mast-relative fixed mounting and rope routes;
-its dimension thresholds still suppress unnecessary mesh uploads during a
-rebuild.
-
-The snotter draws its purchase and collar through `RoutedRope.DrawCached`.
-Cached tubes follow their anchor through draw matrices; flat ropes update world
-points from cached routes. Settings changes and material retries use the current
-transported route. Other routed-rope consumers retain live route updates.
-Private serialized renderer/mount references preserve template cloning; route
-setters invalidate the rope cache. The collar only poses its route, leaving
-drawing to the snotter.
-
-Each consumer acknowledges only its own successful update; hidden, bypassed or
-failed consumers retain pending work. Purchase reactivation refreshes its route.
-Mounts hide while loading, unsupported or struck. Physics, native controls,
-aerodynamic posing, live Cloth, clew sheets, the boomed boom and furled visuals
-continue updating independently.
-
-#### Mount and visual-cache validation
-
-Automated checks cover reference geometry equivalence, seams, eyelet alignment,
-mast clearance, local frames, cache invalidation, template cloning and
-allocation-free warmed fitting. Release and both check suites passed for
-**0.3.0-dev** on **2026-10-09**. Live CPU improvements are recorded under
-[Performance results](#performance-results); visual and lifecycle checks remain
-unconfirmed.
-
-Start on **Brig**, then **Sanbuq** and affected masts. Check sheet/reef input,
-both tacks, resizing, mast replacement, hide/show, preview/cancel and
-save/reload. Inspect seams, eyelets, collar/socket clearance, recoloring and
-shadows. Exercise F7 resumption and flat/3D ropes, including
-sprit/snotter/purchase placement and the Sanbuq unreadable-topmast fallback.
-With controls unchanged, rebuild counts should remain stable and mount
-fitting/sampling/upload work should stop. Neither automated suite simulates
-Unity Cloth or rendering.
-
-### Sprit obstruction on one tack
-
-Both types set `StarboardAffected = true`, matching the shipyard description.
-`SpritsailObstruction` provides one smoothed state for force and local camber.
-Installed apparent wind is `Wind.currentWind - shipRigidbody.velocity`: negative
-boat-local X airflow arrives from starboard. Classification uses the boat frame,
-a **0.035** lateral deadband (about two degrees), retained state inside that
-deadband and a half-second transition. Calm, invalid, unbound, loading, disabled
-and fully struck states reset the effect.
-
-`ObstructedTackForceMultiplier` accepts 0–1, with non-finite values falling back
-to **0.90**. At 1 it disables the extra force loss but retains visual shaping.
-The affected tack reduces camber by up to **50%** near the sprit, fading to zero
-attenuation at **15% of sail width**. This applies during deployed and
-partial-reef poses, before loose-footed sheet flex, without sampling Cloth or
-changing solver topology. These are tuning values, not measured aerodynamics or
-a guarantee of spar/fabric contact clearance.
-
-### Fitting, collision and force lifecycle
-
-Both loose-footed and boomed marks accept raked and leaning carrying masts. The
-physical capsule axis is measured in boat-local coordinates, so boat heel/pitch
-does not change eligibility. The luff and hinge follow that axis; nonfinite,
-degenerate or effectively horizontal axes cannot support the existing
-height-based fitting calculation.
-
-The native slot's higher guide must be at least **5 cm above the fully raised
-purchase**, measured along the mast axis. Otherwise installation reports
-`SPRIT HOIST REQUIRES A HIGHER MAST GUIDE`. Lower or resize the sail, or use a
-mast with a suitable native guide. The actual guide-owning parts remain
-protected through removal previews. Native mast save slots are retained; no
-custom save schema is added. Save/reload behavior still needs runtime
-validation.
-
-Construct all collision children on the inactive template. Native
-`ShipyardSailColChecker.Awake` initializes reporting, tags, layers and kinematic
-bodies on direct children and requires each to have a collider. Remove whole
-unused donor objects, not just their collider components. Both types create and
-pose their deployed spar colliders before activation; runtime fitting only
-updates them. This retains the fix for the boomed empty-child exception and
-ensures every collider participates in native reporting.
-
-Both variants use **24 panel strips, 0.10 m thick before scaling**, plus one
-fully deployed sprit collider; boomed sails add one deployed boom collider. The
-installed full gaff **15** uses narrow boxes about **0.145 m** thick;
-standard/full junk **21/90** use **0.10 m** panel boxes with narrow edge boxes
-about **0.149 m** thick. Spritsails follow that fixed deployed-shape approach:
-no billow, sheet-flex or intermediate/raised reef poses expand shipyard checks.
-The spar boxes retain their existing physical dimensions. Panel clipping and
-mast-pivot alignment remain specific to each Spritsail cut.
-
-Native angle checks step by **5°**: neutral obstruction blocks installation,
-while off-center contacts narrow each tack independently. Paired sheets clamp
-after `JibAngleMaster.Update`; boomed sails clamp after
-`RopeControllerSailAngle.LateUpdate`. Neither widens tighter limits. Rendering
-bounds separately retain nine reef samples, gathered fabric, raised spars and
-loose-footed flex padding to preserve visibility throughout deployment.
-
-Geometry checks require the expected active panel strips, including the
-mast-adjacent strip, then verify thickness, cut clipping and scaling for both
-marks/types. Assembly checks cover pre-Awake collider initialization and
-separate rendering bounds. Live collision reports and retest targets are
-recorded under [Runtime validation](#runtime-validation).
-
-Force orientation follows posed corners. A type-scoped prefix temporarily
-substitutes projected exposed-area fraction for native unroll during force
-calculation; a finalizer restores the control value even on exceptions. Folds,
-lashing offsets and bundle thickness do not contribute exposed area. At unroll
-**≤2%** (or invalid unroll), show the struck bundle with zero force; between
-**2–98%**, use procedural skinned gathering; at **≥98%**, use initialized Cloth.
-Reefing and tacks move existing bones, with render-state refreshes separate from
-topology construction.
-
-## Loose-footed spritsail prototype
-
-Both marks share the jib's paired sheet controllers and coordinated deployment.
-Their controllers bind directly to the carrying mast's native left/right sheet
-and reef slots. Spritsails remain in the native binding list alongside boomed
-and vanilla sails; Fisherman families retain their separate filters/allocation.
-
-The sprit reefs about its quarter-luff bolt in the rotating mast fitting (about
-**34°** from the mast for fully deployed Mk.A at uniform scale). Pulling the
-purchase raises it toward upright; easing spreads the sail. The throat and upper
-luff remain fixed within the rotating sail frame; the lower luff gathers toward
-the socket, and the clew moves inward/upward. Foot/leech budgets constrain the
-pose, including wide shallow cuts whose struck clew rests above the socket.
-Luff, peak and clew are solver-pinned; the free edges can flex. Full deployment
-uses coupled foot/leech fitting.
-
-### Loose-footed spritsail sheet flex
-
-`LooseFootedSpritsailFlex` acts after the ordinary pose on both marks. The lower
-peak–clew–tack triangle curves toward loaded sheets; squared clew barycentric
-weights vanish along the peak-to-tack diagonal, leaving the upper panel fixed.
-Maximum travel is **15% of scaled foot length**, fading with deployment. Native
-paid-out/routed rope lengths estimate load over the last **10%** of slack;
-loaded sides combine by direction and load, smoothing at **5/s**. Unavailable
-controls contribute no load.
-
-The fit budgets sampled curved foot/leech length against the undeformed pose,
-including camber/folds, using bounded inward compensation and reduced travel. It
-adds no edge length and changes bones only. Endpoint leaves and aerodynamic
-frames follow the result; reef-area and force multipliers are unchanged. Culling
-bounds include the flex envelope; shipyard colliders use the thin deployed panel
-described above. The load estimate and travel limit remain visual tuning
-parameters.
-
-The fitter retains 17 candidate directions and 18 bisection steps, skipping a
-candidate only when its closest possible point cannot improve the current fit
-(with a rounding margin for near ties). Zero movement skips edge sampling.
-Authored-corner bone weights are computed once and serialized for live clones;
-fixed bones and zero-displacement writes are skipped. Base posing still runs
-first, and tension/displacement remain live inputs rather than cached results.
-
-Reference comparisons cover **4,320** cases plus bone weights, pose ordering,
-edge budgets and allocation-free warmed fitting. See
-[Performance profiling](#performance-profiling) for benchmarks and measured
-improvements. Visual validation still needs taut/slack/opposing sheets, tacks,
-reefing, resizing and save/reload on both marks.
-
-## Boomed spritsail companions
-
-Both marks retain the gaff's ordinary `angleControllerMid`, two-segment sheet
-route and native `midAngleWinch`/`reefWinch` binding by mast order. The sheet
-ends on a fresh leaf at the boom tip; boomed sails do not reserve paired sheets
-or create custom winches. Original reef/topping-lift visuals are suppressed; the
-native boom sheet remains visible when struck.
-
-The boom pivots at the fixed tack, with the complete straight foot pinned to it
-and foot camber/solver travel fading to zero. Reefing raises boom and sprit on
-separate rigid arcs while cloth gathers at the mast. The throat and entire luff
-stay fixed within the rotating sail frame; head/leech chords may slacken but do
-not stretch. Interior folds vanish at attachments. The struck bundle spans the
-tack to raised sprit tip. There is no loose-footed sheet flex or additional boom
-control.
-
-Templates set `reverseReefing = false`, overriding gaff 15's true setting.
-Paying out/letting fly deploys; hauling in reefs against native **25** weight
-resistance and **1.2** wind-load multiplier. Native winch input limiting makes
-loaded hauling slower than quick release; no custom speed multiplier is added.
-Boat-mass and price premiums are separate from this control resistance.
 
 ## Staysails
 
@@ -973,16 +417,14 @@ data; resolve `Sections`, `Base` and `SheetCategory` through that profile.
 
 The twelve profiles provide **102** stays across **103** mast-pair
 configurations. Fisherman support for OldChronian is profile-based with no hard
-mod assembly dependency; Gloriana, Chronian and Caelanor have profiles.
-Spritsails do not require profiles, including on Gallus. Exact vectors,
-prerequisites and ordered control-source lists live in each profile, backed by
-numeric installed-asset fixtures.
+mod assembly dependency; Gloriana, Chronian and Caelanor have profiles. Exact
+vectors, prerequisites and ordered control-source lists live in each profile,
+backed by numeric installed-asset fixtures.
 
 **Leopard has no Fisherman support:** its BoatRig profile was removed after
 in-game compatibility problems. Profile gates reject Flying Sail fitting and
 skip Fisherman's Stay registration on Leopard; no save migration is provided.
-Spritsails use its native mast fittings under the same profile-independent rules
-as other boats. Future compatibility work is tracked in
+Future compatibility work is tracked in
 [issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
 
 Standard stay variants use **70°** between the aft spar's downward axis and
@@ -1107,14 +549,6 @@ T’gallants. Both mainmast positions share one sheet category and native contro
 identities. Six halyard groups cover Main/Top sections; T’gallants use their own
 seats. All manual fallbacks are null.
 
-### Gallus (OldChronian)
-
-OldChronian 0.6.0's `gallus` bundle, identity `BOAT GALLUS (197)`, offers **1
-(Plumb)** and **4 (Raked, 15°)**. Both mast frames are eligible for all four
-Spritsail marks subject to native fittings and clearance. Gallus has no boat
-profile and receives no Fisherman's Stays or Flying Sail support. Its installed
-mast measurements remain as regression fixtures for profile-independent fitting.
-
 ### Stay collars on Sanbuq and Large Dhow
 
 These boats fit their native forward and aft collars independently of the rope
@@ -1149,10 +583,9 @@ rollback or teardown; shared donor assets and live Cloth are untouched.
 The native winch placement redesign is **accepted as valid and complete**. It
 supports the boats listed in [Boat profiles and stays](#boat-profiles-and-stays)
 and applies to Flying Sails, all three staysail cuts and native sails on
-Fisherman's Stays. Both spritsail types use ordinary native controls
-independently of these profiles. The follow-up architecture cleanup is
-implemented. [Runtime validation](#runtime-validation) separates accepted
-Brig/Jong evidence from later changes and remaining in-game uncertainty.
+Fisherman's Stays. The follow-up architecture cleanup is implemented.
+[Runtime validation](#runtime-validation) separates accepted Brig/Jong evidence
+from later changes and remaining in-game uncertainty.
 
 ### Placement and ownership
 
@@ -1580,28 +1013,31 @@ searches.
 
 ### Automated baseline and limits
 
-The **0.3.0-dev** baseline on **2026-10-07**, including profile-free spritsails,
-OldChronian profiles, the architecture cleanup, Kakam/Dhow support, Dhow's
-shared stay, and Kakam/Sanbuq fallbacks, passed Release with zero
-warnings/errors, both suites, CSharpier, Prettier and `git diff --check`.
-AssemblyChecks covers **114** Harmony targets against installed assemblies.
-These results do not establish in-game behavior.
+The **0.3.0-dev** branch cleanup on **2026-10-12** removes the experimental sail
+family, its authored assets, bake tools, dedicated checks and profiling-only
+visual cache/bypass support. Flying Sail, all three staysail cuts, boat
+profiles, shared rope rendering and CPU/frame profiling remain.
 
-| Area                       | Coverage and limitation                                                                                                                                                                                             |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geometry and forces        | All sail cuts, skin weights, coupled edges, fixed-head/reef poses, spritsail flex and obstruction, collision bounds, force inputs and finite fallbacks; no Cloth simulation                                         |
-| Shipyard and compatibility | IDs/rollback, native IL contracts, patch ordering, filtering/restoration, category paging/scaling, spritsail pre-Awake collider construction, SailInfo reflection and naming; no live menus or Unity initialization |
-| Winch placement            | All profiled stays and halyard groups, exact sources/aliases, atomic pairs, fallbacks, native reclaim, stable reservations, retries, bootstrap and teardown structure; no Unity exception/destruction execution     |
-| Visuals and diagnostics    | Knot channels, collars, mast-surface query slots, displaced walking frames, overlay occupancy and resource ownership; no rendering, audio startup or interactive validation                                         |
+Release builds with zero warnings/errors, and both check suites pass.
+AssemblyChecks covers **62** Harmony targets against installed assemblies. No
+in-game validation was performed for this removal. Verify shipyard fitting,
+controls, save/reload and the simplified F7 capture toggle on Brig before wider
+runtime testing. Saves containing removed experimental prefabs are outside this
+branch's supported runtime validation.
+
+| Area                       | Coverage and limitation                                                                                                                                                                                         |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Geometry and forces        | All sail cuts, skin weights, coupled edges, fixed-head/reef poses, collision bounds, force inputs and finite fallbacks; no Cloth simulation                                                                     |
+| Shipyard and compatibility | IDs/rollback, native IL contracts, patch ordering, filtering/restoration, SailInfo reflection and naming; no live menus or Unity initialization                                                                 |
+| Winch placement            | All profiled stays and halyard groups, exact sources/aliases, atomic pairs, fallbacks, native reclaim, stable reservations, retries, bootstrap and teardown structure; no Unity exception/destruction execution |
+| Visuals and diagnostics    | Knot channels, collars, displaced walking frames, overlay occupancy and resource ownership; no rendering, audio startup or interactive validation                                                               |
 
 OldChronian profile checks cover measured endpoints/slopes, mast ancestry,
 capsule acceptance, guide alignment, native controls and all three staysail
 cuts. Availability checks include **1,024** Chronian support/exclusion
 combinations, **512** Caelanor combinations, both Gloriana mizzen variants and
-Gallus's absence of Fisherman's support. Spritsail checks cover native control
-slots, conflicts and rake/lean acceptance, transform invariance and expected
-active collision strips. Gloriana fallback checks cover native priority,
-exclusive reservations, stable retention, support loss/recovery and
+Gallus's absence of Fisherman's support. Gloriana fallback checks cover native
+priority, exclusive reservations, stable retention, support loss/recovery and
 template/pose validation. Dhow checks cover one mount for both mast pairs,
 coincident endpoints and all three staysail cuts. Kakam checks cover aft sheet
 selection, symmetric parallel poses, startup templates and halyard mounting
@@ -1618,13 +1054,12 @@ does not establish visual acceptance.
 
 ### Shipyard Expansion 0.12.1 compatibility
 
-The 0.2.2 texture compatibility fix is incorporated into **0.3.0-dev** and
-extended to loose-footed and boomed spritsails. All families use SE 0.12.1's
-named texture catalog, string selections and string allowed-option lists. The
-obsolete numeric catalog-order helper and fixture are removed; installed
-assembly checks cover the named API and each family's plain-texture guard. SE
-**0.12.1 is required**; the dependency declaration intentionally has no
-minimum-version loading guard.
+The 0.2.2 texture compatibility fix is incorporated into **0.3.0-dev**. Both
+Fisherman families use SE 0.12.1's named texture catalog, string selections and
+string allowed-option lists. The obsolete numeric catalog-order helper and
+fixture are removed; installed assembly checks cover the named API and each
+family's plain-texture guard. SE **0.12.1 is required**; the dependency
+declaration intentionally has no minimum-version loading guard.
 
 On **2026-10-04**, the original failed development session logged a
 `MissingFieldException` for `SailTextureChanger.sailTextures`, interrupting
@@ -1632,14 +1067,7 @@ On **2026-10-04**, the original failed development session logged a
 incomplete prefab initialization is a suspected consequence. The user then
 successfully loaded a save upgraded from MSS 0.2.1 / SE 0.11.1 to MSS 0.2.2 / SE
 0.12.1 and observed no disappearing sails or bad textures. That observation
-covers the tested save, not spritsails or general save migration and downgrade
-compatibility. SE 0.12.1 also rotates the sail root when its rotation target is
-null. A spritsail-only `SetAngle` prefix preserves the existing no-rotation
-policy, including saved angles; the null target still hides rotation buttons on
-eligible non-square-only masts. Other sails retain SE rotation.
-
-The spritsail adaptation still needs runtime loading, fitting, recoloring and
-save/reload checks, starting on Brig.
+covers the tested save, not general save migration and downgrade compatibility.
 
 ### Confirmed game observations
 
@@ -1656,59 +1084,15 @@ save/reload checks, starting on Brig.
   reclaim, support changes or reloads.
 - **Overlay, 2026-09-28:** the user confirmed operation but found occupied
   amber/yellow hard to distinguish. Occupied traces now use red; that color
-  change has no recorded visual confirmation.
-- **Spritsail development:** the user accepted the thicker blunt sprit, improved
-  fixed-pivot motion, iron fitting and added ropes. A lower-panel wrinkle
-  disappeared when easing the sheet and was accepted as tension-dependent. The
-  later 20% thinner mast collars, Mk.B and boomed additions, and cache changes
-  do not inherit full validation from those observations. The reported zero
-  port-tack efficiency could not be reproduced; no speculative force fix was
-  made.
-- **Gloriana collisions, 2026-10-03:** the user reported Spritsail/lateen end
-  collisions with loose-footed Mk.B at **110%** and dhow lateen 2 at **85%**.
-  The Unity log confirms repeated `col check` / `col_parent` contacts without
-  identifying the Spritsail child. The current thin deployed-shape colliders
-  need an in-game retest of this arrangement.
-- **Gallus collisions, 2026-10-05:** the user reported boomed Spritsail Mk.B
-  obstruction before visible contact. The Unity log records neutral contacts
-  with `staticrig_left_plumb` and `staticrig_right_plumb`, without identifying
-  the sail child. Both Spritsail types now follow native gaff/junk
-  deployed-shape checks; installation and actual-contact rotation limits need an
-  in-game retest.
-- **Boomed regressions:** the user reported installation stuck at “checking
-  collision...” and deployment requiring loaded cranking. The Unity log
-  confirmed a native checker Awake exception from empty collider children. Code
-  fixes address construction timing and reverse reef control direction;
-  successful installation and corrected timing still need an in-game retest.
-- **Junk mainmast guides, 2026-10-09:** the user reported a false
-  `LUFF ABOVE MAST GUIDE` rejection for boomed Mk.B on mainmast 2. Installed
-  `level24` confirms both native mainmasts **10/11** put `mastReefAtt` at boat
-  height **24.3734 m** and `mastReefAttExtension` at **5.0253 m**; every slot
-  uses this reversed-height pair. Both spritsail types now order their assigned
-  pair along the mast before clearance checks and routing. Measured geometry
-  fixtures and assembly integration checks cover the correction; live
-  installation and purchase routing on both Junk mainmasts still need
-  confirmation.
-
-These observations cover specific configurations, not all boats or lifecycle
-transitions. The winch redesign remains accepted; remaining checks concern
-regressions and later changes rather than unfinished original placement work.
-
-### Spritsail native binding revision (2026-10-07)
-
-Targeted native-control regression validation remains incomplete. Validate both
-types/marks on Brig, then Gallus plumb/raked and Sanbuq; include mixed
-square/gaff/Fisherman arrangements, reordered sails, missing or occupied native
-slots, guide-owner removal previews, and loading existing spritsails. Check
-native sheet/reef operation and both tacks without Cloth resets. Earlier runtime
-acceptance of Fisherman winch placement does not validate this spritsail change.
+  change has no recorded visual confirmation. These observations cover specific
+  configurations, not all boats or lifecycle transitions. The winch redesign
+  remains accepted; remaining checks concern regressions and later changes
+  rather than unfinished original placement work.
 
 ### Runtime checklist
 
-Start on **Brig**, then the affected boats, especially **Sanbuq** for cloth,
-tack and mast-surface work. Spritsail fitting is independent of boat profiles;
-Junk, Jong, Cog, Shroud and Baghala need runtime coverage of their eligible mast
-variants, guide clearance, controls, collision and save/reload.
+Start on **Brig**, then the affected boats. Verify Flying Sail and all three
+staysail cuts with mixed native sails, controls and save/reload.
 
 For Kakam and Dhow, check registration, collars, controls, preview/cancel and
 save/reload on both supported mainmast variants. Verify Dhow's single stay
@@ -1721,32 +1105,22 @@ For OldChronian, apply the common checklist below plus these profile-specific
 checks. Current profile and collider revisions have no recorded runtime
 acceptance:
 
-- **Gloriana:** compare raked-foremast and upright main/mizzen spritsail
-  fitting; cover both mizzen variants, native-stay removal, collar appearance,
-  free auxiliary mizzen halyard seats, and both measured reef fallbacks'
-  seating, reachability and operation. Retest the reported Spritsail/lateen
-  arrangement.
+- **Gloriana:** cover both mizzen variants, native-stay removal, collar
+  appearance, free auxiliary mizzen halyard seats, and both measured reef
+  fallbacks' seating, reachability and operation.
 - **Chronian:** check both authored stays, optional T’gallants and reciprocal
   red conflict help for mount 129 versus Mizzen Royalstay 14.
 - **Caelanor:** use foremast/aft-mainmast with and without optional T’gallants;
   verify occupied controls and absence of a stay for the Midmast alternative.
-- **Gallus:** fit both Spritsail types/marks on the plumb and raked masts
-  without a boat profile; verify native controls, guide clearance,
-  contact-limited rotation and reefing visibility.
 
 1. Fit and resize all affected cuts at several heights, with mixed native/custom
-   sails. Check collision completion, spar obstructions, asymmetric trim stops,
-   recoloring, category paging and reopening documents. Compare equal-size
-   boomed/loose-footed price and boat-mass calculations.
-2. Exercise deployment, partial reversals and full strike/set transitions. Check
-   fixed mast pivots, gathering, bundle/rope continuity and procedural-to-Cloth
-   transitions. Boomed release must deploy; loaded hauling must reef more
-   slowly.
+   sails. Check collision completion, trim stops, recoloring and reopening
+   documents.
+2. Exercise deployment, partial reversals and full lowering/hoisting
+   transitions. Check gathering, rope continuity and staysail fixed-head
+   behavior.
 3. Tack at full/partial deployment and both trim limits. Inspect inversion,
-   detachment, spar penetration, force/audio discontinuities, socket/collar
-   seating and sheet flex. Under controlled wind, heading, area and deployment,
-   verify the configured starboard penalty; multiplier 1 should remove only that
-   loss.
+   detachment, force/audio discontinuities, collar seating and sheet tension.
 4. Test native winch priority, complete-pair exhaustion/recovery, native
    reclaim, and controller retention. Cover both Cog mizzen variants and
    Shroud's separate fitted support groups when changing allocation code. Check
@@ -1774,148 +1148,41 @@ For placement diagnostics, see [Placement logging](#placement-logging),
 
 ### Performance profiling
 
-The profiler lives under `src/Utils/Profiling/` and is disabled by default. With
-the game closed, set `[Diagnostics]` in
+The shared profiler under `src/Utils/Profiling/` measures Fisherman sail CPU
+work and whole-game frame statistics. It is disabled by default. With the game
+closed, set `[Diagnostics]` in
 `BepInEx/config/com.august.moresailwindsails.cfg`:
 
 ```ini
 EnableProfiling = true
 ToggleProfiling = F7
 ProfileTargets = All
-ProfileBypass = SailMount
 ```
 
-`ProfileTargets` accepts the comma-separated names below, ignoring case,
-whitespace and duplicates. `All` selects every category; an empty value records
-only whole-game frame statistics. Unknown names warn and are ignored.
+Captures start OFF; **F7** toggles NORMAL/OFF. Configuration changes stop
+capture. `ProfileTargets` accepts `Rig`, `Frame`, `Shape`, `Aerodynamics` and
+`Ropes`, ignoring case, whitespace and duplicates. `All` selects every category;
+an empty value records only whole-game frame statistics. Unknown names warn and
+are ignored.
 
-| Target         | Custom CPU work measured                                             |
-| -------------- | -------------------------------------------------------------------- |
-| `Rig`          | Entire rig LateUpdate                                                |
-| `Frame`        | Mast/stay alignment, including physics and collision callers         |
-| `Shape`        | Deployment, edge fitting, obstruction response and bone posing       |
-| `SheetFlex`    | Loose-footed sheet-flex fitting and application                      |
-| `Aerodynamics` | Aerodynamic-frame refresh                                            |
-| `Ropes`        | Custom rope routing, fitting, upload and draw submission             |
-| `SailMount`    | Mount Setup, Surface, Fit, Upload and Submit stages                  |
-| `Sprit`        | Cached spar posing                                                   |
-| `Snotter`      | Fitting, posing and draw submission, including purchase/collar ropes |
-| `VisualCache`  | Trigger checks, revision reasons and rebuild/reuse counts            |
+`[PerformanceProfile]` logs summarize ten-second windows and partial windows at
+capture transitions across all loaded boats. CPU rows report calls, milliseconds
+per frame and maximum call duration. Timings include nested work and must not be
+added together; they exclude Unity Cloth and GPU completion. FPS, frame
+mean/max, frames over 33 ms and `gc0Global` describe the whole game.
 
-Captures start OFF. **F7** cycles **NORMAL → BYPASS → OFF**; with bypass `None`,
-it toggles NORMAL/OFF. Bypass selection is independent of timing targets:
-
-| `ProfileBypass`      | Visual work skipped                                           |
-| -------------------- | ------------------------------------------------------------- |
-| `None`               | Nothing                                                       |
-| `SailMount`          | Authored luff-mount fitting and drawing                       |
-| `Snotter`            | Snotter fitting/drawing and purchase/collar rope visuals      |
-| `SpritsailLiveRopes` | Custom peak lashings and loose-footed sheets                  |
-| `HiddenNativeRopes`  | Replaced native spritsail line generation and 3D rope updates |
-
-Timings continue in BYPASS; sail mechanics and Cloth stay active. Stopping,
-changing configuration or disabling the diagnostic restores normal visuals.
-Configuration changes return captures to OFF; invalid bypass names select
-`None`. Legacy `EnableSpritsailMountProfiling`/`ToggleSpritsailMountProfiling`
-settings migrate to the new keys unless explicit new values exist.
-
-`HiddenNativeRopes` skips native visual work after attachment, length-limit and
-tension updates. Only ropes already marked for suppression qualify; custom
-ropes, the visible boomed sheet and other sail families retain their rendering.
-Native settings cleanup and the existing hiding postfixes still run. This tests
-updates, not the cost of retaining hidden rope objects or creating them at
-startup. No visible change is expected when switching this bypass.
-
-Select `Ropes` or `All` to record `HiddenNativeVisualUpdates` in NORMAL and
-`HiddenNativeVisualSkips` in BYPASS, attributed to each spritsail family. These
-count visits to the native visual block; its CPU time is not included in the
-custom `Ropes` timing. Missing skip counts make the comparison inconclusive. For
-this test, sail for 60 seconds each in NORMAL and BYPASS and repeat. Press F7
-twice to pass through OFF when returning from BYPASS to NORMAL; finish with one
-press from BYPASS to OFF. Keep the same sails, camera and settings.
-
-#### Reading captures
-
-`[PerformanceProfile]` entries in `BepInEx/LogOutput.log` summarize ten-second
-windows and partial windows at mode changes. They distinguish sail families
-across **all loaded boats**, not just the player's boat.
-
-- CPU rows report calls, milliseconds per frame and maximum call duration.
-  Timings include nested work: **do not add parent and child rows together**.
-  They exclude Unity's Cloth solver and GPU completion.
-- `SailMount` Upload includes reverse-strip copying, position/normal assignment,
-  tangent recalculation and bounds recalculation; it is not a GPU-transfer
-  timer.
-- Counters track completed mount uploads, mount surface-cache hits/misses,
-  visual revision reasons and consumer rebuild/reuse. A rebuild request does not
-  necessarily upload a mesh.
-- FPS, frame mean/max, frames over 33 ms and `gc0Global` describe the whole
-  game. The GC counter is process-wide.
-- Tick intervals report count, mean/max and counts over 50/100 ms separately
-  with and without GC. Up to eight longest intervals over 50 ms include their
-  capture-relative end time and collection delta. These correlate collections
-  with hitches; they do **not** measure GC pause duration. Intervals crossing
-  capture, mode/configuration or report boundaries are excluded and counted.
-  Frame statistics and `gc0Global` remain unfiltered.
-- Scoped allocation bytes (total and maximum per call) are inclusive and
-  available only when the runtime provides
-  `GC.GetAllocatedBytesForCurrentThread`. The installed Mono runtime lacks it
-  and reports `allocations=unavailable`; heap growth is not used as a
-  substitute.
-
-For ABAB comparisons, record 20–30 seconds each of NORMAL/BYPASS and repeat,
-keeping camera, graphics settings, fitted sails and timing selections unchanged.
-Test steady sailing, furled sails and continuous sheet/reef input separately;
-exclude pauses, loading, shipyard transitions and initial allocations. Compare
-rebuild stages per call when control activity differs:
-`ms per rebuild ≈ sum(cpuMsPerFrame × frames) / sum(stage calls)`.
+Tick intervals distinguish samples with and without GC and retain the eight
+longest intervals over 50 ms. This correlates collections with hitches; it does
+not measure GC pause duration. Samples crossing capture, configuration or report
+boundaries are excluded. Optional scoped allocation accounting requires
+`GC.GetAllocatedBytesForCurrentThread`; the installed Mono runtime lacks it and
+reports `allocations=unavailable`.
 
 Warmed collection uses fixed buffers without per-sample allocation; reporting
-and configuration parsing allocate outside timed scopes. Instrumentation still
-adds overhead. Automated checks cover timing, sessions and configuration
-migration. In-game captures confirm logging; visual restoration across every
-bypass target, configuration change and plugin disable still needs validation.
-
-#### Offline benchmarks
-
-Run from the repository root in the pinned environment:
-
-```sh
-nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-flex
-nix develop -c dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mount
-nix develop -c env DOTNET_TieredCompilation=0 dotnet run --project tests/GeometryChecks -c Release --no-restore -- --benchmark-mast
-```
-
-These compare current calculations with frozen reference implementations,
-excluding initialization, Unity mesh uploads and rendering. The mast benchmark
-uses synthetic tapered timbers and 112 uncached rays per batch; tiered
-compilation is disabled to avoid changing JIT optimization during measurement.
-Offline .NET timings do not predict Unity/Mono frame rate.
-
-#### Performance results
-
-Junk captures on **2026-10-09** confirmed lower custom CPU costs after each
-optimization, with matching installed DLLs:
-
-| Work                        | Before          | After               |
-| --------------------------- | --------------- | ------------------- |
-| Loose-footed sheet flex     | 1.29 ms/frame   | about 0.59 ms/frame |
-| Loose-footed mount fitting  | 7.85 ms/rebuild | 2.74 ms/rebuild     |
-| Boomed mount fitting        | 7.78 ms/rebuild | 2.19 ms/rebuild     |
-| Boomed mast-surface queries | 3.84 ms/rebuild | 1.08 ms/rebuild     |
-
-The latest capture contained **870 rebuilds over 230 seconds**. Average FPS
-remained about **48**; differing workloads do not establish an overall FPS gain.
-Periodic stutter remains unresolved. Neither triangle count nor smooth shading
-has been established as its cause. Keep visual validation separate from these
-CPU measurements; detailed benchmark and capture history is retained in Git.
-
-The [spritsail hitching investigation](SPRITSAIL_HITCHING.md) consolidates the
-matched gaff comparisons, historical-build limitations, native-binding rollback
-and hidden-native-rope ABAB results. The latest bypass improved average FPS by
-roughly 4–5% but did not reduce long intervals. Their GC association remains;
-the allocating code and actual GC pause duration are unidentified. Use that
-record for evidence, diagnostic boundaries and remaining leads.
+and configuration parsing allocate outside timed scopes. Automated checks cover
+inclusive timing, family attribution, exception cleanup, capture transitions,
+configuration and GC correlation. The simplified capture toggle still needs an
+in-game check after this branch cleanup.
 
 ### Installed references and logs
 

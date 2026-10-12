@@ -111,7 +111,6 @@ internal static class SailInfoNamesChecks
             {
                 "FishermansFlyingSail.FishermansFlyingSailRig",
                 "FishermansStaysail.FishermansStaysailRig",
-                "Spritsail.LooseFootedSpritsail.LooseFootedSpritsailRig",
             }
         )
             if (
@@ -151,13 +150,6 @@ internal static class SailInfoNamesChecks
             )
         )
             throw new Exception("Fisherman SailInfo labels must retain their family names.");
-
-        if (
-            !calls.Any(method =>
-                method.DeclaringType.Name == "LooseFootedSpritsail" && method.Name == "DisplayName"
-            )
-        )
-            throw new Exception("Spritsail HUD names must resolve the mark by prefab identity.");
 
         var startup = assembly
             .GetType(name: "MoreSailwindSails.Plugin", throwOnError: true)
