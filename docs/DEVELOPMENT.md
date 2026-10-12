@@ -207,10 +207,12 @@ resolve full type names: update both when moving or renaming code.
 - Each family retains its iterative order-text guard before NANDFixes. HarmonyX
   runs later prefixes even after `false`: append wrapped lines to the native
   list and consume input so later prefixes cannot recurse on it.
-- New sails use native white palette **11** and inherit donor textures. Preserve
-  saved colors, native recoloring and the hidden color-reference renderer. SE
-  may supply pattern selection when installed; MSS does not edit its catalog or
-  restrict textures. Never change donor/shared assets.
+- New sails use native white palette **11**. All three staysails use the
+  built-in white texture on their private recolored materials; Flying Sail
+  inherits its donor texture. Preserve saved colors, native recoloring and the
+  hidden color-reference renderer. SE may supply pattern selection when
+  installed; MSS does not edit its catalog or restrict textures. Never change
+  donor/shared assets.
 
 ### Sailwind 0.39 audio
 
@@ -376,6 +378,104 @@ New selections start at **50% width/height** through native `Sail.LoadScale`.
 Native scaling and persistence handle installations without SE; when installed,
 SE patches those same native APIs. MSS does not force a scaling mode or replace
 saved sizes with new-sail defaults.
+
+### Blender authoring meshes
+
+[tools/generate_staysail.py](../tools/generate_staysail.py) generates separate
+editable [Mk.A](../assets/staysails/fishermans_staysail_mka.blend),
+[Mk.B](../assets/staysails/fishermans_staysail_mkb.blend) and
+[Mk.C](../assets/staysails/fishermans_staysail_mkc.blend) Blender files. The
+generator and baker share nominal dimensions and grid rules in
+[tools/staysail_authoring.py](../tools/staysail_authoring.py). From the
+repository root, using a separately installed Blender (verified with **5.1.1**):
+
+```sh
+blender --background --factory-startup --python-exit-code 1 --python tools/generate_staysail.py -- --cut B
+```
+
+Use `--cut A`, `B` or `C`; omitting it retains the original Mk.A command.
+Generation replaces the selected file. Preserve hand edits with
+`--output /tmp/staysail.blend`. The generator only runs in background mode and
+starts with an empty scene.
+
+All cuts have width **13.8 units** and a nominal head rising **20°** aft. A and
+B have a 13.8-unit luff; C has a 20.7-unit luff. Their feet fall 20°, remain
+level and rise 40°, respectively. Width matches donor 110's installed
+`Sail.installHeight`; no native mesh or texture is copied. Each regular **24 ×
+32** quad grid has **825 vertices**, **768 quads** and **1,536 triangles**. The
+files have no thickness, modifiers or rig.
+
+Blender **+X** points aft, **+Z** points up, and **Y = 0**. The object origin is
+the forward upper corner, transforms are identity, and normals face **-Y**.
+Conversion to the sail-local frame is
+`(gameX, gameY, gameZ) = (blenderZ, -blenderY, blenderX - 13.8)`. A single
+planar UV island uses uniform scale and a 5% margin inside a square texture.
+Each file includes a neutral preview material and front orthographic view with
+mesh edges visible; the preview material is not exported.
+
+[tools/bake_staysail.py](../tools/bake_staysail.py) reads the saved asset and
+exports normalized sail-local vertices, UVs and triangle indices to the matching
+`MkA`, `MkB` or `MkC` generated C# mesh file:
+
+```sh
+blender --background assets/staysails/fishermans_staysail_mkb.blend --python-exit-code 1 --python tools/bake_staysail.py -- --cut B
+```
+
+The baker does not regenerate or save the Blender file. Include generated C#
+with asset changes; normal .NET builds use it directly and need no Blender or
+asset bundle. Append `--check` after `--` to verify freshness without writing,
+or `--output /tmp/staysail.g.cs` for a separate output. The selected cut must
+match the open asset; A remains the default.
+
+Baking validates each nominal outline, row-major vertex order, quad connectivity
+and continuous planar UVs with a 5% margin. It rejects changed
+dimensions/topology, non-planar vertices, transforms, modifiers, shape keys,
+seams and distorted UVs. Changing these requires coordinated rig and bake
+validation changes. Quads split along the existing runtime diagonal.
+
+All three cuts select fresh baked arrays through their existing geometry entry
+points and call `FishermansStaysailMeshFitting.Fit`. The shared fitter validates
+width/slope, scales the cut, adjusts the head to the actual stay slope, projects
+UVs from the fitted bounds and adds the existing rest camber. UV bounds use the
+lowest foot corner, which differs between A and C. Nominal mappings agree with
+the baked UVs. `FishermansStaysailGeometry.Create` is removed; the remaining
+geometry helpers supply skinning, Cloth constraints, bone indices and centroids.
+Frame and installation geometry still handle mast-relative positioning,
+clearances and collisions. `FishermansStaysailMeshData` owns one instance's
+arrays.
+
+Initialization assigns the fitted mesh and UVs before recalculating tangents and
+enabling Cloth. Tacks and reefing do not rewrite them. Base dimensions, prefab
+IDs **401/402/403**, placement/scale conventions, controls and reefing remain.
+No save migration is needed by the data format; live save compatibility still
+requires game checks. B/C pattern placement changes with planar UVs; nonuniform
+scaling and Cloth deformation can still stretch textures.
+
+All three staysails default to `Texture2D.whiteTexture`. Native
+`ChangeSailColor` first obtains a private material through `Renderer.material`;
+appearance setup replaces its main texture and shares it with the partial-reef
+renderer and furled color reference. This retains the native double-sided shader
+and tint, adds no texture files or dependencies, and does not modify the donor
+material or destroy Unity's built-in texture. Initialization sets the default
+once; later native recoloring and optional SE pattern selection remain in
+control. The result is plain shaded cloth without painted weave or seams.
+
+The installed brig donor uses the `medi medium sail paint Diffuse Color` atlas,
+whose separate sail regions and empty background do not suit these planar UVs. A
+**2026-10-12** inspection of Crystal Isles Sail Pack's topsail **135** and
+jackyard **136** found `sail cloth test` using the same Ciconia double-sided
+shader and `ParticleCloudWhite` (256 × 256, solid white RGB with varying alpha)
+in an opaque material, without a normal map. Their furled meshes have separate
+textures. MSS follows that plain-default approach without copying assets or
+depending on the pack. SE texture switching remains unrestricted, including the
+donor pattern that the user observed mapping incorrectly on A.
+
+Run the Blender-only checks separately from the two .NET suites, once per cut
+with the matching file and `--cut`:
+
+```sh
+blender --background assets/staysails/fishermans_staysail_mkb.blend --python-exit-code 1 --python tests/BlenderChecks/check_staysail_bake.py -- --cut B
+```
 
 ### Fixed head and reefing
 
@@ -1035,6 +1135,34 @@ searches.
 
 ### Automated baseline and limits
 
+On **2026-10-12**, all three staysails moved to authored Blender meshes and one
+shared fitter, removing procedural cut creation. Blender **5.1.1** checks passed
+for each cut's deterministic output, checked-in freshness, incompatible-edit
+rejection and read-only stale checks. GeometryChecks compares all cuts with
+independent analytical outlines and verifies legacy topology, nominal UV
+agreement, proportional fitted UVs over widths **0.25–100** and slopes
+**0–80°**, invalid inputs, independent arrays and existing rig cases across all
+**103** stays. AssemblyChecks verifies all three entry points consume their bake
+through the shared fitter, procedural creation is absent, and mesh/UV assignment
+remains confined to initialization. The Release build reported zero
+warnings/errors and both .NET suites passed. Pinned CSharpier and Prettier
+checks also passed.
+
+The user confirmed A's baked shape looks correct in game, then confirmed the
+plain white default works after the donor-atlas mismatch was identified. No
+specific boat, reefing or save/reload coverage was reported. The user also
+observed SE can still select the incorrectly mapped donor texture; changing that
+selection behavior was explicitly left out of scope. B/C's new baked meshes,
+planar UVs and plain defaults have no in-game validation yet.
+
+On Brig, check all three cuts at different sizes and colors, both tacks,
+partial/full reefing and preview/cancel. Load a pre-change save containing
+resized, recolored A/B/C sails, check placement and controls, then save/reload.
+Include native+MSS and SE+MSS configurations; verify later SE pattern selections
+are not overwritten. Check Flying Sail and the original brig jib for
+regressions. Passing automation does not establish rendering or live save
+compatibility.
+
 The **0.3.0-dev** branch cleanup on **2026-10-12** removes the experimental sail
 family, its authored assets, bake tools, dedicated checks and profiling-only
 visual cache/bypass support. Flying Sail, all three staysail cuts, boat
@@ -1084,12 +1212,13 @@ plugin's dependency metadata. The default size calls use native
 loader restores sizes through the same API; SE supplies its own behavior when
 installed. No scaler, texture catalog or replacement save format is added.
 
-Appearance inherits the donor texture with native white recoloring and shared
-reefed material references. SE pattern selection is unrestricted. Prefab IDs
-400–403 and stay mount IDs 128–255 are preserved. SE-only rigging is not
-recreated: missing variants retain unavailable option entries, preserving the
-positions of later options. Native `CanInstall` ignores the `canInstall` field,
-so the existing MSS installation guard explicitly rejects these entries.
+Appearance uses native white recoloring and shared reefed material references.
+All staysail cuts default to a plain white texture; Flying Sail inherits its
+donor texture. SE pattern selection is unrestricted. Prefab IDs 400–403 and stay
+mount IDs 128–255 are preserved. SE-only rigging is not recreated: missing
+variants retain unavailable option entries, preserving the positions of later
+options. Native `CanInstall` ignores the `canInstall` field, so the existing MSS
+installation guard explicitly rejects these entries.
 
 A read-only **2026-10-12** audit of installed Sailwind 0.39 `level24` identified
 **29** native-only candidate stays: Brig **6**, Junk **4**, Jong **3**, Sanbuq

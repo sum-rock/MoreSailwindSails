@@ -31,6 +31,30 @@ internal static class PatchChecks
         )
             throw new Exception("Mk.A save identity changed.");
         var registration = Patch("Registration", "Postfix");
+        foreach (string cut in new[] { "A", "B", "C" })
+        {
+            var create = CalledMethods(
+                    Method($"Mk{cut}.FishermansStaysailMk{cut}Geometry", "Create")
+                )
+                .ToArray();
+            if (
+                !create.Any(m =>
+                    m.DeclaringType.Name == $"FishermansStaysailMk{cut}BakedMesh"
+                    && m.Name == "Create"
+                )
+                || !create.Any(m =>
+                    m.DeclaringType.Name == "FishermansStaysailMeshFitting" && m.Name == "Fit"
+                )
+            )
+                throw new Exception($"Mk.{cut} must consume its bake through the shared fitter.");
+        }
+        if (Method("FishermansStaysailGeometry", "Create") != null)
+            throw new Exception("Procedural staysail mesh creation must be removed.");
+        if (
+            !CalledMethods(Method("FishermansStaysailRig", "InitializeCut"))
+                .Any(m => m.Name == "set_uv")
+        )
+            throw new Exception("Fitted staysail UVs must reach the initialized mesh.");
         if (
             !registration
                 .GetCustomAttribute<HarmonyAfter>()
@@ -110,7 +134,9 @@ internal static class PatchChecks
             if (
                 method.Name != "Configure"
                 && method.Name != "InitializeCut"
-                && calls.Any(m => m.Name is "set_sharedMesh" or "set_bindposes" or "set_bones")
+                && calls.Any(m =>
+                    m.Name is "set_sharedMesh" or "set_bindposes" or "set_bones" or "set_uv"
+                )
             )
                 throw new Exception("Live staysail mesh replacement in " + method.Name);
             if (

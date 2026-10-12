@@ -397,6 +397,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             instanceMesh.name =
                 GetComponent<FishermansStaysailShape>().ObjectPrefix + " fitted cloth";
             instanceMesh.vertices = data.Vertices;
+            instanceMesh.uv = data.UV;
             var poses = new Matrix4x4[Bones.Length];
             for (int i = 0; i < Bones.Length; i++)
             {

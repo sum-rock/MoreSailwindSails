@@ -233,6 +233,26 @@
       Link="FishermansStaysail/MkA/FishermansStaysailMkAGeometry.cs"
     />
     <Compile
+      Include="../../src/Sails/FishermansStaysail/MkA/FishermansStaysailMkABakedMesh.g.cs"
+      Link="FishermansStaysail/MkA/FishermansStaysailMkABakedMesh.g.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansStaysail/FishermansStaysailMeshData.cs"
+      Link="FishermansStaysail/FishermansStaysailMeshData.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansStaysail/FishermansStaysailMeshFitting.cs"
+      Link="FishermansStaysail/FishermansStaysailMeshFitting.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansStaysail/MkB/FishermansStaysailMkBBakedMesh.g.cs"
+      Link="FishermansStaysail/MkB/FishermansStaysailMkBBakedMesh.g.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansStaysail/MkC/FishermansStaysailMkCBakedMesh.g.cs"
+      Link="FishermansStaysail/MkC/FishermansStaysailMkCBakedMesh.g.cs"
+    />
+    <Compile
       Include="../../src/Sails/FishermansStaysail/MkB/FishermansStaysailMkBGeometry.cs"
       Link="FishermansStaysail/MkB/FishermansStaysailMkBGeometry.cs"
     />

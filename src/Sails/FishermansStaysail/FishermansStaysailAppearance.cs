@@ -1,4 +1,4 @@
-// Initializes native sail color and shares cloth materials with reefed renderers.
+// Sets native color and plain cloth default, sharing the result with reefed renderers.
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansStaysail
@@ -13,6 +13,10 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             sail.ChangeSailColor(WhiteColorIndex);
             var rig = sail.GetComponent<FishermansStaysailRig>();
             var material = sail.cloth.GetComponent<SkinnedMeshRenderer>().sharedMaterial;
+            // Native ChangeSailColor uses Renderer.material, so this is already
+            // a private recolored material. Keep its shader; avoid the brig atlas
+            // on planar UVs. Later pattern selection may replace this default.
+            material.mainTexture = Texture2D.whiteTexture;
             rig.ReefedRenderer.sharedMaterial = material;
             rig.FurledColorReference.sharedMaterial = material;
         }
