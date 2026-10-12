@@ -1,4 +1,4 @@
-// Initializes native sail color and shares cloth materials with reefed renderers.
+// Initializes plain cloth on a private native recolored material and shares it with reefed renderers.
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansFlyingSail
@@ -13,6 +13,8 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             sail.ChangeSailColor(WhiteColorIndex);
             var rig = sail.GetComponent<FishermansFlyingSailRig>();
             var material = sail.cloth.GetComponent<SkinnedMeshRenderer>().sharedMaterial;
+            // Native recoloring obtains Renderer.material, isolating this from the donor.
+            material.mainTexture = Texture2D.whiteTexture;
             rig.ReefedRenderer.sharedMaterial = material;
             rig.FurledColorReference.sharedMaterial = material;
         }

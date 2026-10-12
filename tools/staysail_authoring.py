@@ -1,4 +1,4 @@
-"""Shared nominal cut dimensions, grid and output paths for staysail authoring."""
+"""Nominal cut dimensions and output paths for staysail authoring."""
 
 import math
 from pathlib import Path
@@ -7,9 +7,6 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WIDTH = 13.8
 HEAD_SLOPE_DEGREES = 20.0
-COLUMNS = 24
-ROWS = 32
-UV_MARGIN = 0.05
 CUTS = ("A", "B", "C")
 
 

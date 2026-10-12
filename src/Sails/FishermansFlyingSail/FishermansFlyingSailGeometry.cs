@@ -1,20 +1,9 @@
+// Scales the baked Flying Sail and supplies its existing camber, skinning and Cloth rig.
 using System;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansFlyingSail
 {
-    internal sealed class FishermansFlyingSailMeshData
-    {
-        internal Vector3[] Vertices;
-        internal Vector2[] UV;
-        internal int[] Triangles;
-        internal BoneWeight[] Weights;
-        internal ClothSkinningCoefficient[] Constraints;
-        internal Vector3[] Corners;
-        internal Vector3[] BonePositions;
-        internal Vector3 Center;
-    }
-
     internal static class FishermansFlyingSailGeometry
     {
         internal const int Columns = 24;
@@ -33,37 +22,20 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 throw new ArgumentException(
                     "Expected a finite sail width between 0.25 and 100 metres."
                 );
-            var data = new FishermansFlyingSailMeshData
-            {
-                Vertices = new Vector3[(Columns + 1) * (Rows + 1)],
-                UV = new Vector2[(Columns + 1) * (Rows + 1)],
-                Weights = new BoneWeight[(Columns + 1) * (Rows + 1)],
-                Constraints = new ClothSkinningCoefficient[(Columns + 1) * (Rows + 1)],
-                Triangles = new int[Columns * Rows * 6],
-                Corners = new[]
-                {
-                    new Vector3(0, 0, -width),
-                    new Vector3(width * EdgeSlope, 0, 0),
-                    new Vector3(-width * ForeDepthRatio, 0, -width),
-                    new Vector3(-width * (ForeDepthRatio + EdgeSlope), 0, 0),
-                },
-            };
-            data.BonePositions = new Vector3[BoneCount];
-            for (int row = 0; row <= Rows; row++)
-            for (int column = 0; column <= ShapeColumns; column++)
-            {
-                float u = (float)column / ShapeColumns,
-                    v = (float)row / Rows;
-                data.BonePositions[ShapeBone(row, column)] = RestPoint(data.Corners, width, u, v);
-            }
+            var data = FishermansFlyingSailBakedMesh.Create();
+            data.Weights = new BoneWeight[data.Vertices.Length];
+            data.Constraints = new ClothSkinningCoefficient[data.Vertices.Length];
             for (int row = 0; row <= Rows; row++)
             for (int col = 0; col <= Columns; col++)
             {
                 float u = (float)col / Columns,
                     v = (float)row / Rows;
                 int i = row * (Columns + 1) + col;
-                data.Vertices[i] = RestPoint(data.Corners, width, u, v);
-                data.UV[i] = new Vector2(u, 1 - v);
+                // The authored flat cut supplies the surface; preserve the live rig's spare fabric.
+                data.Vertices[i] =
+                    data.Vertices[i] * width
+                    + Vector3.up * RestCamber(width: width, u: u, v: v)
+                    + Vector3.back * RestLuffBow(width: width, u: u, v: v);
                 int left = Math.Min(ShapeColumns - 1, col / ShapeStride);
                 float blend = (float)(col - left * ShapeStride) / ShapeStride;
                 data.Weights[i] = ShapeWeights(
@@ -79,16 +51,20 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                     maxDistance = pinned ? 0 : FishermansFlyingSailBillow.ClothTravel(width, u, v),
                     collisionSphereDistance = 0,
                 };
-                if (row == Rows || col == Columns)
-                    continue;
-                int t = (row * Columns + col) * 6;
-                data.Triangles[t] = i;
-                data.Triangles[t + 1] = i + Columns + 1;
-                data.Triangles[t + 2] = i + 1;
-                data.Triangles[t + 3] = i + 1;
-                data.Triangles[t + 4] = i + Columns + 1;
-                data.Triangles[t + 5] = i + Columns + 2;
             }
+            data.Corners = new[]
+            {
+                data.Vertices[0],
+                data.Vertices[Columns],
+                data.Vertices[Rows * (Columns + 1)],
+                data.Vertices[data.Vertices.Length - 1],
+            };
+            data.BonePositions = new Vector3[BoneCount];
+            for (int row = 0; row <= Rows; row++)
+            for (int column = 0; column <= ShapeColumns; column++)
+                data.BonePositions[ShapeBone(row: row, column: column)] = data.Vertices[
+                    row * (Columns + 1) + column * ShapeStride
+                ];
             // Area-weighted centroid, also used for the aerodynamic force point.
             float area = 0;
             for (int i = 0; i < data.Triangles.Length; i += 3)
@@ -103,15 +79,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             data.Center /= area;
             return data;
         }
-
-        private static Vector3 RestPoint(Vector3[] corners, float width, float u, float v) =>
-            Vector3.Lerp(
-                Vector3.Lerp(corners[0], corners[2], v),
-                Vector3.Lerp(corners[1], corners[3], v),
-                u
-            )
-            + Vector3.up * RestCamber(width, u, v)
-            + Vector3.back * RestLuffBow(width, u, v);
 
         // A circular section carries spare fabric through the head and foot.
         // Sample on the bone grid so translation-only skinning reproduces it.

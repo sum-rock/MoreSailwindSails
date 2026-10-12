@@ -260,6 +260,14 @@
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailShadowGeometry.cs"
       Link="FishermansStaysail/FishermansStaysailShadowGeometry.cs"
     />
+    <Compile
+      Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailMeshData.cs"
+      Link="FishermansFlyingSail/FishermansFlyingSailMeshData.cs"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailBakedMesh.g.cs"
+      Link="FishermansFlyingSail/FishermansFlyingSailBakedMesh.g.cs"
+    />
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(SailwindDir)/Sailwind_Data/Managed/UnityEngine.CoreModule.dll</HintPath>
     </Reference>

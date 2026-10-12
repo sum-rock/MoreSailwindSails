@@ -10,6 +10,25 @@ internal static class PatchChecks
 {
     internal static void Run(Assembly assembly)
     {
+        const string family = "MoreSailwindSails.Sails.FishermansFlyingSail.";
+        const BindingFlags methods = BindingFlags.Static | BindingFlags.NonPublic;
+        var geometry = assembly.GetType(family + "FishermansFlyingSailGeometry", true);
+        if (
+            !CalledMethods(geometry.GetMethod("Create", methods))
+                .Any(m =>
+                    m.DeclaringType.Name == "FishermansFlyingSailBakedMesh" && m.Name == "Create"
+                )
+            || geometry.GetMethod("RestPoint", methods) != null
+            || !CalledMethods(
+                    assembly
+                        .GetType(family + "FishermansFlyingSail", true)
+                        .GetMethod("Register", methods)
+                )
+                .Any(m => m.DeclaringType == geometry && m.Name == "Create")
+        )
+            throw new Exception(
+                "Flying Sail registration must construct its rest mesh from the bake."
+            );
         SheetVisualChecks.Run(assembly);
         var travelPatch = assembly.GetType(
             "MoreSailwindSails.Sails.FishermansFlyingSail.Patches.FishermansFlyingSailTravelPatch"
@@ -85,8 +104,14 @@ internal static class PatchChecks
         {
             foreach (var called in CalledMethods(method))
                 if (
-                    called.Name == "set_sharedMesh"
-                    && called.DeclaringType.FullName == "UnityEngine.SkinnedMeshRenderer"
+                    (
+                        called.Name == "set_sharedMesh"
+                        && called.DeclaringType.FullName == "UnityEngine.SkinnedMeshRenderer"
+                    )
+                    || (
+                        called.Name == "set_uv"
+                        && called.DeclaringType.FullName == "UnityEngine.Mesh"
+                    )
                 )
                     throw new Exception(
                         $"Live cloth mesh replacement in {method.Name}; only prefab construction may assign it."

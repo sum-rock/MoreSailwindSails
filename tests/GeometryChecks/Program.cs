@@ -32,6 +32,7 @@ internal static class Program
         ShapingChecks.Run();
         AerodynamicChecks.Run();
         MeshChecks.Run();
+        BakedMeshChecks.Run();
         FishermansStaysail.MkA.CutChecks.Run();
         FishermansStaysail.BakedMeshChecks.Run();
         FishermansStaysail.MkB.CutChecks.Run();

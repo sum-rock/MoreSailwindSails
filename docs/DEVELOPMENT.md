@@ -207,12 +207,11 @@ resolve full type names: update both when moving or renaming code.
 - Each family retains its iterative order-text guard before NANDFixes. HarmonyX
   runs later prefixes even after `false`: append wrapped lines to the native
   list and consume input so later prefixes cannot recurse on it.
-- New sails use native white palette **11**. All three staysails use the
-  built-in white texture on their private recolored materials; Flying Sail
-  inherits its donor texture. Preserve saved colors, native recoloring and the
-  hidden color-reference renderer. SE may supply pattern selection when
-  installed; MSS does not edit its catalog or restrict textures. Never change
-  donor/shared assets.
+- New sails use native white palette **11**. Both Fisherman sail families use
+  the built-in white texture on their private recolored materials. Preserve
+  saved colors, native recoloring and the hidden color-reference renderer. SE
+  may supply pattern selection when installed; MSS does not edit its catalog or
+  restrict textures. Never change donor/shared assets.
 
 ### Sailwind 0.39 audio
 
@@ -308,6 +307,53 @@ switching, Unity rendering and performance remain unverified.
   gap in span checks and compare each head to its own active guide. Restore the
   aligned neutral rotation after sweeping; keep native obstruction rules.
 
+### Flying Sail authoring and bake
+
+The editable
+[Flying Sail Blender asset](../assets/flying_sail/fishermans_flying_sail.blend)
+is a flat **4.6-unit** wide cut with a **9.2-unit** luff, head rising **20°**
+aft and foot falling **20°** aft. Its **24 × 32** quad grid contains **825
+vertices**, **768 quads** and **1,536 triangles**. Blender X points aft, Z up
+and Y is zero; the forward head is the origin, transforms are identity and
+normals face −Y. One proportional planar UV island has a 5% margin. The neutral
+preview material is not exported.
+
+From the repository root with Blender **5.1.1**:
+
+```sh
+blender --background --factory-startup --python-exit-code 1 --python tools/generate_flying_sail.py
+blender --background assets/flying_sail/fishermans_flying_sail.blend --python-exit-code 1 --python tools/bake_flying_sail.py
+blender --background assets/flying_sail/fishermans_flying_sail.blend --python-exit-code 1 --python tests/BlenderChecks/check_flying_sail_bake.py
+```
+
+Generation replaces the asset; use `-- --output /tmp/flying-sail.blend` to
+preserve hand edits. Baking reads the open saved asset without saving it,
+validates its nominal cut, grid correspondence, winding and continuous planar
+UVs, then exports normalized positions, UVs and triangles into
+`FishermansFlyingSailBakedMesh.g.cs`. Use `-- --check` to verify freshness
+without writing or `-- --output /tmp/flying-sail.g.cs` for a separate output.
+Modifiers, shape keys, changed outlines/topology, seams, non-finite values and
+distorted UVs are rejected. Normal .NET builds use the checked-in C# and require
+neither Blender nor an asset bundle. Authoring and bake utilities are shared
+with staysails; their existing commands and outputs remain.
+
+`FishermansFlyingSailGeometry.Create` consumes fresh baked arrays, scales the
+flat cut to the requested width and adds the existing circular camber and capped
+luff bow. It no longer generates flat positions, UVs or triangle topology.
+Corners and all **429** rest bone positions come from corresponding mesh
+vertices; the redundant `RestPoint` calculation is removed. Skin weights, four
+pinned corners, Cloth constraints, centroid and live shaping functions remain.
+Baked UVs are retained because the cut is fixed; physical deformation and
+nonuniform scaling can still stretch textures. `FishermansFlyingSailMeshData`
+owns the arrays.
+
+The default cloth uses `Texture2D.whiteTexture` on the private material obtained
+by native recoloring, shared with reefed renderer references. This retains the
+native shader and tint; later SE texture selection remains unrestricted. Donor
+prefab components and native knot assets remain in use. Prefab **400**,
+**Other** category, donor-height/3 base width, luff installation height and
+saved scale conventions are preserved; no save migration is introduced.
+
 ### Rope visuals and knots
 
 Head/foot visuals join mast ties, luff corners and aft corners. The shared head
@@ -385,9 +431,11 @@ saved sizes with new-sail defaults.
 editable [Mk.A](../assets/staysails/fishermans_staysail_mka.blend),
 [Mk.B](../assets/staysails/fishermans_staysail_mkb.blend) and
 [Mk.C](../assets/staysails/fishermans_staysail_mkc.blend) Blender files. The
-generator and baker share nominal dimensions and grid rules in
-[tools/staysail_authoring.py](../tools/staysail_authoring.py). From the
-repository root, using a separately installed Blender (verified with **5.1.1**):
+generator and baker share nominal dimensions in
+[tools/staysail_authoring.py](../tools/staysail_authoring.py) and grid, UV and
+export utilities with the Flying Sail in
+[tools/sail_authoring.py](../tools/sail_authoring.py). From the repository root,
+using a separately installed Blender (verified with **5.1.1**):
 
 ```sh
 blender --background --factory-startup --python-exit-code 1 --python tools/generate_staysail.py -- --cut B
@@ -1147,6 +1195,26 @@ searches.
 
 ### Automated baseline and limits
 
+On **2026-10-12**, Flying Sail **400** also moved to a baked Blender cut and a
+plain white default. Blender **5.1.1** checks passed for deterministic output,
+freshness, incompatible edits and read-only stale checks, including all three
+staysail assets after shared-tool extraction. Their generated outputs are
+unchanged. The Release build reported zero warnings/errors; both .NET suites and
+pinned formatting/diff checks passed. GeometryChecks compares the baked rest
+surface with analytical expectations across widths **0.25–100**, including
+**4.6** and **3.80/3.81/3.82** around the luff-bow cap, and verifies planar UVs,
+legacy topology and independent arrays. Existing centroid, skinning, four-pin,
+hoisting, tacking, mast-tie, collision and aerodynamic checks also passed.
+AssemblyChecks verifies registration consumes the bake, private plain-material
+initialization and the existing fixed-mesh lifecycle.
+
+This Flying Sail change has no in-game observations yet. Check default/recolored
+appearance, resizing, both tacks, partial/full hoisting, striking, ropes/knots,
+shadows and shipyard preview/cancel on Brig, then Sanbuq. Load a pre-change save
+with a resized/recolored Flying Sail and save/reload; include native+MSS and
+SE+MSS configurations. Verify later SE texture choices remain in control and
+check the original brig jib for material regressions.
+
 On **2026-10-12**, all three staysails moved to authored Blender meshes and one
 shared fitter, removing procedural cut creation. Blender **5.1.1** checks passed
 for each cut's deterministic output, checked-in freshness, incompatible-edit
@@ -1237,12 +1305,12 @@ loader restores sizes through the same API; SE supplies its own behavior when
 installed. No scaler, texture catalog or replacement save format is added.
 
 Appearance uses native white recoloring and shared reefed material references.
-All staysail cuts default to a plain white texture; Flying Sail inherits its
-donor texture. SE pattern selection is unrestricted. Prefab IDs 400–403 and stay
-mount IDs 128–255 are preserved. SE-only rigging is not recreated: missing
-variants retain unavailable option entries, preserving the positions of later
-options. Native `CanInstall` ignores the `canInstall` field, so the existing MSS
-installation guard explicitly rejects these entries.
+Both Fisherman sail families default to a plain white texture. SE pattern
+selection is unrestricted. Prefab IDs 400–403 and stay mount IDs 128–255 are
+preserved. SE-only rigging is not recreated: missing variants retain unavailable
+option entries, preserving the positions of later options. Native `CanInstall`
+ignores the `canInstall` field, so the existing MSS installation guard
+explicitly rejects these entries.
 
 A read-only **2026-10-12** audit of installed Sailwind 0.39 `level24` identified
 **29** native-only candidate stays: Brig **6**, Junk **4**, Jong **3**, Sanbuq
