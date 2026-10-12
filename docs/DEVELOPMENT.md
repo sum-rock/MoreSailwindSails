@@ -1084,6 +1084,21 @@ fixture are removed; installed assembly checks cover the named API and each
 family's plain-texture guard. SE **0.12.1 is required**; the dependency
 declaration intentionally has no minimum-version loading guard.
 
+On **2026-10-12**, **0.3.0-dev** stops clearing SE's `rotatablePart` during
+staysail prefab configuration and `SailScaler.Awake`. SE determines fitting
+rotation availability and behavior; uniform scaling and the separate flip
+restriction remain. This reduces SE coupling, but SE is still required. The
+installed SE implementation falls back to the sail root when `rotatablePart` is
+null, so clearing it did not fully prevent rotation.
+
+Automated validation passed: pinned Prettier and CSharpier checks, Release build
+with zero warnings/errors, GeometryChecks and AssemblyChecks (62 Harmony
+targets). This change has no in-game validation yet. On Brig, check
+Mk.A/Mk.B/Mk.C fitting, resizing, any rotation controls SE exposes, order
+completion/cancel, save/reload and ordinary sailing with sheet controls.
+Removing these writes does not guarantee rotation controls appear for every sail
+category.
+
 On **2026-10-04**, the original failed development session logged a
 `MissingFieldException` for `SailTextureChanger.sailTextures`, interrupting
 `PrefabsDirectory.Start`. A later SE scale exception interrupted save loading;

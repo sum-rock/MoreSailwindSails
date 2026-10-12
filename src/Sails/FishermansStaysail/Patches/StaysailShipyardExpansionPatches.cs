@@ -56,7 +56,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
             if (!__instance.GetComponent<FishermansStaysailRig>())
                 return;
             __instance.scaleType = ScaleType.Uniform;
-            __instance.rotatablePart = null;
             __instance.flippable = false;
         }
     }

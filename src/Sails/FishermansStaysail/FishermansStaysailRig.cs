@@ -219,7 +219,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             reef.furledSail = nativeReefing.Bundle;
             var scaler = sail.GetComponent<ShipyardExpansion.SailScaler>();
             scaler.scaleType = ShipyardExpansion.ScaleType.Uniform;
-            scaler.rotatablePart = null;
             scaler.flippable = false;
         }
 
