@@ -25,6 +25,14 @@ take precedence over historical design choices.
 - Use installed assemblies/assets as the behavioral reference; upstream source
   may differ. Never commit proprietary assemblies or extracted game assets.
 
+## Guidlines
+
+- Always drive to simplicity. Choices should be made preserve straight forward
+  code paths with minimal complexity.
+- Avoid patching external dependencies.
+- Ask for clarification from the user if directives appear to require complex
+  implementation.
+
 ## Verification and handoff
 
 Use the pinned Nix formatting environment and the
