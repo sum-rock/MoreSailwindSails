@@ -217,8 +217,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             rig.ReefedRenderer.enabled = false;
             rig.FurledColorReference = nativeReefing.Bundle;
             reef.furledSail = nativeReefing.Bundle;
-            var scaler = sail.GetComponent<ShipyardExpansion.SailScaler>();
-            scaler.scaleType = ShipyardExpansion.ScaleType.Uniform;
         }
 
         private static void ConfigureCollision(ShipyardSailColChecker checker, Vector3[] corners)

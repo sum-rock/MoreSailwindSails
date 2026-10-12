@@ -134,8 +134,8 @@ or `FlyingSail` with `SailwindPatches.cs`, `ShipyardExpansionPatches.cs` or
   aerodynamics, travel, support protection, refresh and shipyard availability.
 - **Shipyard Expansion:** direct SE patches and supporting native hooks. Stay
   registration, save capacity, load preparation and mount buttons belong here;
-  sail prefab registration, new-sail initialization, textures and staysail
-  scaler configuration do too. Staysail fitting and movement remain in Sailwind.
+  sail prefab registration, new-sail initialization and textures do too.
+  Staysail fitting and movement remain in Sailwind.
 - **NANDFixes:** order-text wrapping that prevents recursive long-line handling.
 - **SailInfo:** optional staysail angle reporting.
 
@@ -378,8 +378,9 @@ downward from the stay's forward endpoint. Retain **15 cm** head/aft-mast
 clearances, spar-length/span fitting and native collision checks. Collision
 strips use lowest head/highest foot with **5 cm** edge margins; disable strips
 too shallow for margins plus **1 cm** height or clipped below **1 mm** width.
-New selections start at **50% width/height** through SE after initialization;
-uniform scaling preserves the cut and existing saves retain their dimensions.
+New selections start at **50% width/height** through SE after initialization. SE
+controls the scaling mode; MSS no longer forces uniform scaling. Loaded sails
+continue to restore their saved SE dimensions.
 
 ### Fixed head and reefing
 
@@ -1042,11 +1043,12 @@ visual cache/bypass support. Flying Sail, all three staysail cuts, boat
 profiles, shared rope rendering and CPU/frame profiling remain.
 
 Release builds with zero warnings/errors, and both check suites pass.
-AssemblyChecks covers **62** Harmony targets against installed assemblies. No
-in-game validation was performed for this removal. Verify shipyard fitting,
-controls, save/reload and the simplified F7 capture toggle on Brig before wider
-runtime testing. Saves containing removed experimental prefabs are outside this
-branch's supported runtime validation.
+AssemblyChecks covers **61** Harmony targets against installed assemblies after
+the subsequent removal of the staysail scaler patch. No in-game validation was
+performed for this removal. Verify shipyard fitting, controls, save/reload and
+the simplified F7 capture toggle on Brig before wider runtime testing. Saves
+containing removed experimental prefabs are outside this branch's supported
+runtime validation.
 
 | Area                       | Coverage and limitation                                                                                                                                                                                         |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1097,12 +1099,29 @@ targets). The user confirmed that the rotation restriction removal works on
 
 The subsequent **0.3.0-dev** change also removes both `flippable = false`
 assignments from staysail prefab configuration and `SailScaler.Awake`, leaving
-SE to determine flip availability and behavior. Uniform scaling remains. The
-same automated checks passed for this change, with zero build warnings/errors.
-Flipping has no in-game validation yet. On Brig, check Mk.A/Mk.B/Mk.C flipping
-and flipping back, fitting, resizing, order completion/cancel, save/reload and
-ordinary sailing with sheet controls. Removing these restrictions does not
-guarantee rotation or flip controls appear for every sail category.
+SE to determine flip availability and behavior. Uniform scaling remained at that
+stage. The same automated checks passed for this change, with zero build
+warnings/errors. The user also confirmed that removing the flip restrictions
+works on **2026-10-12**; no boat, sail-cut or save/reload coverage was
+specified. Removing these restrictions does not guarantee rotation or flip
+controls appear for every sail category.
+
+The next **0.3.0-dev** change removes the `SailScaler.Awake` postfix and the
+prefab-time `ScaleType.Uniform` assignment. The staysail rig class no longer
+references SE types. New-sail size calls remain: 50% for staysails and 100% for
+Flying Sail. SE remains required for scaling and other integrations.
+
+Pinned formatting checks, the Release build and both check suites passed for
+this removal, with zero build warnings/errors and 61 Harmony targets.
+
+Installed SE inspection shows that donor 110 uses `ScaleType.Jib`, and
+`SailScaler.Awake` only assigns scaling modes for its listed prefab IDs. It does
+not reset an inherited mode for custom IDs. Cloned staysails may therefore offer
+independent width/height scaling after removal of the override; this requires
+in-game verification. On Brig, check all three cuts with uniform and independent
+resizing, fitting/collision, order completion/cancel, save/reload, reefing and
+sheet controls. Existing uniformly sized sails should retain their dimensions;
+live restoration and stretched sail behavior remain unverified.
 
 On **2026-10-04**, the original failed development session logged a
 `MissingFieldException` for `SailTextureChanger.sailTextures`, interrupting
