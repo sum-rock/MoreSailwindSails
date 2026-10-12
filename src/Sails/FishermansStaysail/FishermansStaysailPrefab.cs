@@ -100,33 +100,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 shadowMesh.vertices = FishermansStaysailShadowGeometry.Samples(
                     vertices: geometry.Vertices
                 );
-                shadowMesh.triangles = new[]
-                {
-                    0,
-                    3,
-                    1,
-                    1,
-                    3,
-                    4,
-                    1,
-                    4,
-                    2,
-                    2,
-                    4,
-                    5,
-                    3,
-                    6,
-                    4,
-                    4,
-                    6,
-                    7,
-                    4,
-                    7,
-                    5,
-                    5,
-                    7,
-                    8,
-                };
+                // SailShadowCol reads only vertices; its separate BoxCollider receives rays.
                 shadowMesh.RecalculateBounds();
                 FishermansStaysailRig.Configure(sail, geometry, mesh, shadowMesh);
                 FishermansStaysailAppearance.Configure(sail);

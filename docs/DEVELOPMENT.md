@@ -213,6 +213,16 @@ resolve full type names: update both when moving or renaming code.
   may supply pattern selection when installed; MSS does not edit its catalog or
   restrict textures. Never change donor/shared assets.
 
+### Native wind-shadow samples
+
+Both Fisherman sail families give `SailShadowCol` a mesh containing nine
+center-plane sample vertices, without triangle indices. Read-only inspection of
+installed Sailwind 0.39 on **2026-10-12** confirmed `CheckShadow` iterates
+`Mesh.vertices`, casts upwind rays and averages occlusion; it never reads mesh
+triangles. The separate `BoxCollider`, sized explicitly by each rig, receives
+those rays. Keep sample positions, bounds and collider setup when changing this
+mesh; it serves wind shielding rather than visible shadow rendering.
+
 ### Sailwind 0.39 audio
 
 The donor wind-center object carries `SailFlapAudio`, which searches only its
@@ -1194,6 +1204,12 @@ searches.
 ## Runtime validation
 
 ### Automated baseline and limits
+
+On **2026-10-12**, redundant shadow-mesh triangle lists were removed from both
+Fisherman prefab builders. Nine sample vertices, bounds and collider behavior
+are retained. The Release build, both .NET suites and pinned formatting/diff
+checks passed. Wind-shadow behavior after this cleanup still needs an in-game
+check with one sail shielding another; no new game observations were made.
 
 On **2026-10-12**, Flying Sail **400** also moved to a baked Blender cut and a
 plain white default. Blender **5.1.1** checks passed for deterministic output,
