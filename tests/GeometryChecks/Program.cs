@@ -7,42 +7,7 @@ internal static class Program
 {
     private static void Main(string[] args)
     {
-        if (System.Array.IndexOf(array: args, value: "--benchmark-mast") >= 0)
-        {
-            Spritsail.MastIntersectionChecks.Benchmark();
-            return;
-        }
-        if (System.Array.IndexOf(array: args, value: "--benchmark-mount") >= 0)
-        {
-            Spritsail.MountOptimizationChecks.Benchmark();
-            return;
-        }
-        if (System.Array.IndexOf(array: args, value: "--benchmark-flex") >= 0)
-        {
-            Spritsail.LooseFootedSpritsail.FlexOptimizationChecks.Benchmark();
-            return;
-        }
         Visuals.RoutedRopeChecks.Run();
-        Visuals.SailVisualRevisionChecks.Run();
-        Spritsail.CategoryChecks.Run();
-        Spritsail.BoomedSpritsail.GeometryChecks.Run();
-        Spritsail.CollisionChecks.Run();
-        Spritsail.TravelChecks.Run();
-        Spritsail.MastAlignmentChecks.Run();
-        Spritsail.GuideOrderChecks.Run();
-        Spritsail.NativeControlChecks.Run();
-        Spritsail.GallusChecks.Run();
-        Spritsail.SpritVisualChecks.Run();
-        Spritsail.MastIntersectionChecks.Run();
-        Spritsail.SnotterChecks.Run();
-        Spritsail.MountChecks.Run();
-        Spritsail.MountFrameChecks.Run();
-        Spritsail.DeploymentChecks.Run();
-        Spritsail.ObstructionChecks.Run();
-        Spritsail.LooseFootedSpritsail.FlexChecks.Run();
-        Spritsail.LooseFootedSpritsail.FlexOptimizationChecks.Run();
-        Spritsail.LooseFootedSpritsail.MkA.PrototypeChecks.Run();
-        Spritsail.LooseFootedSpritsail.MkB.CutChecks.Run();
         RigChecks.Run();
         ProfileChecks.Run();
         StayChecks.Run();

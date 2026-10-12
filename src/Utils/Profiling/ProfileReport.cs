@@ -10,7 +10,7 @@ namespace MoreSailwindSails.Utils.Profiling
         internal static void Write(ProfileSession session, Action<string> log)
         {
             var prefix =
-                $"[PerformanceProfile] session={session.SessionId} window={session.WindowId} mode={(session.Mode == 1 ? "NORMAL" : "BYPASS")} bypass={session.Bypass}";
+                $"[PerformanceProfile] session={session.SessionId} window={session.WindowId} mode=NORMAL";
             log(
                 FormattableString.Invariant(
                     $"{prefix} scope=all-loaded-boats frames={session.Frames} frameMeanMs={session.FrameSeconds * 1000 / session.Frames:F2} frameMaxMs={session.MaxFrameSeconds * 1000:F2} fps={(session.FrameSeconds > 0 ? session.Frames / session.FrameSeconds : 0):F2} over33ms={session.SlowFrames} gc0Global={session.GcCollections} targets={Names(selection: session.Collector.Selection)} cpu=inclusive-not-additive excludes=Unity-Cloth-and-GPU"
@@ -69,21 +69,6 @@ namespace MoreSailwindSails.Utils.Profiling
                         );
                     }
                 }
-                var counters = new StringBuilder();
-                for (
-                    var counter = ProfileCounter.MountUploads;
-                    counter < ProfileCounter.Count;
-                    counter++
-                )
-                {
-                    int count = session.Collector.Counters[
-                        (int)family * (int)ProfileCounter.Count + (int)counter
-                    ];
-                    if (count != 0)
-                        counters.Append(' ').Append(counter).Append('=').Append(count);
-                }
-                if (counters.Length > 0)
-                    log($"{prefix} family={family} counters:{counters}");
             }
         }
 

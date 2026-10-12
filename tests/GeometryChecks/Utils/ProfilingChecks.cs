@@ -12,7 +12,6 @@ internal static class ProfilingChecks
     {
         Selection();
         Timing();
-        ExplicitCounters();
         Sessions();
         ProfilingGcChecks.Run();
         Console.WriteLine(
@@ -43,20 +42,6 @@ internal static class ProfilingChecks
             ProfileSelection.Parse(text: " , ", warn: warnings.Add) == 0,
             "Empty selection permits frame-only capture."
         );
-        Check(
-            ProfileSelection.ParseBypass(text: " sNoTtEr ", warn: warnings.Add)
-                == ProfileBypass.Snotter,
-            "Bypass names ignore case/whitespace."
-        );
-        Check(
-            ProfileSelection.ParseBypass(text: " hiddenNATIVERopes ", warn: warnings.Add)
-                == ProfileBypass.HiddenNativeRopes,
-            "Hidden native rope visuals are an explicit selectable bypass."
-        );
-        Check(
-            ProfileSelection.ParseBypass(text: "Rig", warn: warnings.Add) == ProfileBypass.None,
-            "Unknown/unsafe bypass fails closed."
-        );
     }
 
     private static void Timing()
@@ -68,18 +53,14 @@ internal static class ProfilingChecks
             clockReads++;
             return now;
         });
-        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.BoomedSpritsail)) { }
-        collector.Count(target: ProfileTarget.VisualCache, counter: ProfileCounter.Sheet);
+        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.Staysail)) { }
         Check(
-            clockReads == 0
-                && collector.Calls.All(c => c == 0)
-                && collector.Counters.All(c => c == 0),
+            clockReads == 0 && collector.Calls.All(c => c == 0),
             "Disabled hooks collect nothing and never read the clock."
         );
         collector.Active = true;
-        collector.Selection =
-            (1 << (int)ProfileTarget.Shape) | (1 << (int)ProfileTarget.VisualCache);
-        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.BoomedSpritsail))
+        collector.Selection = 1 << (int)ProfileTarget.Shape;
+        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.Staysail))
         {
             Check(
                 clockReads == 0,
@@ -92,23 +73,15 @@ internal static class ProfilingChecks
                 {
                     now = 20;
                 }
-                collector.Count(target: ProfileTarget.VisualCache, counter: ProfileCounter.Sheet);
             }
         }
         int shape = ProfileCollector.Index(
-            family: ProfileFamily.BoomedSpritsail,
+            family: ProfileFamily.Staysail,
             target: ProfileTarget.Shape
         );
         Check(
             collector.Calls[shape] == 1 && collector.Ticks[shape] == 20 && clockReads == 2,
             "Same-category nested work is included exactly once."
-        );
-        Check(
-            collector.Counters[
-                (int)ProfileFamily.BoomedSpritsail * (int)ProfileCounter.Count
-                    + (int)ProfileCounter.Sheet
-            ] == 1,
-            "Counters inherit family attribution."
         );
         collector.Clear();
         collector.Selection = ProfileSelection.All;
@@ -143,53 +116,23 @@ internal static class ProfilingChecks
         );
         try
         {
-            using (
-                collector.Begin(
-                    target: ProfileTarget.SailMount,
-                    owner: ProfileFamily.LooseFootedSpritsail
-                )
-            )
+            using (collector.Begin(target: ProfileTarget.Frame, owner: ProfileFamily.FlyingSail))
             {
-                using (
-                    collector.Begin(target: ProfileTarget.SailMount, stage: ProfileStage.Surface)
-                )
+                using (collector.Begin(target: ProfileTarget.Frame))
                 {
-                    collector.SurfaceQuery(hit: true);
                     now += 4;
                     throw new InvalidOperationException("expected");
                 }
             }
         }
         catch (InvalidOperationException) { }
-        collector.SurfaceQuery(hit: false);
-        Check(
-            collector.Counters[
-                (int)ProfileFamily.LooseFootedSpritsail * (int)ProfileCounter.Count
-                    + (int)ProfileCounter.SurfaceHits
-            ] == 1,
-            "Mount queries are attributed to their owning family."
-        );
-        Check(
-            collector
-                .Counters.Where(
-                    (_, i) => i % (int)ProfileCounter.Count == (int)ProfileCounter.SurfaceMisses
-                )
-                .All(n => n == 0),
-            "Queries outside mount timing are excluded."
-        );
-        using (
-            collector.Begin(
-                target: ProfileTarget.SailMount,
-                owner: ProfileFamily.LooseFootedSpritsail
-            )
-        )
+        using (collector.Begin(target: ProfileTarget.Frame, owner: ProfileFamily.FlyingSail))
         {
             now++;
         }
         Check(
-            collector.Calls[
-                ProfileCollector.Index(ProfileFamily.LooseFootedSpritsail, ProfileTarget.SailMount)
-            ] == 2,
+            collector.Calls[ProfileCollector.Index(ProfileFamily.FlyingSail, ProfileTarget.Frame)]
+                == 2,
             "An exception cannot leave a timing category open."
         );
         var stale = collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.FlyingSail);
@@ -201,12 +144,8 @@ internal static class ProfilingChecks
         );
         void Sample()
         {
-            using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.BoomedSpritsail))
-            using (collector.Begin(target: ProfileTarget.Ropes))
-                collector.Count(
-                    target: ProfileTarget.VisualCache,
-                    counter: ProfileCounter.SnotterReuse
-                );
+            using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.Staysail))
+            using (collector.Begin(target: ProfileTarget.Ropes)) { }
         }
         for (int i = 0; i < 100; i++)
             Sample();
@@ -215,60 +154,7 @@ internal static class ProfilingChecks
             Sample();
         Check(
             GC.GetAllocatedBytesForCurrentThread() == before,
-            "Warmed nested scopes and counters must allocate no managed memory."
-        );
-    }
-
-    private static void ExplicitCounters()
-    {
-        var collector = new ProfileCollector(timestamp: () => 0)
-        {
-            Active = true,
-            Selection = 1 << (int)ProfileTarget.Ropes,
-        };
-        int Counter(ProfileFamily family, ProfileCounter counter) =>
-            collector.Counters[(int)family * (int)ProfileCounter.Count + (int)counter];
-        using (collector.Begin(target: ProfileTarget.Rig, owner: ProfileFamily.Staysail))
-        {
-            collector.Count(
-                target: ProfileTarget.Ropes,
-                counter: ProfileCounter.HiddenNativeVisualSkips,
-                owner: ProfileFamily.LooseFootedSpritsail
-            );
-            collector.Count(
-                target: ProfileTarget.Ropes,
-                counter: ProfileCounter.HiddenNativeVisualUpdates
-            );
-        }
-        Check(
-            Counter(ProfileFamily.LooseFootedSpritsail, ProfileCounter.HiddenNativeVisualSkips) == 1
-                && Counter(ProfileFamily.Staysail, ProfileCounter.HiddenNativeVisualUpdates) == 1,
-            "Native callbacks can name their family without altering scope attribution."
-        );
-        void Sample() =>
-            collector.Count(
-                target: ProfileTarget.Ropes,
-                counter: ProfileCounter.HiddenNativeVisualUpdates,
-                owner: ProfileFamily.BoomedSpritsail
-            );
-        for (int i = 0; i < 100; i++)
-            Sample();
-        long before = GC.GetAllocatedBytesForCurrentThread();
-        for (int i = 0; i < 1000; i++)
-            Sample();
-        Check(
-            GC.GetAllocatedBytesForCurrentThread() == before,
-            "Explicit-family native visual counters allocate no managed memory."
-        );
-        collector.Selection = 0;
-        Sample();
-        collector.Selection = ProfileSelection.All;
-        collector.Active = false;
-        Sample();
-        Check(
-            Counter(ProfileFamily.BoomedSpritsail, ProfileCounter.HiddenNativeVisualUpdates)
-                == 1100,
-            "Unselected and inactive counters record nothing."
+            "Warmed nested scopes must allocate no managed memory."
         );
     }
 
@@ -281,11 +167,8 @@ internal static class ProfilingChecks
             report: s =>
                 reports.Add((s.Mode, s.Frames, s.SlowFrames, s.FrameSeconds, s.GcCollections))
         );
-        session.Configure(selection: ProfileSelection.All, bypass: ProfileBypass.SailMount);
-        Check(
-            session.Mode == 0 && !collector.Active && !session.IsBypassed(ProfileBypass.SailMount),
-            "Configuration starts OFF."
-        );
+        session.Configure(selection: ProfileSelection.All);
+        Check(session.Mode == 0 && !collector.Active, "Configuration starts OFF.");
         void Tick(
             int frame,
             double now,
@@ -316,47 +199,19 @@ internal static class ProfilingChecks
         );
         Tick(frame: 3, now: 11, toggle: true);
         Check(
-            reports.Count == 2 && reports[1].Frames == 1 && session.Mode == 2,
+            reports.Count == 2 && reports[1].Frames == 1 && session.Mode == 0,
             "Mode changes flush partial windows before changing mode."
         );
-        foreach (
-            var bypass in new[]
-            {
-                ProfileBypass.SailMount,
-                ProfileBypass.Snotter,
-                ProfileBypass.SpritsailLiveRopes,
-                ProfileBypass.HiddenNativeRopes,
-            }
-        )
-        {
-            session.Configure(selection: ProfileSelection.All, bypass: bypass);
-            Tick(frame: 4, now: 12, toggle: true);
-            Tick(frame: 5, now: 13, toggle: true);
-            Check(
-                session.IsBypassed(bypass) && !session.IsBypassed(ProfileBypass.None),
-                "Only the configured visual target is bypassed."
-            );
-            Tick(frame: 6, now: 14, toggle: true);
-            Check(
-                session.Mode == 0 && !collector.Active && !session.IsBypassed(bypass),
-                "Third press restores normal behavior."
-            );
-        }
-        session.Configure(selection: 0, bypass: ProfileBypass.None);
+        session.Configure(selection: 0);
         Tick(frame: 7, now: 15, toggle: true);
         Tick(frame: 8, now: 16, toggle: true);
-        Check(session.Mode == 0, "None uses a two-state cycle.");
-        session.Configure(selection: ProfileSelection.All, bypass: ProfileBypass.Snotter);
+        Check(session.Mode == 0, "Capture uses a two-state cycle.");
+        session.Configure(selection: ProfileSelection.All);
         Tick(frame: 9, now: 17, toggle: true);
-        Tick(frame: 10, now: 18, toggle: true);
         Tick(frame: 11, now: 19, enabled: false);
-        Check(
-            session.Mode == 0 && !session.IsBypassed(ProfileBypass.Snotter),
-            "Disabling restores visual behavior."
-        );
+        Check(session.Mode == 0 && !collector.Active, "Disabling stops capture.");
         Tick(frame: 12, now: 20, toggle: true);
-        Tick(frame: 13, now: 21, toggle: true);
-        session.Configure(selection: 0, bypass: ProfileBypass.None);
+        session.Configure(selection: 0);
         Check(
             session.Mode == 0 && !collector.Active && collector.Selection == 0,
             "Changing configuration stops capture and clears old samples."

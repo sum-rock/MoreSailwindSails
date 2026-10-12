@@ -4,8 +4,6 @@ namespace MoreSailwindSails.Utils.Profiling
     internal enum ProfileFamily
     {
         Unspecified,
-        LooseFootedSpritsail,
-        BoomedSpritsail,
         FlyingSail,
         Staysail,
         Count,

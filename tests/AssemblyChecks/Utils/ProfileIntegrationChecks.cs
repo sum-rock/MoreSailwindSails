@@ -5,7 +5,7 @@ using MoreSailwindSails.Tests.AssemblyChecks.Shared;
 
 namespace MoreSailwindSails.Tests.AssemblyChecks.Utils;
 
-// Checks profiler integration and the boundary between visual bypass and native mechanics.
+// Checks profiler integration and isolation from native mechanics.
 internal static class ProfileIntegrationChecks
 {
     internal static void Run(Assembly assembly)
@@ -22,8 +22,6 @@ internal static class ProfileIntegrationChecks
         foreach (
             string rig in new[]
             {
-                "Sails.Spritsail.LooseFootedSpritsail.LooseFootedSpritsailRig",
-                "Sails.Spritsail.BoomedSpritsail.BoomedSpritsailRig",
                 "Sails.FishermansFlyingSail.FishermansFlyingSailRig",
                 "Sails.FishermansStaysail.FishermansStaysailRig",
             }
@@ -46,27 +44,6 @@ internal static class ProfileIntegrationChecks
             );
         }
         foreach (
-            var target in new[]
-            {
-                ("Sails.Spritsail.SpritsailMount", "Draw"),
-                ("Sails.Spritsail.SpritsailSnotter", "Pose"),
-                ("Sails.Spritsail.LooseFootedSpritsail.LooseFootedSpritsailLines", "Draw"),
-                ("Sails.Spritsail.BoomedSpritsail.BoomedSpritsailLines", "Draw"),
-            }
-        )
-        {
-            var calls = IlReader.CalledMethods(Method(target.Item1, target.Item2)).ToArray();
-            Require(
-                value: calls.Any(m => m.Name == "IsBypassed"),
-                message: "The visual owner must handle its bypass."
-            );
-            if (!target.Item1.EndsWith("SpritsailMount"))
-                Require(
-                    value: calls.Any(m => m.Name == "Hide"),
-                    message: "Bypass must hide persistent rope renderers."
-                );
-        }
-        foreach (
             var type in assembly
                 .GetTypes()
                 .Where(t => t.Namespace == "MoreSailwindSails.Utils.Profiling")
@@ -81,33 +58,8 @@ internal static class ProfileIntegrationChecks
                     ),
                 message: "The profiling utility must not access or mutate sail mechanics."
             );
-        Require(
-            value: assembly.GetType("MoreSailwindSails.Sails.Spritsail.SpritsailMountProfile")
-                == null,
-            message: "The obsolete mount-only profiler must be removed."
-        );
-        var frame = assembly.GetType(
-            name: "MoreSailwindSails.Sails.Spritsail.SpritsailMountFrame",
-            throwOnError: true
-        );
-        foreach (var method in frame.GetMethods(bindingAttr: flags | BindingFlags.DeclaredOnly))
-            Require(
-                value: IlReader
-                    .CalledMethods(method: method)
-                    .All(m =>
-                        m.DeclaringType.Name != "Transform"
-                        || m.Name
-                            is "get_parent"
-                                or "get_localPosition"
-                                or "get_localRotation"
-                                or "get_localScale"
-                                or "IsChildOf"
-                    ),
-                message: "Stable fitting frames must use the local hierarchy without world positions or transform mutation."
-            );
-
         Console.WriteLine(
-            "PASS: all sail rigs instrumented with finalized scopes; visual owners handle bypass, profiler avoids mechanics, and stable mount frames are preserved. Live rendering requires in-game checks."
+            "PASS: Fisherman sail rigs instrumented with finalized scopes; profiler avoids mechanics. Live rendering requires in-game checks."
         );
     }
 

@@ -93,16 +93,7 @@ internal static class RoutedRopeChecks
                 message: "Rendering must not change sail Cloth or control physics."
             );
         }
-        foreach (
-            string name in new[]
-            {
-                "FishermansFlyingSail.FishermansFlyingSailSupportLine",
-                "Spritsail.LooseFootedSpritsail.LooseFootedSpritsailLines",
-                "Spritsail.BoomedSpritsail.BoomedSpritsailLines",
-                "Spritsail.SpritsailSnotter",
-                "Spritsail.SpritsailRopeCollar",
-            }
-        )
+        foreach (string name in new[] { "FishermansFlyingSail.FishermansFlyingSailSupportLine" })
         {
             var owner = assembly.GetType(
                 name: "MoreSailwindSails.Sails." + name,

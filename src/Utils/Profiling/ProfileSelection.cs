@@ -7,8 +7,7 @@ namespace MoreSailwindSails.Utils.Profiling
     internal static class ProfileSelection
     {
         internal const int All = (1 << (int)ProfileTarget.Count) - 1;
-        internal const string DefaultTargets =
-            "Rig,Frame,Shape,SheetFlex,Aerodynamics,Ropes,SailMount,Sprit,Snotter,VisualCache";
+        internal const string DefaultTargets = "Rig,Frame,Shape,Aerodynamics,Ropes";
 
         internal static int Parse(string text, Action<string> warn)
         {
@@ -30,14 +29,6 @@ namespace MoreSailwindSails.Utils.Profiling
                     warn("Unknown ProfileTargets entry: " + name);
             }
             return mask;
-        }
-
-        internal static ProfileBypass ParseBypass(string text, Action<string> warn)
-        {
-            if (TryName(name: (text ?? "").Trim(), value: out ProfileBypass bypass))
-                return bypass;
-            warn("Unknown ProfileBypass; using None: " + text);
-            return ProfileBypass.None;
         }
 
         private static bool TryName<T>(string name, out T value)

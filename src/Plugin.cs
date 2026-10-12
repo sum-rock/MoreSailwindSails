@@ -27,7 +27,6 @@ namespace MoreSailwindSails
         private void Awake()
         {
             Log = Logger;
-            Sails.Spritsail.SpritsailCategory.Configure(config: Config);
             captureWinchPosition = Config.Bind(
                 "Diagnostics",
                 "CaptureWinchPosition",

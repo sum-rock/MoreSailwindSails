@@ -19,39 +19,21 @@ namespace MoreSailwindSails.Utils.Profiling
         private static ConfigEntry<bool> enabled;
         private static ConfigEntry<KeyboardShortcut> shortcut;
         private static ConfigEntry<string> targets;
-        private static ConfigEntry<string> bypass;
         private static bool changed;
 
         internal static void Configure(ConfigFile config)
         {
-            // Bind reads saved/orphaned entries. New saved keys override these migration defaults.
-            bool oldEnabled = config
-                .Bind(
-                    section: "Diagnostics",
-                    key: "EnableSpritsailMountProfiling",
-                    defaultValue: false
-                )
-                .Value;
-            var oldShortcut = config
-                .Bind(
-                    section: "Diagnostics",
-                    key: "ToggleSpritsailMountProfiling",
-                    defaultValue: new KeyboardShortcut(KeyCode.F7)
-                )
-                .Value;
-            config.Remove(new ConfigDefinition("Diagnostics", "EnableSpritsailMountProfiling"));
-            config.Remove(new ConfigDefinition("Diagnostics", "ToggleSpritsailMountProfiling"));
             enabled = config.Bind(
                 section: "Diagnostics",
                 key: "EnableProfiling",
-                defaultValue: oldEnabled,
+                defaultValue: false,
                 description: "Enable optional CPU/frame diagnostics. Captures start OFF; use ToggleProfiling. Does not measure Unity Cloth or GPU execution."
             );
             shortcut = config.Bind(
                 section: "Diagnostics",
                 key: "ToggleProfiling",
-                defaultValue: oldShortcut,
-                description: "Cycle NORMAL, the selected visual BYPASS, and OFF. With ProfileBypass=None, toggle NORMAL/OFF. Set to None to disable the shortcut."
+                defaultValue: new KeyboardShortcut(KeyCode.F7),
+                description: "Toggle CPU/frame capture on or off. Set to None to disable the shortcut."
             );
             targets = config.Bind(
                 section: "Diagnostics",
@@ -61,16 +43,9 @@ namespace MoreSailwindSails.Utils.Profiling
                     + ProfileSelection.DefaultTargets
                     + ". All selects every category; empty records frame statistics only. Reports distinguish families across all loaded boats."
             );
-            bypass = config.Bind(
-                section: "Diagnostics",
-                key: "ProfileBypass",
-                defaultValue: "SailMount",
-                description: "One visual comparison: None, SailMount, Snotter (including purchase/collar), SpritsailLiveRopes (custom sheets/lashings), or HiddenNativeRopes (replaced native rope visuals). Sail mechanics continue."
-            );
             enabled.SettingChanged += Changed;
             shortcut.SettingChanged += Changed;
             targets.SettingChanged += Changed;
-            bypass.SettingChanged += Changed;
             changed = true;
         }
 
@@ -82,47 +57,6 @@ namespace MoreSailwindSails.Utils.Profiling
             ProfileStage stage = ProfileStage.Total
         ) => collector.Begin(target: target, owner: family, stage: stage);
 
-        internal static bool IsBypassed(ProfileBypass target) => session.IsBypassed(target: target);
-
-        internal static bool Selected(ProfileTarget target) => collector.Selected(target: target);
-
-        internal static void Count(
-            ProfileTarget target,
-            ProfileCounter counter,
-            ProfileFamily owner = ProfileFamily.Unspecified
-        ) => collector.Count(target: target, counter: counter, owner: owner);
-
-        internal static void SurfaceQuery(bool hit) => collector.SurfaceQuery(hit: hit);
-
-        internal static void Revision(int reasons)
-        {
-            if (!collector.Selected(target: ProfileTarget.VisualCache))
-                return;
-            for (int i = 0; i < 7; i++)
-                if ((reasons & (1 << i)) != 0)
-                    Count(target: ProfileTarget.VisualCache, counter: ProfileCounter.Initial + i);
-        }
-
-        internal static void Consumer(ProfileTarget target, bool rebuild)
-        {
-            ProfileCounter counter;
-            switch (target)
-            {
-                case ProfileTarget.SailMount:
-                    counter = ProfileCounter.MountRebuild;
-                    break;
-                case ProfileTarget.Sprit:
-                    counter = ProfileCounter.SpritRebuild;
-                    break;
-                case ProfileTarget.Snotter:
-                    counter = ProfileCounter.SnotterRebuild;
-                    break;
-                default:
-                    return;
-            }
-            Count(target: ProfileTarget.VisualCache, counter: counter + (rebuild ? 0 : 1));
-        }
-
         internal static void Tick()
         {
             if (enabled == null)
@@ -130,15 +64,12 @@ namespace MoreSailwindSails.Utils.Profiling
             if (changed)
             {
                 session.Configure(
-                    selection: ProfileSelection.Parse(text: targets.Value, warn: Warn),
-                    bypass: ProfileSelection.ParseBypass(text: bypass.Value, warn: Warn)
+                    selection: ProfileSelection.Parse(text: targets.Value, warn: Warn)
                 );
                 changed = false;
                 Log(
-                    "[PerformanceProfile] Configuration applied; OFF, normal visuals restored. targets="
+                    "[PerformanceProfile] Configuration applied; OFF. targets="
                         + ProfileReport.Names(selection: collector.Selection)
-                        + " bypass="
-                        + session.Bypass
                 );
                 return;
             }
@@ -158,10 +89,9 @@ namespace MoreSailwindSails.Utils.Profiling
                 Log(
                     "[PerformanceProfile] "
                         + (
-                            session.Mode == 0 ? "OFF; normal visuals restored."
-                            : session.Mode == 1
-                                ? "NORMAL; recording selected CPU categories and frame statistics."
-                            : "BYPASS " + session.Bypass + "; mechanics unchanged."
+                            session.Mode == 0
+                                ? "OFF."
+                                : "NORMAL; recording selected CPU categories and frame statistics."
                         )
                 );
         }
@@ -171,7 +101,7 @@ namespace MoreSailwindSails.Utils.Profiling
             bool active = session.Mode != 0;
             session.Stop();
             if (active)
-                Log("[PerformanceProfile] OFF; normal visuals restored.");
+                Log("[PerformanceProfile] OFF.");
         }
 
         private static void Report(ProfileSession value) =>
