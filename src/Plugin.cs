@@ -7,7 +7,10 @@ using UnityEngine;
 namespace MoreSailwindSails
 {
     [BepInPlugin(PluginGuid, PluginName, PluginRuntimeVersion)]
-    [BepInDependency("com.nandbrew.shipyardexpansion")]
+    [BepInDependency(
+        "com.nandbrew.shipyardexpansion",
+        BepInDependency.DependencyFlags.SoftDependency
+    )]
     [BepInDependency("pr0skynesis.sailinfo", BepInDependency.DependencyFlags.SoftDependency)]
     public sealed class Plugin : BaseUnityPlugin
     {

@@ -1,3 +1,4 @@
+// Samples native rope motion for reef lift and draws the native furled bundle.
 using System;
 using System.Linq;
 using UnityEngine;
@@ -9,17 +10,13 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
     {
         public GameObject Driver;
         public AnimationClip Clip;
-        public Transform FoldBone,
-            Rope;
-        public Vector3 OpenScale,
-            ClosedScale,
-            OpenRope,
+        public Transform Rope;
+        public Vector3 OpenRope,
             ClosedRope;
         public Transform BundleRoot;
         public MeshRenderer Bundle;
         private float lastUnroll = float.NaN;
         internal float Lift { get; private set; } = 1;
-        internal float Spread { get; private set; } = 1;
 
         internal static FishermansStaysailReefing Create(Sail sail, ReefEffectAnimUniversal donor)
         {
@@ -51,22 +48,14 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 Object.DestroyImmediate(renderer);
             foreach (var animation in result.Driver.GetComponentsInChildren<Animator>(true))
                 animation.enabled = false;
-            result.FoldBone = result.Driver.transform.Find("SAIL_jib/jib_armature/0/1");
             result.Rope = result.Driver.transform.Find("SAIL_jib/rope_att_jib_angle");
-            if (!result.FoldBone || !result.Rope)
+            if (!result.Rope)
                 throw new InvalidOperationException("Native brig jib animation paths changed.");
             clip.SampleAnimation(result.Driver, 0);
-            result.OpenScale = result.FoldBone.localScale;
             result.OpenRope = result.Rope.localPosition;
             clip.SampleAnimation(result.Driver, clip.length);
-            result.ClosedScale = result.FoldBone.localScale;
             result.ClosedRope = result.Rope.localPosition;
             // Fail at construction rather than leaving a half-working invisible sail.
-            FishermansStaysailReefingGeometry.Progress(
-                result.OpenScale,
-                result.ClosedScale,
-                result.OpenScale
-            );
             FishermansStaysailReefingGeometry.Progress(
                 result.OpenRope,
                 result.ClosedRope,
@@ -96,13 +85,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             if (unroll == lastUnroll)
                 return;
             Clip.SampleAnimation(Driver, (1 - Mathf.Clamp01(unroll)) * Clip.length);
-            // The native cloth bone supplies gathering; its moving rope attachment
-            // supplies the vertical deployment progress. Both are sampled from reef.
-            Spread = FishermansStaysailReefingGeometry.Progress(
-                FoldBone.localScale,
-                ClosedScale,
-                OpenScale
-            );
+            // The native rope attachment supplies vertical deployment progress.
             Lift = FishermansStaysailReefingGeometry.Progress(
                 Rope.localPosition,
                 ClosedRope,
@@ -112,7 +95,12 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         }
 
         internal Vector3 Pose(Vector3 point, Vector3 foreHead, Vector3 aftHead) =>
-            FishermansStaysailReefingGeometry.Pose(point, foreHead, aftHead, Lift, Spread);
+            FishermansStaysailReefingGeometry.Pose(
+                point: point,
+                foreHead: foreHead,
+                aftHead: aftHead,
+                lift: Lift
+            );
 
         internal void DrawBundle(
             Vector3 foreHead,

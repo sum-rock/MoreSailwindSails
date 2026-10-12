@@ -10,6 +10,21 @@ internal static class PluginMetadataChecks
     internal static void Run(Assembly assembly)
     {
         var plugin = assembly.GetType(name: "MoreSailwindSails.Plugin", throwOnError: true);
+        if (
+            assembly
+                .GetReferencedAssemblies()
+                .Any(a => a.Name is "ShipyardExpansion" or "SE_Bridge")
+        )
+            throw new Exception("The plugin must load without SE assemblies.");
+        var se = plugin
+            .GetCustomAttributesData()
+            .Single(a =>
+                a.AttributeType.FullName == "BepInEx.BepInDependency"
+                && (string)a.ConstructorArguments[0].Value == "com.nandbrew.shipyardexpansion"
+            );
+        var flag = se.ConstructorArguments[1];
+        if (Enum.GetName(flag.ArgumentType, flag.Value) != "SoftDependency")
+            throw new Exception("SE must be optional, retaining only loader ordering.");
         var metadata = plugin
             .GetCustomAttributes(inherit: false)
             .Single(attribute => attribute.GetType().FullName == "BepInEx.BepInPlugin");

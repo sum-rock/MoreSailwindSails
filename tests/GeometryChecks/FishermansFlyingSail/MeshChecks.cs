@@ -8,7 +8,7 @@ internal static class MeshChecks
 {
     internal static void Run()
     {
-        foreach (float width in new[] { 0.25f, 6f, 13.8f, 40f })
+        foreach (float width in new[] { 0.25f, 3.80f, 3.81f, 3.82f, 4.6f, 6f, 13.8f, 40f, 100f })
         {
             CheckSail(width);
         }

@@ -106,8 +106,8 @@ internal static class BillowChecks
             headAngle,
             unroll
         );
-        var tack = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], unroll, unroll);
-        var clew = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], unroll, unroll);
+        var tack = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], unroll);
+        var clew = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], unroll);
         clew = FishermansStaysailFrameGeometry.RotateAroundMast(
             clew,
             c[0],

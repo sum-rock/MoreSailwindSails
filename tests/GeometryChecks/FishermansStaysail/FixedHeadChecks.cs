@@ -76,7 +76,7 @@ internal static class FixedHeadChecks
                 width * 1e-5f,
                 "reef parks upper corner at head"
             );
-        var tack = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], unroll, unroll);
+        var tack = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], unroll);
         var pulley = c[0] + (c[1] - c[0]) * 1.5f;
         float originalDistance = DistanceToStay(head, c[0], pulley);
         for (int sheet = -40; sheet <= 40; sheet += 5)
@@ -110,13 +110,7 @@ internal static class FixedHeadChecks
                         width * 1e-5f,
                         "fixed distance from stay"
                     );
-                    var clew = FishermansStaysailReefingGeometry.Pose(
-                        c[3],
-                        c[0],
-                        c[1],
-                        unroll,
-                        unroll
-                    );
+                    var clew = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], unroll);
                     clew = FishermansStaysailFrameGeometry.RotateAroundMast(
                         clew,
                         c[0],

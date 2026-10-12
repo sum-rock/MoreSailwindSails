@@ -5,6 +5,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 {
     internal static class FishermansStaysailFrameGeometry
     {
+        internal static Vector3 ProjectOntoMast(Vector3 point, Vector3 forePoint, Vector3 axis) =>
+            forePoint + axis * Vector3.Dot(point - forePoint, axis);
+
         internal static Vector3 ModelOffset(Vector3 pivot, Vector3 alignedHead) =>
             pivot - alignedHead;
 

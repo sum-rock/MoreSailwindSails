@@ -10,39 +10,26 @@ internal static class PatchChecks
 {
     internal static void Run(Assembly assembly)
     {
-        SheetVisualChecks.Run(assembly);
-        // The installed SE save loader and texture button both go through this update.
-        // Guarding only the selector would allow an old saved pattern to reappear.
-        var textureTarget = assembly
-            .GetType(
-                "MoreSailwindSails.Sails.FishermansFlyingSail.Patches.FishermansFlyingSailPlainTexturePatch"
-            )
-            .GetCustomAttribute<HarmonyPatch>()
-            .info;
-        foreach (var name in new[] { "SetTexture", "NextTexture" })
-            if (
-                !CalledMethods(textureTarget.declaringType.GetMethod(name))
-                    .Any(m =>
-                        m.DeclaringType == textureTarget.declaringType
-                        && m.Name == textureTarget.methodName
-                    )
-            )
-                throw new Exception($"SE {name} no longer passes through the plain-texture guard.");
-        var textureButtonPostfix = assembly
-            .GetType(
-                "MoreSailwindSails.Sails.FishermansFlyingSail.Patches.FishermansFlyingSailTextureButtonPatch"
-            )
-            .GetMethod("Postfix", BindingFlags.Static | BindingFlags.NonPublic);
+        const string family = "MoreSailwindSails.Sails.FishermansFlyingSail.";
+        const BindingFlags methods = BindingFlags.Static | BindingFlags.NonPublic;
+        var geometry = assembly.GetType(family + "FishermansFlyingSailGeometry", true);
         if (
-            !textureButtonPostfix
-                .GetCustomAttribute<HarmonyAfter>()
-                .info.after.Contains("com.nandbrew.shipyardexpansion")
+            !CalledMethods(geometry.GetMethod("Create", methods))
+                .Any(m =>
+                    m.DeclaringType.Name == "FishermansFlyingSailBakedMesh" && m.Name == "Create"
+                )
+            || geometry.GetMethod("RestPoint", methods) != null
+            || !CalledMethods(
+                    assembly
+                        .GetType(family + "FishermansFlyingSail", true)
+                        .GetMethod("Register", methods)
+                )
+                .Any(m => m.DeclaringType == geometry && m.Name == "Create")
         )
-            throw new Exception("Hide texture options after SE refreshes its button visibility.");
-        Console.WriteLine(
-            "PASS: installed SE saved/cycled texture routes and texture-button patch ordering."
-        );
-
+            throw new Exception(
+                "Flying Sail registration must construct its rest mesh from the bake."
+            );
+        SheetVisualChecks.Run(assembly);
         var travelPatch = assembly.GetType(
             "MoreSailwindSails.Sails.FishermansFlyingSail.Patches.FishermansFlyingSailTravelPatch"
         );
@@ -117,8 +104,14 @@ internal static class PatchChecks
         {
             foreach (var called in CalledMethods(method))
                 if (
-                    called.Name == "set_sharedMesh"
-                    && called.DeclaringType.FullName == "UnityEngine.SkinnedMeshRenderer"
+                    (
+                        called.Name == "set_sharedMesh"
+                        && called.DeclaringType.FullName == "UnityEngine.SkinnedMeshRenderer"
+                    )
+                    || (
+                        called.Name == "set_uv"
+                        && called.DeclaringType.FullName == "UnityEngine.Mesh"
+                    )
                 )
                     throw new Exception(
                         $"Live cloth mesh replacement in {method.Name}; only prefab construction may assign it."

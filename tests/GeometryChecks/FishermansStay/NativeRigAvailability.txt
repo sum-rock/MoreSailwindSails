@@ -1,0 +1,13 @@
+# Installed Sailwind 0.39 level24, read-only audit 2026-10-12.
+# Only Mast components referenced by BoatCustomParts.partOptions are included.
+# Native candidate donors have walking roots and paired sheet controls;
+# required aft guides were checked. Counts do not establish live fit.
+# boat|registered native mast IDs|expected candidate stay IDs
+BOAT medi medium (50)|2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26|128,132,136,140,144,148
+BOAT junk medium (80)|0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16|128,131,133,135
+BOAT junk large (70)|0,1,2,3,4,5,6,7,8,9,10,11,12,13,14|128,129,133
+BOAT dhow medium (20)|2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17|128,130
+BOAT dhow large (30)|0,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43|128,129,130,131,132,133,134,135,136,137,138,139,140,141
+BOAT medi small (40)|3,4,5,6,8|
+BOAT junk small singleroof(90)|2,3,4,5,6,7|
+BOAT dhow small (10)|3,4,5,6,7|

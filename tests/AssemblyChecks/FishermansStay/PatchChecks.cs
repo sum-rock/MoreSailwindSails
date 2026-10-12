@@ -38,13 +38,22 @@ internal static class PatchChecks
         var saveType = capacity.GetParameters()[0].ParameterType;
         var save = Activator.CreateInstance(saveType);
         var mastField = saveType.GetField("masts");
-        var oldSlots = new bool[128];
-        oldSlots[5] = true;
-        mastField.SetValue(save, oldSlots);
-        capacity.Invoke(null, new[] { save });
-        var extended = (bool[])mastField.GetValue(save);
-        if (extended.Length != 256 || !extended[5] || extended[128])
-            throw new Exception("Stay save capacity lost old state or defaulted a new slot on.");
+        foreach (int originalCapacity in new[] { 48, 128 })
+        {
+            var oldSlots = new bool[originalCapacity];
+            oldSlots[5] = true;
+            mastField.SetValue(save, oldSlots);
+            capacity.Invoke(null, new[] { save });
+            var extended = (bool[])mastField.GetValue(save);
+            if (
+                extended.Length != 256
+                || !extended[5]
+                || extended.Skip(originalCapacity).Any(x => x)
+            )
+                throw new Exception(
+                    "Stay save capacity lost old state or defaulted a new slot on."
+                );
+        }
         var larger = new bool[512];
         larger[400] = true;
         mastField.SetValue(save, larger);

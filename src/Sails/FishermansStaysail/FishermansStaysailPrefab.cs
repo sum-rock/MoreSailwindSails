@@ -36,28 +36,17 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 var source =
                     directory.sails.Length > SourceIndex ? directory.sails[SourceIndex] : null;
                 var sourceSail = source ? source.GetComponent<Sail>() : null;
-                if (
-                    !sourceSail
-                    || sourceSail.prefabIndex != SourceIndex
-                    || sourceSail.category != SailCategory.staysail
-                    || sourceSail.sailName != "brig jib"
-                )
+                if (!sourceSail || sourceSail.prefabIndex != SourceIndex)
                     throw new InvalidOperationException(
-                        $"Expected the brig jib staysail at index {SourceIndex}."
+                        $"Expected a Sail component with prefab index {SourceIndex} on the donor."
                     );
                 var sourceRenderer = sourceSail.cloth
                     ? sourceSail.cloth.GetComponent<SkinnedMeshRenderer>()
                     : null;
-                if (
-                    !sourceRenderer
-                    || !sourceRenderer.sharedMesh
-                    || !sourceRenderer.sharedMesh.isReadable
-                )
+                if (!sourceRenderer)
                     throw new InvalidOperationException(
-                        "The brig jib has no readable skinned cloth mesh."
+                        "The staysail donor requires Cloth with a SkinnedMeshRenderer."
                     );
-
-                var sourceMesh = sourceRenderer.sharedMesh;
 
                 // An inactive parent prevents Awake/Start from running on our
                 // template. Installed copies retain activeSelf=true and initialize normally.
@@ -97,66 +86,20 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 mesh.RecalculateTangents();
                 mesh.RecalculateBounds();
                 shadowMesh = new Mesh { name = objectPrefix + " Shadow Samples" };
-                // Native shadow checking casts one ray per vertex per frame.
-                // Use a coarse 3x3 sample grid, not all 825 cloth vertices.
-                var shadowPoints = new Vector3[9];
-                for (int row = 0; row < 3; row++)
-                for (int col = 0; col < 3; col++)
-                {
-                    shadowPoints[row * 3 + col] = geometry.Vertices[
-                        row
-                            * (FishermansStaysailGeometry.Rows / 2)
-                            * (FishermansStaysailGeometry.Columns + 1)
-                            + col * (FishermansStaysailGeometry.Columns / 2)
-                    ];
-                    // Fixed center-plane samples are neutral between tacks.
-                    shadowPoints[row * 3 + col].y = 0;
-                }
-                shadowMesh.vertices = shadowPoints;
-                shadowMesh.triangles = new[]
-                {
-                    0,
-                    3,
-                    1,
-                    1,
-                    3,
-                    4,
-                    1,
-                    4,
-                    2,
-                    2,
-                    4,
-                    5,
-                    3,
-                    6,
-                    4,
-                    4,
-                    6,
-                    7,
-                    4,
-                    7,
-                    5,
-                    5,
-                    7,
-                    8,
-                };
+                shadowMesh.vertices = FishermansStaysailShadowGeometry.Samples(
+                    vertices: geometry.Vertices
+                );
+                // SailShadowCol reads only vertices; its separate BoxCollider receives rays.
                 shadowMesh.RecalculateBounds();
                 FishermansStaysailRig.Configure(sail, geometry, mesh, shadowMesh);
                 FishermansStaysailAppearance.Configure(sail);
-                var renderer = sail.cloth.GetComponent<SkinnedMeshRenderer>();
                 clone.SetActive(true);
                 sail.SetSailArea();
-
-                // Verify that the source still points at its original mesh.
-                if (sourceRenderer.sharedMesh != sourceMesh || renderer.sharedMesh == sourceMesh)
-                    throw new InvalidOperationException(
-                        "The Fisherman's Staysail must own a separate cloth mesh."
-                    );
 
                 string registrationMessage =
                     $"Registered {displayName}: source={SourceIndex}, index={prefabIndex}, "
                     + $"vertices={mesh.vertexCount}, corners=4, pinnedLuff=true, "
-                    + $"area={sourceSail.GetSailArea():F2}->{sail.sailArea:F2}. Original brig jib preserved.";
+                    + $"area={sail.sailArea:F2}.";
 
                 if (directory.sails.Length <= prefabIndex)
                     Array.Resize(ref directory.sails, prefabIndex + 1);

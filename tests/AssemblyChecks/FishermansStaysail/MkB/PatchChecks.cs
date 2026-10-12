@@ -47,12 +47,9 @@ internal static class PatchChecks
         }
         if (
             Type("MkB.FishermansStaysailMkBShape").BaseType != Type("FishermansStaysailShape")
-            || Type("MkB.FishermansStaysailMkBShape")
-                .GetProperty("FixedUpperHeadAngle", all)
-                .DeclaringType != Type("MkB.FishermansStaysailMkBShape")
             || (float)
-                Type("MkB.FishermansStaysailMkBGeometry")
-                    .GetField("FixedUpperHeadAngle", all)
+                Type("FishermansStaysailFixedHead")
+                    .GetField("DeployedAngle", all)
                     .GetRawConstantValue() != 14f
         )
             throw new Exception("Mk.B does not use the shared rig's 14-degree fixed head.");

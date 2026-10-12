@@ -21,9 +21,9 @@ reference, verification procedures and
 ## Build and automated checks
 
 The pinned Nix flake supports **x86_64 Linux** with .NET 8; the plugin targets
-`netstandard2.0`. Install Sailwind, BepInEx 5 and Shipyard Expansion locally.
-The build references their installed assemblies, including HarmonyX and Unity;
-no Unity editor or separate asset bundle is required.
+`netstandard2.0`. Install Sailwind and BepInEx 5 locally. Shipyard Expansion is
+optional. The build references installed game, BepInEx, HarmonyX and Unity
+assemblies; no Unity editor or separate asset bundle is required.
 
 From the repository root, restore a fresh checkout:
 
@@ -125,6 +125,25 @@ The solution includes the plugin and both check projects. Feature namespaces
 follow their directories under `MoreSailwindSails`; Harmony patches live in each
 feature's `Patches/` directory and `.Patches` namespace.
 
+Stay/sail feature patches use one file per integration responsibility, with
+multiple top-level patch classes per file. Filenames combine `Stay`, `Staysail`
+or `FlyingSail` with `SailwindPatches.cs` or `NANDFixesPatches.cs`; staysails
+also have `StaysailSailInfoPatches.cs`.
+
+- **Sailwind:** native fitting, movement, collision, controls, cloth,
+  aerodynamics, travel, support protection, refresh and shipyard availability.
+- Native registration, new-sail initialization, stay save capacity, load
+  preparation and shipyard navigation also belong in **Sailwind**. Optional SE
+  ordering annotations preserve coexistence without referencing SE types.
+- **NANDFixes:** order-text wrapping that prevents recursive long-line handling.
+- **SailInfo:** optional staysail angle reporting.
+
+Classify by integration responsibility. Registration follows optional SE donor
+and rig initialization and precedes All Sails inventory caching. Shared
+`Compatibility/Patches/` and `Controls/Patches/` retain their existing layout.
+Preserve patch class names, namespaces and Harmony metadata when regrouping
+files; the existing discovery and reflection checks use them.
+
 | Location                          | Responsibility                                                                                                      |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `src/Plugin.cs`                   | Identity, dependencies, Harmony discovery and optional SailInfo integrations                                        |
@@ -140,8 +159,10 @@ Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
 with one type per file. They retain the `MoreSailwindSails.BoatRigs` namespace.
 
 Use named arguments where practical, especially profile constructors, explicit
-null fallbacks and flags. Keep one class per file with a responsibility comment.
-Preserve authored values and ordering when changing argument style.
+null fallbacks and flags. Prefer one class per file with a responsibility
+comment, except for the integration-grouped stay/sail patch files above. Those
+files have both file and class responsibility comments. Preserve authored values
+and ordering when changing argument style.
 
 Add future sail families under their own `src/Sails/<Family>/` directory. Keep
 Flying Sail and staysail mechanics independently editable; new families need not
@@ -164,9 +185,9 @@ resolve full type names: update both when moving or renaming code.
   mirrored-mesh experiment passed geometry checks but detached/reset in game.
   Initialization and existing furl/render refreshes serve separate purposes.
 - Construct templates under inactive parents with fresh Cloth for new topology.
-  Preserve the donor Animator as SE's scaling reference and the hierarchy
-  expected by `SailShadowCol`. Template-owned and instance-owned meshes have
-  distinct lifetimes. Never mirror collider transforms using negative scale.
+  Preserve the donor Animator for optional SE scaling and the hierarchy expected
+  by `SailShadowCol`. Template-owned and instance-owned meshes have distinct
+  lifetimes. Never mirror collider transforms using negative scale.
 - Rope endpoints are independent leaves: native `RopeEffect` calls `LookAt` on
   them and must not rotate skin bones. Preserve coupled edge fitting and finite
   fallbacks.
@@ -186,15 +207,21 @@ resolve full type names: update both when moving or renaming code.
 - Each family retains its iterative order-text guard before NANDFixes. HarmonyX
   runs later prefixes even after `false`: append wrapped lines to the native
   list and consume input so later prefixes cannot recurse on it.
-- New sails use native white palette **11** and SE's named plain texture
-  **ParticleCloudWhite**. Preserve saved colors, recoloring and the hidden
-  color-reference renderer; scope plain texture/selector/material guards to
-  custom sails. Never change donor/shared assets. With **Shipyard Expansion
-  0.12.1**, texture selections and allowed options are strings, and the catalog
-  is a name-keyed dictionary. The compatibility patch registers the native plain
-  texture before prefab setup without changing other catalog entries. The former
-  numeric texture-zero ordering helper is no longer used. This build targets the
-  new API and does not support SE 0.11.1.
+- New sails use native white palette **11**. Both Fisherman sail families use
+  the built-in white texture on their private recolored materials. Preserve
+  saved colors, native recoloring and the hidden color-reference renderer. SE
+  may supply pattern selection when installed; MSS does not edit its catalog or
+  restrict textures. Never change donor/shared assets.
+
+### Native wind-shadow samples
+
+Both Fisherman sail families give `SailShadowCol` a mesh containing nine
+center-plane sample vertices, without triangle indices. Read-only inspection of
+installed Sailwind 0.39 on **2026-10-12** confirmed `CheckShadow` iterates
+`Mesh.vertices`, casts upwind rays and averages occlusion; it never reads mesh
+triangles. The separate `BoxCollider`, sized explicitly by each rig, receives
+those rays. Keep sample positions, bounds and collider setup when changing this
+mesh; it serves wind shielding rather than visible shadow rendering.
 
 ### Sailwind 0.39 audio
 
@@ -268,8 +295,8 @@ switching, Unity rendering and performance remain unverified.
   the luff. The isosceles trapezoid has luff `2 × width`, head rising **20°**
   aft, foot falling **20°** aft and aft edge about `2.728 × width`. Derive edge
   budgets, area, bounds and shadow samples from this cut. New selections use
-  `SailScaler.SetScaleAbs(1f, 1f)` after SE initialization; preserve saved
-  sizes.
+  native `Sail.LoadScale(y: 1f, z: 1f)` after optional SE initialization;
+  preserve saved sizes.
 - Retain **85%** upper-corner sheeting response with coupled foot/leech fitting.
   The attempted 60% response caused in-game creases and was reverted.
 - Pivot around the offset luff. Two fixed **0.4572 m (18-inch)** ties hold its
@@ -289,6 +316,53 @@ switching, Unity rendering and performance remain unverified.
   separate from billow bounds. Retain the first strip; include mast radius/tie
   gap in span checks and compare each head to its own active guide. Restore the
   aligned neutral rotation after sweeping; keep native obstruction rules.
+
+### Flying Sail authoring and bake
+
+The editable
+[Flying Sail Blender asset](../assets/flying_sail/fishermans_flying_sail.blend)
+is a flat **4.6-unit** wide cut with a **9.2-unit** luff, head rising **20°**
+aft and foot falling **20°** aft. Its **24 × 32** quad grid contains **825
+vertices**, **768 quads** and **1,536 triangles**. Blender X points aft, Z up
+and Y is zero; the forward head is the origin, transforms are identity and
+normals face −Y. One proportional planar UV island has a 5% margin. The neutral
+preview material is not exported.
+
+From the repository root with Blender **5.1.1**:
+
+```sh
+blender --background --factory-startup --python-exit-code 1 --python tools/generate_flying_sail.py
+blender --background assets/flying_sail/fishermans_flying_sail.blend --python-exit-code 1 --python tools/bake_flying_sail.py
+blender --background assets/flying_sail/fishermans_flying_sail.blend --python-exit-code 1 --python tests/BlenderChecks/check_flying_sail_bake.py
+```
+
+Generation replaces the asset; use `-- --output /tmp/flying-sail.blend` to
+preserve hand edits. Baking reads the open saved asset without saving it,
+validates its nominal cut, grid correspondence, winding and continuous planar
+UVs, then exports normalized positions, UVs and triangles into
+`FishermansFlyingSailBakedMesh.g.cs`. Use `-- --check` to verify freshness
+without writing or `-- --output /tmp/flying-sail.g.cs` for a separate output.
+Modifiers, shape keys, changed outlines/topology, seams, non-finite values and
+distorted UVs are rejected. Normal .NET builds use the checked-in C# and require
+neither Blender nor an asset bundle. Authoring and bake utilities are shared
+with staysails; their existing commands and outputs remain.
+
+`FishermansFlyingSailGeometry.Create` consumes fresh baked arrays, scales the
+flat cut to the requested width and adds the existing circular camber and capped
+luff bow. It no longer generates flat positions, UVs or triangle topology.
+Corners and all **429** rest bone positions come from corresponding mesh
+vertices; the redundant `RestPoint` calculation is removed. Skin weights, four
+pinned corners, Cloth constraints, centroid and live shaping functions remain.
+Baked UVs are retained because the cut is fixed; physical deformation and
+nonuniform scaling can still stretch textures. `FishermansFlyingSailMeshData`
+owns the arrays.
+
+The default cloth uses `Texture2D.whiteTexture` on the private material obtained
+by native recoloring, shared with reefed renderer references. This retains the
+native shader and tint; later SE texture selection remains unrestricted. Donor
+prefab components and native knot assets remain in use. Prefab **400**,
+**Other** category, donor-height/3 base width, luff installation height and
+saved scale conventions are preserved; no save migration is introduced.
 
 ### Rope visuals and knots
 
@@ -332,12 +406,21 @@ identify the incompatible channel and available diagnostic context.
 
 ## Staysails
 
-All marks fit registered Fisherman's Stays. Register after SE and before All
-Sails caches its inventory. Each mark's `FishermansStaysailShape` supplies
-geometry and owned-asset prefixes for template and instance creation; do not
-reintroduce separate geometry/prefix arguments. The family builder owns donor
-**110** and template slope **20°**; first binding creates the owned mesh for the
-actual stay slope before enabling Cloth. Mesh and bind poses then stay fixed.
+All marks fit registered Fisherman's Stays. Register after optional SE and
+before All Sails caches its inventory. Each mark's `FishermansStaysailShape`
+supplies geometry and owned-asset prefixes for template and instance creation;
+do not reintroduce separate geometry/prefix arguments. The family builder owns
+donor **110** and template slope **20°**; first binding creates the owned mesh
+for the actual stay slope before enabling Cloth. Mesh and bind poses then stay
+fixed.
+
+Staysail registration validates donor index **110**, `Sail`, `Cloth` and its
+`SkinnedMeshRenderer`, plus destination-slot availability. It does not require
+the donor's exact name/category or deployed mesh data: the authored mesh
+replaces that geometry. The registration log reports only the constructed sail's
+area, avoiding native `GetSailArea` reads of donor vertices/triangles.
+Component-specific rig checks still validate the machinery used during
+construction. Flying Sail's registration checks are unchanged.
 
 | Cut  | Geometry in the forward-mast frame                                                   |
 | ---- | ------------------------------------------------------------------------------------ |
@@ -355,14 +438,122 @@ downward from the stay's forward endpoint. Retain **15 cm** head/aft-mast
 clearances, spar-length/span fitting and native collision checks. Collision
 strips use lowest head/highest foot with **5 cm** edge margins; disable strips
 too shallow for margins plus **1 cm** height or clipped below **1 mm** width.
-New selections start at **50% width/height** through SE after initialization;
-uniform scaling preserves the cut and existing saves retain their dimensions.
+New selections start at **50% width/height** through native `Sail.LoadScale`.
+Native scaling and persistence handle installations without SE; when installed,
+SE patches those same native APIs. MSS does not force a scaling mode or replace
+saved sizes with new-sail defaults.
+
+### Blender authoring meshes
+
+[tools/generate_staysail.py](../tools/generate_staysail.py) generates separate
+editable [Mk.A](../assets/staysails/fishermans_staysail_mka.blend),
+[Mk.B](../assets/staysails/fishermans_staysail_mkb.blend) and
+[Mk.C](../assets/staysails/fishermans_staysail_mkc.blend) Blender files. The
+generator and baker share nominal dimensions in
+[tools/staysail_authoring.py](../tools/staysail_authoring.py) and grid, UV and
+export utilities with the Flying Sail in
+[tools/sail_authoring.py](../tools/sail_authoring.py). From the repository root,
+using a separately installed Blender (verified with **5.1.1**):
+
+```sh
+blender --background --factory-startup --python-exit-code 1 --python tools/generate_staysail.py -- --cut B
+```
+
+Use `--cut A`, `B` or `C`; omitting it retains the original Mk.A command.
+Generation replaces the selected file. Preserve hand edits with
+`--output /tmp/staysail.blend`. The generator only runs in background mode and
+starts with an empty scene.
+
+All cuts have width **13.8 units** and a nominal head rising **20°** aft. A and
+B have a 13.8-unit luff; C has a 20.7-unit luff. Their feet fall 20°, remain
+level and rise 40°, respectively. Width matches donor 110's installed
+`Sail.installHeight`; no native mesh or texture is copied. Each regular **24 ×
+32** quad grid has **825 vertices**, **768 quads** and **1,536 triangles**. The
+files have no thickness, modifiers or rig.
+
+Blender **+X** points aft, **+Z** points up, and **Y = 0**. The object origin is
+the forward upper corner, transforms are identity, and normals face **-Y**.
+Conversion to the sail-local frame is
+`(gameX, gameY, gameZ) = (blenderZ, -blenderY, blenderX - 13.8)`. A single
+planar UV island uses uniform scale and a 5% margin inside a square texture.
+Each file includes a neutral preview material and front orthographic view with
+mesh edges visible; the preview material is not exported.
+
+[tools/bake_staysail.py](../tools/bake_staysail.py) reads the saved asset and
+exports normalized sail-local vertices, UVs and triangle indices to the matching
+`MkA`, `MkB` or `MkC` generated C# mesh file:
+
+```sh
+blender --background assets/staysails/fishermans_staysail_mkb.blend --python-exit-code 1 --python tools/bake_staysail.py -- --cut B
+```
+
+The baker does not regenerate or save the Blender file. Include generated C#
+with asset changes; normal .NET builds use it directly and need no Blender or
+asset bundle. Append `--check` after `--` to verify freshness without writing,
+or `--output /tmp/staysail.g.cs` for a separate output. The selected cut must
+match the open asset; A remains the default.
+
+Baking validates each nominal outline, row-major vertex order, quad connectivity
+and continuous planar UVs with a 5% margin. It rejects changed
+dimensions/topology, non-planar vertices, transforms, modifiers, shape keys,
+seams and distorted UVs. Changing these requires coordinated rig and bake
+validation changes. Quads split along the existing runtime diagonal.
+
+Each shape component selects its baked arrays and calls
+`FishermansStaysailMeshFitting.Fit` directly; the three per-cut geometry
+wrappers and their unused dimension constants are removed. The shared fitter
+validates width/slope, scales the cut, adjusts the head to the actual stay
+slope, projects UVs from the fitted bounds and adds the existing rest camber. UV
+bounds use the lowest foot corner, which differs between A and C. Nominal
+mappings agree with the baked UVs. `FishermansStaysailGeometry.Create` is
+removed; the remaining geometry helpers supply skinning, Cloth constraints, bone
+indices and centroids. Frame and installation geometry still handle
+mast-relative positioning, clearances and collisions.
+`FishermansStaysailMeshData` owns one instance's arrays.
+`FishermansStaysailShadowGeometry` supplies the same nine center-plane shadow
+samples and collider bounds to template construction and instance fitting; mesh
+ownership and cleanup stay with those callers.
+
+Initialization assigns the fitted mesh and UVs before recalculating tangents and
+enabling Cloth. Tacks and reefing do not rewrite them. Base dimensions, prefab
+IDs **401/402/403**, placement/scale conventions, controls and reefing remain.
+No save migration is needed by the data format; live save compatibility still
+requires game checks. B/C pattern placement changes with planar UVs; nonuniform
+scaling and Cloth deformation can still stretch textures.
+
+All three staysails default to `Texture2D.whiteTexture`. Native
+`ChangeSailColor` first obtains a private material through `Renderer.material`;
+appearance setup replaces its main texture and shares it with the partial-reef
+renderer and furled color reference. This retains the native double-sided shader
+and tint, adds no texture files or dependencies, and does not modify the donor
+material or destroy Unity's built-in texture. Initialization sets the default
+once; later native recoloring and optional SE pattern selection remain in
+control. The result is plain shaded cloth without painted weave or seams.
+
+The installed brig donor uses the `medi medium sail paint Diffuse Color` atlas,
+whose separate sail regions and empty background do not suit these planar UVs. A
+**2026-10-12** inspection of Crystal Isles Sail Pack's topsail **135** and
+jackyard **136** found `sail cloth test` using the same Ciconia double-sided
+shader and `ParticleCloudWhite` (256 × 256, solid white RGB with varying alpha)
+in an opaque material, without a normal map. Their furled meshes have separate
+textures. MSS follows that plain-default approach without copying assets or
+depending on the pack. SE texture switching remains unrestricted, including the
+donor pattern that the user observed mapping incorrectly on A.
+
+Run the Blender-only checks separately from the two .NET suites, once per cut
+with the matching file and `--cut`:
+
+```sh
+blender --background assets/staysails/fishermans_staysail_mkb.blend --python-exit-code 1 --python tests/BlenderChecks/check_staysail_bake.py -- --cut B
+```
 
 ### Fixed head and reefing
 
 - Upper aft target is **14° × clamped currentUnroll** leeward: **14°/7°/0°** at
   full/half/zero deployment. Rotate the neutral head about the fore-mast axis,
   preserving height/span and independence from lower sheets and wind strength.
+  `FishermansStaysailFixedHead.DeployedAngle` owns the shared 14° constant;
+  shapes no longer expose identical per-cut angle properties.
 - Select tacks from apparent wind projected on
   `Cross(mastAxis, neutralAftDirection)`. A **±0.6 m/s** deadband retains the
   previous side; indeterminate initialization defaults positive. Smooth
@@ -372,13 +563,19 @@ uniform scaling preserves the cut and existing saves retain their dimensions.
   a **12%-width** head peak. Interior travel is capped near **60%** of local
   camber plus foot/leech allowances and clew taper. Opposite-tack skin tests did
   not reproduce Sanbuq's reported asymmetry; excess travel was a suspected
-  contributor, not a confirmed Cloth-level cause.
+  contributor, not a confirmed Cloth-level cause. Each bone update resolves
+  support validity, fore point and axis once before the row loop. Luff
+  projection shares the frame-geometry formula; these values are local to the
+  update, so support changes are still observed without a persistent cache.
 - Reef **upward** using the brig jib's native `reef` clip/controller and
   `furled__sail_cloth_jib` mesh from `sharedassets15.assets`. Sample an
   inactive, stripped animation hierarchy at `1 - currentUnroll`, with no live
   donor scripts or colliders. Preserve animation binding paths and donor
   Animator; disable the original reef component so it cannot compete with custom
-  rendering.
+  rendering. Only the rope-position channel is normalized for vertical lift.
+  Fold-scale sampling and `Spread` were removed: reef posing receives the four
+  corners, all with Y = 0, so multiplying their Y by spread had no effect.
+  Interior camber continues to be applied separately by the bone update.
 - The lower corner gathers toward the reefed head angle. Below **4%**
   deployment, show the recolorable native bundle fitted between posed head
   endpoints, returning to neutral at full furl. Above it use the sampled panel
@@ -439,13 +636,16 @@ axis to the attachment height while preserving the native radial offset. Native
 guides remain unchanged and must be active. Boat-specific checks own measured
 endpoint/slope assertions; shared checks cover guide alignment and fitting.
 
-Append groups/options after SE initializes customization; never reorder save
-slots. Reserve mount IDs **128–255** and expand capacity to **256** without
+Append groups/options after native and optional SE customization; never reorder
+save slots. Reserve mount IDs **128–255** and expand capacity to **256** without
 shrinking larger arrays. Missing old-save/cancellation entries restore **None**.
-Validate profiles and occupied IDs before construction; roll back a boat's new
-stays on failure. Protect occupied stays/supports during invalid previews and
-restore preview state in a finalizer. Normalize stay and walking geometry
-independently to the same endpoints; donor bounds may differ from `mastHeight`.
+Keep unavailable variants in their original option slots; missing donors,
+required masts or guides disable that variant rather than reject the boat.
+Missing excluded parts impose no restriction. Validate geometry and occupied IDs
+before construction; roll back a boat's new stays on failure. Protect occupied
+stays/supports during invalid previews and restore preview state in a finalizer.
+Normalize stay and walking geometry independently to the same endpoints; donor
+bounds may differ from `mastHeight`.
 
 ### Kakam and Dhow
 
@@ -1013,17 +1213,89 @@ searches.
 
 ### Automated baseline and limits
 
+On **2026-10-12**, staysail registration dropped obsolete donor-mesh checks and
+the donor-area comparison, retaining source/component and destination guards.
+The Release build, both .NET suites and pinned formatting/diff checks passed.
+Registration in Unity still needs an in-game check; no new game observations
+were made.
+
+On **2026-10-12**, redundant shadow-mesh triangle lists were removed from both
+Fisherman prefab builders. Nine sample vertices, bounds and collider behavior
+are retained. The Release build, both .NET suites and pinned formatting/diff
+checks passed. Wind-shadow behavior after this cleanup still needs an in-game
+check with one sail shielding another; no new game observations were made.
+
+On **2026-10-12**, Flying Sail **400** also moved to a baked Blender cut and a
+plain white default. Blender **5.1.1** checks passed for deterministic output,
+freshness, incompatible edits and read-only stale checks, including all three
+staysail assets after shared-tool extraction. Their generated outputs are
+unchanged. The Release build reported zero warnings/errors; both .NET suites and
+pinned formatting/diff checks passed. GeometryChecks compares the baked rest
+surface with analytical expectations across widths **0.25–100**, including
+**4.6** and **3.80/3.81/3.82** around the luff-bow cap, and verifies planar UVs,
+legacy topology and independent arrays. Existing centroid, skinning, four-pin,
+hoisting, tacking, mast-tie, collision and aerodynamic checks also passed.
+AssemblyChecks verifies registration consumes the bake, private plain-material
+initialization and the existing fixed-mesh lifecycle.
+
+This Flying Sail change has no in-game observations yet. Check default/recolored
+appearance, resizing, both tacks, partial/full hoisting, striking, ropes/knots,
+shadows and shipyard preview/cancel on Brig, then Sanbuq. Load a pre-change save
+with a resized/recolored Flying Sail and save/reload; include native+MSS and
+SE+MSS configurations. Verify later SE texture choices remain in control and
+check the original brig jib for material regressions.
+
+On **2026-10-12**, all three staysails moved to authored Blender meshes and one
+shared fitter, removing procedural cut creation. Blender **5.1.1** checks passed
+for each cut's deterministic output, checked-in freshness, incompatible-edit
+rejection and read-only stale checks. GeometryChecks compares all cuts with
+independent analytical outlines and verifies legacy topology, nominal UV
+agreement, proportional fitted UVs over widths **0.25–100** and slopes
+**0–80°**, invalid inputs, independent arrays and existing rig cases across all
+**103** stays. AssemblyChecks verifies all three entry points consume their bake
+directly through the shared fitter, procedural creation and per-cut wrappers are
+absent, and mesh/UV assignment remains confined to initialization. The Release
+build reported zero warnings/errors and both .NET suites passed. Pinned
+CSharpier and Prettier checks also passed.
+
+The subsequent **2026-10-12** cleanup removed inactive reef-spread sampling and
+per-cut geometry wrappers, shared shadow calculations and captured the luff
+frame once per bone update. The Release build (zero warnings/errors), both .NET
+suites, pinned CSharpier/Prettier and diff checks passed. Added coverage
+verifies zero-Y reef corners, shadow sample order/bounds across all three cuts,
+and projection onto translated/raked mast frames. Assembly checks cover direct
+shape fitting, shared head policy and the captured-frame call structure.
+Production C# shrank by **37 lines**, test C# by **8**, and the test project by
+**8** (including the new shadow helper). Assets and generated mesh data did not
+change. Blender checks were not rerun for this cleanup. No new in-game
+observations were made.
+
+The user confirmed A's baked shape looks correct in game, then confirmed the
+plain white default works after the donor-atlas mismatch was identified. No
+specific boat, reefing or save/reload coverage was reported. The user also
+observed SE can still select the incorrectly mapped donor texture; changing that
+selection behavior was explicitly left out of scope. B/C's new baked meshes,
+planar UVs and plain defaults have no in-game validation yet.
+
+On Brig, check all three cuts at different sizes and colors, both tacks,
+partial/full reefing and preview/cancel. Load a pre-change save containing
+resized, recolored A/B/C sails, check placement and controls, then save/reload.
+Include native+MSS and SE+MSS configurations; verify later SE pattern selections
+are not overwritten. Check Flying Sail and the original brig jib for
+regressions. Passing automation does not establish rendering or live save
+compatibility.
+
 The **0.3.0-dev** branch cleanup on **2026-10-12** removes the experimental sail
 family, its authored assets, bake tools, dedicated checks and profiling-only
 visual cache/bypass support. Flying Sail, all three staysail cuts, boat
 profiles, shared rope rendering and CPU/frame profiling remain.
 
 Release builds with zero warnings/errors, and both check suites pass.
-AssemblyChecks covers **62** Harmony targets against installed assemblies. No
-in-game validation was performed for this removal. Verify shipyard fitting,
-controls, save/reload and the simplified F7 capture toggle on Brig before wider
-runtime testing. Saves containing removed experimental prefabs are outside this
-branch's supported runtime validation.
+AssemblyChecks now covers **58** Harmony targets against installed native
+assemblies. No in-game validation was performed for this removal. Verify
+shipyard fitting, controls, save/reload and the simplified F7 capture toggle on
+Brig before wider runtime testing. Saves containing removed experimental prefabs
+are outside this branch's supported runtime validation.
 
 | Area                       | Coverage and limitation                                                                                                                                                                                         |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1052,22 +1324,68 @@ or total allocation measurements. The separate installed-asset collar audit
 covered **160 cases** (both ends of 40 variants in visual/walking forms); it
 does not establish visual acceptance.
 
-### Shipyard Expansion 0.12.1 compatibility
+### Optional Shipyard Expansion
 
-The 0.2.2 texture compatibility fix is incorporated into **0.3.0-dev**. Both
-Fisherman families use SE 0.12.1's named texture catalog, string selections and
-string allowed-option lists. The obsolete numeric catalog-order helper and
-fixture are removed; installed assembly checks cover the named API and each
-family's plain-texture guard. SE **0.12.1 is required**; the dependency
-declaration intentionally has no minimum-version loading guard.
+**0.3.0-dev** has no SE assembly reference or SE patch targets. Its soft BepInEx
+dependency retains load order when SE is installed. AssemblyChecks rejects
+attempts to resolve `ShipyardExpansion` or `SE_Bridge` and verifies the built
+plugin's dependency metadata. The default size calls use native
+`Sail.LoadScale`: 50% for staysails and 100% for Flying Sail. The native save
+loader restores sizes through the same API; SE supplies its own behavior when
+installed. No scaler, texture catalog or replacement save format is added.
 
-On **2026-10-04**, the original failed development session logged a
-`MissingFieldException` for `SailTextureChanger.sailTextures`, interrupting
-`PrefabsDirectory.Start`. A later SE scale exception interrupted save loading;
-incomplete prefab initialization is a suspected consequence. The user then
-successfully loaded a save upgraded from MSS 0.2.1 / SE 0.11.1 to MSS 0.2.2 / SE
-0.12.1 and observed no disappearing sails or bad textures. That observation
-covers the tested save, not general save migration and downgrade compatibility.
+Appearance uses native white recoloring and shared reefed material references.
+Both Fisherman sail families default to a plain white texture. SE pattern
+selection is unrestricted. Prefab IDs 400–403 and stay mount IDs 128–255 are
+preserved. SE-only rigging is not recreated: missing variants retain unavailable
+option entries, preserving the positions of later options. Native `CanInstall`
+ignores the `canInstall` field, so the existing MSS installation guard
+explicitly rejects these entries.
+
+A read-only **2026-10-12** audit of installed Sailwind 0.39 `level24` identified
+**29** native-only candidate stays: Brig **6**, Junk **4**, Jong **3**, Sanbuq
+**2** and Baghala **14**. Cog, Kakam and Dhow's current stays require SE-added
+parts; their unavailable entries do not prevent other profiles from registering.
+The numeric `NativeRigAvailability.txt` fixture records registered mast IDs and
+expected candidate mount IDs. Donor walking roots, paired sheets and required
+aft guides were also inspected. Mod-added boats still need their providing mods.
+This is asset evidence, not live construction or fit validation.
+
+The installed native shipyard has 48 mast selectors and eight parts rows. MSS
+extends selectors to at least 256 and, when more parts rows are needed, clones
+native rows into pages with previous/next arrows and a page counter. Native
+option indices, error labels and order processing still use the full arrays.
+Paging follows the current boat/category and is not installed when SE supplies
+its own navigation.
+
+On **2026-10-12**, the Release build and both check suites passed with the
+installed references and with an isolated reference directory containing only
+the game and BepInEx assemblies (no plugins). Builds reported zero warnings or
+errors. Checks covered 58 native Harmony targets and all 29 native candidate
+stays. Optional SailInfo signature checks passed with installed references and
+were skipped in the isolated run.
+
+On **2026-10-12**, the user confirmed that removing the rotation, flip and
+forced-uniform scaling restrictions works. No boat, sail-cut or save/reload
+coverage was specified. These observations precede the native scaling, texture,
+partial-profile and paging changes; those have no in-game validation recorded
+yet.
+
+Use separate, consistent mod configurations for validation: native game plus
+MSS, and SE plus MSS. Start with Brig, then the other available boat profiles.
+Check menu reachability beyond eight groups, category/boat switching, later
+valid variants after unavailable entries, rejection of unavailable orders,
+initial sizes, resizing, textures/colors, reefing, sheets, order completion and
+cancellation, save/reload and old snapshots. Confirm the original donor sails
+and SE's own pages still work. Automated checks cannot exercise Unity
+initialization, material updates, page layout or live save restoration.
+
+Removing SE from an existing SE-equipped save is outside this change's supported
+migration scope. Part selections are positional, and SE stores additional sail
+state. Keep the mod setup stable for an existing save; MSS does not reinterpret
+SE parts, patterns or nonuniform sail state after removal. The **2026-10-04**
+successful MSS 0.2.1 / SE 0.11.1 to MSS 0.2.2 / SE 0.12.1 upgrade observation
+remains historical evidence for that tested save only.
 
 ### Confirmed game observations
 

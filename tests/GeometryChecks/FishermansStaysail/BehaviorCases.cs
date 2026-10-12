@@ -12,37 +12,41 @@ internal static class BehaviorCases
     {
         internal readonly string Name;
         internal readonly Func<float, float, FishermansStaysailMeshData> Create;
-        internal readonly float HeadAngle;
+        internal float HeadAngle => FishermansStaysailFixedHead.DeployedAngle;
 
-        internal Mark(
-            string name,
-            Func<float, float, FishermansStaysailMeshData> create,
-            float headAngle
-        )
+        internal Mark(string name, Func<float, float, FishermansStaysailMeshData> create)
         {
             Name = name;
             Create = create;
-            HeadAngle = headAngle;
         }
     }
 
+    internal static FishermansStaysailMeshData CreateA(float width, float headSlope = 20f) =>
+        FishermansStaysailMeshFitting.Fit(
+            data: FishermansStaysailMkABakedMesh.Create(),
+            width: width,
+            headSlope: headSlope
+        );
+
+    internal static FishermansStaysailMeshData CreateB(float width, float headSlope = 20f) =>
+        FishermansStaysailMeshFitting.Fit(
+            data: FishermansStaysailMkBBakedMesh.Create(),
+            width: width,
+            headSlope: headSlope
+        );
+
+    internal static FishermansStaysailMeshData CreateC(float width, float headSlope = 20f) =>
+        FishermansStaysailMeshFitting.Fit(
+            data: FishermansStaysailMkCBakedMesh.Create(),
+            width: width,
+            headSlope: headSlope
+        );
+
     private static readonly Mark[] Marks =
     {
-        new Mark(
-            "Mk.A",
-            FishermansStaysailMkAGeometry.Create,
-            FishermansStaysailMkAGeometry.FixedUpperHeadAngle
-        ),
-        new Mark(
-            "Mk.B",
-            FishermansStaysailMkBGeometry.Create,
-            FishermansStaysailMkBGeometry.FixedUpperHeadAngle
-        ),
-        new Mark(
-            "Mk.C",
-            FishermansStaysailMkCGeometry.Create,
-            FishermansStaysailMkCGeometry.FixedUpperHeadAngle
-        ),
+        new Mark("Mk.A", CreateA),
+        new Mark("Mk.B", CreateB),
+        new Mark("Mk.C", CreateC),
     };
 
     internal static readonly float[] Reefs =

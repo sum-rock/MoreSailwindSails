@@ -31,6 +31,13 @@ internal static class PatchChecks
         )
             throw new Exception("Mk.A save identity changed.");
         var registration = Patch("Registration", "Postfix");
+        if (Method("FishermansStaysailGeometry", "Create") != null)
+            throw new Exception("Procedural staysail mesh creation must be removed.");
+        if (
+            !CalledMethods(Method("FishermansStaysailRig", "InitializeCut"))
+                .Any(m => m.Name == "set_uv")
+        )
+            throw new Exception("Fitted staysail UVs must reach the initialized mesh.");
         if (
             !registration
                 .GetCustomAttribute<HarmonyAfter>()
@@ -71,16 +78,27 @@ internal static class PatchChecks
                 )
         )
             throw new Exception("Mk.A is not sampling the actual native reef animation.");
+        if (
+            Type("FishermansStaysailReefing").GetProperty("Spread", all) != null
+            || Type("FishermansStaysailReefing").GetField("FoldBone", all) != null
+        )
+            throw new Exception("Unused reef spread sampling returned.");
+        var shaping = CalledMethods(Method("FishermansStaysailRig", "UpdateShapeBones")).ToArray();
+        foreach (string getter in new[] { "get_Active", "get_ForePoint", "get_ForeAxis" })
+            if (shaping.Count(m => m.Name == getter) != 1)
+                throw new Exception("Resolve the luff frame once per bone update: " + getter);
+        if (shaping.Any(m => m.Name == "LuffPoint"))
+            throw new Exception("Bone updates must project with the captured mast frame.");
         var newSail = Patch("NewSail", "Postfix");
         if (
             !CalledMethods(newSail)
-                .Any(m => m.DeclaringType.Name == "SailScaler" && m.Name == "SetScaleAbs")
+                .Any(m => m.DeclaringType.Name == "Sail" && m.Name == "LoadScale")
             || !newSail
                 .GetCustomAttribute<HarmonyAfter>()
                 .info.after.Contains("com.nandbrew.shipyardexpansion")
         )
             throw new Exception(
-                "New Mk.A size must use SE scaling after its shipyard initialization."
+                "New Mk.A size must use native scaling after shipyard initialization."
             );
         foreach (
             var type in assembly
@@ -91,7 +109,7 @@ internal static class PatchChecks
             if (
                 method != newSail
                 && CalledMethods(method)
-                    .Any(m => m.DeclaringType.Name == "SailScaler" && m.Name == "SetScaleAbs")
+                    .Any(m => m.DeclaringType.Name == "Sail" && m.Name == "LoadScale")
             )
                 throw new Exception(
                     "Default size must not override existing sail sizes: " + type.Name
@@ -110,7 +128,9 @@ internal static class PatchChecks
             if (
                 method.Name != "Configure"
                 && method.Name != "InitializeCut"
-                && calls.Any(m => m.Name is "set_sharedMesh" or "set_bindposes" or "set_bones")
+                && calls.Any(m =>
+                    m.Name is "set_sharedMesh" or "set_bindposes" or "set_bones" or "set_uv"
+                )
             )
                 throw new Exception("Live staysail mesh replacement in " + method.Name);
             if (
@@ -141,21 +161,13 @@ internal static class PatchChecks
             || !lateUpdate.Any(m =>
                 m.DeclaringType.Name == "FishermansStaysailFixedHead" && m.Name == "Position"
             )
-            || !lateUpdate.Any(m => m.Name == "get_FixedUpperHeadAngle")
-            || Type("MkA.FishermansStaysailMkAShape")
-                .GetProperty("FixedUpperHeadAngle", all)
-                .DeclaringType != Type("MkA.FishermansStaysailMkAShape")
-            || Type("FishermansStaysailShape").GetProperty("FixedUpperHeadAngle", all).PropertyType
-                != typeof(float)
-            || !Type("FishermansStaysailShape")
-                .GetProperty("FixedUpperHeadAngle", all)
-                .GetMethod.IsAbstract
+            || Type("FishermansStaysailShape").GetProperty("FixedUpperHeadAngle", all) != null
             || Type("FishermansStaysailShape").GetProperty("UpperCornerTrim", all) != null
             || Type("FishermansStaysailFrameGeometry").GetMethod("UpperHead", all) != null
             || assembly.GetType(family + "FishermansStaysailUpperTrim") != null
             || (float)
-                Type("MkA.FishermansStaysailMkAGeometry")
-                    .GetField("FixedUpperHeadAngle", all)
+                Type("FishermansStaysailFixedHead")
+                    .GetField("DeployedAngle", all)
                     .GetRawConstantValue() != 14f
         )
             throw new Exception(
