@@ -1,3 +1,4 @@
+// Groups Staysail patches for optional SailInfo angle reporting.
 using System;
 using System.Reflection;
 using HarmonyLib;

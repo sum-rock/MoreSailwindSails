@@ -1,8 +1,10 @@
+// Groups Staysail patches for NANDFixes order-text compatibility.
 using System.Collections.Generic;
 using HarmonyLib;
 
 namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
 {
+    // Wraps feature order lines before NANDFixes can recurse on long prefixes.
     [HarmonyPatch(typeof(ShipyardUIOrderText), "AddLine")]
     internal static class FishermansStaysailOrderTextPatch
     {

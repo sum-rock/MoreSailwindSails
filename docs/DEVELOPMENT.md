@@ -125,6 +125,27 @@ The solution includes the plugin and both check projects. Feature namespaces
 follow their directories under `MoreSailwindSails`; Harmony patches live in each
 feature's `Patches/` directory and `.Patches` namespace.
 
+Stay/sail feature patches use one file per integration responsibility, with
+multiple top-level patch classes per file. Filenames combine `Stay`, `Staysail`
+or `FlyingSail` with `SailwindPatches.cs`, `ShipyardExpansionPatches.cs` or
+`NANDFixesPatches.cs`; staysails also have `StaysailSailInfoPatches.cs`.
+
+- **Sailwind:** native fitting, movement, collision, controls, cloth,
+  aerodynamics, travel, support protection, refresh and shipyard availability.
+- **Shipyard Expansion:** direct SE patches and supporting native hooks. Stay
+  registration, save capacity, load preparation and mount buttons belong here;
+  sail prefab registration, new-sail initialization, textures and staysail
+  scaler configuration do too. Staysail fitting and movement remain in Sailwind.
+- **NANDFixes:** order-text wrapping that prevents recursive long-line handling.
+- **SailInfo:** optional staysail angle reporting.
+
+Classify by integration responsibility, not just the target method's assembly or
+an ordering annotation. Prefab registration depends on SE-prepared source
+components and retains its AllSailsAllShipyards ordering constraint within the
+SE group. Shared `Compatibility/Patches/` and `Controls/Patches/` retain their
+own organization. Preserve patch class names, namespaces and Harmony metadata
+when regrouping files; the existing discovery and reflection checks use them.
+
 | Location                          | Responsibility                                                                                                      |
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `src/Plugin.cs`                   | Identity, dependencies, Harmony discovery and optional SailInfo integrations                                        |
@@ -140,8 +161,10 @@ Shared boat-rig definitions and the catalog live in `src/BoatRigs/Definitions/`,
 with one type per file. They retain the `MoreSailwindSails.BoatRigs` namespace.
 
 Use named arguments where practical, especially profile constructors, explicit
-null fallbacks and flags. Keep one class per file with a responsibility comment.
-Preserve authored values and ordering when changing argument style.
+null fallbacks and flags. Prefer one class per file with a responsibility
+comment, except for the integration-grouped stay/sail patch files above. Those
+files have both file and class responsibility comments. Preserve authored values
+and ordering when changing argument style.
 
 Add future sail families under their own `src/Sails/<Family>/` directory. Keep
 Flying Sail and staysail mechanics independently editable; new families need not
