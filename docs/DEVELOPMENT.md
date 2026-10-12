@@ -414,6 +414,14 @@ donor **110** and template slope **20°**; first binding creates the owned mesh
 for the actual stay slope before enabling Cloth. Mesh and bind poses then stay
 fixed.
 
+Staysail registration validates donor index **110**, `Sail`, `Cloth` and its
+`SkinnedMeshRenderer`, plus destination-slot availability. It does not require
+the donor's exact name/category or deployed mesh data: the authored mesh
+replaces that geometry. The registration log reports only the constructed sail's
+area, avoiding native `GetSailArea` reads of donor vertices/triangles.
+Component-specific rig checks still validate the machinery used during
+construction. Flying Sail's registration checks are unchanged.
+
 | Cut  | Geometry in the forward-mast frame                                                   |
 | ---- | ------------------------------------------------------------------------------------ |
 | Mk.A | Original 110° foot cut, sloping downward aft                                         |
@@ -1204,6 +1212,12 @@ searches.
 ## Runtime validation
 
 ### Automated baseline and limits
+
+On **2026-10-12**, staysail registration dropped obsolete donor-mesh checks and
+the donor-area comparison, retaining source/component and destination guards.
+The Release build, both .NET suites and pinned formatting/diff checks passed.
+Registration in Unity still needs an in-game check; no new game observations
+were made.
 
 On **2026-10-12**, redundant shadow-mesh triangle lists were removed from both
 Fisherman prefab builders. Nine sample vertices, bounds and collider behavior
