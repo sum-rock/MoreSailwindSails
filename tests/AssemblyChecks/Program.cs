@@ -47,6 +47,7 @@ internal static class Program
         HarmonySignatureChecks.Run(assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
+        Compatibility.OrderTextChecks.Run(assembly: assembly);
         Compatibility.NativeAppearanceChecks.Run(assembly);
         Compatibility.SailInfoNamesChecks.Run(assembly: assembly, gameDir: gameDir);
         FlyingSailChecks.Run(assembly);

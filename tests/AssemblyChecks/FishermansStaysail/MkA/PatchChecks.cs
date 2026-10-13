@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -54,7 +53,7 @@ internal static class PatchChecks
             )
         )
             throw new Exception("Mk.A must resolve exact registered stays.");
-        foreach (string patch in new[] { "InstallError", "InstallGuard", "Fit" })
+        foreach (string patch in new[] { "InstallError", "Fit" })
             if (
                 !CalledMethods(Patch(patch))
                     .Any(m =>
@@ -63,6 +62,14 @@ internal static class PatchChecks
                     )
             )
                 throw new Exception("Missing physical mast fit guard: " + patch);
+        // Native installation must still reject invalid custom fits through our height hook.
+        var fitTarget = Patch("Fit").DeclaringType.GetCustomAttribute<HarmonyPatch>().info;
+        var nativeFit = fitTarget.declaringType.GetMethod(fitTarget.methodName, all);
+        var nativeInstall = fitTarget.declaringType.GetMethod("InstallSail", all);
+        if (!CalledMethods(nativeInstall).Any(m => m == nativeFit))
+            throw new Exception("Native installation bypasses the custom staysail fit check.");
+        if (assembly.GetType(family + "Patches.FishermansStaysailInstallGuardPatch") != null)
+            throw new Exception("The redundant staysail installation guard returned.");
         Shared.ControlRestorationChecks.Run(
             assembly,
             family + "Patches.FishermansStaysailControlsPatch",
@@ -194,25 +201,6 @@ internal static class PatchChecks
             throw new Exception(
                 "Aft halyard route must refresh its controls and use the aft mast axis."
             );
-        var prefix = Patch("OrderText");
-        if (
-            !prefix
-                .GetCustomAttribute<HarmonyBefore>()
-                .info.before.Contains("com.nandbrew.nandfixes")
-        )
-            throw new Exception("Mk.A order guard must precede NANDFixes.");
-        var lines = new List<string> { "existing" };
-        object[] args = { "192: (ERROR): Fisherman's Staysail Mk.A (150%) -> (no sail)", lines };
-        if (
-            (bool)prefix.Invoke(null, args)
-            || (string)args[0] != ""
-            || lines[0] != "existing"
-            || lines.Any(l => l.Length > 45)
-        )
-            throw new Exception("Mk.A order text is unsafe.");
-        args[0] = "Fisherman's Stay (a long physical stay part description)";
-        if (!(bool)prefix.Invoke(null, args))
-            throw new Exception("Mk.A text guard changed a stay-part order.");
         Console.WriteLine(
             "PASS: Mk.A prefab identity, stay membership, fit guards, animation sampling, native bundle, control finalizer and fixed-mesh lifecycle."
         );

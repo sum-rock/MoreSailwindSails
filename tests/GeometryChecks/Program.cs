@@ -22,7 +22,7 @@ internal static class Program
         Controls.NativeSeatAllocationChecks.Run();
         Controls.NativeSeatPolicyChecks.Run();
         Controls.WinchRefreshChecks.Run();
-        OrderTextChecks.Run();
+        Compatibility.OrderTextChecks.Run();
         FlyingSailChecks.Run();
         RopeChecks.Run();
         KnotChecks.Run();

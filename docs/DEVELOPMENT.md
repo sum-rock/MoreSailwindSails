@@ -127,15 +127,17 @@ feature's `Patches/` directory and `.Patches` namespace.
 
 Stay/sail feature patches use one file per integration responsibility, with
 multiple top-level patch classes per file. Filenames combine `Stay`, `Staysail`
-or `FlyingSail` with `SailwindPatches.cs` or `NANDFixesPatches.cs`; staysails
-also have `StaysailSailInfoPatches.cs`.
+or `FlyingSail` with `SailwindPatches.cs`; staysails also have
+`StaysailSailInfoPatches.cs`.
 
 - **Sailwind:** native fitting, movement, collision, controls, cloth,
   aerodynamics, travel, support protection, refresh and shipyard availability.
 - Native registration, new-sail initialization, stay save capacity, load
   preparation and shipyard navigation also belong in **Sailwind**. Optional SE
   ordering annotations preserve coexistence without referencing SE types.
-- **NANDFixes:** order-text wrapping that prevents recursive long-line handling.
+- **NANDFixes:** shared order-text protection lives in
+  `Compatibility/Patches/FishermanOrderTextPatch.cs`, with recognition and
+  wrapping in `Compatibility/FishermanOrderText.cs`.
 - **SailInfo:** optional staysail angle reporting.
 
 Classify by integration responsibility. Registration follows optional SE donor
@@ -204,9 +206,12 @@ resolve full type names: update both when moving or renaming code.
 - Clamp fisherman sail travel to **±40°** after native controller updates,
   preserving tighter limits without snapping transforms. Paired sheets use
   `JibAngleMaster.Update`.
-- Each family retains its iterative order-text guard before NANDFixes. HarmonyX
-  runs later prefixes even after `false`: append wrapped lines to the native
-  list and consume input so later prefixes cannot recurse on it.
+- One shared order-text guard covers Flying Sail, all staysail marks and stay
+  parts before NANDFixes. Installed **1.4.4** still recursively submits long
+  arrow prefixes. Preserve the 45-character limit, existing name boundaries and
+  explicit line breaks. HarmonyX runs later prefixes even after `false`: append
+  wrapped lines to the native list and consume input so later prefixes cannot
+  recurse on it. Keep this wrapping active without NANDFixes too.
 - New sails use native white palette **11**. Both Fisherman sail families use
   the built-in white texture on their private recolored materials. Preserve
   saved colors, native recoloring and the hidden color-reference renderer. SE
@@ -424,6 +429,12 @@ do not reintroduce separate geometry/prefix arguments. The family builder owns
 donor **110** and template slope **20°**; first binding creates the owned mesh
 for the actual stay slope before enabling Cloth. Mesh and bind poses then stay
 fixed.
+
+Native `ShipyardSailInstaller.InstallSail` calls `MastNotTallEnough`, whose
+staysail fit patch runs custom support and geometry validation. There is no
+separate staysail `InstallSail` guard duplicating that check. The
+`GetInstallError` patch retains specific shipyard error text. Flying Sail keeps
+its own installation guard because it does not override `MastNotTallEnough`.
 
 | Cut  | Geometry in the forward-mast frame                                                   |
 | ---- | ------------------------------------------------------------------------------------ |
@@ -1215,6 +1226,19 @@ searches.
 ## Runtime validation
 
 ### Automated baseline and limits
+
+On **2026-10-12**, the three family order-text patches and helpers were
+consolidated into one shared compatibility implementation, and the duplicate
+staysail installation guard was removed. All other patches and saved IDs are
+unchanged. Shared tests cover all sail marks and stay orders, scope/width
+boundaries, long words, LF/CRLF, consumed input and native-list preservation. An
+installed-assembly check verifies native installation calls the method targeted
+by the staysail fit patch. Release builds with zero warnings/errors; both .NET
+suites pass, including **55** Harmony targets. Pinned formatting and diff checks
+pass. Production C# shrank by **131 lines**, test C# by **16**, and the test
+project by **8**. Live shipyard text rendering and rejection of invalid staysail
+fits still require in-game validation, including NANDFixes enabled and disabled;
+no new game observations were made.
 
 On **2026-10-12**, both Fisherman sail families dropped obsolete donor-mesh
 checks and donor-area comparisons, retaining source/component and destination

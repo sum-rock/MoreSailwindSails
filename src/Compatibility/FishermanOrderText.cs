@@ -1,9 +1,10 @@
+// Recognizes Fisherman order lines and wraps them without recursive native calls.
 using System;
 using System.Collections.Generic;
 
-namespace MoreSailwindSails.Stays.FishermansStay
+namespace MoreSailwindSails.Compatibility
 {
-    internal static class FishermansStayOrderText
+    internal static class FishermanOrderText
     {
         internal const int LineWidth = 45;
 
@@ -11,6 +12,11 @@ namespace MoreSailwindSails.Stays.FishermansStay
         {
             if (line == null || line.Length <= LineWidth)
                 return false;
+            if (
+                line.IndexOf("Fisherman's Flying Sail", StringComparison.Ordinal) >= 0
+                || line.IndexOf("Fisherman's Staysail", StringComparison.Ordinal) >= 0
+            )
+                return true;
             const string name = "Fisherman's Stay";
             int index = line.IndexOf(name, StringComparison.Ordinal);
             while (index >= 0)
