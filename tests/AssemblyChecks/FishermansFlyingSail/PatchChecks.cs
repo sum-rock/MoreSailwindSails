@@ -21,7 +21,7 @@ internal static class PatchChecks
             || geometry.GetMethod("RestPoint", methods) != null
             || !CalledMethods(
                     assembly
-                        .GetType(family + "FishermansFlyingSail", true)
+                        .GetType(family + "FishermansFlyingSailPrefab", true)
                         .GetMethod("Register", methods)
                 )
                 .Any(m => m.DeclaringType == geometry && m.Name == "Create")

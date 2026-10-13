@@ -267,7 +267,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Patches
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Last)]
         private static void Postfix(Shipyard __instance) =>
-            FishermansFlyingSail.AddToShipyard(__instance);
+            FishermansFlyingSailPrefab.AddToShipyard(__instance);
     }
 
     // Adds custom sails when documents open after an early shipyard awakening.
@@ -277,7 +277,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Patches
         // Covers shipyards that awakened before PrefabsDirectory.Start.
         [HarmonyPrefix]
         private static void Prefix(Shipyard __instance) =>
-            FishermansFlyingSail.AddToShipyard(__instance);
+            FishermansFlyingSailPrefab.AddToShipyard(__instance);
     }
 
     // Suppresses native sheet rendering where the custom rig owns the visual.
@@ -375,6 +375,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Patches
         [HarmonyAfter("com.nandbrew.shipyardexpansion")]
         [HarmonyBefore("NatoriusG.AllSailsAllShipyards")]
         private static void Postfix(PrefabsDirectory __instance) =>
-            FishermansFlyingSail.Register(__instance);
+            FishermansFlyingSailPrefab.Register(__instance);
     }
 }

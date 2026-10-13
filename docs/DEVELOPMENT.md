@@ -213,6 +213,15 @@ resolve full type names: update both when moving or renaming code.
   may supply pattern selection when installed; MSS does not edit its catalog or
   restrict textures. Never change donor/shared assets.
 
+Both Fisherman prefab builders validate donor index **110**, `Sail`, `Cloth` and
+its `SkinnedMeshRenderer`, plus destination-slot availability. They do not
+require the donor's exact name/category or deployed mesh data: authored meshes
+replace that geometry. Registration logs report only the constructed sail's
+area, avoiding native `GetSailArea` reads of donor vertices/triangles.
+Component-specific rig checks still validate the machinery used during
+construction. Flying Sail knot mesh checks remain because knot construction
+consumes the native mesh through `BakeMesh`.
+
 ### Native wind-shadow samples
 
 Both Fisherman sail families give `SailShadowCol` a mesh containing nine
@@ -287,6 +296,8 @@ switching, Unity rendering and performance remain unverified.
 
 ## Flying Sail
 
+- `FishermansFlyingSailPrefab` owns template registration and shipyard inventory
+  integration, following the `FishermansStaysailPrefab` naming convention.
 - Fits a physical mast under **Other**, with active aft support, native mast
   save slots and normal vertical-space/overlap rules. Hoists from deck; partial
   hoists use a procedural renderer, full deployment uses Cloth, and striking
@@ -413,14 +424,6 @@ do not reintroduce separate geometry/prefix arguments. The family builder owns
 donor **110** and template slope **20°**; first binding creates the owned mesh
 for the actual stay slope before enabling Cloth. Mesh and bind poses then stay
 fixed.
-
-Staysail registration validates donor index **110**, `Sail`, `Cloth` and its
-`SkinnedMeshRenderer`, plus destination-slot availability. It does not require
-the donor's exact name/category or deployed mesh data: the authored mesh
-replaces that geometry. The registration log reports only the constructed sail's
-area, avoiding native `GetSailArea` reads of donor vertices/triangles.
-Component-specific rig checks still validate the machinery used during
-construction. Flying Sail's registration checks are unchanged.
 
 | Cut  | Geometry in the forward-mast frame                                                   |
 | ---- | ------------------------------------------------------------------------------------ |
@@ -1213,11 +1216,13 @@ searches.
 
 ### Automated baseline and limits
 
-On **2026-10-12**, staysail registration dropped obsolete donor-mesh checks and
-the donor-area comparison, retaining source/component and destination guards.
-The Release build, both .NET suites and pinned formatting/diff checks passed.
-Registration in Unity still needs an in-game check; no new game observations
-were made.
+On **2026-10-12**, both Fisherman sail families dropped obsolete donor-mesh
+checks and donor-area comparisons, retaining source/component and destination
+guards. The Flying Sail builder was renamed to `FishermansFlyingSailPrefab`,
+including registration, shipyard, SailInfo and assembly-check references. Native
+knot validation and saved prefab indices remain unchanged. The Release build,
+both .NET suites and pinned formatting/diff checks passed. Registration in Unity
+still needs an in-game check; no new game observations were made.
 
 On **2026-10-12**, redundant shadow-mesh triangle lists were removed from both
 Fisherman prefab builders. Nine sample vertices, bounds and collider behavior

@@ -56,7 +56,7 @@ namespace MoreSailwindSails.Compatibility.Patches
             // WinchHUD gates names with SailInfo's setting and adds the halyard suffix.
             // Bypass positional-name caching to keep Fisherman labels grouped.
             if (___sailComponent.GetComponent<FishermansFlyingSailRig>())
-                __result = FishermansFlyingSail.DisplayName;
+                __result = FishermansFlyingSailPrefab.DisplayName;
             else if (___sailComponent.GetComponent<FishermansStaysailRig>())
                 __result = "Fisherman's Staysail";
             else
