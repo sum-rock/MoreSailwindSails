@@ -1,10 +1,11 @@
+// Builds and registers the Flying Sail prefab and adds it to shipyard inventories.
 using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace MoreSailwindSails.Sails.FishermansFlyingSail
 {
-    internal static class FishermansFlyingSail
+    internal static class FishermansFlyingSailPrefab
     {
         internal const int SourceIndex = 110;
 
@@ -36,28 +37,18 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 var source =
                     directory.sails.Length > SourceIndex ? directory.sails[SourceIndex] : null;
                 var sourceSail = source ? source.GetComponent<Sail>() : null;
-                if (
-                    !sourceSail
-                    || sourceSail.prefabIndex != SourceIndex
-                    || sourceSail.category != SailCategory.staysail
-                    || sourceSail.sailName != "brig jib"
-                )
+                if (!sourceSail || sourceSail.prefabIndex != SourceIndex)
                     throw new InvalidOperationException(
-                        $"Expected the brig jib staysail at index {SourceIndex}."
+                        $"Expected a Sail component with prefab index {SourceIndex} on the donor."
                     );
                 var sourceRenderer = sourceSail.cloth
                     ? sourceSail.cloth.GetComponent<SkinnedMeshRenderer>()
                     : null;
-                if (
-                    !sourceRenderer
-                    || !sourceRenderer.sharedMesh
-                    || !sourceRenderer.sharedMesh.isReadable
-                )
+                if (!sourceRenderer)
                     throw new InvalidOperationException(
-                        "The brig jib has no readable skinned cloth mesh."
+                        "The Flying Sail donor requires Cloth with a SkinnedMeshRenderer."
                     );
 
-                var sourceMesh = sourceRenderer.sharedMesh;
                 // Bake the smaller size into the fabric so it is the new 100%.
                 var geometry = FishermansFlyingSailGeometry.Create(sourceSail.installHeight / 3f);
 
@@ -122,21 +113,14 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                     out knotMesh
                 );
                 FishermansFlyingSailAppearance.Configure(sail);
-                var renderer = sail.cloth.GetComponent<SkinnedMeshRenderer>();
                 clone.SetActive(true);
                 sail.SetSailArea();
-
-                // Verify that the source still points at its original mesh.
-                if (sourceRenderer.sharedMesh != sourceMesh || renderer.sharedMesh == sourceMesh)
-                    throw new InvalidOperationException(
-                        "The Fisherman's Flying Sail must own a separate cloth mesh."
-                    );
 
                 string registrationMessage =
                     $"Registered {DisplayName}: source={SourceIndex}, index={PrefabIndex}, "
                     + $"vertices={mesh.vertexCount}, corners=4, luffWidthRatio=2, edgeSlope=20, mastTies=0.4572m, camberDepth=0.20, "
                     + $"baseWidth={-geometry.Corners[0].z:F2}m, baseLuff={sail.installHeight:F2}m, "
-                    + $"area={sourceSail.GetSailArea():F2}->{sail.sailArea:F2}. Original brig jib preserved.";
+                    + $"area={sail.sailArea:F2}.";
 
                 if (directory.sails.Length <= PrefabIndex)
                     Array.Resize(ref directory.sails, PrefabIndex + 1);

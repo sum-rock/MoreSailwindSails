@@ -22,10 +22,16 @@ internal static class HarmonySignatureChecks
                 | BindingFlags.Static
                 | BindingFlags.Public
                 | BindingFlags.NonPublic;
+            var prepare = type.GetMethod(name: "Prepare", bindingAttr: all);
+            if (prepare?.Invoke(obj: null, parameters: null) is false)
+                continue;
+            var targetMethod = type.GetMethod(name: "TargetMethod", bindingAttr: all);
             var targets =
                 info.declaringType == null
-                    ? (IEnumerable<MethodBase>)
-                        type.GetMethod("TargetMethods", all).Invoke(null, null)
+                    ? targetMethod != null
+                        ? new[] { (MethodBase)targetMethod.Invoke(obj: null, parameters: null) }
+                        : (IEnumerable<MethodBase>)
+                            type.GetMethod("TargetMethods", all).Invoke(null, null)
                     : new[]
                     {
                         info.methodType == MethodType.Constructor
@@ -102,8 +108,8 @@ internal static class HarmonySignatureChecks
                 count++;
             }
         }
-        if (count != 58)
-            throw new Exception($"Expected all 58 patch targets, found {count}.");
+        if (count != 55)
+            throw new Exception($"Expected all 55 patch targets, found {count}.");
 
         Console.WriteLine($"PASS: {count} Harmony targets and injected argument types.");
     }

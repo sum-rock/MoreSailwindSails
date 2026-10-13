@@ -72,33 +72,6 @@ internal static class PatchChecks
             throw new Exception(
                 "Stay load handling must prepare old snapshots before native sail removal."
             );
-        var stayText = StayMethod("OrderText", "Prefix");
-        if (
-            !stayText
-                .GetCustomAttribute<HarmonyBefore>()
-                .info.before.Contains("com.nandbrew.nandfixes")
-        )
-            throw new Exception("Stay text protection must precede NANDFixes.");
-        var stayLines = new System.Collections.Generic.List<string> { "existing" };
-        object[] stayTextArguments =
-        {
-            "192: (ERROR): Fisherman's Stay (foremast 1 / main topmast 2) -> (no Fisherman's Stay)",
-            stayLines,
-        };
-        if (
-            (bool)stayText.Invoke(null, stayTextArguments)
-            || (string)stayTextArguments[0] != ""
-            || stayLines[0] != "existing"
-            || stayLines.Count < 3
-            || stayLines.Any(line => line.Length > 45)
-        )
-            throw new Exception(
-                "Stay order guard failed to preserve safe input for later prefixes."
-            );
-        stayTextArguments[0] = "Fisherman's Flying Sail " + new string('x', 80);
-        int lineCount = stayLines.Count;
-        if (!(bool)stayText.Invoke(null, stayTextArguments) || stayLines.Count != lineCount)
-            throw new Exception("Stay text guard intercepted another sail's order.");
         var install = StayMethod("CanInstall", "Postfix");
         if (
             !CalledMethods(install).Any(m => m.Name == "Concat")

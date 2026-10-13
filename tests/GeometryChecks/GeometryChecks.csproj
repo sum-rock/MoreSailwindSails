@@ -153,16 +153,12 @@
       Link="FishermansStay/FishermansStayGeometry.cs"
     />
     <Compile
-      Include="../../src/Stays/FishermansStay/FishermansStayOrderText.cs"
-      Link="FishermansStay/FishermansStayOrderText.cs"
+      Include="../../src/Compatibility/FishermanOrderText.cs"
+      Link="Compatibility/FishermanOrderText.cs"
     />
     <Compile
       Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailGeometry.cs"
       Link="FishermansFlyingSail/FishermansFlyingSailGeometry.cs"
-    />
-    <Compile
-      Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailOrderText.cs"
-      Link="FishermansFlyingSail/FishermansFlyingSailOrderText.cs"
     />
     <Compile
       Include="../../src/Sails/FishermansFlyingSail/FishermansFlyingSailFrameGeometry.cs"
@@ -223,10 +219,6 @@
     <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailReefingGeometry.cs"
       Link="FishermansStaysail/FishermansStaysailReefingGeometry.cs"
-    />
-    <Compile
-      Include="../../src/Sails/FishermansStaysail/FishermansStaysailOrderText.cs"
-      Link="FishermansStaysail/FishermansStaysailOrderText.cs"
     />
     <Compile
       Include="../../src/Sails/FishermansStaysail/MkA/FishermansStaysailMkABakedMesh.g.cs"

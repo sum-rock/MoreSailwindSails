@@ -170,23 +170,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
         }
     }
 
-    // Rejects native installation when custom sail supports are invalid.
-    [HarmonyPatch(typeof(ShipyardSailInstaller), "InstallSail")]
-    internal static class FishermansStaysailInstallGuardPatch
-    {
-        [HarmonyPrefix]
-        private static bool Prefix(Mast mast, Sail sail)
-        {
-            if (!sail.GetComponent<FishermansStaysailRig>())
-                return true;
-            string error = FishermansStaysailRigging.InstallError(sail, mast);
-            if (error == null)
-                return true;
-            Plugin.Log.LogWarning("FishermansStaysail installation rejected: " + error);
-            return false;
-        }
-    }
-
     // Reports custom sail height from its posed geometry and scale.
     [HarmonyPatch(typeof(Sail), "GetScaledHeight")]
     internal static class FishermansStaysailMastHeightPatch

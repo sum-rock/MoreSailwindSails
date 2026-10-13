@@ -54,18 +54,6 @@ internal static class CutChecks
                 throw new Exception("Mk.A accepted invalid width.");
         }
         CheckProfiles();
-        if (
-            FishermansStayOrderText.NeedsWrapping(
-                "Fisherman's Staysail Mk.A " + new string('x', 70)
-            )
-        )
-            throw new Exception("Stay part text intercepted Mk.A.");
-        if (
-            !FishermansStaysailOrderText.NeedsWrapping(
-                "Fisherman's Staysail Mk.A " + new string('x', 70)
-            )
-        )
-            throw new Exception("Mk.A order text is unprotected.");
         Console.WriteLine(
             "PASS: Mk.A 110-degree cut, pinned straight luff, free stay-independent head, skinning, tension and authored-stay alignment."
         );

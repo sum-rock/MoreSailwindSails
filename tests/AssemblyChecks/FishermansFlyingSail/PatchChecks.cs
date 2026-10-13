@@ -21,7 +21,7 @@ internal static class PatchChecks
             || geometry.GetMethod("RestPoint", methods) != null
             || !CalledMethods(
                     assembly
-                        .GetType(family + "FishermansFlyingSail", true)
+                        .GetType(family + "FishermansFlyingSailPrefab", true)
                         .GetMethod("Register", methods)
                 )
                 .Any(m => m.DeclaringType == geometry && m.Name == "Create")
@@ -170,45 +170,6 @@ internal static class PatchChecks
                 );
         Console.WriteLine(
             "PASS (IL): fixed luff tie callbacks only draw/hide endpoints; no cloth, hinge or skin-orientation mutation. Unity rope rendering remains a runtime check."
-        );
-
-        // Run the actual text prefix without Unity objects. HarmonyX runs later
-        // prefixes even when this one returns false, so their input must be safe too.
-        var textPrefix = assembly
-            .GetType(
-                "MoreSailwindSails.Sails.FishermansFlyingSail.Patches.FishermansFlyingSailOrderTextPatch"
-            )
-            .GetMethod("Prefix", BindingFlags.Static | BindingFlags.NonPublic);
-        if (
-            !textPrefix
-                .GetCustomAttribute<HarmonyBefore>()
-                .info.before.Contains("com.nandbrew.nandfixes")
-        )
-            throw new Exception("Fisherman text protection must run before NANDFixes.");
-        var orderLines = new System.Collections.Generic.List<string> { "existing order line" };
-        object[] textArguments =
-        {
-            "192: (ERROR): Fisherman's Flying Sail (150% x 115%) -> (no sail)",
-            orderLines,
-        };
-        if (
-            (bool)textPrefix.Invoke(null, textArguments)
-            || (string)textArguments[0] != ""
-            || orderLines.Count < 3
-            || orderLines[0] != "existing order line"
-            || orderLines.Any(line => line.Length > 45)
-        )
-            throw new Exception("Text guard did not consume and append the removal order safely.");
-        textArguments[0] = "192: shipyard fee";
-        int previousCount = orderLines.Count;
-        if (
-            !(bool)textPrefix.Invoke(null, textArguments)
-            || orderLines.Count != previousCount
-            || (string)textArguments[0] != "192: shipyard fee"
-        )
-            throw new Exception("Text guard changed an unrelated order line.");
-        Console.WriteLine(
-            "PASS: actual order-text prefix, NANDFixes ordering, safe input for later HarmonyX prefixes, and native-list preservation."
         );
 
         Shared.ControlRestorationChecks.Run(

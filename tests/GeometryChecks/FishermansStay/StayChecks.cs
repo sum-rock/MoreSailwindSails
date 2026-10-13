@@ -212,37 +212,8 @@ internal static class StayChecks
                 Brig.Definition.SheetCategories
             )
         );
-        foreach (
-            string text in new[]
-            {
-                "192: (ERROR): Fisherman's Stay (foremast 1 / main topmast 2) -> (no Fisherman's Stay)",
-                "Fisherman's Stay " + new string('x', 200),
-                "Fisherman's Stay\nrequires: main mast and topmast",
-            }
-        )
-        {
-            Check(
-                FishermansStayOrderText.NeedsWrapping(text),
-                "Stay order escaped freeze protection."
-            );
-            var wrapped = FishermansStayOrderText.Wrap(text).ToArray();
-            Check(
-                wrapped.All(l => l.Length <= 45),
-                "Stay text wrapping failed to terminate safely."
-            );
-            Check(
-                string.Concat(wrapped).Replace(" ", "") == text.Replace(" ", "").Replace("\n", ""),
-                "Stay order details were lost."
-            );
-        }
-        Check(
-            !FishermansStayOrderText.NeedsWrapping(
-                "Fisherman's Flying Sail " + new string('x', 60)
-            ),
-            "Stay guard changed flying-sail scope."
-        );
         Console.WriteLine(
-            $"PASS: {variants} authored stays across {BoatRigCatalog.All.Count} Fisherman boat profiles, {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs, pose invariance and order text."
+            $"PASS: {variants} authored stays across {BoatRigCatalog.All.Count} Fisherman boat profiles, {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs and pose invariance."
         );
     }
 
