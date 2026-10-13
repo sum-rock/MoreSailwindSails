@@ -49,6 +49,7 @@ internal static class Program
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
         Compatibility.OrderTextChecks.Run(assembly: assembly);
         Compatibility.NativeAppearanceChecks.Run(assembly);
+        Compatibility.ShipyardExpansionTextureChecks.Run(assembly: assembly);
         Compatibility.SailInfoNamesChecks.Run(assembly: assembly, gameDir: gameDir);
         FlyingSailChecks.Run(assembly);
         StayChecks.Run(assembly);

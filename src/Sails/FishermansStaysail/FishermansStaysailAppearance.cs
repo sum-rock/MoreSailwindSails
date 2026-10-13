@@ -15,7 +15,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             var material = sail.cloth.GetComponent<SkinnedMeshRenderer>().sharedMaterial;
             // Native ChangeSailColor uses Renderer.material, so this is already
             // a private recolored material. Keep its shader; avoid the brig atlas
-            // on planar UVs. Later pattern selection may replace this default.
+            // on planar UVs. Optional SE material updates have their own white restriction.
             material.mainTexture = Texture2D.whiteTexture;
             rig.ReefedRenderer.sharedMaterial = material;
             rig.FurledColorReference.sharedMaterial = material;
