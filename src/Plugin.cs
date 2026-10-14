@@ -16,7 +16,7 @@ namespace MoreSailwindSails
     {
         public const string PluginGuid = "com.august.moresailwindsails";
         public const string PluginName = "MoreSailwindSails";
-        public const string PluginVersion = "0.3.0-dev";
+        public const string PluginVersion = "0.3.0";
 
         // BepInEx 5 accepts numeric System.Version metadata, not prerelease labels.
         public const string PluginRuntimeVersion = "0.3.0";

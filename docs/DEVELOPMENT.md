@@ -84,7 +84,7 @@ physics or the live shipyard. Passing checks do not establish in-game behavior.
 
 ## Release and manual installation
 
-Development version is **0.3.0-dev** in `Plugin.PluginVersion` and the project
+Release version is **0.3.0** in `Plugin.PluginVersion` and the project
 `<Version>`; BepInEx requires numeric runtime metadata **0.3.0**. Keep release
 versions and release documentation aligned. README changes require an explicit
 request. Preserve GUID `com.august.moresailwindsails`, assembly
@@ -115,9 +115,9 @@ must never execute files from `scripts/` or use it as their working directory.
   switching/fetching happen before confirmation. Build/publication failure can
   leave a pushed tag.
 
-After installation, confirm `MoreSailwindSails 0.3.0-dev loaded!` and
-registration of the intended prefabs in `BepInEx/LogOutput.log`. Compare
-installed and built DLL hashes when diagnosing; they are separate files.
+After installation, confirm `MoreSailwindSails 0.3.0 loaded!` and registration
+of the intended prefabs in `BepInEx/LogOutput.log`. Compare installed and built
+DLL hashes when diagnosing; they are separate files.
 
 ## Source organization
 
@@ -850,8 +850,8 @@ paging/scaling, profile changes, rope rendering and the simplified F7 toggle.
 
 ### Optional Shipyard Expansion
 
-SE is optional in **0.3.0-dev**. The plugin has no SE assembly reference; its
-soft dependency preserves load order. Native `Sail.LoadScale` supplies new-sail
+SE is optional in **0.3.0**. The plugin has no SE assembly reference; its soft
+dependency preserves load order. Native `Sail.LoadScale` supplies new-sail
 defaults (50% staysails, 100% Flying Sail) and save restoration. SE can patch
 the same APIs when installed; MSS adds no scaler or replacement save format.
 
