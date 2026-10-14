@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.BoatConfiguration;
 using MoreSailwindSails.Controls;
 using MoreSailwindSails.Stays.FishermansStay;
 using UnityEngine;
@@ -64,7 +64,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 return false;
             var refs = stay.References;
             var boat = mount.GetComponentInParent<BoatRefs>();
-            var profile = BoatRigCatalog.Find(boat.name);
+            var profile = BoatCatalog.Find(boat.name);
             int baseId = profile.Base(refs.Aft.orderIndex);
             var foreSections = profile
                 .Sections(refs.Fore.orderIndex)

@@ -1,9 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Configuration.Boats;
+using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
+using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration.Boats;
 using MoreSailwindSails.Sails.FishermansStaysail;
 using MoreSailwindSails.Stays.FishermansStay;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
@@ -13,9 +18,9 @@ internal static class CaelanorChecks
 {
     internal static void Run()
     {
-        var boat = Caelanor.Definition;
+        var boat = CaelanorStays.Definition;
         Check(
-            BoatRigCatalog.Find(boatName: "BOAT CAELANOR (192)(Clone)") == boat
+            FishermansStayCatalog.Find(boatName: "BOAT CAELANOR (192)(Clone)") == boat
                 && boat.Stays.Count == 1
                 && boat.Stays[0].Variants.Count == 1,
             "Caelanor must offer exactly one Fisherman's Stay."
@@ -49,8 +54,10 @@ internal static class CaelanorChecks
         );
         foreach (var (top, middle, lower) in new[] { (17, 2, 1), (18, 6, 5), (19, 4, 3) })
             Check(
-                boat.Sections(section: top).SequenceEqual(new[] { top, middle, lower })
-                    && boat.HalyardSources(mast: top).SequenceEqual(new[] { top }),
+                boat.Boat.Sections(section: top).SequenceEqual(new[] { top, middle, lower })
+                    && CaelanorControls
+                        .Definition.HalyardSources(mast: top)
+                        .SequenceEqual(new[] { top }),
                 "Caelanor mast ancestry or independent T'gallant reef sources changed."
             );
         foreach (
@@ -84,7 +91,7 @@ internal static class CaelanorChecks
             );
         }
         Check(
-            !boat.MastPairs(foreIndex: 4).Any(),
+            !CaelanorFlyingSail.Definition.MastPairs(foreIndex: 4).Any(),
             "Caelanor Midmast gained an unintended sail support pair."
         );
         Console.WriteLine(

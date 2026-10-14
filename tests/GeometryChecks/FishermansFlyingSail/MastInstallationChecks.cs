@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Sails.FishermansFlyingSail;
+using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansFlyingSail;
@@ -12,7 +12,7 @@ internal static class MastInstallationChecks
     {
         CheckMastAxis();
         CheckCollisionEnvelope();
-        var brig = BoatRigCatalog.Find("BOAT medi medium (50)");
+        var brig = FlyingSailCatalog.Find("BOAT medi medium (50)");
         var forwardPairs = brig.MastPairs(2).ToArray();
         Require(
             forwardPairs.Select(g => g.Key).OrderBy(i => i).SequenceEqual(new[] { 4, 5 }),

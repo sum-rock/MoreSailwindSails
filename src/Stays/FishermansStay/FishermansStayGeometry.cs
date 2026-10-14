@@ -51,7 +51,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
             return up.normalized;
         }
 
-        // Validation only: endpoints are authored in BoatRigs, never generated
+        // Validation only: endpoints are authored in stay configuration, never generated
         // from a runtime mast search. Accept physical masthead fallback angles.
         internal static bool OnSpar(
             Vector3 point,

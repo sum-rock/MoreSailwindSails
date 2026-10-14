@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Controls.Configuration;
 using UnityEngine;
 using Object = UnityEngine.Object;
 

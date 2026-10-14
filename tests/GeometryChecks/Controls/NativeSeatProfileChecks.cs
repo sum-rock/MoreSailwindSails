@@ -1,7 +1,12 @@
 using System;
 using System.IO;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.BoatConfiguration;
+using MoreSailwindSails.BoatConfiguration.Boats;
+using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Configuration.Boats;
+using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
@@ -10,13 +15,18 @@ internal static class NativeSeatProfileChecks
 {
     internal static void Run()
     {
-        foreach (var boat in BoatRigCatalog.All)
+        foreach (var boat in BoatControlCatalog.All)
         {
             foreach (
-                int fore in boat
+                int fore in FishermansStayCatalog
+                    .Find(boatName: boat.BoatName)
                     .Stays.SelectMany(g => g.Variants)
                     .Select(v => v.Fore)
-                    .Concat(boat.Supports.SelectMany(s => s.ForeSections))
+                    .Concat(
+                        FlyingSailCatalog
+                            .Find(boatName: boat.BoatName)
+                            .Supports.SelectMany(s => s.ForeSections)
+                    )
             )
                 Check(
                     boat.SheetCategory(fore) != null,
@@ -48,27 +58,25 @@ internal static class NativeSeatProfileChecks
             }
         }
         Check(
-            Brig.Definition.SheetCategory(3) == Brig.Definition.SheetCategory(2),
+            BrigControls.Definition.SheetCategory(3) == BrigControls.Definition.SheetCategory(2),
             "Brig variants split."
         );
         Check(
-            Jong.Definition.SheetCategory(2) != Jong.Definition.SheetCategory(3),
+            JongControls.Definition.SheetCategory(2) != JongControls.Definition.SheetCategory(3),
             "Jong mainmasts merged."
         );
         Check(
-            Brig.Definition.SheetCategory(mast: 56) == Brig.Definition.SheetCategory(mast: 5),
+            BrigControls.Definition.SheetCategory(mast: 56)
+                == BrigControls.Definition.SheetCategory(mast: 5),
             "Topmast category lost."
         );
         Check(
-            Shroud.Definition.SheetCategory(6).Fallback != null,
+            ShroudControls.Definition.SheetCategory(6).Fallback != null,
             "Shroud measured fallback lost."
         );
-        var ordered = new BoatRigDefinition(
-            boatName: Cog.Definition.BoatName,
-            supports: Cog.Definition.Supports,
-            stays: Cog.Definition.Stays,
-            mastParents: Cog.Definition.MastParents,
-            sheetCategories: Cog.Definition.SheetCategories,
+        var ordered = new BoatControlDefinition(
+            boat: Cog.Definition,
+            sheetCategories: CogControls.Definition.SheetCategories,
             halyardGroups: new[] { new HalyardWinchGroup(mast: 57, sources: new[] { 58, 57 }) }
         );
         Check(
@@ -122,9 +130,9 @@ internal static class NativeSeatProfileChecks
             "Kakam",
             "Dhow",
         };
-        for (int b = 0; b < BoatRigCatalog.All.Count; b++)
+        for (int b = 0; b < BoatControlCatalog.All.Count; b++)
         {
-            var profile = BoatRigCatalog.All[b];
+            var profile = BoatControlCatalog.All[b];
             foreach (var category in profile.SheetCategories)
             {
                 var groups = category
@@ -144,7 +152,8 @@ internal static class NativeSeatProfileChecks
                     );
             }
             foreach (
-                var donor in profile
+                var donor in FishermansStayCatalog
+                    .Find(boatName: profile.BoatName)
                     .Stays.SelectMany(g => g.Variants)
                     .Select(v => v.Donor)
                     .Distinct()

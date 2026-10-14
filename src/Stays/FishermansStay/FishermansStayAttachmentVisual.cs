@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.BoatConfiguration;
+using MoreSailwindSails.BoatConfiguration.Boats;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Stays.FishermansStay
@@ -207,7 +210,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
             body.localPosition = end + rotation * (new Vector3(0, 0, offset) - bodyCenter);
         }
 
-        internal static FishermansStaySparSurface Surface(Mast mast, BoatRigDefinition profile)
+        internal static FishermansStaySparSurface Surface(Mast mast, BoatDefinition profile)
         {
             var filter = mast.GetComponent<MeshFilter>();
             var capsule = mast.GetComponent<CapsuleCollider>();
@@ -223,10 +226,10 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     && filter.sharedMesh.name == "mizzen_topmast_sanbuq"
                 )
                     return FishermansStaySparSurface.Taper(
-                        bottom: Sanbuq.StayTopmastBottom,
-                        top: Sanbuq.StayTopmastTop,
-                        bottomRadius: Sanbuq.StayTopmastBottomRadius,
-                        topRadius: Sanbuq.StayTopmastTopRadius,
+                        bottom: SanbuqStays.StayTopmastBottom,
+                        top: SanbuqStays.StayTopmastTop,
+                        bottomRadius: SanbuqStays.StayTopmastBottomRadius,
+                        topRadius: SanbuqStays.StayTopmastTopRadius,
                         axis: capsule.center
                     );
                 throw new InvalidOperationException(

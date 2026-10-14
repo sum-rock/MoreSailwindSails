@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Sails.FishermansStaysail;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration.Boats;
 using MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ internal static class DhowChecks
 {
     internal static void Run()
     {
-        var profile = Dhow.Definition;
+        var profile = DhowStays.Definition;
         var configurations = profile.Stays.Single().Variants;
         Check(
             configurations.Count == 2

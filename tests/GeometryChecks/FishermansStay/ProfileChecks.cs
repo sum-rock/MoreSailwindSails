@@ -3,7 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.BoatConfiguration;
+using MoreSailwindSails.BoatConfiguration.Boats;
+using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Configuration.Boats;
+using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration.Boats;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
 
@@ -11,22 +17,32 @@ internal static class ProfileChecks
 {
     internal static void Run()
     {
-        foreach (var boat in BoatRigCatalog.All)
+        foreach (var boat in BoatCatalog.All)
+            CheckCopies(boat);
+        foreach (var boat in FlyingSailCatalog.All)
         {
             CheckCopies(boat);
             foreach (var support in boat.Supports)
                 CheckCopies(support);
-            foreach (var group in boat.HalyardGroups)
-            {
-                CheckCopies(group);
-                if (group.Fallback != null)
-                    CheckCopies(group.Fallback);
-            }
+        }
+        foreach (var boat in FishermansStayCatalog.All)
+        {
+            CheckCopies(boat);
             foreach (var group in boat.Stays)
             {
                 CheckCopies(group);
                 foreach (var variant in group.Variants)
                     CheckCopies(variant);
+            }
+        }
+        foreach (var boat in BoatControlCatalog.All)
+        {
+            CheckCopies(boat);
+            foreach (var group in boat.HalyardGroups)
+            {
+                CheckCopies(group);
+                if (group.Fallback != null)
+                    CheckCopies(group.Fallback);
             }
             foreach (var category in boat.SheetCategories)
             {
@@ -38,19 +54,34 @@ internal static class ProfileChecks
                 }
             }
         }
-        CheckReadOnly(BoatRigCatalog.All);
+        CheckCatalog(all: BoatCatalog.All, find: BoatCatalog.Find, name: boat => boat.BoatName);
+        CheckCatalog(
+            all: FishermansStayCatalog.All,
+            find: FishermansStayCatalog.Find,
+            name: boat => boat.BoatName
+        );
+        CheckCatalog(
+            all: FlyingSailCatalog.All,
+            find: FlyingSailCatalog.Find,
+            name: boat => boat.BoatName
+        );
+        CheckCatalog(
+            all: BoatControlCatalog.All,
+            find: BoatControlCatalog.Find,
+            name: boat => boat.BoatName
+        );
         ChronianChecks.Run();
         CaelanorChecks.Run();
         DhowChecks.Run();
-        if (!ReferenceEquals(BoatRigCatalog.All, BoatRigCatalog.All))
+        if (!ReferenceEquals(BoatCatalog.All, BoatCatalog.All))
             throw new Exception("Catalog is rebuilt on access.");
         foreach (string suffix in new[] { "", "(Clone)", "(Clone)(Clone)" })
-            if (BoatRigCatalog.Find(boatName: "BOAT LEOPARD (207)" + suffix) != null)
+            if (BoatCatalog.Find(boatName: "BOAT LEOPARD (207)" + suffix) != null)
                 throw new Exception("Leopard must remain unsupported pending compatibility work.");
 
         if (
             !ReferenceEquals(
-                BoatRigCatalog.Find(boatName: "BOAT medi medium (50)(Clone)(Clone)"),
+                BoatCatalog.Find(boatName: "BOAT medi medium (50)(Clone)(Clone)"),
                 Brig.Definition
             )
             || !Brig.Definition.Sections(56).SequenceEqual(new[] { 56, 5 })
@@ -59,10 +90,15 @@ internal static class ProfileChecks
         )
             throw new Exception("Profile lookup or ordered mast ancestry changed.");
 
-        foreach (var boat in new[] { Kakam.Definition, Dhow.Definition })
+        foreach (var boat in new[] { KakamStays.Definition, DhowStays.Definition })
         {
             foreach (string suffix in new[] { "", "(Clone)", "(Clone)(Clone)" })
-                if (!ReferenceEquals(BoatRigCatalog.Find(boatName: boat.BoatName + suffix), boat))
+                if (
+                    !ReferenceEquals(
+                        FishermansStayCatalog.Find(boatName: boat.BoatName + suffix),
+                        boat
+                    )
+                )
                     throw new Exception("Small boat compatibility lookup failed.");
             var variants = boat.Stays.Single().Variants;
             int aft = variants[0].Aft;
@@ -83,14 +119,17 @@ internal static class ProfileChecks
             }
             if (
                 variants.Any(v => v.Fore >= 55 || v.Aft >= 55)
-                || variants.Any(v => boat.SheetCategory(mast: v.Fore) == null)
+                || variants.Any(v =>
+                    BoatControlCatalog.Find(boatName: boat.BoatName).SheetCategory(mast: v.Fore)
+                    == null
+                )
             )
                 throw new Exception("Small boat support included a Bermuda rig or lost controls.");
         }
 
         var largeDhow = LargeDhow.Definition;
         if (
-            !ReferenceEquals(BoatRigCatalog.Find("BOAT dhow large (30)(Clone)"), largeDhow)
+            !ReferenceEquals(BoatCatalog.Find("BOAT dhow large (30)(Clone)"), largeDhow)
             || !largeDhow.Sections(3).SequenceEqual(new[] { 3, 2 })
             || !largeDhow.Sections(5).SequenceEqual(new[] { 5, 4 })
         )
@@ -105,7 +144,7 @@ internal static class ProfileChecks
             var active = new HashSet<int> { fore, main, mizzen };
             if (topmast)
                 active.Add(main + 1);
-            foreach (var group in largeDhow.Stays)
+            foreach (var group in LargeDhowStays.Definition.Stays)
                 if (
                     group.Variants.Count(s =>
                         s.Required.All(active.Contains) && !s.Forbidden.Any(active.Contains)
@@ -118,11 +157,12 @@ internal static class ProfileChecks
 
         var gloriana = Gloriana.Definition;
         if (
-            !ReferenceEquals(BoatRigCatalog.Find(boatName: "BOAT GLORIANA (182)(Clone)"), gloriana)
+            !ReferenceEquals(BoatCatalog.Find(boatName: "BOAT GLORIANA (182)(Clone)"), gloriana)
             || !gloriana.Sections(section: 4).SequenceEqual(new[] { 4, 3 })
-            || gloriana.SheetCategory(mast: 4) != gloriana.SheetCategory(mast: 3)
-            || !gloriana.HalyardSources(mast: 2).SequenceEqual(new[] { 2 })
-            || !gloriana.HalyardSources(mast: 3).SequenceEqual(new[] { 3, 4, 6 })
+            || GlorianaControls.Definition.SheetCategory(mast: 4)
+                != GlorianaControls.Definition.SheetCategory(mast: 3)
+            || !GlorianaControls.Definition.HalyardSources(mast: 2).SequenceEqual(new[] { 2 })
+            || !GlorianaControls.Definition.HalyardSources(mast: 3).SequenceEqual(new[] { 3, 4, 6 })
         )
             throw new Exception("Gloriana lost its connected mizzen or mast-specific controls.");
         // Native stays supply assets only: either custom group remains available
@@ -146,25 +186,16 @@ internal static class ProfileChecks
                     v.Required.All(active.Contains) && !v.Forbidden.Any(active.Contains)
                 );
             if (
-                Available(gloriana.Stays[0]) != (fore && main ? 1 : 0)
-                || Available(gloriana.Stays[1]) != (main && mizzen ? 1 : 0)
+                Available(GlorianaStays.Definition.Stays[0]) != (fore && main ? 1 : 0)
+                || Available(GlorianaStays.Definition.Stays[1]) != (main && mizzen ? 1 : 0)
             )
                 throw new Exception("Gloriana has missing or ambiguous stays for fitted supports.");
         }
 
         Reject<ArgumentException>(() => Brig.Definition.Sections(section: 127));
         Reject<ArgumentException>(() => Brig.Definition.Base(section: 127));
-        BoatRigDefinition Profile(
-            IReadOnlyDictionary<int, int> parents,
-            params SheetWinchCategory[] categories
-        ) =>
-            new BoatRigDefinition(
-                "test",
-                Brig.Definition.Supports,
-                Array.Empty<FishermansStayGroupDefinition>(),
-                parents,
-                categories
-            );
+        BoatDefinition Profile(IReadOnlyDictionary<int, int> parents) =>
+            new BoatDefinition(boatName: "test", mastParents: parents);
 
         Reject<ArgumentException>(() => Profile(new Dictionary<int, int> { { 0, 1 } }));
         Reject<ArgumentException>(() => Profile(new Dictionary<int, int> { { 0, 0 } }));
@@ -175,16 +206,15 @@ internal static class ProfileChecks
         parents[0] = 0;
         if (!profile.Sections(0).SequenceEqual(new[] { 0 }))
             throw new Exception("Caller mutation corrupted validated mast ancestry.");
-        var sample = Brig.Definition.SheetCategories[0];
-        Reject<ArgumentException>(() => Profile(new Dictionary<int, int>(), sample, sample));
-        BoatRigDefinition HalyardProfile(params HalyardWinchGroup[] groups) =>
-            new BoatRigDefinition(
-                boatName: "test",
-                supports: Cog.Definition.Supports,
-                stays: Cog.Definition.Stays,
-                mastParents: Cog.Definition.MastParents,
-                halyardGroups: groups
-            );
+        var sample = BrigControls.Definition.SheetCategories[0];
+        Reject<ArgumentException>(() =>
+            new BoatControlDefinition(
+                boat: Brig.Definition,
+                sheetCategories: new[] { sample, sample }
+            )
+        );
+        BoatControlDefinition HalyardProfile(params HalyardWinchGroup[] groups) =>
+            new BoatControlDefinition(boat: Cog.Definition, halyardGroups: groups);
         var halyard = new HalyardWinchGroup(mast: 57, sources: new[] { 57, 58 });
         Reject<ArgumentException>(() => HalyardProfile(halyard, halyard));
         Reject<ArgumentException>(() =>
@@ -196,6 +226,34 @@ internal static class ProfileChecks
         Console.WriteLine(
             "PASS: immutable boat profiles and halyard groups, ordered mast ancestry, missing entries, duplicate groups/categories and invalid-source/cyclic-parent rejection."
         );
+    }
+
+    // Feature membership is independent; each catalog must resolve only its own exact names.
+    private static void CheckCatalog<T>(
+        IReadOnlyList<T> all,
+        Func<string, T> find,
+        Func<T, string> name
+    )
+        where T : class
+    {
+        CheckReadOnly(all);
+        if (all.Select(name).Distinct().Count() != all.Count)
+            throw new Exception("Duplicate boat identity in a configuration catalog.");
+        foreach (var entry in all)
+        foreach (string suffix in new[] { "", "(Clone)", " (Clone)(Clone)" })
+            if (!ReferenceEquals(find(name(entry) + suffix), entry))
+                throw new Exception("Configuration lookup changed for " + name(entry) + suffix);
+        foreach (
+            string unknown in new[]
+            {
+                null,
+                "",
+                "BOAT LEOPARD (207)",
+                "BOAT medi medium (50) custom",
+            }
+        )
+            if (find(unknown) != null)
+                throw new Exception("Unknown boat gained configuration: " + unknown);
     }
 
     // Reconstruct every authored definition using mutable arrays, then mutate all

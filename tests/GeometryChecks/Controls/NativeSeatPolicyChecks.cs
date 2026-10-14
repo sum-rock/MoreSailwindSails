@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
@@ -262,7 +263,7 @@ internal static class NativeSeatPolicyChecks
             .Select(line => line.Split('|'))
             .Where(row => row[4] == "reefWinch")
             .ToLookup(row => int.Parse(row[3]));
-        var sources = Cog
+        var sources = CogControls
             .Definition.HalyardSources(mast: mast)
             .SelectMany(source => reefSeats[source])
             .Select(row => new WinchCandidate

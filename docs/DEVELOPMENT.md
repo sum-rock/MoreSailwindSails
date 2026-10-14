@@ -133,16 +133,38 @@ names, namespaces and ordering when moving patches.
 | `src/Sails/FishermansFlyingSail/` | Flying Sail prefab, rig, geometry and aerodynamics                        |
 | `src/Sails/FishermansStaysail/`   | Shared staysail mechanics; `MkA/`, `MkB/`, `MkC/` own cuts and identities |
 | `src/Stays/FishermansStay/`       | Mount registration, previews, shipyard navigation and save compatibility  |
-| `src/BoatRigs/`                   | Per-boat supports, stays, ancestry, control sources and fallbacks         |
+| `src/BoatConfiguration/`          | Shared boat identity and physical mast ancestry                           |
 | `src/Controls/`                   | Native seat discovery, allocation, reservations and owned controls        |
 | `src/Compatibility/`              | Shared order text and optional SE/SailInfo integration                    |
 | `src/Visuals/`                    | Shared routed rope rendering                                              |
 | `src/Utils/`                      | Diagnostics and profiling                                                 |
 
-Shared profile types live in `BoatRigs/Definitions/` with the `BoatRigs`
-namespace. Native integration belongs in each feature's `*SailwindPatches.cs`;
-staysail angle reporting uses `StaysailSailInfoPatches.cs`. Registration follows
-optional SE initialization and precedes All Sails inventory caching.
+`BoatConfiguration/` owns shared boat identity and mast ancestry.
+`BoatDefinition.cs` and `BoatCatalog.cs` live at its top level; the twelve
+per-boat files live under `BoatConfiguration/Boats/`, with matching namespaces.
+Per-boat configuration and its definition types live with their consumers:
+
+- `Stays/FishermansStay/Configuration/`: ordered stay groups, endpoints,
+  prerequisites, permanent mount IDs and attachment measurements.
+- `Sails/FishermansFlyingSail/Configuration/`: ordered support pairs and native
+  control donors.
+- `Controls/Configuration/`: sheet categories, halyard sources and measured
+  fallback seats shared by both sail families and native sails on custom stays.
+
+Each feature configuration references its shared `BoatDefinition` through
+`Boat`. Each owner has its own catalog; a shared boat entry does not enable any
+feature. Catalogs share exact boat-name matching and trailing `(Clone)`
+normalization. Keep one file per boat inside each configuration directory’s
+`Boats/` subdirectory, with matching `.Configuration.Boats` namespaces. Catalogs
+and definition types stay directly in `Configuration/`. New sail families own
+only the configuration they need; fisherman’s staysails currently use registered
+stays and shared mast ancestry without another per-boat profile. Preserve
+authored ordering, IDs and values when moving configuration, since stay option
+positions are saved.
+
+Native integration belongs in each feature's `*SailwindPatches.cs`; staysail
+angle reporting uses `StaysailSailInfoPatches.cs`. Registration follows optional
+SE initialization and precedes All Sails inventory caching.
 
 Keep sail-family mechanics independently editable. Add new families under
 `src/Sails/<Family>/` and preserve donor hierarchy names required by native
@@ -454,9 +476,11 @@ needs testing.
 
 ## Boat profiles and stays
 
-Profiles author physical mast IDs, endpoints, active guides, prerequisites,
-exclusions, ancestry and permanent mount IDs. Each boat's `Definition` owns its
-data; resolve `Sections`, `Base` and `SheetCategory` through that profile.
+Shared boat definitions author physical mast ancestry and provide `Sections` and
+`Base`. `FishermansStayDefinition` owns endpoints, active guides, prerequisites,
+exclusions and permanent mount IDs; `FlyingSailDefinition` owns support pairs.
+`BoatControlDefinition` provides `SheetCategory` and ordered halyard sources.
+Each boat's feature configuration references its shared boat definition.
 
 | Boat                         | Part groups | Authored stays | Forward-masthead fallbacks |
 | ---------------------------- | ----------: | -------------: | -------------------------: |
@@ -510,7 +534,8 @@ bounds may differ from `mastHeight`.
 
 ### Kakam and Dhow
 
-[Kakam.cs](../src/BoatRigs/Kakam.cs) and [Dhow.cs](../src/BoatRigs/Dhow.cs)
+[KakamStays.cs](../src/Stays/FishermansStay/Configuration/Boats/KakamStays.cs)
+and [DhowStays.cs](../src/Stays/FishermansStay/Configuration/Boats/DhowStays.cs)
 register one main/mizzen part group per boat:
 
 | Boat       | Native name                      | Stay mount    | Physical mast pair | SE donor    |
@@ -534,18 +559,19 @@ use the requested mast's own seats. Kakam uses the
 
 ### Large dhow
 
-[LargeDhow.cs](../src/BoatRigs/LargeDhow.cs) profiles native boat **30**
-(Baghala). Fourteen stays cover adjacent mast pairs. Topmasts **3/5** require
-bases **2/4** and retain lower-mainmast guides. Fore/main endpoints use the
-rendered foremast tip, not the higher capsule tip, to avoid floating
-attachments.
+[LargeDhowStays.cs](../src/Stays/FishermansStay/Configuration/Boats/LargeDhowStays.cs)
+profiles native boat **30** (Baghala). Fourteen stays cover adjacent mast pairs.
+Topmasts **3/5** require bases **2/4** and retain lower-mainmast guides.
+Fore/main endpoints use the rendered foremast tip, not the higher capsule tip,
+to avoid floating attachments.
 
 ### Gloriana (OldChronian)
 
-[Gloriana.cs](../src/BoatRigs/Gloriana.cs) profiles boat **182** from
-OldChronian **0.6.0**. Mounts **128–130** cover fore/main and both mizzen
-variants. The upper mizzen requires its lower section; the lower stay excludes
-the upper section. Native stays provide templates without needing to be fitted.
+[GlorianaStays.cs](../src/Stays/FishermansStay/Configuration/Boats/GlorianaStays.cs)
+profiles boat **182** from OldChronian **0.6.0**. Mounts **128–130** cover
+fore/main and both mizzen variants. The upper mizzen requires its lower section;
+the lower stay excludes the upper section. Native stays provide templates
+without needing to be fitted.
 
 Lower-mizzen halyards try **3 → 4 → 6**; upper mizzen tries **4 → 6**. These
 seats share the permanent mizzen fife rail. Mainmast **2** and lower mizzen
@@ -554,22 +580,22 @@ are null.
 
 ### Chronian (OldChronian)
 
-[Chronian.cs](../src/BoatRigs/Chronian.cs) profiles boat **187** from
-OldChronian **0.6.0**. Mount **128** joins Foremast Top **3** to Mainmast Top
-**5** below the rendered wood tips. Mount **129** joins Mainmast **4** to
-Mizzenmast Top **7** along Mizzen Royalstay **14**'s extended centerline and
-excludes that stay, with reciprocal shipyard conflict help. Both use prototype
-**12** and aligned aft guides. Optional T’gallants do not disable them; manual
-fallbacks are null.
+[ChronianStays.cs](../src/Stays/FishermansStay/Configuration/Boats/ChronianStays.cs)
+profiles boat **187** from OldChronian **0.6.0**. Mount **128** joins Foremast
+Top **3** to Mainmast Top **5** below the rendered wood tips. Mount **129**
+joins Mainmast **4** to Mizzenmast Top **7** along Mizzen Royalstay **14**'s
+extended centerline and excludes that stay, with reciprocal shipyard conflict
+help. Both use prototype **12** and aligned aft guides. Optional T’gallants do
+not disable them; manual fallbacks are null.
 
 ### Caelanor (OldChronian)
 
-[Caelanor.cs](../src/BoatRigs/Caelanor.cs) profiles boat **192** from
-OldChronian **0.6.0**. Mount **128** joins Foremast Top **2** to Mainmast Top
-**6**, requiring **1/2/5/6**. It uses the aft mainmast position; the Midmast
-alternative has no stay option. Endpoints sit below rendered wood tips,
-excluding offset poles. Optional T’gallants do not move or disable the stay;
-manual fallbacks are null.
+[CaelanorStays.cs](../src/Stays/FishermansStay/Configuration/Boats/CaelanorStays.cs)
+profiles boat **192** from OldChronian **0.6.0**. Mount **128** joins Foremast
+Top **2** to Mainmast Top **6**, requiring **1/2/5/6**. It uses the aft mainmast
+position; the Midmast alternative has no stay option. Endpoints sit below
+rendered wood tips, excluding offset poles. Optional T’gallants do not move or
+disable the stay; manual fallbacks are null.
 
 ### Stay collars on Sanbuq and Large Dhow
 
@@ -591,7 +617,7 @@ cleanup and profile changes still need regression testing.
 
 ### Placement and ownership
 
-Boat profiles define ordered native sources and measured fallbacks. Native
+Control profiles define ordered native sources and measured fallbacks. Native
 inventory discovers inactive rigs through the hierarchy, independent of the
 startup `BoatRefs.masts` array. Separate sheet/halyard resolvers select seats; a
 boat-owned ledger and coordinator manage reservations and clones.
@@ -671,10 +697,11 @@ occupancy.
 
 ### Gloriana reef fallbacks
 
-[Gloriana.cs](../src/BoatRigs/Gloriana.cs) defines one fallback each for
-mainmast **2** and lower mizzen **3**, from F9 captures on **2026-10-04** and
-**2026-10-05**. Exact contacts, normals, mounting depths and templates live in
-the profile. Native seats take priority for new allocations.
+[GlorianaControls.cs](../src/Controls/Configuration/Boats/GlorianaControls.cs)
+defines one fallback each for mainmast **2** and lower mizzen **3**, from F9
+captures on **2026-10-04** and **2026-10-05**. Exact contacts, normals, mounting
+depths and templates live in the profile. Native seats take priority for new
+allocations.
 
 Fallbacks reserve `halyard-fallback/<requested mast>` for one owner. A valid
 fallback remains stable when a native seat frees. Requested support, template
@@ -683,11 +710,12 @@ controls for retry.
 
 ### Sanbuq reef fallbacks
 
-[Sanbuq.cs](../src/BoatRigs/Sanbuq.cs) defines fallbacks for base masts
-**10/11/55/69**, measured with F9 on **2026-10-07**. Each uses the requested
-mast's `reefWinch[0]` after native sources exhaust. Contacts, normals and
-mesh-derived mounting depths live in the profile. Topmasts keep their existing
-sources. These mounting poses still need visual acceptance.
+[SanbuqControls.cs](../src/Controls/Configuration/Boats/SanbuqControls.cs)
+defines fallbacks for base masts **10/11/55/69**, measured with F9 on
+**2026-10-07**. Each uses the requested mast's `reefWinch[0]` after native
+sources exhaust. Contacts, normals and mesh-derived mounting depths live in the
+profile. Topmasts keep their existing sources. These mounting poses still need
+visual acceptance.
 
 ### Manual sheet fallbacks
 
@@ -711,12 +739,12 @@ generated strip or rotated mast search remains.
 
 ### Kakam aft controls
 
-[Kakam.cs](../src/BoatRigs/Kakam.cs) uses **2026-10-07** F9 measurements.
-Mainmast variants **5/6** use the authored aft sheet pair; an empty native
-source list excludes forward seats. Mast **5** angle controls supply templates.
-Contacts are symmetric and orientations parallel. Mizzen **7** tries its own
-reef array before the measured halyard fallback. Exact vectors and mesh-derived
-mounting depths live in the profile.
+[KakamControls.cs](../src/Controls/Configuration/Boats/KakamControls.cs) uses
+**2026-10-07** F9 measurements. Mainmast variants **5/6** use the authored aft
+sheet pair; an empty native source list excludes forward seats. Mast **5** angle
+controls supply templates. Contacts are symmetric and orientations parallel.
+Mizzen **7** tries its own reef array before the measured halyard fallback.
+Exact vectors and mesh-derived mounting depths live in the profile.
 
 ### Placement logging
 
@@ -823,6 +851,17 @@ placement searches or establish in-game acceptance.
 ## Runtime validation
 
 ### Automated baseline and limits
+
+The **2026-10-14** configuration ownership refactor, including the per-boat
+`Configuration/Boats/` organization and shared `BoatConfiguration`
+naming/layout, passed a Release build with zero warnings/errors and both .NET
+check suites against installed references. The optional SailInfo signature check
+was skipped because its DLL was absent. Configuration comparisons retained all
+authored values and ordering across the twelve boats; catalog checks cover exact
+names, clone suffixes and unknown boats, and stay checks cover duplicate mount
+IDs across groups. No in-game validation was performed for this refactor;
+fitting, controls, shipyard previews and save restoration still need runtime
+regression checks.
 
 The latest recorded **2026-10-12** Release builds passed with zero warnings or
 errors, and both .NET suites passed against installed references and an isolated

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Sails.FishermansStaysail;
 using MoreSailwindSails.Stays.FishermansStay;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail.MkA;
@@ -151,7 +151,7 @@ internal static class CutChecks
             );
         }
         int count = 0;
-        foreach (var boat in BoatRigCatalog.All)
+        foreach (var boat in FishermansStayCatalog.All)
         foreach (var stay in boat.Stays.SelectMany(g => g.Variants))
         {
             var masts = measurements[boat.BoatName];
@@ -160,14 +160,14 @@ internal static class CutChecks
             int baseId = stay.Fore;
             while (masts[baseId].Parents.Length != 0)
                 baseId = masts[baseId].Parents[0];
-            if (boat.Base(stay.Fore) != baseId)
+            if (boat.Boat.Base(stay.Fore) != baseId)
                 throw new Exception("Wrong authored Mk.A fore-mast base.");
             int aftBase = stay.Aft;
             while (masts[aftBase].Parents.Length != 0)
                 aftBase = masts[aftBase].Parents[0];
-            if (boat.Base(stay.Aft) != aftBase)
+            if (boat.Boat.Base(stay.Aft) != aftBase)
                 throw new Exception("Wrong authored Mk.A aft halyard source.");
-            var chain = boat.Sections(stay.Aft);
+            var chain = boat.Boat.Sections(stay.Aft);
             if (
                 chain[0] != stay.Aft
                 || chain[chain.Length - 1] != aftBase

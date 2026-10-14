@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Controls;
+using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -68,7 +68,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             )
                 return false;
             var boat = fore.GetComponentInParent<BoatRefs>();
-            var profile = boat ? BoatRigCatalog.Find(boat.name) : null;
+            var profile = boat ? FlyingSailCatalog.Find(boatName: boat.name) : null;
             if (profile == null)
                 return false;
             var masts = boat.GetComponentsInChildren<Mast>(true)

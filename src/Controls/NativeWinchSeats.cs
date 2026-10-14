@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Controls.Configuration;
 using UnityEngine;
 
 namespace MoreSailwindSails.Controls
@@ -10,7 +10,7 @@ namespace MoreSailwindSails.Controls
     internal sealed class NativeWinchSeats
     {
         internal readonly BoatRefs Boat;
-        internal readonly BoatRigDefinition Profile;
+        internal readonly BoatControlDefinition Profile;
         private readonly Func<GPButtonRopeWinch, bool> owned;
         private readonly Dictionary<int, Quaternion> wheelFrames =
             new Dictionary<int, Quaternion>();
@@ -32,7 +32,7 @@ namespace MoreSailwindSails.Controls
         internal NativeWinchSeats(BoatRefs boat, Func<GPButtonRopeWinch, bool> owned)
         {
             Boat = boat;
-            Profile = BoatRigCatalog.Find(boat.name);
+            Profile = BoatControlCatalog.Find(boatName: boat.name);
             this.owned = owned;
         }
 
@@ -209,10 +209,10 @@ namespace MoreSailwindSails.Controls
         {
             if (!mast || !mast.gameObject.activeInHierarchy)
                 return false;
-            if (Profile == null || !Profile.MastParents.ContainsKey(mast.orderIndex))
+            if (Profile == null || !Profile.Boat.MastParents.ContainsKey(mast.orderIndex))
                 return true;
             return Profile
-                .Sections(mast.orderIndex)
+                .Boat.Sections(mast.orderIndex)
                 .All(id =>
                 {
                     var support = Mast(id);

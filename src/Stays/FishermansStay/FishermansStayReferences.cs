@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
 using UnityEngine;
 
 namespace MoreSailwindSails.Stays.FishermansStay
@@ -38,7 +38,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
         }
 
         internal static FishermansStayReferences[][] Resolve(
-            BoatRigDefinition profile,
+            FishermansStayDefinition profile,
             BoatCustomParts parts,
             BoatRefs boat
         )

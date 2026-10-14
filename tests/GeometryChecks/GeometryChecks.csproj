@@ -185,8 +185,20 @@
       Link="FishermansFlyingSail/FishermansFlyingSailAerodynamics.cs"
     />
     <Compile
-      Include="../../src/BoatRigs/**/*.cs"
-      Link="BoatRigs/%(RecursiveDir)%(Filename)%(Extension)"
+      Include="../../src/Controls/Configuration/**/*.cs"
+      Link="Controls/Configuration/%(RecursiveDir)%(Filename)%(Extension)"
+    />
+    <Compile
+      Include="../../src/Stays/FishermansStay/Configuration/**/*.cs"
+      Link="Stays/FishermansStay/Configuration/%(RecursiveDir)%(Filename)%(Extension)"
+    />
+    <Compile
+      Include="../../src/Sails/FishermansFlyingSail/Configuration/**/*.cs"
+      Link="Sails/FishermansFlyingSail/Configuration/%(RecursiveDir)%(Filename)%(Extension)"
+    />
+    <Compile
+      Include="../../src/BoatConfiguration/**/*.cs"
+      Link="BoatConfiguration/%(RecursiveDir)%(Filename)%(Extension)"
     />
     <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailGeometry.cs"
