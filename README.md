@@ -1,29 +1,20 @@
 # MoreSailwindSails
 
-<!-- prettier-ignore -->
-> [!IMPORTANT]
-> This README documents the current development version of MoreSailwindSails.
->
-> For documentation on the latest stable version, see the [0.2.2 tagged release](https://github.com/sum-rock/MoreSailwindSails/tree/v0.2.2).
->
-> To download the latest release go to the [release page](https://github.com/sum-rock/MoreSailwindSails/releases)
-
 ## Overview
 
-MoreSailwindSails adds new sail types to Sailwind, with room for more as they
-are developed. The mod currently includes two sail families:
+MoreSailwindSails adds two families of sails to Sailwind:
 
 - **Fisherman's Staysails** — Mk.A, Mk.B and Mk.C cuts fitted to a Fisherman's
   Stay between two masts.
 - **Fisherman's Flying Sails** — sails fitted directly to a physical mast, with
-  an active mast behind it for support.
+  a fitted mast behind it for support.
 
 **Fisherman's Stays** provide the rigging mounts for the staysail family.
 
 ### Current versions
 
-**Latest release:** 0.2.2\
-**Development:** 0.3.0-dev
+**Latest release:** 0.3.0\
+**Development:** 0.4.0
 
 See the [changelog](#changelog).
 
@@ -37,30 +28,38 @@ See the [changelog](#changelog).
   <a href="references/fishermans-staysail-at-sea.png"><img src="references/fishermans-staysail-at-sea.png" width="32%" alt="Fisherman's Staysail between two masts, viewed from astern at sea"></a>
 </p>
 
-Select a screenshot to view it at full size.
+Select a screenshot to view it at full size. These show earlier versions;
+current sails use plain cloth with your chosen color.
 
 ### What's included
 
-| Sail or rigging               | What it adds                                                                                                                                |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Fisherman's Stay**          | A high stay between two masts, with variants for supported mast and topmast combinations.                                                   |
-| **Fisherman's Staysail Mk.A** | A four-corner sail with a sloping head and a lower edge that slopes downward toward the aft mast.                                           |
-| **Fisherman's Staysail Mk.B** | The same head and controls as Mk.A, with a straight lower edge perpendicular to the mast—level with the deck on upright masts.              |
-| **Fisherman's Staysail Mk.C** | The same head and controls, with a 50% longer luff and a lower edge rising 40° from the forward luff toward the aft leech on upright masts. |
-| **Fisherman's Flying Sail**   | A separate sail fitted directly to a mast through the **Other** category.                                                                   |
+| Sail or rigging               | What it adds                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------- |
+| **Fisherman's Stay**          | A high stay between two masts, with options for different mast and topmast combinations.    |
+| **Fisherman's Staysail Mk.A** | A four-corner sail whose lower edge slopes downward toward the rear mast.                   |
+| **Fisherman's Staysail Mk.B** | The same upper edge and controls as Mk.A, with a lower edge that is level on upright masts. |
+| **Fisherman's Staysail Mk.C** | A 50% longer forward edge than Mk.A/B, with a lower edge rising toward the rear mast.       |
+| **Fisherman's Flying Sail**   | A trapezoid sail fitted directly to a mast through the **Other** category.                  |
 
 ### Supported boats
 
-Supported boats include **Brig, Junk, Jong, Sanbuq, Cog, Shroud and Baghala**.
-Shroud requires
-[Shattered Seas Expansion](https://github.com/TheOriginOfAllEvil/Shattered-Seas-Expansion).
-Available stay variants depend on the boat and its fitted masts.
+Flying Sails and Fisherman's Staysails have support for the boats below.
+Available fittings depend on your installed mods and chosen masts; not every
+mast combination supports a sail or stay.
 
-Flying Sail, Fisherman's Staysail and Spritsail support for **Gloriana, Chronian
-and Caelanor** from **OldChronian**, which must be installed to use these boats.
-**Gallus** supports loose-footed and boomed Spritsails on its plumb mast only.
+| Boats                                 | Requirements and fitting notes                                                                               |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Brig, Junk, Jong, Sanbuq, Baghala** | Stay options are available with the base game. Shipyard Expansion adds more mast combinations on some boats. |
+| **Cog, Kakam, Dhow**                  | Current Fisherman's Stay options require parts supplied by Shipyard Expansion.                               |
+| **Shroud**                            | Requires [Shattered Seas Expansion](https://github.com/TheOriginOfAllEvil/Shattered-Seas-Expansion).         |
+| **Gloriana, Chronian, Caelanor**      | Requires OldChronian; support targets version 0.6.0.                                                         |
 
-**Leopard support has been removed.** Future compatibility work is tracked in
+On the Dhow, one stay option covers both supported mainmast heights. Caelanor's
+stay uses the aft mainmast position, not the Midmast alternative. Chronian's
+main-to-mizzen Fisherman's Stay cannot be fitted alongside its Mizzen Royalstay.
+
+**Leopard and Gallus are not supported.** Experimental spritsails are not
+included in this version. Future Leopard compatibility is tracked in
 [issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
 
 ## Usage
@@ -80,10 +79,10 @@ and Caelanor** from **OldChronian**, which must be installed to use these boats.
 sail; these stays can also carry vanilla staysails. Supported three-masted boats
 offer additional mast pairs.
 
-All three cuts start with the same width; Mk.C has a luff 50% longer than Mk.A
-and Mk.B and needs more room on the forward mast. They can be resized uniformly.
-New sails are white and plain, with normal recoloring available. Heads follow
-the fitted stay; foot cuts use the forward mast’s frame and tilt with mast rake.
+All three cuts start with the same width. Mk.C's forward edge (the luff) is 50%
+longer than Mk.A/B's and needs more room on the forward mast. Resize using the
+controls available in your shipyard. The sail's top follows the stay, and its
+lower edge tilts with the forward mast.
 
 Remove a fitted sail before replacing or removing its stay. If you change a
 supporting mast or add a topmast, choose a matching stay variant as part of the
@@ -92,10 +91,25 @@ shipyard changes.
 ### Using the Flying Sail
 
 At a shipyard, select a **physical mast**, open **Other**, and choose
-**Fisherman's Flying Sail**. It needs a supported active mast behind it.
+**Fisherman's Flying Sail**. It needs a supported fitted mast behind it.
 
 Its own hoist winch raises it from the deck, and its port and starboard sheets
-control the trim. Fully lowering it hides the sail.
+control the trim. Fully lowering it hides the sail. Leave clearance below the
+aft supporting pulley when sizing and positioning it.
+
+### Colors and controls
+
+Both sail families start with plain white cloth and can be recolored at the
+shipyard. With Shipyard Expansion 0.12.1 (and newer), texture cycling is
+restricted to plain cloth; older saved patterned selections are changed to plain
+cloth when loaded.
+
+Controls use available mounting points on the boat. Some boats also have extra
+positions for when the usual points are occupied. If no suitable position is
+free, the affected controls stay hidden until a position becomes available.
+
+SailInfo is optional. When installed, its hover labels identify Fisherman's
+Flying Sails and Staysails; staysails also report their sheet angle.
 
 ## Requirements and installation
 
@@ -105,14 +119,48 @@ game, or save files from using this mod. Back up your saves before installing.
 
 - Built against **Sailwind 0.39**
 - **BepInEx 5**
-- **Shipyard Expansion 0.12.1** (required)
 
-1. Close Sailwind.
-2. Place `MoreSailwindSails.dll` in
-   `<Sailwind>/BepInEx/plugins/MoreSailwindSails/`, creating the folder if
-   needed.
-3. When updating, replace the old DLL and remove any duplicate copies.
-4. Launch the game and visit a shipyard.
+**Optional mods:**
+
+- **Shipyard Expansion 0.12.1** for additional rigging and shipyard controls.
+  Starting with 0.3.0, it is no longer required to load MoreSailwindSails, but
+  some boat fittings still need its parts (see
+  [supported boats](#supported-boats)).
+- **SailInfo** for control hover labels and sail information; integration was
+  checked against version **1.2.1**.
+- **Shattered Seas Expansion** or **OldChronian** for their respective boats.
+
+1. Download `MoreSailwindSails.dll` from the
+   [release page](https://github.com/sum-rock/MoreSailwindSails/releases).
+2. Close Sailwind.
+3. Place the DLL in `<Sailwind>/BepInEx/plugins/MoreSailwindSails/`, creating
+   the folder if needed.
+4. When updating, replace the old DLL and remove any duplicate copies.
+5. Launch the game and visit a shipyard.
+
+### Updating from 0.2.2
+
+Back up your save before updating. Keep Shipyard Expansion installed for saves
+that already use it: making it optional does not make its saved rigging safe to
+remove. The same applies to mods that provide your boat.
+
+Existing Fisherman's sail and stay selections are retained. If existing sails
+show odd textures and patterns when you upgrade, they will be able to be fixed
+(for free) when you visit a shipyard.
+
+### If something is missing
+
+- **No stay or sail option:** check the boat, installed mods and fitted masts.
+  Staysails require a Fisherman's Stay; Flying Sails require a physical mast and
+  a supported mast behind it.
+- **A stay or mast cannot be removed:** remove its fitted sail first.
+- **Missing winches:** other sails may occupy the available control positions.
+  Check for competing sails on the same masts.
+
+For a bug report, include the boat, fitted masts, mod versions, steps to
+reproduce, a screenshot if useful, and `BepInEx/LogOutput.log`. Submit it
+through the
+[issue tracker](https://github.com/sum-rock/MoreSailwindSails/issues).
 
 ## Removing the mod
 
@@ -121,6 +169,27 @@ Before uninstalling, remove all sails and rigging added by MoreSailwindSails
 sails before removing the stays or masts that support them.
 
 ## Changelog
+
+### 0.3.0
+
+- **Shipyard Expansion is now optional.** Supported base-game rigs can use
+  Fisherman's sails and stays without it. The native shipyard gains page arrows
+  for longer rigging lists; fittings that need missing mod parts stay
+  unavailable.
+- Added **Kakam and Dhow** support and **Gloriana, Chronian and Caelanor**
+  support from OldChronian. Dhow uses one stay option for both supported
+  mainmast heights.
+- Added extra halyard mounting positions on **Sanbuq, Gloriana and Kakam**, and
+  placed Kakam's sheet controls near the stern.
+- **Flying Sail ropes now follow the game's 3D rope setting**, matching the
+  rounded appearance of native ropes when enabled.
+- Reworked all four sail meshes and their texture mapping. Sails use plain cloth
+  with normal recoloring; SE texture selection is restricted to plain cloth to
+  prevent mismatched sail patterns, including on older saved sails.
+- Removed forced uniform scaling and the mod's rotation/flip restrictions on
+  staysails, leaving those options to the installed shipyard controls.
+
+Experimental spritsails developed between releases are not included in 0.3.0.
 
 ### 0.2.2
 
