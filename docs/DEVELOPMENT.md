@@ -34,16 +34,18 @@ dotnet restore
 ```
 
 Initial Nix/NuGet restores need network access. Keep `flake.lock` and
-`.config/dotnet-tools.json` pinned. The flake also pins Prettier for Markdown.
-Run `pre-commit install` inside the development shell to enable the CSharpier
-and Markdown formatting hooks, which invoke Nix on later commits. Hooks format
-staged files; review and stage any formatting changes before retrying the
+`.config/dotnet-tools.json` pinned. The flake also provides Python 3, ILSpy CLI
+and pins Prettier for Markdown and Ruff for Python formatting. Run
+`pre-commit install` inside the development shell to enable the CSharpier and
+Markdown/Python formatting hooks, which invoke Nix on later commits. Hooks
+format staged files; review and stage any formatting changes before retrying the
 commit.
 
 After restoring, run from the repository root:
 
 ```sh
 nix develop -c prettier --check "**/*.md"
+nix develop -c ruff format --check .
 nix develop -c bash -c 'dotnet csharpier check . && dotnet build -c Release --no-restore && dotnet run --project tests/GeometryChecks -c Release --no-restore && dotnet run --project tests/AssemblyChecks -c Release --no-restore'
 git diff --check
 ```
@@ -57,6 +59,12 @@ For Markdown, run `nix develop -c prettier --write "**/*.md"` to format or use
 wrapping target and preserves embedded code formatting. `.prettierignore`
 excludes build outputs. To exercise the Markdown hook across tracked files, run
 `nix develop -c pre-commit run prettier-markdown --all-files`.
+
+For Python, run `nix develop -c ruff format .` to format or add `--check` for
+read-only verification. The `ruff-format` commit hook formats staged Python
+files using Ruff's defaults; it does not execute them or run lint fixes.
+Exercise it across tracked Python files with
+`nix develop -c pre-commit run ruff-format --all-files`.
 
 The default game directory is `~/.local/share/Steam/steamapps/common/Sailwind`.
 For another installation, pass `-p:SailwindDir="/path/to/Sailwind"` to the
@@ -1052,6 +1060,76 @@ Inspect `Sailwind_Data/Managed/Assembly-CSharp.dll`, Unity assemblies,
 `BepInEx/plugins/`: ShipyardExpansion/SE_Bridge, NANDFixes, AllSailsAllShipyards
 and SailInfo. Keep debugging dependencies out of the plugin and asset inspection
 read-only. The installed mod DLL is distinct from build output.
+
+#### Local decompiled game reference
+
+Maintainers can manually run the Bash wrapper from the repository root to create
+or refresh `/home/august/Documents/SailwindGame`:
+
+```sh
+./scripts/decompile-sailwind.sh
+```
+
+The wrapper locates the repository's Nix flake and launches the Python script,
+forwarding all arguments. It can also be invoked by absolute path from another
+directory; relative argument paths remain relative to the caller's directory.
+The pinned Nix shell supplies Python 3, .NET 8 and ILSpy CLI through
+`pkgs.ilspycmd`. `flake.lock` pins the decompiler package along with the other
+development tools. The script finds `ilspycmd` on `PATH` and records its full
+version output without parsing or validating it. It does not install tools.
+Existing `.tools/` directories from earlier runs are unused and left intact.
+Initial Nix downloads may require network access. Override the default paths
+when needed:
+
+```sh
+./scripts/decompile-sailwind.sh \
+  --game-dir "/path/to/Sailwind" \
+  --output-dir "/path/to/local/SailwindGame"
+```
+
+The output directory must be separate from the game and repository. It contains
+`source/Assembly-CSharp/` and `source/Assembly-CSharp-firstpass/`, with
+generated C# files grouped by namespace and project files for navigation. Unity
+libraries in the installed Managed directory resolve dependencies; installed
+mods and separate game assets are not extracted. Generated code is reference
+material, not a replacement game build. It cannot recover original comments or
+scene and prefab configuration; ambiguous behavior still requires IL or asset
+inspection.
+
+`manifest.json` records the input paths and SHA-256 hashes, UTC extraction time,
+ILSpy version, source-file counts and exact command argument lists.
+`decompile.log` records commands and diagnostics. Command output paths in these
+records refer to the temporary staging directory used for that extraction; the
+manifest's relative output directories identify the published files.
+
+Rerun the same command after a game update. Each refresh stages both assemblies
+and verifies nonempty C# output and unchanged input hashes before publishing.
+Handled extraction or publication failures preserve the previous snapshot and
+report the staging directory containing diagnostics and any recovery files.
+Failed staging directories remain available for manual inspection and cleanup. A
+per-directory lock prevents concurrent refreshes. Only generated `source/`,
+`manifest.json` and `decompile.log` are replaced; existing snapshot paths
+require this script's ownership marker in the manifest. Keep personal notes
+outside `source/`. Other files in the destination are preserved.
+
+After a successful run, review `decompile.log` for warnings and compare the
+manifest's hashes with the installed inputs:
+
+```sh
+sha256sum "$HOME/.local/share/Steam/steamapps/common/Sailwind/Sailwind_Data/Managed/Assembly-CSharp.dll" \
+  "$HOME/.local/share/Steam/steamapps/common/Sailwind/Sailwind_Data/Managed/Assembly-CSharp-firstpass.dll"
+rg -n 'class .*Sail|class .*Shipyard|class .*Winch|class .*Save' \
+  /home/august/Documents/SailwindGame/source
+```
+
+Implementation validation covers Bash and Python syntax, formatting, static
+review of subprocess/path/rollback handling and a Nix-shell `ilspycmd --version`
+check (the pinned package reports **9.1.0.0**). Extraction and refresh recovery
+remain unverified until a maintainer runs the script manually. Agents must not
+execute files in `scripts/`. This tooling does not change plugin behavior or
+require an in-game check.
+
+#### Game logs
 
 Read both logs; Unity warnings may be absent from BepInEx output:
 

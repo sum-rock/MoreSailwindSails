@@ -78,7 +78,9 @@ def generate(*, output: Path, width: float, heights: tuple, object_name: str) ->
                 view = area.spaces.active.region_3d
                 view.view_rotation = Quaternion((1.0, 0.0, 0.0), math.pi / 2.0)
                 view.view_perspective = "ORTHO"
-                view.view_location = Vector((width / 2.0, 0.0, (head_rise + bottom) / 2.0))
+                view.view_location = Vector(
+                    (width / 2.0, 0.0, (head_rise + bottom) / 2.0)
+                )
                 view.view_distance = max(width, height) * 1.5
 
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -91,15 +93,32 @@ def require(condition: bool, message: str) -> None:
         raise ValueError(f"Incompatible sail asset: {message}")
 
 
-def bake(*, width: float, heights: tuple, object_name: str, namespace: str, class_name: str, data_type: str, source_comment: str) -> str:
+def bake(
+    *,
+    width: float,
+    heights: tuple,
+    object_name: str,
+    namespace: str,
+    class_name: str,
+    data_type: str,
+    source_comment: str,
+) -> str:
     require(bpy.app.background, "run in background Blender")
     require(bool(bpy.data.filepath), "open the saved .blend file before baking")
     obj = bpy.data.objects.get(object_name)
-    require(obj is not None and obj.type == "MESH", f"missing named mesh: {object_name}")
+    require(
+        obj is not None and obj.type == "MESH", f"missing named mesh: {object_name}"
+    )
     require(obj.matrix_world == Matrix.Identity(4), "apply object transforms")
-    require(not obj.modifiers and not obj.data.shape_keys, "modifiers and shape keys are unsupported")
+    require(
+        not obj.modifiers and not obj.data.shape_keys,
+        "modifiers and shape keys are unsupported",
+    )
     mesh = obj.data
-    require(len(mesh.vertices) == 825 and len(mesh.polygons) == 768, "retain the 24 x 32 quad grid")
+    require(
+        len(mesh.vertices) == 825 and len(mesh.polygons) == 768,
+        "retain the 24 x 32 quad grid",
+    )
     uv = mesh.uv_layers.get("ClothUV")
     require(uv is not None, "missing ClothUV layer")
     rise, foot_fore, foot_aft = heights
@@ -115,9 +134,18 @@ def bake(*, width: float, heights: tuple, object_name: str, namespace: str, clas
         for col in range(COLUMNS + 1):
             u = col / COLUMNS
             point = mesh.vertices[row * (COLUMNS + 1) + col].co
-            expected = Vector((width * u, 0, rise * u * (1 - v) + (foot_fore * (1 - u) + foot_aft * u) * v))
+            expected = Vector(
+                (
+                    width * u,
+                    0,
+                    rise * u * (1 - v) + (foot_fore * (1 - u) + foot_aft * u) * v,
+                )
+            )
             require(all(math.isfinite(n) for n in point), "non-finite vertex")
-            require((point - expected).length < 0.00001, "retain the nominal flat cut and vertex order")
+            require(
+                (point - expected).length < 0.00001,
+                "retain the nominal flat cut and vertex order",
+            )
 
     expected_faces = set()
     triangles = []
@@ -133,26 +161,41 @@ def bake(*, width: float, heights: tuple, object_name: str, namespace: str, clas
         require(len(indices) == 4, "retain quad faces")
         start = indices.index(min(indices))
         canonical = indices[start:] + indices[:start]
-        require(canonical in expected_faces, "changed connectivity, winding or duplicate face")
+        require(
+            canonical in expected_faces,
+            "changed connectivity, winding or duplicate face",
+        )
         expected_faces.remove(canonical)
     require(not expected_faces, "missing grid face")
-    require(len(mesh.edges) == 2 * COLUMNS * ROWS + COLUMNS + ROWS, "loose or missing edges")
+    require(
+        len(mesh.edges) == 2 * COLUMNS * ROWS + COLUMNS + ROWS, "loose or missing edges"
+    )
 
     vertex_uvs = [None] * len(mesh.vertices)
     for loop in mesh.loops:
         point = mesh.vertices[loop.vertex_index].co
         value = uv.data[loop.index].uv
-        expected = Vector((uv_left + point.x * uv_scale, uv_bottom + (point.z - bottom) * uv_scale))
+        expected = Vector(
+            (uv_left + point.x * uv_scale, uv_bottom + (point.z - bottom) * uv_scale)
+        )
         require(all(math.isfinite(n) for n in value), "non-finite UV")
-        require((value - expected).length < 0.000002, "retain continuous uniform planar UVs with a 5% margin")
+        require(
+            (value - expected).length < 0.000002,
+            "retain continuous uniform planar UVs with a 5% margin",
+        )
         previous = vertex_uvs[loop.vertex_index]
-        require(previous is None or (previous - value).length < 0.0000001, "UV seams are unsupported")
+        require(
+            previous is None or (previous - value).length < 0.0000001,
+            "UV seams are unsupported",
+        )
         vertex_uvs[loop.vertex_index] = value.copy()
 
     # Normalize by the stored span so the luff/aft endpoints remain exactly -1/0.
     # Blender (X,Y,Z) -> sail (Z,-Y,X-width). Export no material or native asset.
     span = mesh.vertices[COLUMNS].co.x
-    vertices = [(p.co.z / span, -p.co.y / span, p.co.x / span - 1) for p in mesh.vertices]
+    vertices = [
+        (p.co.z / span, -p.co.y / span, p.co.x / span - 1) for p in mesh.vertices
+    ]
 
     def number(value: float) -> str:
         return ("0" if value == 0 else format(value, ".9g")) + "f"
@@ -180,7 +223,11 @@ def bake(*, width: float, heights: tuple, object_name: str, namespace: str, clas
         ("Triangles", "int", triangles),
     ):
         lines.extend((f"                {name} = new {kind}[]", "                {"))
-        lines.extend("                    " + (f"{value}," if kind == "int" else vector(value, kind)) for value in values)
+        lines.extend(
+            "                    "
+            + (f"{value}," if kind == "int" else vector(value, kind))
+            for value in values
+        )
         lines.append("                },")
     lines.extend(("            };", "    }", "}", ""))
     return "\n".join(lines)

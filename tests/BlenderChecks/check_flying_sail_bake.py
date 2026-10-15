@@ -9,5 +9,9 @@ tool = runpy.run_path(str(root / "tools/bake_flying_sail.py"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sail_bake_checks import check
 
-check(bake=tool["bake"], source_path=tool["SOURCE_PATH"],
-      object_name=tool["OBJECT_NAME"], main=tool["main"])
+check(
+    bake=tool["bake"],
+    source_path=tool["SOURCE_PATH"],
+    object_name=tool["OBJECT_NAME"],
+    main=tool["main"],
+)

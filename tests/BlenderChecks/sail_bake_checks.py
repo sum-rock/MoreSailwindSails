@@ -13,7 +13,6 @@ def check(*, bake, source_path, object_name, main, cli_args=()):
     obj = bpy.data.objects[object_name]
     original = obj.data
 
-
     def reject(label, edit):
         obj.data = original.copy()
         try:
@@ -32,27 +31,28 @@ def check(*, bake, source_path, object_name, main, cli_args=()):
             bpy.context.view_layer.update()
             bpy.data.meshes.remove(modified)
 
-
     def move_object(obj):
         obj.location.x = 1
         bpy.context.view_layer.update()
 
-
     def add_vertex(obj):
         obj.data.vertices.add(count=1)
-
 
     def flip_face(obj):
         face = obj.data.polygons[0]
         face.vertices = tuple(reversed(face.vertices))
 
-
     reject("object transform", move_object)
     reject("vertex count", add_vertex)
     reject("non-planar surface", lambda o: setattr(o.data.vertices[10].co, "y", 0.1))
     reject("vertex correspondence", lambda o: setattr(o.data.vertices[10].co, "x", 0.1))
-    reject("non-finite vertex", lambda o: setattr(o.data.vertices[10].co, "z", float("nan")))
-    reject("UV distortion", lambda o: setattr(o.data.uv_layers[0].data[0], "uv", (0, 0)))
+    reject(
+        "non-finite vertex",
+        lambda o: setattr(o.data.vertices[10].co, "z", float("nan")),
+    )
+    reject(
+        "UV distortion", lambda o: setattr(o.data.uv_layers[0].data[0], "uv", (0, 0))
+    )
     reject("missing UV layer", lambda o: o.data.uv_layers.remove(o.data.uv_layers[0]))
     reject("winding", flip_face)
     reject("modifier", lambda o: o.modifiers.new(name="Solidify", type="SOLIDIFY"))
@@ -73,9 +73,15 @@ def check(*, bake, source_path, object_name, main, cli_args=()):
                     pass
                 else:
                     raise AssertionError("Stale check unexpectedly passed")
-                assert (not output.exists()) if stale is None else output.read_text() == stale
+                assert (
+                    (not output.exists())
+                    if stale is None
+                    else output.read_text() == stale
+                )
             output.write_text(source, encoding="utf-8")
             main()
         finally:
             sys.argv = original_args
-    print(f"PASS: {object_name} deterministic bake, incompatible edit rejection and read-only freshness checks.")
+    print(
+        f"PASS: {object_name} deterministic bake, incompatible edit rejection and read-only freshness checks."
+    )
