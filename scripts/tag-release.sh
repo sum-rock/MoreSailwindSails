@@ -75,4 +75,4 @@ fi
 printf 'Pushed release tag %s to origin.\n' "$tag"
 
 nix develop -c dotnet build src/MoreSailwindSails.csproj -c Release -t:Rebuild
-gh release create "$tag" "$repo_dir/src/bin/Release/netstandard2.0/MoreSailwindSails.dll" --verify-tag --notes-file "$repo_dir/docs/release_notes.md"
+gh release create "$tag" "$repo_dir/src/bin/Release/netstandard2.0/MoreSailwindSails.dll" --verify-tag --notes-file "$repo_dir/docs/RELEASE_NOTES.md"
