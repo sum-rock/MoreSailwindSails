@@ -17,8 +17,14 @@ cut = parser.parse_args(args).cut
 def bake():
     return tool["bake"](cut=cut)
 
+
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sail_bake_checks import check
 
-check(bake=bake, source_path=tool["source_path"](cut=cut),
-      object_name=f"Fishermans Staysail Mk.{cut}", main=tool["main"], cli_args=("--cut", cut))
+check(
+    bake=bake,
+    source_path=tool["source_path"](cut=cut),
+    object_name=f"Fishermans Staysail Mk.{cut}",
+    main=tool["main"],
+    cli_args=("--cut", cut),
+)

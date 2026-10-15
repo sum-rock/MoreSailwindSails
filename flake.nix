@@ -10,7 +10,14 @@
     in
     {
       devShells.${system}.default = pkgs.mkShell {
-        packages = [ pkgs.dotnet-sdk_8 pkgs.pre-commit pkgs.prettier ];
+        packages = [
+          pkgs.dotnet-sdk_8
+          pkgs.ilspycmd
+          pkgs.pre-commit
+          pkgs.prettier
+          pkgs.python3
+          pkgs.ruff
+        ];
       };
     };
 }

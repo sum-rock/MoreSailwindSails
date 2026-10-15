@@ -11,6 +11,10 @@ from flying_sail_authoring import ASSET_PATH, HEIGHTS, OBJECT_NAME, WIDTH
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ASSET_PATH)
-    args = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
-    generate(output=parser.parse_args(args).output.resolve(), width=WIDTH,
-             heights=HEIGHTS, object_name=OBJECT_NAME)
+    args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
+    generate(
+        output=parser.parse_args(args).output.resolve(),
+        width=WIDTH,
+        heights=HEIGHTS,
+        object_name=OBJECT_NAME,
+    )

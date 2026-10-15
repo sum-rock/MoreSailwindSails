@@ -24,3 +24,9 @@ repos:
         language: unsupported
         files: '\.md$'
         require_serial: true
+      - id: ruff-format
+        name: Ruff (Python formatting)
+        entry: nix develop -c ruff format
+        language: unsupported
+        types_or: [python, pyi]
+        require_serial: true

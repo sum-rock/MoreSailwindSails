@@ -23,4 +23,7 @@ def asset_path(cut: str) -> Path:
 
 
 def source_path(cut: str) -> Path:
-    return ROOT / f"src/Sails/FishermansStaysail/Mk{cut}/FishermansStaysailMk{cut}BakedMesh.g.cs"
+    return (
+        ROOT
+        / f"src/Sails/FishermansStaysail/Mk{cut}/FishermansStaysailMk{cut}BakedMesh.g.cs"
+    )

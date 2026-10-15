@@ -10,8 +10,12 @@ from staysail_authoring import CUTS, WIDTH, asset_path, dimensions
 
 
 def generate(output: Path, cut: str = "A") -> None:
-    sail_authoring.generate(output=output, width=WIDTH, heights=dimensions(cut=cut),
-                            object_name=f"Fishermans Staysail Mk.{cut}")
+    sail_authoring.generate(
+        output=output,
+        width=WIDTH,
+        heights=dimensions(cut=cut),
+        object_name=f"Fishermans Staysail Mk.{cut}",
+    )
 
 
 if __name__ == "__main__":
@@ -20,4 +24,7 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=Path)
     arguments = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     options = parser.parse_args(arguments)
-    generate(output=(options.output or asset_path(cut=options.cut)).resolve(), cut=options.cut)
+    generate(
+        output=(options.output or asset_path(cut=options.cut)).resolve(),
+        cut=options.cut,
+    )
