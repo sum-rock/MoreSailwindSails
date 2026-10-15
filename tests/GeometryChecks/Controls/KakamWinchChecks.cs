@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
@@ -11,9 +12,9 @@ internal static class KakamWinchChecks
 {
     internal static void Run()
     {
-        var category = Kakam.Definition.SheetCategory(mast: 5);
+        var category = KakamControls.Definition.SheetCategory(mast: 5);
         Check(
-            category == Kakam.Definition.SheetCategory(mast: 6)
+            category == KakamControls.Definition.SheetCategory(mast: 6)
                 && category.Sources.Count == 0
                 && category.Fallback?.InvalidSide == null,
             "Both Kakam mainmast variants must use the authored aft pair."
@@ -54,7 +55,7 @@ internal static class KakamWinchChecks
                 .SequenceEqual(templates),
             "Kakam startup must obtain both aft fallback templates."
         );
-        var reef = Kakam.Definition.HalyardGroups.Single();
+        var reef = KakamControls.Definition.HalyardGroups.Single();
         Check(
             reef.Mast == 7
                 && reef.Sources.SequenceEqual(new[] { 7 })

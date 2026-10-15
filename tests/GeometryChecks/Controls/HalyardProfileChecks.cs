@@ -2,7 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Configuration.Boats;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
@@ -11,19 +12,19 @@ internal static class HalyardProfileChecks
 {
     internal static void Run()
     {
-        var boats = new Dictionary<string, BoatRigDefinition>
+        var boats = new Dictionary<string, BoatControlDefinition>
         {
-            { "Brig", Brig.Definition },
-            { "Junk", Junk.Definition },
-            { "Jong", Jong.Definition },
-            { "Sanbuq", Sanbuq.Definition },
-            { "Cog", Cog.Definition },
-            { "Shroud", Shroud.Definition },
-            { "LargeDhow", LargeDhow.Definition },
-            { "Gloriana", Gloriana.Definition },
-            { "Chronian", Chronian.Definition },
-            { "Caelanor", Caelanor.Definition },
-            { "Kakam", Kakam.Definition },
+            { "Brig", BrigControls.Definition },
+            { "Junk", JunkControls.Definition },
+            { "Jong", JongControls.Definition },
+            { "Sanbuq", SanbuqControls.Definition },
+            { "Cog", CogControls.Definition },
+            { "Shroud", ShroudControls.Definition },
+            { "LargeDhow", LargeDhowControls.Definition },
+            { "Gloriana", GlorianaControls.Definition },
+            { "Chronian", ChronianControls.Definition },
+            { "Caelanor", CaelanorControls.Definition },
+            { "Kakam", KakamControls.Definition },
         };
         var associations = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "Controls", "HalyardMounts.txt")
@@ -73,7 +74,7 @@ internal static class HalyardProfileChecks
                 boat.HalyardGroups.Count == associations.Keys.Count(key => key.Boat == entry.Key),
                 "Unaudited or missing halyard groups: " + entry.Key
             );
-            foreach (int mast in boat.MastParents.Keys)
+            foreach (int mast in boat.Boat.MastParents.Keys)
             {
                 var expected = new[] { mast }.Concat(
                     associations.TryGetValue((entry.Key, mast), out var sources)
@@ -131,9 +132,9 @@ internal static class HalyardProfileChecks
                 && !ReefSeats(boat: "Brig", source: 70)
                     .Intersect(ReefSeats(boat: "Brig", source: 74))
                     .Any()
-                && Brig.Definition.HalyardSources(mast: 4).Contains(70)
-                && Brig.Definition.HalyardSources(mast: 58).Contains(70)
-                && !Brig.Definition.HalyardGroups.Any(group => group.Sources.Contains(74)),
+                && BrigControls.Definition.HalyardSources(mast: 4).Contains(70)
+                && BrigControls.Definition.HalyardSources(mast: 58).Contains(70)
+                && !BrigControls.Definition.HalyardGroups.Any(group => group.Sources.Contains(74)),
             "Brig's registered mainmast source 70 was confused with unregistered foremast source 74."
         );
         Console.WriteLine(

@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
 
@@ -24,7 +24,7 @@ internal static class NativeAvailabilityChecks
             int[] Ids(string text) =>
                 text.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
             var native = new HashSet<int>(Ids(columns[1]));
-            var profile = BoatRigCatalog.Find(boatName: columns[0]);
+            var profile = FishermansStayCatalog.Find(boatName: columns[0]);
             var actual = profile
                 .Stays.SelectMany(g => g.Variants)
                 .Where(v => v.HasRequiredParts(present: native.Contains))
@@ -37,7 +37,9 @@ internal static class NativeAvailabilityChecks
             candidates += actual.Length;
         }
         foreach (
-            var variant in BoatRigCatalog.All.SelectMany(b => b.Stays).SelectMany(g => g.Variants)
+            var variant in FishermansStayCatalog
+                .All.SelectMany(b => b.Stays)
+                .SelectMany(g => g.Variants)
         )
         {
             var present = new HashSet<int>(variant.Required) { variant.Donor };

@@ -1,7 +1,10 @@
 using System;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.BoatConfiguration;
+using MoreSailwindSails.BoatConfiguration.Boats;
 using MoreSailwindSails.Stays.FishermansStay;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
@@ -45,9 +48,9 @@ internal static class StayChecks
         int variants = 0,
             fallback = 0;
         int[] counts = { 24, 9, 9, 26, 3, 8, 14, 3, 2, 1, 2, 2 };
-        for (int boatIndex = 0; boatIndex < BoatRigCatalog.All.Count; boatIndex++)
+        for (int boatIndex = 0; boatIndex < FishermansStayCatalog.All.Count; boatIndex++)
         {
-            var boat = BoatRigCatalog.All[boatIndex];
+            var boat = FishermansStayCatalog.All[boatIndex];
             var masts = measurements[boat.BoatName];
             var stays = boat.Stays.SelectMany(g => g.Variants).ToArray();
             Check(
@@ -142,24 +145,24 @@ internal static class StayChecks
         Check(fallback == 22, "Shorter-foremast fallback coverage changed.");
         // The large dhow's foremast capsules extend 6.7 cm beyond the rendered
         // end rings. Both upright and raked options must use the visible spar.
-        var dhowSpars = measurements[LargeDhow.Definition.BoatName];
+        var dhowSpars = measurements[LargeDhowStays.Definition.BoatName];
         foreach (int id in new[] { 0, 1 })
             Check(
                 !OnSegment(dhowSpars[id].Point(new Vector3(-0.006836f, 0f, 2.29f)), dhowSpars[id]),
                 "Large dhow capsule tip incorrectly accepted as a visible masthead."
             );
         Check(
-            LargeDhow
+            LargeDhowStays
                 .Definition.Stays.SelectMany(g => g.Variants)
                 .Count(s => s.Fore == 0 || s.Fore == 1) == 8,
             "Missing large dhow foremast endpoint coverage."
         );
         // Actual Brig coordinates straddle the boundary: the same authored aft
         // anchor meets a bare foremast head, or the preferred line on its topmast.
-        var brig = BoatRigCatalog.All[0].Stays[0].Variants;
+        var brig = FishermansStayCatalog.All[0].Stays[0].Variants;
         var bare = brig.Single(s => s.MountIndex == 129);
         var tall = brig.Single(s => s.MountIndex == 131);
-        var data = measurements[BoatRigCatalog.All[0].BoatName];
+        var data = measurements[FishermansStayCatalog.All[0].BoatName];
         var start = data[bare.Aft].Point(bare.AftPoint);
         var target = data[tall.Fore].Point(tall.ForePoint);
         var direction = (data[bare.Aft].Bottom - data[bare.Aft].Top).normalized;
@@ -204,16 +207,23 @@ internal static class StayChecks
             )
         );
         Reject(() =>
-            new BoatRigDefinition(
-                "duplicate",
-                Brig.Definition.Supports,
-                new[] { new FishermansStayGroupDefinition("test", new[] { sample, sample }) },
-                Brig.Definition.MastParents,
-                Brig.Definition.SheetCategories
+            new FishermansStayDefinition(
+                boat: Brig.Definition,
+                stays: new[] { new FishermansStayGroupDefinition("test", new[] { sample, sample }) }
+            )
+        );
+        Reject(() =>
+            new FishermansStayDefinition(
+                boat: Brig.Definition,
+                stays: new[]
+                {
+                    new FishermansStayGroupDefinition(label: "first", variants: new[] { sample }),
+                    new FishermansStayGroupDefinition(label: "second", variants: new[] { sample }),
+                }
             )
         );
         Console.WriteLine(
-            $"PASS: {variants} authored stays across {BoatRigCatalog.All.Count} Fisherman boat profiles, {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs and pose invariance."
+            $"PASS: {variants} authored stays across {FishermansStayCatalog.All.Count} Fisherman boat profiles, {fallback} masthead fallbacks, physical endpoints, topmast dependencies, stable IDs and pose invariance."
         );
     }
 

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.BoatConfiguration;
+using MoreSailwindSails.BoatConfiguration.Boats;
 using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Configuration;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -128,7 +130,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
             walkVisual = CopyGeometry(source.walkColMast, WalkObject.transform);
             GeometryRange(walkVisual, out walkMin, out walkMax);
             Mount.walkColMast = WalkObject.transform;
-            var profile = BoatRigCatalog.Find(boat.name);
+            var profile = BoatCatalog.Find(boat.name);
             if (profile == Sanbuq.Definition || profile == LargeDhow.Definition)
             {
                 foreSurface = FishermansStayAttachmentVisual.Surface(
@@ -211,7 +213,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                                 anchors[i] = Tuple.Create(next.Guide, anchors[i].Item2);
                         if (attachmentVisual != null)
                         {
-                            var profile = BoatRigCatalog.Find(boatName: boat.name);
+                            var profile = BoatCatalog.Find(boatName: boat.name);
                             foreSurface = FishermansStayAttachmentVisual.Surface(
                                 mast: next.Fore,
                                 profile: profile

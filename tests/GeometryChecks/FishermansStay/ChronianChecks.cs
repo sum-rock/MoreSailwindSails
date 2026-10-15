@@ -1,9 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Configuration.Boats;
+using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 using MoreSailwindSails.Sails.FishermansStaysail;
 using MoreSailwindSails.Stays.FishermansStay;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
@@ -13,9 +17,12 @@ internal static class ChronianChecks
 {
     internal static void Run()
     {
-        var boat = Chronian.Definition;
+        var boat = ChronianStays.Definition;
         Check(
-            ReferenceEquals(BoatRigCatalog.Find(boatName: "BOAT CHRONIAN (187)(Clone)"), boat)
+            ReferenceEquals(
+                FishermansStayCatalog.Find(boatName: "BOAT CHRONIAN (187)(Clone)"),
+                boat
+            )
                 && boat.Stays.Count == 2
                 && boat.Stays.All(group => group.Variants.Count == 1),
             "Chronian must offer exactly two Fisherman's Stays."
@@ -73,9 +80,12 @@ internal static class ChronianChecks
         }
         foreach (var (top, middle, lower) in new[] { (15, 3, 2), (16, 5, 4), (17, 7, 6) })
             Check(
-                boat.Sections(section: top).SequenceEqual(new[] { top, middle, lower })
-                    && boat.SheetCategory(mast: top) == boat.SheetCategory(mast: lower)
-                    && boat.HalyardSources(mast: top).SequenceEqual(new[] { top }),
+                boat.Boat.Sections(section: top).SequenceEqual(new[] { top, middle, lower })
+                    && ChronianControls.Definition.SheetCategory(mast: top)
+                        == ChronianControls.Definition.SheetCategory(mast: lower)
+                    && ChronianControls
+                        .Definition.HalyardSources(mast: top)
+                        .SequenceEqual(new[] { top }),
                 "Chronian mast ancestry or independent T'gallant reef sources changed."
             );
         // Installed capsule bounds differ from the rendered end rings; registration

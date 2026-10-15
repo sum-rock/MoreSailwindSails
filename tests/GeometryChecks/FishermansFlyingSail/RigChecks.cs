@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.BoatConfiguration;
+using MoreSailwindSails.BoatConfiguration.Boats;
 using MoreSailwindSails.Sails.FishermansFlyingSail;
+using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansFlyingSail;
 
@@ -40,12 +42,12 @@ internal static class RigChecks
             "62:5>7;70:6>7",
             "54:6,7>51",
         };
-        Assert(BoatRigCatalog.All.Count == names.Length, "Missing boat mapping coverage.");
+        Assert(FlyingSailCatalog.All.Count == names.Length, "Missing boat mapping coverage.");
         for (int i = 0; i < names.Length; i++)
         {
-            var profile = BoatRigCatalog.Find(names[i]);
+            var profile = FlyingSailCatalog.Find(names[i]);
             Assert(
-                profile != null && BoatRigCatalog.Find(names[i] + "(Clone)") == profile,
+                profile != null && FlyingSailCatalog.Find(names[i] + "(Clone)") == profile,
                 "Boat lookup failed."
             );
             string actual = string.Join(
@@ -73,11 +75,11 @@ internal static class RigChecks
             }
         }
         Assert(
-            BoatRigCatalog.Find("BOAT medi medium (50) custom") == null
-                && BoatRigCatalog.Find(null) == null,
+            FlyingSailCatalog.Find("BOAT medi medium (50) custom") == null
+                && FlyingSailCatalog.Find(null) == null,
             "Unknown boats must not use guessed profiles."
         );
-        var brig = BoatRigCatalog.Find(names[0]).Supports;
+        var brig = FlyingSailCatalog.Find(names[0]).Supports;
         Assert(
             brig.Single(s => s.SheetControlSource == 61).AftSections.SequenceEqual(new[] { 56, 5 }),
             "Brig topmast lost its lower mainmast support."
@@ -87,13 +89,7 @@ internal static class RigChecks
             "Alternate Brig topmast uses wrong lower section."
         );
         Reject(() =>
-            new BoatRigDefinition(
-                "duplicate",
-                new[] { brig[0], brig[0] },
-                Brig.Definition.Stays,
-                Brig.Definition.MastParents,
-                Brig.Definition.SheetCategories
-            )
+            new FlyingSailDefinition(boat: Brig.Definition, supports: new[] { brig[0], brig[0] })
         );
         Reject(() => new MastSupportDefinition(1, new[] { 2 }, new[] { 2 }));
         Reject(() => new MastSupportDefinition(-1, new[] { 2 }, new[] { 3 }));

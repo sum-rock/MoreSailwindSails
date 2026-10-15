@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Controls.Configuration;
 
 namespace MoreSailwindSails.Controls
 {

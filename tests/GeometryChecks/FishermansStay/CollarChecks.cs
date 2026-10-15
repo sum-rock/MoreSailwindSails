@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Stays.FishermansStay;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using MoreSailwindSails.Stays.FishermansStay.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
@@ -139,10 +140,10 @@ internal static class CollarChecks
         }
         CheckContacts();
         var measuredTopmast = FishermansStaySparSurface.Taper(
-            bottom: Sanbuq.StayTopmastBottom,
-            top: Sanbuq.StayTopmastTop,
-            bottomRadius: Sanbuq.StayTopmastBottomRadius,
-            topRadius: Sanbuq.StayTopmastTopRadius,
+            bottom: SanbuqStays.StayTopmastBottom,
+            top: SanbuqStays.StayTopmastTop,
+            bottomRadius: SanbuqStays.StayTopmastBottomRadius,
+            topRadius: SanbuqStays.StayTopmastTopRadius,
             axis: Vector3.zero
         );
         var topmastSeat = measuredTopmast.Seat(
@@ -156,7 +157,7 @@ internal static class CollarChecks
             "Unreadable Sanbuq topmast no longer matches its installed rendered-spar measurement."
         );
         Check(
-            new[] { Sanbuq.Definition, LargeDhow.Definition }.Sum(b =>
+            new[] { SanbuqStays.Definition, LargeDhowStays.Definition }.Sum(b =>
                 b.Stays.Sum(g => g.Variants.Count)
             ) == 40,
             "Affected collar variant coverage changed."

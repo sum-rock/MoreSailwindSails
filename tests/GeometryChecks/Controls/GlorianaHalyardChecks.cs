@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
 using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
@@ -38,7 +39,7 @@ internal static class GlorianaHalyardChecks
         int templateIndex
     )
     {
-        var group = Gloriana.Definition.HalyardGroups.Single(g => g.Mast == mast);
+        var group = GlorianaControls.Definition.HalyardGroups.Single(g => g.Mast == mast);
         var definition = group.Fallback;
         Check(
             group.Sources.SequenceEqual(sources)
@@ -64,7 +65,7 @@ internal static class GlorianaHalyardChecks
             "Coil mounting depth changed."
         );
         Check(
-            Gloriana.Definition.HalyardGroups.Count(g => g.Fallback != null) == 2,
+            GlorianaControls.Definition.HalyardGroups.Count(g => g.Fallback != null) == 2,
             "Gloriana manual halyard fallback leaked to another mast."
         );
         foreach (

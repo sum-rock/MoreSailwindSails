@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatRigs;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -30,7 +30,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
             var parts = customization.GetComponent<BoatCustomParts>();
             if (!boat || !parts || parts.availableParts == null)
                 return;
-            var profile = BoatRigCatalog.Find(boat.name);
+            var profile = FishermansStayCatalog.Find(boatName: boat.name);
             if (profile == null || profile.Stays.Count == 0)
                 return;
             var registry =
