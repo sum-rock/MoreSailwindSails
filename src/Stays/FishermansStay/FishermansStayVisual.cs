@@ -29,6 +29,13 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 throw new InvalidOperationException(
                     "Missing native lantern metal or stay rope material."
                 );
+            // TODO: creates identical rope and collar meshes for every variant.
+            // Sanbuq’s 26 variants therefore create **52 meshes**, although their
+            // differences are applied through transforms.
+            // Registry-owned shared meshes could reduce that to **two**, avoiding
+            // array creation and tangent calculation. This targets loading and
+            // memory; ownership must move to the registry so individual stay
+            // cleanup cannot destroy shared assets.
             var rope = CreateMesh(
                 data: FishermansStayBakedMesh.CreateRope(),
                 name: "FishermansStay rope",
