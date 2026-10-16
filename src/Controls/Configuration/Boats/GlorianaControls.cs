@@ -1,4 +1,4 @@
-// Owns Gloriana's authored shared winch sources and fallback placements.
+// Owns Gloriana's authored fallback placements.
 using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration.Boats
@@ -7,33 +7,10 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
     {
         internal static readonly BoatControlDefinition Definition = new BoatControlDefinition(
             boat: BoatConfiguration.Boats.Gloriana.Definition,
-            sheetCategories: new[]
+            halyardFallbacks: new HalyardFallbackDefinition[]
             {
-                new SheetWinchCategory(
-                    name: "Foremast",
-                    physicalMasts: new[] { 1 },
-                    sources: new[] { 1, 5 },
-                    fallback: null
-                ),
-                new SheetWinchCategory(
-                    name: "Mainmast",
-                    physicalMasts: new[] { 2 },
-                    sources: new[] { 2, 6 },
-                    fallback: null
-                ),
-                new SheetWinchCategory(
-                    name: "Mizzenmast",
-                    physicalMasts: new[] { 3 },
-                    sources: new[] { 3, 4 },
-                    fallback: null
-                ),
-            },
-            halyardGroups: new[]
-            {
-                new HalyardWinchGroup(mast: 1, sources: new[] { 1, 5 }),
-                new HalyardWinchGroup(
+                new HalyardFallbackDefinition(
                     mast: 2,
-                    sources: new[] { 2 },
                     fallback: new HalyardFallbackSeat(
                         // F9 capture #2, MAST_MAIN walking surface, 2026-10-04.
                         contact: new Vector3(-0.005373f, 1.887422f, 0.791344f),
@@ -45,9 +22,8 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                         templateIndex: 1
                     )
                 ),
-                new HalyardWinchGroup(
+                new HalyardFallbackDefinition(
                     mast: 3,
-                    sources: new[] { 3, 4, 6 },
                     fallback: new HalyardFallbackSeat(
                         // F9 capture #1, FIFE_MIZEN walking surface, 2026-10-05.
                         contact: new Vector3(0.801387f, 4.769459f, -9.351812f),
@@ -59,7 +35,6 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                         templateIndex: 0
                     )
                 ),
-                new HalyardWinchGroup(mast: 4, sources: new[] { 4, 6 }),
             }
         );
     }

@@ -76,18 +76,23 @@ internal static class WinchChecks
                 method + " no longer returns early for already disposed controls."
             );
         }
-        var reconcileCalls = CalledMethods(manager.GetMethod("Reconcile", all)).ToArray();
-        Check(
-            reconcileCalls.Count(m => m.DeclaringType == owned && m.Name == "Retire") == 2
-                && !reconcileCalls.Any(m => m.DeclaringType == owned && m.Name == "Dispose")
-                && reconcileCalls.Any(m => m.DeclaringType == group && m.Name == "Set"),
-            "Reconciliation replacement/rollback must preserve controllers and restore group slots."
-        );
         var cleanupCalls = CalledMethods(manager.GetMethod("LateUpdate", all)).ToArray();
         Check(
             cleanupCalls.Any(m => m.DeclaringType == owned && m.Name == "Dispose")
                 && cleanupCalls.Any(m => m.DeclaringType == owned && m.Name == "Retire"),
             "Stale-control cleanup must distinguish lost owners from broken live controls."
+        );
+        Check(
+            CalledMethods(manager.GetMethod("InvalidateInventory", all))
+                .Any(m => m.Name == "NativeBindingComplete"),
+            "Native rebinding must preserve controllers beneath hidden mount-owned winches."
+        );
+        var rebound = CalledMethods(owned.GetMethod("NativeBindingComplete", all)).ToArray();
+        Check(
+            rebound.Any(m => m.Name == "get_activeInHierarchy")
+                && rebound.Any(m => m.Name == "Detach")
+                && rebound.Any(m => m.Name == "Dirty"),
+            "Hidden native bindings must detach controllers and request a placement retry."
         );
         var adopt = owned.GetMethod("Adopt", all);
         CheckOrderedCalls(adopt, "Detach", "Destroy", "Bind");
@@ -121,27 +126,19 @@ internal static class WinchChecks
                 .Any(m => m.Name == "Release" && m.DeclaringType.Name == "WinchReservations"),
             "Pair cleanup bypasses shared ledger."
         );
-        Check(
-            CalledMethods(manager.GetMethod("BindSheets", all)).Count(m => m.Name == "Bind") == 2,
-            "Sheet controllers are not bound together."
-        );
         foreach (string family in new[] { "FishermansFlyingSail", "FishermansStaysail" })
         {
             var type = assembly.GetType($"MoreSailwindSails.Sails.{family}.{family}Rigging", true);
-            var attach = type.GetMethod("AttachControls", all);
+            foreach (string method in new[] { "AttachControls", "TryResolve", "OnDestroy" })
+                Check(
+                    !CalledMethods(type.GetMethod(method, all))
+                        .Any(m => m.DeclaringType == manager || m.DeclaringType == owned),
+                    family
+                        + " must use its mounting Mast's controls rather than independent clones or placement searches."
+                );
             Check(
-                CalledMethods(attach).Any(m => m.DeclaringType == manager && m.Name == "Reconcile")
-                    && CalledMethods(attach)
-                        .Any(m => m.DeclaringType == manager && m.Name == "BindSheets")
-                    && Instructions(attach).Any(i => i.Operand is FieldInfo f && f.Name == "Fore"),
-                family + " does not pass physical forward mast and paired bindings."
-            );
-            Check(
-                CalledMethods(type.GetMethod("OnDestroy", all))
-                    .Any(m => m.DeclaringType == owned && m.Name == "Dispose")
-                    && !CalledMethods(type.GetMethod("OnDestroy", all))
-                        .Any(m => m.Name == "Retire"),
-                family + " bypasses control cleanup."
+                !type.GetFields(all).Any(field => field.FieldType == owned.MakeArrayType()),
+                family + " retains independent owned winches."
             );
         }
         var stay = assembly.GetType("MoreSailwindSails.Stays.FishermansStay.FishermansStay", true);
@@ -171,44 +168,20 @@ internal static class WinchChecks
             assembly.GetType("MoreSailwindSails.Controls.WinchPlacementGeometry") == null,
             "Generated placement remains in the plugin."
         );
-        var bootstrap = assembly.GetType(
-            "MoreSailwindSails.Controls.WinchBootstrapTemplates",
-            true
-        );
-        Check(
-            CalledMethods(manager.GetMethod("Create", all))
-                .Any(m => m.DeclaringType == bootstrap && m.Name == "TryGet"),
-            "Owned startup clones bypass shared bootstrap selection."
-        );
         var createCalls = CalledMethods(manager.GetMethod("Create", all)).ToArray();
         Check(
-            Array.FindIndex(
-                createCalls,
-                m => m.Name == "Prepare" && m.DeclaringType.Name == "NativeWinchSeats"
-            ) >= 0
-                && Array.FindIndex(
-                    createCalls,
-                    m => m.Name == "Prepare" && m.DeclaringType.Name == "NativeWinchSeats"
-                ) < Array.FindIndex(createCalls, m => m.Name == "TryGet"),
-            "Startup clones select templates before inventory discovery."
+            createCalls.Any(m => m.Name == "Sources")
+                && createCalls.Any(m => m.Name == "FirstOrDefault"),
+            "Stay startup must clone its existing donor assets independently of placement availability."
         );
-        foreach (string family in new[] { "FishermansFlyingSail", "FishermansStaysail" })
-        {
-            var type = assembly.GetType($"MoreSailwindSails.Sails.{family}.{family}Rigging", true);
-            Check(
-                CalledMethods(type.GetMethod("TryResolve", all))
-                    .Any(m => m.DeclaringType == manager && m.Name == "BootstrapReady"),
-                family + " readiness bypasses shared template policy."
-            );
-        }
-        foreach (var method in bootstrap.GetMethods(all).Where(m => m.DeclaringType == bootstrap))
-            Check(
-                !CalledMethods(method)
-                    .Any(m =>
-                        m.Name is "TryAcquireSeats" or "Occupied" or "Available" or "ActiveSupport"
-                    ),
-                "Bootstrap templates depend on placement vacancy or reserve native seats."
-            );
+        Check(
+            assembly.GetType("MoreSailwindSails.Controls.WinchBootstrapTemplates") == null,
+            "Obsolete placement source searches remain in bootstrap."
+        );
+        Check(
+            CalledMethods(manager.GetMethod("Configure", all)).Any(m => m.Name == "PhysicalMast"),
+            "Stay allocation must resolve the aft physical base mast."
+        );
         var native = assembly.GetType("MoreSailwindSails.Controls.NativeWinchSeats", true);
         var usable = native.GetMethod("Usable", all);
         var show = usable.GetParameters()[0].ParameterType.GetMethod("ShowWinch", all);

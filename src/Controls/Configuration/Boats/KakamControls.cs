@@ -1,4 +1,4 @@
-// Owns Kakam's authored shared winch sources and fallback placements.
+// Owns Kakam's authored fallback placements.
 using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration.Boats
@@ -7,27 +7,14 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
     {
         internal static readonly BoatControlDefinition Definition = new BoatControlDefinition(
             boat: BoatConfiguration.Boats.Kakam.Definition,
-            sheetCategories: new[]
+            sheetFallbacks: new SheetFallbackDefinition[]
             {
-                new SheetWinchCategory(
-                    name: "Mainmast",
-                    physicalMasts: new[] { 5, 6 },
-                    // Use the captured aft trim pair instead of the forward native seats.
-                    sources: new int[0],
-                    fallback: MainmastFallback
-                ),
-                new SheetWinchCategory(
-                    name: "Mizzenmast",
-                    physicalMasts: new[] { 7 },
-                    sources: new[] { 7 },
-                    fallback: null
-                ),
+                new SheetFallbackDefinition(name: "Mainmast", fallback: MainmastFallback),
             },
-            halyardGroups: new[]
+            halyardFallbacks: new HalyardFallbackDefinition[]
             {
-                new HalyardWinchGroup(
+                new HalyardFallbackDefinition(
                     mast: 7,
-                    sources: new[] { 7 },
                     fallback: new HalyardFallbackSeat(
                         contact: new Vector3(-0.000950f, 2.005890f, -4.232710f),
                         normal: new Vector3(-0.000001f, 0.036369f, -0.999338f),
@@ -41,7 +28,7 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
         );
 
         // F9 captures #2/#3 centered across the boat, with a shared normal for parallel winches.
-        // Both installed angle templates have the same rotation and rear Z bound -0.044704.
+
         private static SheetFallbackPair MainmastFallback =>
             new SheetFallbackPair(
                 port: new SheetFallbackSeat(

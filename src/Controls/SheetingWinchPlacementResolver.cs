@@ -1,3 +1,4 @@
+// Allocates complete sheet pairs from aft-mast dependencies, then authored positions moving aft.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,22 +18,22 @@ namespace MoreSailwindSails.Controls
             this.ledger = ledger;
         }
 
-        internal bool ValidateCurrent(Mast forward, NativeWinchCandidate current)
+        private IEnumerable<SheetFallbackDefinition> Fallbacks(Mast requested) =>
+            SheetFallbackOrder.FromMast(
+                fallbacks: native.Profile?.SheetFallbacks ?? Array.Empty<SheetFallbackDefinition>(),
+                mastZ: native.Boat.transform.InverseTransformPoint(requested.transform.position).z
+            );
+
+        internal bool ValidateCurrent(Mast requested, NativeWinchCandidate current)
         {
-            if (current == null || !native.ActiveSupport(forward))
-                return false;
-            var category = native.Profile?.SheetCategory(forward.orderIndex);
-            if (category == null)
+            if (current == null || !native.ActiveSupport(mast: requested))
                 return false;
             if (current.Fallback)
             {
-                if (
-                    category.Fallback == null
-                    || category.Fallback.InvalidSide != null
-                    || current.Id != category.FallbackName
-                )
-                    return false;
-                return ValidFallbackSide(
+                var category = Fallbacks(requested: requested)
+                    .FirstOrDefault(item => item.FallbackName == current.Id);
+                return category != null
+                    && ValidFallbackSide(
                         definition: category.Fallback.Port,
                         current: current,
                         index: 0
@@ -46,15 +47,15 @@ namespace MoreSailwindSails.Controls
             var mast = current.SourceMast;
             int index = current.SourceIndex;
             return mast
-                && category.Sources.Contains(mast.orderIndex)
-                && native.Mast(mast.orderIndex) == mast
+                && native.StaySources(requested: requested).Contains(mast)
                 && mast.leftAngleWinch != null
                 && mast.rightAngleWinch != null
+                && index >= 0
                 && index < mast.leftAngleWinch.Length
                 && index < mast.rightAngleWinch.Length
                 && mast.leftAngleWinch[index] == current.Templates[0]
                 && mast.rightAngleWinch[index] == current.Templates[1]
-                && native.Current(current);
+                && native.Current(candidate: current);
         }
 
         private bool ValidFallbackSide(
@@ -63,16 +64,11 @@ namespace MoreSailwindSails.Controls
             int index
         )
         {
-            var controls = NativeWinchSeats.Sources(
-                mast: native.Mast(definition.TemplateMast),
-                role: definition.TemplateRole
-            );
-            var template = current.Templates[index];
-            return controls != null
-                && definition.TemplateIndex < controls.Length
-                && controls[definition.TemplateIndex] == template
-                && native.TemplateUsable(template)
-                && definition.Supports.All(id => native.ActiveSupport(native.Mast(id)))
+            var template = Template(definition: definition);
+            return template
+                && current.Templates[index] == template
+                && definition.Supports.All(id => native.ActiveSupport(mast: native.Mast(id: id)))
+                && native.Available(seat: current.Seats[index])
                 && current
                     .Seats[index]
                     .MatchesPose(
@@ -81,136 +77,113 @@ namespace MoreSailwindSails.Controls
                         rotation: Quaternion.FromToRotation(
                             definition.SourceNormal,
                             definition.Normal
-                        ) * native.Rotation(template)
+                        ) * native.Rotation(c: template)
                     );
         }
 
-        internal WinchResolution Resolve(
-            object owner,
-            GameObject ownerObject,
-            Mast forward,
-            WinchCandidate current
-        )
+        internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
         {
-            var category = forward ? native.Profile?.SheetCategory(forward.orderIndex) : null;
-            if (category == null)
-            {
-                ledger.Release(owner);
-                native.Diagnose(
-                    "category/" + (forward ? forward.orderIndex : -1),
-                    $"Missing sheet category: boat={native.Boat.name}, owner={ownerObject.name}, mast={(forward ? forward.orderIndex : -1)}."
-                );
-                return new WinchResolution { MissingSupports = 1 };
-            }
             var pairs = new List<NativeWinchCandidate>();
-            foreach (var source in category.Sources)
+            if (native.ActiveSupport(mast: requested))
             {
-                var mast = native.Mast(source);
-                if (!mast)
-                    continue;
-                var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
-                var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
-                var indices = NativeSheetPairing.Indices(
-                    left,
-                    right,
-                    NativeWinchSeats.Usable,
-                    index =>
-                        native.Diagnose(
-                            $"pair/{source}/{index}",
-                            $"Unmatched native sheet pair: boat={native.Boat.name}, category={category.Name}, source={source}, indices={index}."
-                        )
-                );
-                foreach (var index in indices)
+                foreach (var mast in native.StaySources(requested: requested))
                 {
-                    var p = left[index[0]];
-                    var s = right[index[1]];
-                    var candidate = native.Candidate(
-                        $"native/{p.GetInstanceID()}/{s.GetInstanceID()}",
-                        $"category={category.Name}, sourceRig={source}, indices={index[0]}/{index[1]}",
-                        p,
-                        s
-                    );
-                    if (candidate == null)
-                        continue;
-                    candidate.SourceMast = mast;
-                    candidate.SourceIndex = index[0];
-                    candidate.Supported &= native.ActiveSupport(forward);
-                    WinchPlacementPolicy.AddSupportedRepresentative(
-                        candidates: pairs,
-                        candidate: candidate
-                    );
+                    var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
+                    var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
+                    foreach (
+                        var indices in NativeSheetPairing.Indices(
+                            port: left,
+                            starboard: right,
+                            usable: native.TemplateUsable,
+                            invalid: index =>
+                                native.Diagnose(
+                                    key: $"pair/{mast.GetInstanceID()}/{index}",
+                                    message: $"Unmatched native sheet pair: boat={native.Boat.name}, source={mast.orderIndex}, index={index}."
+                                )
+                        )
+                    )
+                    {
+                        var candidate = native.Candidate(
+                            id: $"native/{left[indices[0]].GetInstanceID()}/{right[indices[1]].GetInstanceID()}",
+                            context: $"requestedMast={requested.orderIndex}, sourceRig={mast.orderIndex}, index={indices[0]}",
+                            templates: new[] { left[indices[0]], right[indices[1]] }
+                        );
+                        if (candidate == null)
+                            continue;
+                        candidate.SourceMast = mast;
+                        candidate.SourceIndex = indices[0];
+                        WinchPlacementPolicy.AddSupportedRepresentative(
+                            candidates: pairs,
+                            candidate: candidate
+                        );
+                    }
+                }
+                // Append authored pairs in encounter order. The shared policy skips occupied,
+                // unsupported or claimed pairs and acquires both sides together.
+                foreach (var category in Fallbacks(requested: requested))
+                {
+                    var fallback = Fallback(category: category);
+                    if (fallback != null)
+                        pairs.Add(fallback);
                 }
             }
-            var fallback = Fallback(category, forward, out var invalid);
             var result = WinchPlacementPolicy.Resolve(
-                ledger,
-                owner,
-                current,
-                pairs.ToArray(),
-                fallback,
-                invalid
+                ledger: ledger,
+                owner: owner,
+                current: current,
+                native: pairs.ToArray()
             );
-            if (result.MissingFallbackSide != null)
-                native.Diagnose(
-                    "fallback/" + category.Name + "/" + result.MissingFallbackSide,
-                    $"Missing or invalid sheet fallback: boat={native.Boat.name}#{native.Boat.GetInstanceID()}, category={category.Name}, owner={ownerObject.name}#{ownerObject.GetInstanceID()}, fallback={category.FallbackName}, side={result.MissingFallbackSide}.",
-                    true
-                );
+            if (!native.ActiveSupport(mast: requested))
+                result.MissingSupports++;
             return result;
         }
 
-        private NativeWinchCandidate Fallback(
-            SheetWinchCategory category,
-            Mast forward,
-            out string invalid
-        )
+        private GPButtonRopeWinch Template(SheetFallbackSeat definition)
         {
-            invalid =
-                category.Fallback == null
-                    ? "port/starboard (not authored)"
-                    : category.Fallback.InvalidSide;
-            if (invalid != null)
-                return null;
+            var controls = NativeWinchSeats.Sources(
+                mast: native.Mast(id: definition.TemplateMast),
+                role: definition.TemplateRole
+            );
+            return
+                controls != null
+                && definition.TemplateIndex < controls.Length
+                && native.TemplateUsable(control: controls[definition.TemplateIndex])
+                ? controls[definition.TemplateIndex]
+                : null;
+        }
+
+        private NativeWinchCandidate Fallback(SheetFallbackDefinition category)
+        {
             var definitions = new[] { category.Fallback.Port, category.Fallback.Starboard };
-            var templates = new GPButtonRopeWinch[2];
-            var seats = new WinchSeat[2];
-            bool supported = native.ActiveSupport(forward);
-            for (int i = 0; i < 2; i++)
-            {
-                var d = definitions[i];
-                var controls = NativeWinchSeats.Sources(
-                    native.Mast(d.TemplateMast),
-                    d.TemplateRole
-                );
-                if (
-                    controls == null
-                    || d.TemplateIndex >= controls.Length
-                    || !NativeWinchSeats.Usable(controls[d.TemplateIndex])
+            var templates = definitions.Select(Template).ToArray();
+            if (templates.Any(template => !template))
+                return null;
+            var seats = definitions
+                .Select(
+                    (definition, index) =>
+                        new WinchSeat(
+                            identity: category.FallbackName + "/" + index,
+                            aliases: null,
+                            position: definition.Contact
+                                + definition.Normal.normalized * definition.Offset,
+                            rotation: Quaternion.FromToRotation(
+                                definition.SourceNormal,
+                                definition.Normal
+                            ) * native.Rotation(c: templates[index])
+                        )
                 )
-                {
-                    invalid = (i == 0 ? "port" : "starboard") + " template";
-                    return null;
-                }
-                templates[i] = controls[d.TemplateIndex];
-                seats[i] = new WinchSeat(
-                    category.FallbackName + "/" + i,
-                    null,
-                    d.Contact + d.Normal.normalized * d.Offset,
-                    Quaternion.FromToRotation(d.SourceNormal, d.Normal)
-                        * native.Rotation(templates[i])
-                );
-                supported &= d.Supports.All(id => native.ActiveSupport(native.Mast(id)));
-            }
+                .ToArray();
             return new NativeWinchCandidate
             {
                 Id = category.FallbackName,
-                Context = "category=" + category.Name,
+                Context = "fallback=" + category.FallbackName,
                 Fallback = true,
                 Templates = templates,
                 Seats = seats,
-                Supported = supported,
-                // Authored fallbacks are chosen to avoid native fittings; the ledger prevents reuse.
-                Vacant = true,
+                Supported = definitions.All(definition =>
+                    definition.Supports.All(id => native.ActiveSupport(mast: native.Mast(id: id)))
+                ),
+                Vacant = seats.All(native.Available),
             };
         }
     }

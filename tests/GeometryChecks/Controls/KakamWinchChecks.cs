@@ -12,11 +12,9 @@ internal static class KakamWinchChecks
 {
     internal static void Run()
     {
-        var category = KakamControls.Definition.SheetCategory(mast: 5);
+        var category = KakamControls.Definition.SheetFallbacks.Single();
         Check(
-            category == KakamControls.Definition.SheetCategory(mast: 6)
-                && category.Sources.Count == 0
-                && category.Fallback?.InvalidSide == null,
+            category.Fallback?.InvalidSide == null,
             "Both Kakam mainmast variants must use the authored aft pair."
         );
         var port = category.Fallback.Port;
@@ -42,23 +40,9 @@ internal static class KakamWinchChecks
                 && starboard.TemplateIndex == 0,
             "Kakam sheets lost the measured depth or matching native template rotations."
         );
-        var templates = new[] { new object(), new object() };
-        Check(
-            WinchBootstrapPolicy
-                .Sheets(
-                    sources: category.Sources,
-                    port: _ => throw new Exception("Forward native port seat selected."),
-                    starboard: _ => throw new Exception("Forward native starboard seat selected."),
-                    usable: (object template) => template != null,
-                    fallback: () => templates
-                )
-                .SequenceEqual(templates),
-            "Kakam startup must obtain both aft fallback templates."
-        );
-        var reef = KakamControls.Definition.HalyardGroups.Single();
+        var reef = KakamControls.Definition.HalyardFallbacks.Single();
         Check(
             reef.Mast == 7
-                && reef.Sources.SequenceEqual(new[] { 7 })
                 && reef.Fallback.Valid
                 && reef.Fallback.TemplateIndex == 0
                 && Math.Abs(reef.Fallback.Offset - 0.063862f * 0.792f) < 0.000001f
@@ -68,7 +52,7 @@ internal static class KakamWinchChecks
             "Kakam mizzen must retain its native reef seats before the measured mast-holder fallback."
         );
         Console.WriteLine(
-            "PASS: Kakam aft sheet selection, symmetric parallel mounts, fallback startup and measured mizzen halyard fallback."
+            "PASS: Kakam aft sheet selection, symmetric parallel mounts, and measured mizzen halyard fallback."
         );
     }
 

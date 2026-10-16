@@ -103,10 +103,10 @@ internal static class NativeResolverChecks
             "Halyard array not inspected."
         );
         Check(
-            CalledMethods(halyard).Any(m => m.Name == "HalyardSources")
+            CalledMethods(halyard).Any(m => m.Name == "StaySources")
                 && CalledMethods(halyard).Any(m => m.Name == "ActiveSupport")
                 && !CalledMethods(halyard).Any(m => m.Name == "SheetCategory"),
-            "Halyard bypasses authored sources or requested active support."
+            "Halyard bypasses stay dependencies or requested active support."
         );
         var halyardValidate = Type("HalyardWinchPlacementResolver")
             .GetMethod("ValidateCurrent", flags);
@@ -124,17 +124,37 @@ internal static class NativeResolverChecks
             "Manual halyard fallback bypasses allocation, active support, template validity or retained pose checks."
         );
         Check(
-            CalledMethods(halyardValidate).Any(m => m.Name == "HalyardSources")
+            CalledMethods(halyardValidate).Any(m => m.Name == "StaySources")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "ActiveSupport")
                 && Instructions(halyardValidate)
                     .Any(i => i.Operand is FieldInfo f && f.Name == "reefWinch"),
             "Retained halyard does not validate permitted sources, active mast and source array."
         );
+        var discovery = native.GetMethod("StaySources", flags);
+        var iteratorType = discovery
+            .GetCustomAttribute<System.Runtime.CompilerServices.IteratorStateMachineAttribute>()
+            .StateMachineType;
+        var moveNext = iteratorType.GetMethod("MoveNext", flags);
+        foreach (string method in new[] { "Reaches", "TryFind", "Any" })
+            Check(
+                CalledMethods(moveNext).Any(m => m.Name == method),
+                "Stay discovery must check dependencies, exclude owned stays and skip sails: "
+                    + method
+            );
         Check(
-            CalledMethods(Type("WinchBootstrapTemplates").GetMethod("TryGet", flags))
-                .Any(m => m.Name == "HalyardSources"),
-            "Bootstrap does not use the same authored halyard sources."
+            Instructions(moveNext).Any(i => i.Operand is FieldInfo f && f.Name == "onlyStaysails"),
+            "Donors must be native stays."
         );
+        foreach (string field in new[] { "availableParts", "partOptions" })
+            Check(
+                native
+                    .GetMethods(flags)
+                    .Concat(native.GetNestedTypes(flags).SelectMany(type => type.GetMethods(flags)))
+                    .Any(method =>
+                        Instructions(method).Any(i => i.Operand is FieldInfo f && f.Name == field)
+                    ),
+                "Stay discovery must preserve registered option ordering: " + field
+            );
         foreach (
             var type in new[]
             {
@@ -162,7 +182,7 @@ internal static class NativeResolverChecks
             "Sheet resolver bypasses atomic allocation policy."
         );
         Console.WriteLine(
-            "PASS (structural): native rope/visibility occupancy, inactive hierarchy lookup, authored halyard sources with active requested support and non-mutating resolvers."
+            "PASS (structural): native rope/visibility occupancy, inactive hierarchy lookup, stay dependencies with active requested support and non-mutating resolvers."
         );
     }
 

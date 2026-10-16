@@ -10,79 +10,28 @@ using MoreSailwindSails.Stays.FishermansStay.Configuration;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
-// Checks supported boat categories and their installed native control inventories.
+// Checks authored fallback templates and installed donor control inventories.
 internal static class NativeSeatProfileChecks
 {
     internal static void Run()
     {
         foreach (var boat in BoatControlCatalog.All)
         {
-            foreach (
-                int fore in FishermansStayCatalog
-                    .Find(boatName: boat.BoatName)
-                    .Stays.SelectMany(g => g.Variants)
-                    .Select(v => v.Fore)
-                    .Concat(
-                        FlyingSailCatalog
-                            .Find(boatName: boat.BoatName)
-                            .Supports.SelectMany(s => s.ForeSections)
-                    )
-            )
+            foreach (var fallback in boat.SheetFallbacks)
                 Check(
-                    boat.SheetCategory(fore) != null,
-                    "Missing forward category: " + boat.BoatName + "/" + fore
-                );
-            foreach (var category in boat.SheetCategories)
-            {
-                Check(
-                    category.PhysicalMasts.Distinct().Count() == category.PhysicalMasts.Count,
-                    "Duplicate category member."
-                );
-                Check(
-                    category.Sources.Distinct().Count() == category.Sources.Count,
-                    "Duplicate source rig."
-                );
-                Check(
-                    category.PhysicalMasts.All(m => category.Sources.Any(s => s == m))
-                        || (
-                            category.Sources.Count == 0
-                            && category.Fallback?.InvalidSide == null
-                            && category.Fallback != null
-                        ),
-                    "Physical variants missing from source pool without an authored replacement pair."
-                );
-                Check(
-                    category.Fallback == null || category.Fallback.InvalidSide == null,
+                    fallback.Fallback != null && fallback.Fallback.InvalidSide == null,
                     "Invalid authored fallback pair."
                 );
-            }
+            foreach (var fallback in boat.HalyardFallbacks)
+                Check(
+                    boat.Boat.Base(section: fallback.Mast) == fallback.Mast
+                        && fallback.Fallback.Valid,
+                    "Halyard fallback must belong to a physical base mast."
+                );
         }
         Check(
-            BrigControls.Definition.SheetCategory(3) == BrigControls.Definition.SheetCategory(2),
-            "Brig variants split."
-        );
-        Check(
-            JongControls.Definition.SheetCategory(2) != JongControls.Definition.SheetCategory(3),
-            "Jong mainmasts merged."
-        );
-        Check(
-            BrigControls.Definition.SheetCategory(mast: 56)
-                == BrigControls.Definition.SheetCategory(mast: 5),
-            "Topmast category lost."
-        );
-        Check(
-            ShroudControls.Definition.SheetCategory(6).Fallback != null,
-            "Shroud measured fallback lost."
-        );
-        var ordered = new BoatControlDefinition(
-            boat: Cog.Definition,
-            sheetCategories: CogControls.Definition.SheetCategories,
-            halyardGroups: new[] { new HalyardWinchGroup(mast: 57, sources: new[] { 58, 57 }) }
-        );
-        Check(
-            ordered.HalyardSources(mast: 57).SequenceEqual(new[] { 58, 57 })
-                && ordered.HalyardSources(mast: 8).SequenceEqual(new[] { 8 }),
-            "Halyard group order was overridden or shared with another mizzen variant."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 2,
+            "Preserve the two authored sheet fallback pairs."
         );
         var rows = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
@@ -108,13 +57,6 @@ internal static class NativeSeatProfileChecks
             }
         )
             Check(rows.Any(r => r[1] == boat), "Missing boat inventory: " + boat);
-        // Verify profile constants against independently extracted shipyard groups.
-        var rigs = File.ReadAllLines(
-                Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
-            )
-            .Where(l => l.StartsWith("rig|"))
-            .Select(l => l.Split('|'))
-            .ToArray();
         var names = new[]
         {
             "Brig",
@@ -133,24 +75,6 @@ internal static class NativeSeatProfileChecks
         for (int b = 0; b < BoatControlCatalog.All.Count; b++)
         {
             var profile = BoatControlCatalog.All[b];
-            foreach (var category in profile.SheetCategories)
-            {
-                var groups = category
-                    .PhysicalMasts.Select(id =>
-                        rigs.Single(r => r[1] == names[b] && r[3] == id.ToString())[5]
-                    )
-                    .Distinct()
-                    .ToArray();
-                Check(
-                    groups.Length == 1,
-                    names[b] + "/" + category.Name + " merges separate shipyard groups."
-                );
-                foreach (var source in category.Sources)
-                    Check(
-                        rigs.Any(r => r[1] == names[b] && r[3] == source.ToString()),
-                        "Missing audited source: " + names[b] + "/" + source
-                    );
-            }
             foreach (
                 var donor in FishermansStayCatalog
                     .Find(boatName: profile.BoatName)

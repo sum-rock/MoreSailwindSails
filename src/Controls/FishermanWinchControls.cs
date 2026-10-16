@@ -1,3 +1,4 @@
+// Owns controls and transient placement claims for registered Fisherman stay mounts.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,8 +8,6 @@ using Object = UnityEngine.Object;
 
 namespace MoreSailwindSails.Controls
 {
-    internal sealed class FishermanOwnedWinchMarker : MonoBehaviour { }
-
     // Owns boat-local winch allocation, live replacement and final control cleanup.
     internal sealed class FishermanWinchControls : MonoBehaviour
     {
@@ -60,7 +59,10 @@ namespace MoreSailwindSails.Controls
             Mast nativeMount = null
         )
         {
-            var group = For(boat).Group(owner);
+            var manager = For(boat: boat);
+            manager.native.Prepare();
+            halyard = manager.native.PhysicalMast(section: halyard);
+            var group = manager.Group(owner: owner);
             if (group.Forward != forward || group.HalyardMast != halyard)
                 group.Suspend();
             group.Forward = forward;
@@ -80,108 +82,17 @@ namespace MoreSailwindSails.Controls
             var manager = For(boat);
             var group = manager.Group(owner);
             manager.native.Prepare();
-            if (
-                !new WinchBootstrapTemplates(native: manager.native).TryGet(
-                    forward: group.Forward,
-                    halyard: group.HalyardMast,
-                    templates: out var templates,
-                    failure: out var failure
-                )
-            )
+            var source = NativeWinchSeats
+                .Sources(mast: donorMast, role: role)
+                ?.FirstOrDefault(manager.native.TemplateUsable);
+            if (!source)
                 throw new InvalidOperationException(
-                    $"Winch bootstrap template unavailable: {label}; {failure}."
+                    $"Winch bootstrap template unavailable: {label}."
                 );
-            int index =
-                role == WinchRole.Reef ? 0
-                : role == WinchRole.Left ? 1
-                : role == WinchRole.Right ? 2
-                : throw new ArgumentOutOfRangeException(nameof(role));
-            var source = templates[index];
-            var control = new OwnedWinch(
-                manager,
-                manager.Group(owner),
-                parent,
-                source,
-                donorMast,
-                role,
-                label
-            );
+            var control = new OwnedWinch(manager, group, parent, source, role, label);
             manager.controls.Add(control);
             control.Group.Set(control);
             return control;
-        }
-
-        internal static bool BootstrapReady(BoatRefs boat, Mast forward, Mast halyard)
-        {
-            var manager = For(boat);
-            manager.native.Prepare();
-            if (
-                new WinchBootstrapTemplates(native: manager.native).TryGet(
-                    forward: forward,
-                    halyard: halyard,
-                    templates: out _,
-                    failure: out var failure
-                )
-            )
-                return true;
-            manager.native.Diagnose(
-                key: "bootstrap/" + failure,
-                message: $"Winch bootstrap template unavailable: boat={boat.name}; {failure}."
-            );
-            return false;
-        }
-
-        internal static void Reconcile(
-            ref OwnedWinch[] current,
-            BoatRefs boat,
-            GameObject owner,
-            Transform parent,
-            Mast forward,
-            Mast[] donors,
-            string[] labels
-        )
-        {
-            Configure(boat, owner, forward, donors[0]);
-            var roles = new[] { WinchRole.Reef, WinchRole.Left, WinchRole.Right };
-            var next = new OwnedWinch[3];
-            try
-            {
-                for (int i = 0; i < 3; i++)
-                    next[i] =
-                        current != null
-                        && !current[i].IsDisposed
-                        && current[i].Winch
-                        && current[i].TemplateDonor == donors[i]
-                            ? current[i]
-                            : Create(boat, owner, parent, donors[i], roles[i], labels[i]);
-            }
-            catch
-            {
-                foreach (var control in next)
-                    if (control != null && (current == null || !current.Contains(control)))
-                        control.Retire();
-                if (current != null)
-                    foreach (var control in current)
-                        control.Group.Set(control);
-                throw;
-            }
-            if (current != null)
-                foreach (var control in current)
-                    if (!next.Contains(control))
-                        control.Retire();
-            current = next;
-        }
-
-        internal static void BindSheets(
-            OwnedWinch port,
-            RopeController portRope,
-            OwnedWinch starboard,
-            RopeController starboardRope
-        )
-        {
-            // Both controllers are registered before the boat's late refresh can allocate.
-            port.Bind(portRope);
-            starboard.Bind(starboardRope);
         }
 
         private void LateUpdate()
@@ -206,8 +117,13 @@ namespace MoreSailwindSails.Controls
         internal static void InvalidateInventory(Component component)
         {
             var boat = component ? component.GetComponentInParent<BoatRefs>() : null;
-            if (boat)
-                boat.GetComponent<FishermanWinchControls>()?.native?.Invalidate();
+            var manager = boat ? boat.GetComponent<FishermanWinchControls>() : null;
+            if (!manager)
+                return;
+            manager.native?.Invalidate();
+            foreach (var control in manager.controls)
+                if (control.Group.NativeMount == component)
+                    control.NativeBindingComplete();
         }
 
         private void OnDestroy()
@@ -259,20 +175,7 @@ namespace MoreSailwindSails.Controls
                     starboard = control;
             }
 
-            private bool Active =>
-                Owner
-                && Owner.activeInHierarchy
-                && (
-                    !NativeMount
-                    || NativeMount.sails == null
-                    || !NativeMount.sails.Any(s =>
-                        s
-                        && (
-                            s.GetComponent<Sails.FishermansFlyingSail.FishermansFlyingSailRig>()
-                            || s.GetComponent<Sails.FishermansStaysail.FishermansStaysailRig>()
-                        )
-                    )
-                );
+            private bool Active => Owner && Owner.activeInHierarchy;
             private bool SheetWanted =>
                 Active && port != null && starboard != null && port.Wanted && starboard.Wanted;
             private bool HalyardWanted => Active && reef != null && reef.Wanted;
@@ -355,7 +258,7 @@ namespace MoreSailwindSails.Controls
                             current: state.Current,
                             valid: pair
                                 ? manager.sheets.ValidateCurrent(
-                                    forward: Forward,
+                                    requested: HalyardMast,
                                     current: state.Current
                                 )
                                 : manager.halyards.ValidateCurrent(
@@ -376,7 +279,11 @@ namespace MoreSailwindSails.Controls
                     }
                     state.Released = false;
                     var result = pair
-                        ? manager.sheets.Resolve(state, Owner, Forward, state.Current)
+                        ? manager.sheets.Resolve(
+                            owner: state,
+                            requested: HalyardMast,
+                            current: state.Current
+                        )
                         : manager.halyards.Resolve(state, HalyardMast, state.Current);
                     var selected = result.Candidate as NativeWinchCandidate;
                     if (selected == null)
@@ -496,7 +403,6 @@ namespace MoreSailwindSails.Controls
         {
             private readonly FishermanWinchControls manager;
             internal readonly ControlGroup Group;
-            internal readonly Mast TemplateDonor;
             internal readonly WinchRole Role;
             private readonly Transform parent;
             private readonly string label;
@@ -505,7 +411,6 @@ namespace MoreSailwindSails.Controls
             internal GameObject Owner => Group.Owner;
             internal GPButtonRopeWinch Source => clone.Source;
             internal GPButtonRopeWinch Winch => clone.Winch;
-            internal bool IsDisposed => disposed;
             internal bool Wanted =>
                 !disposed && Owner && Owner.activeInHierarchy && Winch && Winch.rope;
 
@@ -514,14 +419,12 @@ namespace MoreSailwindSails.Controls
                 ControlGroup group,
                 Transform parent,
                 GPButtonRopeWinch source,
-                Mast donor,
                 WinchRole role,
                 string label
             )
             {
                 this.manager = manager;
                 Group = group;
-                TemplateDonor = donor;
                 Role = role;
                 this.parent = parent;
                 this.label = label;
@@ -596,15 +499,22 @@ namespace MoreSailwindSails.Controls
                 try
                 {
                     Winch.AttachToController(controller);
-                    if (!clone.Mount.gameObject.activeInHierarchy)
-                        clone.Detach(manager.boat);
-                    Group.Dirty();
+                    NativeBindingComplete();
                 }
                 catch
                 {
                     Group.Suspend();
                     throw;
                 }
+            }
+
+            internal void NativeBindingComplete()
+            {
+                // Native binding reparents ropes beneath the winch. Hidden placement
+                // mounts must not deactivate controllers during exhaustion or support loss.
+                if (clone.Mount && !clone.Mount.gameObject.activeInHierarchy)
+                    clone.Detach(boat: manager.boat);
+                Group.Dirty();
             }
 
             internal void Position(WinchSeat seat)
@@ -649,7 +559,6 @@ namespace MoreSailwindSails.Controls
                 if (disposed)
                     return;
                 Group.Suspend(preserveControllers: true);
-                // Reconcile may already have replaced this control's group slot.
                 clone.Detach(boat: manager.boat);
                 Dispose();
             }

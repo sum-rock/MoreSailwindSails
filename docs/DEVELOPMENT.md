@@ -154,10 +154,9 @@ Per-boat configuration and its definition types live with their consumers:
 
 - `Stays/FishermansStay/Configuration/`: ordered stay groups, endpoints,
   prerequisites, permanent mount IDs and attachment measurements.
-- `Sails/FishermansFlyingSail/Configuration/`: ordered support pairs and native
-  control donors.
-- `Controls/Configuration/`: sheet categories, halyard sources and measured
-  fallback seats shared by both sail families and native sails on custom stays.
+- `Sails/FishermansFlyingSail/Configuration/`: ordered physical support pairs.
+- `Controls/Configuration/`: measured sheet pairs and mast-specific halyard
+  fallback seats for sails on Fisherman's Stays.
 
 Each feature configuration references its shared `BoatDefinition` through
 `Boat`. Each owner has its own catalog; a shared boat entry does not enable any
@@ -201,9 +200,9 @@ moving or renaming code.
   follow posed corners; force patches are scoped to custom sails. Do not fake
   SailInfo values or alter vanilla forces. Retain donor wind-cloth response
   unless evidence warrants a change.
-- Filter sails with custom paired controls only during native control binding
-  and restore the full list in a finalizer. Capacity, collision, overlap and
-  saves must see all sails.
+- Keep custom sails in native control binding and height ordering. Flying Sails
+  use their physical mast arrays at `mastOrder`; staysails use the registered
+  Fisherman's Stay arrays. Routing postfixes restore custom guides and travel.
 - Fisherman families resolve authored, connected **active** mast
   sections/guides. Registration and previews can precede activation; protect
   occupied stays and actual support parts.
@@ -472,7 +471,7 @@ needs testing.
   endpoints, returning to neutral at full furl. Above it use the sampled panel
   pose, then initialized Cloth at full deployment. Do not substitute Flying Sail
   hoisting.
-- Clone the aft-base reef winch for the native reef controller. Route its
+- Bind the reef controller through the stay mount's allocated winch. Route its
   halyard through active aft guides (with **5 cm** separation) and a leaf below
   the top-aft bone. Keep independent lower sheets; no fore halyard or decorative
   upper sheets. Resolve active aft ancestry without falling back to the fore
@@ -487,7 +486,7 @@ needs testing.
 Shared boat definitions author physical mast ancestry and provide `Sections` and
 `Base`. `FishermansStayDefinition` owns endpoints, active guides, prerequisites,
 exclusions and permanent mount IDs; `FlyingSailDefinition` owns support pairs.
-`BoatControlDefinition` provides `SheetCategory` and ordered halyard sources.
+`BoatControlDefinition` provides authored sheet pairs and halyard fallbacks.
 Each boat's feature configuration references its shared boat definition.
 
 | Boat                         | Part groups | Authored stays | Forward-masthead fallbacks |
@@ -508,7 +507,7 @@ Each boat's feature configuration references its shared boat definition.
 The twelve profiles provide **102** stays across **103** mast-pair
 configurations. Fisherman support for OldChronian is profile-based with no hard
 mod assembly dependency; Gloriana, Chronian and Caelanor have profiles. Exact
-vectors, prerequisites and ordered control-source lists live in each profile,
+vectors, prerequisites and measured fallback positions live in each profile,
 backed by numeric installed-asset fixtures.
 
 **Leopard has no Fisherman support:** its BoatRig profile was removed after
@@ -561,9 +560,8 @@ attachment line; donors need not be fitted. Bermuda mounts are staysail-only and
 cannot provide physical support. Dhow's raked mast **52** is excluded because
 its 70° line produces a negative head slope outside the fitting range.
 
-Dhow sheets use mainmast sources **6/7/54** or mizzen source **51**; halyards
-use the requested mast's own seats. Kakam uses the
-[aft control placements](#kakam-aft-controls) below.
+Dhow and Kakam discover donor stays through the aft physical mast's dependency
+paths. Kakam also retains the [aft fallback placements](#kakam-aft-controls).
 
 ### Large dhow
 
@@ -581,10 +579,11 @@ fore/main and both mizzen variants. The upper mizzen requires its lower section;
 the lower stay excludes the upper section. Native stays provide templates
 without needing to be fitted.
 
-Lower-mizzen halyards try **3 → 4 → 6**; upper mizzen tries **4 → 6**. These
-seats share the permanent mizzen fife rail. Mainmast **2** and lower mizzen
-**3** have [measured reef fallbacks](#gloriana-reef-fallbacks); sheet fallbacks
-are null.
+Native stay **6** depends on mainmast **2** and upper mizzen **4**, which
+requires lower mizzen **3**. It can supply controls to either custom mast pair
+when sail-less; the shared claim ledger prevents conflicts. Mainmast **2** and
+lower mizzen **3** retain [measured reef fallbacks](#gloriana-reef-fallbacks).
+There are no authored sheet fallbacks.
 
 ### Chronian (OldChronian)
 
@@ -619,44 +618,91 @@ registration rollback; teardown destroys only owned meshes.
 
 ## Winch placement
 
-Shared controls serve Flying Sails, all staysail cuts and native sails on
-Fisherman's Stays. The original placement redesign was accepted in game; later
-cleanup and profile changes still need regression testing.
+Flying Sails use native physical-mast binding. All sails on Fisherman's Stays
+use mount-owned cloned controls, with runtime placement claims shared per boat.
 
 ### Placement and ownership
 
-Control profiles define ordered native sources and measured fallbacks. Native
-inventory discovers inactive rigs through the hierarchy, independent of the
-startup `BoatRefs.masts` array. Separate sheet/halyard resolvers select seats; a
-boat-owned ledger and coordinator manage reservations and clones.
+- Native `Mast.UpdateControllerAttachments` sorts all sails by height and binds
+  Flying Sail reef/left/right controllers at `mastOrder`. Adding or moving a
+  sail can reassign controls. No custom source search, fallback, capacity audit
+  or shortage handling applies to Flying Sails; record actual shortages in game.
+- A Fisherman's Stay remains the saved mounting `Mast`, with one sail at order
+  zero. Its reef/left/right arrays expose the owned clones for custom or vanilla
+  sails. The sail rigs retain custom guides, geometry and travel limits, without
+  owning another set of winches or filtering the native sail list.
+- Resolve the stay's aft section to its physical base mast. Enumerate
+  `BoatCustomParts.availableParts` and each `partOptions` array in registration
+  order, including inactive options. Donors must have `Mast.onlyStaysails`, be
+  outside our stay registry and carry no sails. Follow `requires` transitively
+  to the aft physical mast, tracking visited options to terminate cycles.
+- Within each eligible stay, inspect arrays in order. Sheets require complete
+  left/right entries at the same index; centre controls are not candidates.
+  Reefing controls are selected separately. A donor need not be installed, but
+  each control's actual mounting ancestors and the requested mast must be
+  active.
+- Bound ropes block borrowing even when hidden, as do active native renderers or
+  colliders. Check shared references and all coincident aliases. Claim sheet
+  pairs atomically and reefing positions individually; reference identity and
+  positions within **1 mm** conflict, including authored fallback positions.
+- Reefing falls back only to the authored seat for that aft physical mast.
+  Sheets try complete authored pairs moving aft in boat coordinates (**-Z**).
+  Both contacts must be at or aft of the mast; their forwardmost contact orders
+  pairs along that axis. Skip unavailable templates, supports, occupied seats or
+  claims and continue aft. Preserve both authored poses; do not mirror, move or
+  rank them by distance. Native positions precede fallbacks for new allocations.
+- Startup clones use the existing stay geometry donor's sheet assets and aft
+  section's reef asset without claiming a placement. Native startup receives
+  initialized mount arrays even when no placement is available.
+- Retain valid placements, including fallbacks when native positions free. Donor
+  sails, changed dependencies/bindings, lost support or changed poses invalidate
+  borrowed positions. Prepare replacement pairs before retiring old clones;
+  update mount arrays and preserve sail controllers. Exhaustion hides affected
+  controls, releases claims and retries every second, preserving the installed
+  sail and its saved mount identity.
 
-- The forward physical mast selects the sheet category. Search complete
-  left/right pairs in source and native-array order; skip unmatched entries and
-  never pair centre sheets. Preserve native poses and asymmetry.
-- Deduplicate shared/coincident seats while checking all aliases for occupancy.
-  Bound native ropes block borrowing even when hidden, as do active renderers or
-  colliders. Requested supports and mounting ancestors must be active.
-- Claim sheet pairs atomically. Halyards use the same ledger; owned clones are
-  excluded from native discovery. Native control suppression prevents mount and
-  sail controls from competing for the same sail.
-- Halyard groups map an exact requested mast to ordered sources. Unconfigured
-  masts use their own reef arrays. Do not infer groups from ancestry, proximity
-  or display names. Cog **57** uses **[57, 58]**; Cog **8** uses **[8, 51,
-  65]**, with aliases preventing duplicate claims.
-- Bootstrap templates follow the same source/fallback order but ignore occupancy
-  and reserve nothing. Missing templates trigger registration rollback. Native
-  startup must receive initialized control arrays.
-- Clone controls inactive with owned handles/outlines. Prepare both replacement
-  sheets before retiring old clones, preserve sail-owned controllers and update
-  custom-mount arrays. Mount placement must preserve wheel-local input rotation.
-- Retain valid placements and clones, including fallbacks when native seats
-  become free. Native reclaim, lost support or changed source/pose invalidates
-  the pair. Exhaustion hides controls, preserves controllers and retries every
-  second; it must not remove stays or saved sails.
+Native poses and measured fallbacks are trusted; there is no clearance search.
+Claims are transient and do not affect save identities. During complete
+exhaustion, ropes can still appear at the boat origin: this remains a known
+visual limitation.
 
-Native poses and authored fallbacks are trusted; there is no runtime clearance
-search. All reservations are transient. During complete exhaustion, ropes can
-still appear at the boat origin: this remains a known visual limitation.
+### Dependency and mounting audit
+
+The **2026-10-15** read-only audit used installed native `level24` and local mod
+bundles under `BepInEx/bkp/` (currently disabled): SE's
+`shipyard_expansion.assets`, Shattered Seas' `veil piercer`, and OldChronian's
+`gloriana`, `aelasyl` and `caelanor`. The decompiled native assembly hash
+matched the installed `Assembly-CSharp.dll`. No game files or saves were
+changed.
+
+Registered native stays and the modded boat options expose separate control
+references whose mounting parents can remain present when the source stay is
+inactive. Keep the live ancestor checks: an active direct parent alone does not
+establish that the complete support hierarchy is fitted. Shared identities in
+Cog's stays **51/65** and shared positions across mast pairs require the same
+occupancy checks and ledger as different variants.
+
+OldChronian's dependencies identify both endpoint groups and transitively
+include lower sections: Gloriana stay **6 → 2,4 → 3**, Chronian stay **12 → 3,5
+→ 2,4**, and Caelanor stay **14 → 6 → 5**. SE adds native part references from
+`SE_PartOptionData.requiresVanilla1/2` during `AssetTools` initialization, so
+discovery reads live registered options after mod setup and refreshes when
+rigging changes; serialized SE dependencies alone are incomplete.
+
+Shroud's **24** requires tall fore/main masts **5/7** and **25** requires tall
+main/mizzen masts **7/9**. Its default stays **16/17/18/19** have empty
+`requires` lists, and the inspected Shattered Seas assembly does not populate
+those lists. They are excluded by the specified dependency rule. Short main
+**8** and mizzen **10** therefore have no matching donor stays in this bundle;
+controls without an eligible authored fallback remain unavailable. No guessed
+endpoint or hardcoded source exception was added. Test these variants explicitly
+before accepting the new placement behavior.
+
+Sources can now belong to either endpoint of a native stay associated with the
+aft mast. This deliberately changes the former forward-mast sheet categories;
+control locations and rope reachability require a game check on each mast pair.
+The audit establishes references and dependency paths, not live placement or
+visual acceptance.
 
 ### Controller lifetime during cleanup
 
@@ -665,43 +711,27 @@ reparenting controllers, making teardown independent of sibling callback order.
 Controllers under destroyed mounts disappear with them; controllers already
 moved elsewhere remain untouched.
 
-Live reconciliation uses `Retire()` to preserve sibling controllers and detach
-the retiring control before disposal. Template adoption detaches before
+Broken-control cleanup uses `Retire()` to preserve sibling controllers and
+detach the retiring control before disposal. Template adoption detaches before
 replacing and rebinding a clone. Support loss, inactivity and exhaustion hide
-controls for reuse; a missing owner triggers final disposal.
+controls for reuse; a missing owner triggers final disposal. Native binding
+reparents controllers beneath the winch, so the binding invalidation hook also
+detaches them from hidden placement mounts and requests a retry. This preserves
+controller activity when native binding runs again during exhaustion.
 
 ### Inventory lifetime and inspection counters
 
 Each coordinator owns one inventory and mast/seat lookup per boat. Lifecycle
-postfixes invalidate discovery after mast activation, part refresh and save
-customization, ordered after SE. Array snapshots detect in-place changes; a
-one-second sweep catches delayed or inactive parts. Occupancy and support checks
-remain live, and pose changes rebuild alias lookup.
+postfixes invalidate discovery after mast activation, native control binding,
+part refresh and save customization, ordered after SE. Array snapshots detect
+in-place changes; a one-second sweep catches delayed or inactive parts.
+Occupancy and support checks remain live, and pose changes rebuild alias lookup.
 
-Alternative searches run on initial allocation, invalidation or exhaustion
-retry. Empty coordinators skip discovery. Per-boat `HierarchyScans`,
-`CandidateBuilds` and `EntriesCreated` counters measure inspection/allocation
-activity, not frame time or total managed allocations.
-
-### Halyards and Shroud belaying pins
-
-`HalyardWinchPlacementResolver` uses the concrete requested active mast's
-authored group, preserving native array order within each source. Flying Sails
-request their mounting mast; staysail Mk.A/B/C request the aft base; native
-sails on custom stays request the stay's aft halyard source. Topmast seats on an
-active lower support retain their native association. An optional measured
-fallback is tried after native sources exhaust; it is scoped to that exact
-requested mast. There is no inferred alternative-mast search or generated
-placement.
-
-Shroud uses these same resolvers. Its short mainmast has **five** ordinary reef
-entries and its tall mainmast **seven**. Each keeps its own ordinary array
-first, then adds sources **16/17/24** from the mainmast's separate jib reef
-coils. Foremast and mizzen groups likewise add only their associated stay coils.
-This does not restore the former twelve-pin pool across physical variants.
-Native reclaim and stable reservations follow the same rules as on every other
-boat; capacity depends on the authored sources, their live mounting support and
-occupancy.
+Alternative placement searches run on initial allocation, invalidation or
+exhaustion retry; retained placements recheck donor dependencies and sails live.
+Empty coordinators skip discovery. Per-boat `HierarchyScans`, `CandidateBuilds`
+and `EntriesCreated` counters measure inspection/allocation activity, not frame
+time or total managed allocations.
 
 ### Gloriana reef fallbacks
 
@@ -722,61 +752,55 @@ controls for retry.
 defines fallbacks for base masts **10/11/55/69**, measured with F9 on
 **2026-10-07**. Each uses the requested mast's `reefWinch[0]` after native
 sources exhaust. Contacts, normals and mesh-derived mounting depths live in the
-profile. Topmasts keep their existing sources. These mounting poses still need
-visual acceptance.
+profile. Requests from topmast stays resolve to their physical base. These
+mounting poses still need visual acceptance.
 
 ### Manual sheet fallbacks
 
-Every category names a nullable port/starboard fallback pair. Native pairs take
-priority on a new allocation. Each fallback side specifies its own contact
-point, normal, mounting offset, compatible template and support requirements; a
-captured surface point alone is not a finished mounting pose. Do not generate or
-mirror fallback positions at runtime.
+Each authored fallback side specifies its contact point, normal, mounting
+offset, template and support requirements. A captured point alone is not a
+finished pose. Null, incomplete or non-finite pairs are unavailable as a whole.
+Fallback occupancy and claims use the same native-priority rules as borrowed
+positions; exhaustion is reported once until recovery.
 
-Authored pairs exist for **Shroud / ForemastFallback** (forward trim) and
-[Kakam / MainmastFallback](#kakam-aft-controls) (aft trim). All other category
-fallbacks are null. Future additions require labeled F9 captures and
-visual/reachability confirmation. Missing vectors do not block native placement.
-
-Null, incomplete or non-finite fallbacks are unavailable as a whole. When native
-pairs exhaust, missing fallback data produces one contextual error per
-definition and boat/category during that boat instance's lifetime. Retries
-remain quiet. A valid fallback already reserved by another owner produces
-ordinary exhaustion diagnostics. No default origin placement, partial pair,
-generated strip or rotated mast search remains.
+Authored pairs remain **Shroud / ForemastFallback** and
+[Kakam / MainmastFallback](#kakam-aft-controls). Their names preserve diagnostic
+identity and no longer select a forward-mast category. Eligibility follows their
+positions aft of the requested mast. All other boats have no authored sheet
+pair. Future additions require labeled F9 captures and visual/reachability
+confirmation.
 
 ### Kakam aft controls
 
-[KakamControls.cs](../src/Controls/Configuration/Boats/KakamControls.cs) uses
-**2026-10-07** F9 measurements. Mainmast variants **5/6** use the authored aft
-sheet pair; an empty native source list excludes forward seats. Mast **5** angle
-controls supply templates. Contacts are symmetric and orientations parallel.
-Mizzen **7** tries its own reef array before the measured halyard fallback.
-Exact vectors and mesh-derived mounting depths live in the profile.
+[KakamControls.cs](../src/Controls/Configuration/Boats/KakamControls.cs) retains
+its **2026-10-07** F9 measurements. Mast **5** angle controls supply the
+symmetric, parallel aft pair's templates. The pair can serve a stay whose aft
+mast lies forward of both contacts after native stay positions exhaust. Mizzen
+**7** retains its measured reef fallback. Exact vectors and mesh-derived
+mounting depths are unchanged; the new native-first behavior needs a game check.
 
 ### Placement logging
 
 Read `BepInEx/LogOutput.log`; paths are under
 [Local investigation](#local-investigation).
 
-| Message                                        | Meaning                                                                         |
-| ---------------------------------------------- | ------------------------------------------------------------------------------- |
-| `Placed native winch`                          | Initial successful placement; inspect `origin=native/fallback`.                 |
-| `No free native winch pair/seat`               | Exhausted or unsupported; hidden controls retry.                                |
-| `Missing or invalid sheet fallback`            | Required fallback is unrecorded or invalid; error is limited per boat/category. |
-| `Unmatched native sheet pair`                  | Missing, null or unmatched native array entries were skipped.                   |
-| `Winch reassigned after native/support change` | A previously valid placement became unavailable or moved.                       |
-| `Winch successfully placed after retry`        | Placement recovered after an exhaustion or binding failure.                     |
-| `Winch binding/placement failed`               | Clone/binding exception; claims release and controllers survive for retry.      |
+| Message                                        | Meaning                                                                    |
+| ---------------------------------------------- | -------------------------------------------------------------------------- |
+| `Placed native winch`                          | Initial successful placement; inspect `origin=native/fallback`.            |
+| `No free native winch pair/seat`               | Exhausted or unsupported; hidden controls retry.                           |
+| `Unmatched native sheet pair`                  | Missing, null or unmatched native array entries were skipped.              |
+| `Winch reassigned after native/support change` | A previously valid placement became unavailable or moved.                  |
+| `Winch successfully placed after retry`        | Placement recovered after an exhaustion or binding failure.                |
+| `Winch binding/placement failed`               | Clone/binding exception; claims release and controllers survive for retry. |
 
-Sheet messages identify boat and owner instances, forward mast, category,
-selected source rig and array indices, pair identity, origin, both poses and
-both templates. Halyard placement messages identify the requested active mast,
-source rig and native array index. Exhaustion separates `nativeUnavailable`,
-`reserved`, `missingSupports` and `fallbackBlocked`. Success is reported after
-placement and showing both controls; routine refreshes and repeated failed
-retries remain silent. Missing-data errors identify the fallback name and
-missing/invalid side.
+Sheet messages identify boat and owner instances, forward and requested aft
+masts, selected source rig and array index or fallback name, pair identity,
+origin, both poses and both templates. Halyard placement messages identify the
+requested active mast, source rig and native array index. Exhaustion separates
+`nativeUnavailable`, `reserved`, `missingSupports` and `fallbackBlocked`.
+Success is reported after placement and showing both controls; routine refreshes
+and repeated failed retries remain silent. Missing or invalid fallback pairs
+remain unavailable.
 
 ### Capturing proposed winch positions
 
@@ -826,7 +850,7 @@ Wireframes show through the hull, including inactive rig variants:
 
 Coincident locations use a **1 mm** tolerance; occupied aliases take priority.
 Bound native ropes count even when hidden; hidden spare custom controls do not.
-**Green does not guarantee allocation:** pairing, category, support and
+**Green does not guarantee allocation:** dependency, pairing, support and
 reservation rules still apply. Use the overlay to find bare structure for
 [F9 captures](#capturing-proposed-winch-positions), then confirm fallback
 orientation, depth and reachability.
@@ -846,7 +870,8 @@ Commit numeric fixtures only, never extracted meshes, textures or assemblies.
 
 - `tests/GeometryChecks/FishermansStay/NativeWinchSeats.txt` records control
   identities, array correspondence, parent-local poses and shipyard groups.
-- `tests/GeometryChecks/Controls/HalyardMounts.txt` records support eligibility.
+- `tests/GeometryChecks/Controls/HalyardMounts.txt` records the historical
+  source association audit; it no longer defines runtime discovery.
 - `tests/GeometryChecks/FishermansStay/NativeRigAvailability.txt` records native
   mast IDs and candidate stays.
 - Earlier rail/surface fixtures remain references for manual fallback authoring.
@@ -859,6 +884,18 @@ placement searches or establish in-game acceptance.
 ## Runtime validation
 
 ### Automated baseline and limits
+
+The **2026-10-15** winch placement simplification retains plugin/runtime version
+**0.3.0**. A Release build passed with zero warnings/errors, GeometryChecks
+passed, and AssemblyChecks passed against installed references, including **56**
+Harmony targets. Optional SailInfo signature checks were skipped because its DLL
+was absent. New checks cover dependency cycles/transitive paths, complete aft
+fallback ordering, coincident claims, native reclaim, exhaustion recovery and
+native binding/mount ownership. Pinned CSharpier, Prettier and diff checks pass.
+No in-game validation was performed. Confirm Shroud's short-mast exhaustion,
+inactive donors, mixed Flying Sail height ordering and save/reload before
+accepting runtime behavior. Earlier placement acceptance does not cover this
+change.
 
 The **2026-10-14** configuration ownership refactor, including the per-boat
 `Configuration/Boats/` organization and shared `BoatConfiguration`
@@ -998,10 +1035,15 @@ acceptance:
    behavior.
 3. Tack at full/partial deployment and both trim limits. Inspect inversion,
    detachment, force/audio discontinuities, collar seating and sheet tension.
-4. Test native winch priority, complete-pair exhaustion/recovery, native
-   reclaim, and controller retention. Cover both Cog mizzen variants and
-   Shroud's separate fitted support groups when changing allocation code. Check
-   fallback reachability where an authored fallback exists.
+4. Test native winch priority, complete-pair exhaustion/recovery, native reclaim
+   and controller retention. Borrow from inactive sail-less stays, then install
+   native sails and confirm claims move or release. Cover shared Cog **51/65**
+   controls, both Cog mizzen variants, Shroud's tall/short mast pairs, and
+   competing stays on different mast pairs. Verify missing actual mounting
+   supports block borrowing even when a donor references the position. Check
+   fallback reachability and exhaustion without losing the installed sail. Add
+   and move Flying Sails among native sails at several heights and confirm
+   reef/left/right arrays follow native `mastOrder`; record actual shortages.
 5. Preview/cancel mast changes, reject occupied-support removal, refit, remove,
    save/reload and unload the boat. Check full mast lists, control bindings and
    native/custom sail behavior. Do not claim persistence or teardown correctness

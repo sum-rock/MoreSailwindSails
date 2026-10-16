@@ -8,16 +8,8 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Configuration.Boats
             boat: BoatConfiguration.Boats.Kakam.Definition,
             supports: new[]
             {
-                new MastSupportDefinition(
-                    sheetControlSource: 62,
-                    foreSections: new[] { 5 },
-                    aftSections: new[] { 7 }
-                ),
-                new MastSupportDefinition(
-                    sheetControlSource: 70,
-                    foreSections: new[] { 6 },
-                    aftSections: new[] { 7 }
-                ),
+                new MastSupportDefinition(foreSections: new[] { 5 }, aftSections: new[] { 7 }),
+                new MastSupportDefinition(foreSections: new[] { 6 }, aftSections: new[] { 7 }),
             }
         );
     }
