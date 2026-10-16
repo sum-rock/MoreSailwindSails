@@ -188,17 +188,19 @@ internal static class StayChecks
         var sample = brig[0];
         Reject(() =>
             new FishermansStayVariantDefinition(
-                128,
-                15,
-                "bad",
-                3,
-                Vector3.zero,
-                5,
-                Vector3.zero,
-                false,
-                0,
-                new[] { 3, 5 },
-                new[] { 5 }
+                mountIndex: 128,
+                donor: 15,
+                label: "bad",
+                fore: 3,
+                forePoint: Vector3.zero,
+                foreCollarRadius: 0.1f,
+                aft: 5,
+                aftPoint: Vector3.zero,
+                aftCollarRadius: 0.1f,
+                extendedGuide: false,
+                guideIndex: 0,
+                required: new[] { 3, 5 },
+                forbidden: new[] { 5 }
             )
         );
         Reject(() =>

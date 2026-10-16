@@ -17,6 +17,12 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration
         internal readonly string Label;
         internal readonly Vector3 ForePoint,
             AftPoint;
+
+        // Measured on the visible shaft; offsets seat bands without moving sail endpoints.
+        internal readonly float ForeCollarRadius,
+            AftCollarRadius;
+        internal readonly Vector3 ForeCollarOffset,
+            AftCollarOffset;
         internal readonly bool ExtendedGuide,
             AlignGuideHeightToAftAnchor;
         internal readonly IReadOnlyList<int> Required,
@@ -28,13 +34,17 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration
             string label,
             int fore,
             Vector3 forePoint,
+            float foreCollarRadius,
             int aft,
             Vector3 aftPoint,
+            float aftCollarRadius,
             bool extendedGuide,
             int guideIndex,
             IEnumerable<int> required,
             IEnumerable<int> forbidden,
-            bool alignGuideHeightToAftAnchor = false
+            bool alignGuideHeightToAftAnchor = false,
+            Vector3 foreCollarOffset = default,
+            Vector3 aftCollarOffset = default
         )
         {
             var requiredCopy = (required ?? Array.Empty<int>()).ToArray();
@@ -49,6 +59,12 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration
                 || string.IsNullOrEmpty(label)
                 || !Finite(forePoint)
                 || !Finite(aftPoint)
+                || !(foreCollarRadius > 0)
+                || float.IsInfinity(foreCollarRadius)
+                || !(aftCollarRadius > 0)
+                || float.IsInfinity(aftCollarRadius)
+                || !Finite(foreCollarOffset)
+                || !Finite(aftCollarOffset)
                 || !requiredCopy.Contains(fore)
                 || !requiredCopy.Contains(aft)
                 || requiredCopy.Concat(forbiddenCopy).Any(i => i < 0 || i >= 128)
@@ -64,6 +80,10 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration
             Aft = aft;
             ForePoint = forePoint;
             AftPoint = aftPoint;
+            ForeCollarRadius = foreCollarRadius;
+            AftCollarRadius = aftCollarRadius;
+            ForeCollarOffset = foreCollarOffset;
+            AftCollarOffset = aftCollarOffset;
             ExtendedGuide = extendedGuide;
             AlignGuideHeightToAftAnchor = alignGuideHeightToAftAnchor;
             GuideIndex = guideIndex;

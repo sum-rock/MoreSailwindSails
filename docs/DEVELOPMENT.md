@@ -680,13 +680,25 @@ alongside authoring changes.
 
 ### Stay placement and native materials
 
-The per-boat stay definitions' `ForePoint` and `AftPoint` are the exact rope
-endpoints and collar centers. Only rope length scales; its authored diameter
-remains unchanged. Each band follows its supporting mast's capsule axis and
-scales radially to the capsule radius, retaining its axial height in mast space.
-This is an approximate fit to tapered wood: there is no rendered-surface scan,
-height correction, native collar extraction or boat-specific fitting path. The
-rope extends to the authored centers, including the portions inside masts.
+The per-boat stay definitions' `ForePoint` and `AftPoint` remain the exact rope
+endpoints. Only rope length scales; its authored diameter remains unchanged.
+Each band follows its supporting mast's capsule axis, but uses its authored
+`ForeCollarRadius` or `AftCollarRadius` instead of the oversized collision
+radius. `ForeCollarOffset` and `AftCollarOffset` seat bands on the visible shaft
+without moving the rope endpoints or sail guides. The rope extends to the
+authored endpoints, including the portions inside masts.
+
+Collar measurements come from the installed native and boat-mod meshes in mast
+local space. Circular shaft sections identify the center and upper shaft extent;
+the nearest surface around that center excludes detached rigging and adjacent
+spars in the same mesh. Radii at the seated band centers include a 1 mm overlap.
+Masthead bands sit at least one band half-height below the shaft tip; Gloriana's
+forward band sits below its square cap. These remain circular, cylindrical
+bands, so taper and irregular cross-sections are approximate fits. Runtime
+placement only applies the authored radius and offset, retaining the band's
+axial height. There is no runtime mesh scan, native collar extraction or
+boat-specific fitting path. Changing band height requires reviewing the authored
+masthead offsets.
 
 The mount remains at the aft endpoint with negative Z toward the forward mast.
 Boat up supplies the roll reference. An empty walking root maps through
@@ -697,8 +709,8 @@ frame; using the rigidbody root directly would misplace that checker.
 
 The stay creates no colliders or walking mesh copies. Its rope and bands do not
 block players/items or restrict other sails' shipyard clearance. Physical mast
-capsules still supply cloth collision and collar sizing; sail collision
-checkers, wind-shadow colliders and winch interaction colliders remain separate.
+capsules still supply cloth collision and collar axes; sail collision checkers,
+wind-shadow colliders and winch interaction colliders remain separate.
 
 The rope reuses the configured native stay's root renderer material. Bands reuse
 `metal2`, inspected on native lantern **114** (`114 lantern M`, `level24` object
@@ -994,15 +1006,20 @@ placement searches.
 The **2026-10-16** authored stay integration retains plugin/runtime version
 **0.3.0**. Release built with zero warnings/errors; GeometryChecks passed,
 including baked rope endpoints across **103** configurations, fixed rope
-cross-section and capsule-based collar sizing. AssemblyChecks passed, including
-baked construction without stay colliders, retained walking-model frame, lantern
+cross-section and authored collar sizing. AssemblyChecks passed, including baked
+construction without stay colliders, retained walking-model frame, lantern
 material reuse, owned mesh cleanup and removal of legacy donor geometry helpers.
 The updated asset was rebaked with a **1 m** reference rope and **0.10 m** band
 height. Blender **5.1.1** regression and freshness checks passed for Solidify
 thickness, UV seams, flat shading, canonical dimensions, malformed input
 rejection and source-file preservation. The existing dimension-driven fitting
 consumes the new bake without additional runtime logic. Release and both .NET
-check suites passed again with the updated measurements.
+check suites passed again with the updated measurements. The collar fit revision
+adds measured radii and seating offsets for all **206** bands across those
+configurations. The Dhow aft band's inner radius is **0.08083 m**, replacing the
+**0.20 m** capsule radius; the measured wood radius is **0.08183 m**. Release,
+GeometryChecks and AssemblyChecks passed, including Dhow centering, complete
+Brig masthead-band seating and rejection of capsule-radius sizing in the visual.
 
 The Caelanor captured-control fallbacks retain plugin/runtime version **0.3.0**.
 Release build passed with zero warnings/errors, both check suites passed

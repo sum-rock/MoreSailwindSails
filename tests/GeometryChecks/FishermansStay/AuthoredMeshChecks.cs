@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using MoreSailwindSails.Stays.FishermansStay;
+using MoreSailwindSails.Stays.FishermansStay.Configuration.Boats;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStay;
@@ -24,6 +25,26 @@ internal static class AuthoredMeshChecks
             Near(actual: scale.y, expected: scale.x);
             Near(actual: scale.z, expected: 1);
         }
+        // Installed Dhow mizzen: visible shaft at the authored height is offset
+        // from the origin and about 0.08183 m in radius; its capsule is 0.20 m.
+        var dhow = DhowStays.Definition.Stays.Single().Variants[0];
+        var seated = dhow.AftPoint + dhow.AftCollarOffset;
+        Near(actual: seated.x, expected: 0.01019f);
+        Near(actual: seated.y, expected: -0.00352f);
+        Near(actual: seated.z, expected: 0.616f);
+        var fitted = FishermansStayGeometry.CollarScale(radius: dhow.AftCollarRadius);
+        Near(actual: FishermansStayBakedMesh.CollarInnerRadius * fitted.x, expected: 0.08083f);
+        // Brig's fallback endpoint sits above the rendered tip (2.94751 m).
+        // Seat the complete band on the wood without changing the rope endpoint.
+        var brig = BrigStays.Definition.Stays[0].Variants[1];
+        if (
+            brig.ForePoint.z < 3.08f
+            || brig.ForePoint.z + brig.ForeCollarOffset.z + FishermansStayBakedMesh.CollarHalfHeight
+                > 2.94751f
+        )
+            throw new Exception(
+                "Masthead collar floats above the wood or moved the stay endpoint."
+            );
         Near(actual: rope.Vertices.Min(v => v.z), expected: -FishermansStayBakedMesh.RopeLength);
         Near(actual: rope.Vertices.Max(v => v.z), expected: 0);
         foreach (var vertex in rope.Vertices)

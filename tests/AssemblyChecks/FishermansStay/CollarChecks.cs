@@ -72,11 +72,24 @@ internal static class CollarChecks
         var collar = visual.GetMethod("PlaceCollar", flags);
         if (
             !CalledMethods(collar).Any(m => m.Name == "MultiplyPoint3x4")
-            || CalledMethods(collar).Any(m => m.Name is "get_vertices" or "get_triangles")
+            || CalledMethods(collar)
+                .Any(m => m.Name is "get_vertices" or "get_triangles" or "get_radius")
         )
             throw new Exception(
-                "Collars must use authored mount vectors without mesh surface scans."
+                "Collars must use authored seating measurements, not capsule radii or mesh surface scans."
             );
+        var visualPlace = visual.GetMethod("Place", flags);
+        foreach (
+            string field in new[]
+            {
+                "ForeCollarRadius",
+                "AftCollarRadius",
+                "ForeCollarOffset",
+                "AftCollarOffset",
+            }
+        )
+            if (!Instructions(visualPlace).Any(i => i.Operand is FieldInfo f && f.Name == field))
+                throw new Exception("Collar placement lost its authored " + field);
         foreach (
             string removed in new[]
             {

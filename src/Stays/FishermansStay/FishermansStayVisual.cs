@@ -95,16 +95,18 @@ namespace MoreSailwindSails.Stays.FishermansStay
             PlaceCollar(
                 node: parts[1],
                 mast: references.Fore,
-                point: references.Definition.ForePoint
+                point: references.Definition.ForePoint + references.Definition.ForeCollarOffset,
+                radius: references.Definition.ForeCollarRadius
             );
             PlaceCollar(
                 node: parts[2],
                 mast: references.Aft,
-                point: references.Definition.AftPoint
+                point: references.Definition.AftPoint + references.Definition.AftCollarOffset,
+                radius: references.Definition.AftCollarRadius
             );
         }
 
-        private void PlaceCollar(Transform node, Mast mast, Vector3 point)
+        private void PlaceCollar(Transform node, Mast mast, Vector3 point, float radius)
         {
             var capsule = mast.GetComponent<CapsuleCollider>();
             var axis =
@@ -121,7 +123,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
             node.localRotation = frame.rotation;
             node.localScale = Vector3.Scale(
                 frame.lossyScale,
-                FishermansStayGeometry.CollarScale(radius: capsule.radius)
+                FishermansStayGeometry.CollarScale(radius: radius)
             );
         }
     }
