@@ -14,6 +14,8 @@ namespace MoreSailwindSails.Controls
         private readonly WinchReservations reservations = new WinchReservations();
         private readonly List<OwnedWinch> controls = new List<OwnedWinch>();
         private readonly List<ControlGroup> groups = new List<ControlGroup>();
+        private readonly List<OwnedWinch> controlSnapshot = new List<OwnedWinch>();
+        private readonly List<ControlGroup> groupSnapshot = new List<ControlGroup>();
         private BoatRefs boat;
         private NativeWinchSeats native;
         private SheetingWinchPlacementResolver sheets;
@@ -95,23 +97,39 @@ namespace MoreSailwindSails.Controls
             return control;
         }
 
+        // Copy before callbacks can mutate the source; retain capacity between frames.
+        private static List<T> Snapshot<T>(List<T> source, List<T> buffer)
+        {
+            buffer.Clear();
+            buffer.AddRange(collection: source);
+            return buffer;
+        }
+
         private void LateUpdate()
         {
             if (!boat || controls.Count == 0)
                 return;
-            foreach (var control in controls.ToArray())
-                if (!control.Owner)
-                    control.Dispose();
-                else if (!control.Winch)
-                    control.Retire();
-            if (controls.Count == 0)
-                return;
-            native.Prepare();
-            // Release inactive owners before anyone competes for their seats.
-            foreach (var group in groups.ToArray())
-                group.ReleaseUnused();
-            foreach (var group in groups.ToArray())
-                group.Refresh();
+            try
+            {
+                foreach (var control in Snapshot(source: controls, buffer: controlSnapshot))
+                    if (!control.Owner)
+                        control.Dispose();
+                    else if (!control.Winch)
+                        control.Retire();
+                if (controls.Count == 0)
+                    return;
+                native.Prepare();
+                // Release inactive owners before anyone competes for their seats.
+                foreach (var group in Snapshot(source: groups, buffer: groupSnapshot))
+                    group.ReleaseUnused();
+                foreach (var group in Snapshot(source: groups, buffer: groupSnapshot))
+                    group.Refresh();
+            }
+            finally
+            {
+                controlSnapshot.Clear();
+                groupSnapshot.Clear();
+            }
         }
 
         internal static void InvalidateInventory(Component component)

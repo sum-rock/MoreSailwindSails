@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -76,12 +77,33 @@ internal static class WinchChecks
                 method + " no longer returns early for already disposed controls."
             );
         }
-        var cleanupCalls = CalledMethods(manager.GetMethod("LateUpdate", all)).ToArray();
+        var tick = manager.GetMethod("LateUpdate", all);
+        var cleanupCalls = CalledMethods(tick).ToArray();
         Check(
             cleanupCalls.Any(m => m.DeclaringType == owned && m.Name == "Dispose")
                 && cleanupCalls.Any(m => m.DeclaringType == owned && m.Name == "Retire"),
             "Stale-control cleanup must distinguish lost owners from broken live controls."
         );
+        Check(
+            !cleanupCalls.Any(m => m.Name == "ToArray")
+                && cleanupCalls
+                    .Where(m => m.Name is "Snapshot" or "ReleaseUnused" or "Refresh")
+                    .Select(m => m.Name)
+                    .SequenceEqual(
+                        new[] { "Snapshot", "Snapshot", "ReleaseUnused", "Snapshot", "Refresh" }
+                    ),
+            "Tick must snapshot cleanup and each group pass separately, releasing before refresh."
+        );
+        Check(
+            cleanupCalls.Count(m => m.Name == "Clear") == 2
+                && tick.GetMethodBody()
+                    .ExceptionHandlingClauses.Any(c =>
+                        c.Flags == ExceptionHandlingClauseOptions.Finally
+                    )
+                && CalledMethods(manager.GetMethod("OnDestroy", all)).Any(m => m.Name == "ToArray"),
+            "Tick must clear both buffers with final cleanup and keep teardown's snapshot independent."
+        );
+        CheckSnapshots(method: manager.GetMethod("Snapshot", all));
         Check(
             CalledMethods(manager.GetMethod("InvalidateInventory", all))
                 .Any(m => m.Name == "NativeBindingComplete"),
@@ -193,6 +215,45 @@ internal static class WinchChecks
             );
         Console.WriteLine(
             "PASS (structural): paired binding, controller-preserving retirement/replacement, final disposal without rope reparenting, native mount references, all ownership paths and generated-search removal. Unity lifecycle remains unexecuted."
+        );
+    }
+
+    private static void CheckSnapshots(MethodInfo method)
+    {
+        var snapshot = method
+            .MakeGenericMethod(typeof(object))
+            .CreateDelegate<Func<List<object>, List<object>, List<object>>>();
+        var first = new object();
+        var second = new object();
+        var source = new List<object> { first, second };
+        var buffer = new List<object>();
+        Check(ReferenceEquals(snapshot(source, buffer), buffer), "Snapshot must reuse its buffer.");
+        int visited = 0;
+        foreach (var item in buffer)
+        {
+            source.Remove(item);
+            visited++;
+        }
+        Check(visited == 2 && source.Count == 0, "Source removals must not skip snapshot entries.");
+        source.Add(second);
+        snapshot(source, buffer);
+        Check(
+            buffer.Count == 1 && buffer[0] == second,
+            "Next pass must capture the updated source."
+        );
+        source.Clear();
+        snapshot(source, buffer);
+        Check(buffer.Count == 0, "Empty capture must release stale references.");
+        source.Add(first);
+        for (int i = 0; i < 1000; i++)
+            snapshot(source, buffer);
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 1000; i++)
+            snapshot(source, buffer);
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(allocated == 0, "Warmed snapshot copies must not allocate replacement collections.");
+        Console.WriteLine(
+            "PASS: snapshot mutation isolation, fresh passes, empty cleanup and 0 allocated bytes for 1000 warmed copies (.NET test host)."
         );
     }
 

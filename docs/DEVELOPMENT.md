@@ -824,6 +824,12 @@ reparents controllers beneath the winch, so the binding invalidation hook also
 detaches them from hidden placement mounts and requests a retry. This preserves
 controller activity when native binding runs again during exhaustion.
 
+The coordinator reuses separate control and group snapshot lists during each
+tick. It captures groups again between release and refresh so each pass sees
+current membership, while callbacks can safely mutate the source lists. A
+`finally` clears both buffers, retaining capacity without retaining removed
+objects. Final teardown uses its own independent snapshot.
+
 ### Inventory lifetime and inspection counters
 
 Each coordinator owns one inventory and mast/seat lookup per boat. Lifecycle
