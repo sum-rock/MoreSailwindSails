@@ -187,27 +187,14 @@ internal static class NativeSeatPolicyChecks
             "Another sail reused the same fallback seats."
         );
         var invalidSeat = new SheetFallbackSeat(
-            new Vector3(float.NaN, 0, 0),
-            Vector3.up,
-            Vector3.up,
-            0,
-            1,
-            WinchRole.Left,
-            0
+            contact: new Vector3(float.NaN, 0, 0),
+            normal: Vector3.up
         );
         Check(
             new SheetFallbackPair(invalidSeat, null).InvalidSide == "port",
             "Invalid vector accepted."
         );
-        var origin = new SheetFallbackSeat(
-            Vector3.zero,
-            Vector3.up,
-            Vector3.up,
-            0,
-            1,
-            WinchRole.Left,
-            0
-        );
+        var origin = new SheetFallbackSeat(contact: Vector3.zero, normal: Vector3.up);
         Check(
             origin.Valid && new SheetFallbackPair(origin, null).InvalidSide == "starboard",
             "Origin or half-defined fallback mishandled."

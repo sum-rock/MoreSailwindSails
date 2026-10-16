@@ -181,6 +181,52 @@ internal static class NativeResolverChecks
                 .Any(m => m.DeclaringType.Name == "WinchPlacementPolicy" && m.Name == "Resolve"),
             "Sheet resolver bypasses atomic allocation policy."
         );
+        var sheetType = Type("SheetingWinchPlacementResolver");
+        foreach (string method in new[] { "Fallback", "ValidFallbackSide" })
+        {
+            var calls = CalledMethods(sheetType.GetMethod(method, flags)).ToArray();
+            Check(
+                calls.Any(m =>
+                    m.DeclaringType.Name == "SharedSheetWinchTemplate" && m.Name == "Get"
+                )
+                    && !calls.Any(m =>
+                        m.DeclaringType.Name == "NativeWinchSeats" && m.Name == "Rotation"
+                    ),
+                "Sheet fallback must share a donor and must not inherit live donor wheel rotation."
+            );
+        }
+        var sharedTemplate = Type("SharedSheetWinchTemplate");
+        var templateGet = sharedTemplate.GetMethod("Get", flags);
+        var templateCalls = CalledMethods(templateGet).ToArray();
+        Check(
+            templateCalls.Any(m => m.Name == "Usable")
+                && templateCalls.Any(m => m.Name == "Due")
+                && templateCalls.Any(m => m.Name == "Discovered")
+                && templateCalls.Any(m => m.Name == "FindObjectsOfTypeAll")
+                && templateCalls.Any(m => m.Name == "IsValid")
+                && templateCalls.Any(m =>
+                    m.Name == "GetComponentsInChildren" && m.GetParameters().Length == 1
+                ),
+            "Shared donor discovery must validate the cached object, throttle retries and include inactive hierarchy lookup."
+        );
+        foreach (
+            var method in sharedTemplate
+                .GetMethods(flags)
+                .Where(m => m.DeclaringType == sharedTemplate)
+        )
+            Check(
+                !CalledMethods(method)
+                    .Any(m => m.Name is "SetActive" or "AttachToController" or "Occupied"),
+                "Shared template discovery must neither mutate nor require a free native donor."
+            );
+        var usable = native.GetMethod("Usable", flags);
+        Check(
+            CalledMethods(usable)
+                .Any(m =>
+                    m.Name == "op_Implicit" && m.DeclaringType.FullName == "UnityEngine.Object"
+                ),
+            "Destroyed Unity donors must fail template validation and allow rediscovery."
+        );
         Console.WriteLine(
             "PASS (structural): native rope/visibility occupancy, inactive hierarchy lookup, stay dependencies with active requested support and non-mutating resolvers."
         );

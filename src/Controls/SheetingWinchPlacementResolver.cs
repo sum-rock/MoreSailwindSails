@@ -64,21 +64,14 @@ namespace MoreSailwindSails.Controls
             int index
         )
         {
-            var template = Template(definition: definition);
+            var template = SharedSheetWinchTemplate.Get();
             return template
                 && current.Templates[index] == template
                 && definition.Supports.All(id => native.ActiveSupport(mast: native.Mast(id: id)))
                 && native.Available(seat: current.Seats[index])
                 && current
                     .Seats[index]
-                    .MatchesPose(
-                        position: definition.Contact
-                            + definition.Normal.normalized * definition.Offset,
-                        rotation: Quaternion.FromToRotation(
-                            definition.SourceNormal,
-                            definition.Normal
-                        ) * native.Rotation(c: template)
-                    );
+                    .MatchesPose(position: definition.Position, rotation: definition.Rotation);
         }
 
         internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
@@ -138,25 +131,11 @@ namespace MoreSailwindSails.Controls
             return result;
         }
 
-        private GPButtonRopeWinch Template(SheetFallbackSeat definition)
-        {
-            var controls = NativeWinchSeats.Sources(
-                mast: native.Mast(id: definition.TemplateMast),
-                role: definition.TemplateRole
-            );
-            return
-                controls != null
-                && definition.TemplateIndex < controls.Length
-                && native.TemplateUsable(control: controls[definition.TemplateIndex])
-                ? controls[definition.TemplateIndex]
-                : null;
-        }
-
         private NativeWinchCandidate Fallback(SheetFallbackDefinition category)
         {
             var definitions = new[] { category.Fallback.Port, category.Fallback.Starboard };
-            var templates = definitions.Select(Template).ToArray();
-            if (templates.Any(template => !template))
+            var template = SharedSheetWinchTemplate.Get();
+            if (!template)
                 return null;
             var seats = definitions
                 .Select(
@@ -164,12 +143,8 @@ namespace MoreSailwindSails.Controls
                         new WinchSeat(
                             identity: category.FallbackName + "/" + index,
                             aliases: null,
-                            position: definition.Contact
-                                + definition.Normal.normalized * definition.Offset,
-                            rotation: Quaternion.FromToRotation(
-                                definition.SourceNormal,
-                                definition.Normal
-                            ) * native.Rotation(c: templates[index])
+                            position: definition.Position,
+                            rotation: definition.Rotation
                         )
                 )
                 .ToArray();
@@ -178,7 +153,8 @@ namespace MoreSailwindSails.Controls
                 Id = category.FallbackName,
                 Context = "fallback=" + category.FallbackName,
                 Fallback = true,
-                Templates = templates,
+                Templates = new[] { template, template },
+                TemplateScale = SheetFallbackTemplate.Scale,
                 Seats = seats,
                 Supported = definitions.All(definition =>
                     definition.Supports.All(id => native.ActiveSupport(mast: native.Mast(id: id)))

@@ -7,6 +7,7 @@ using MoreSailwindSails.Controls.Configuration;
 using MoreSailwindSails.Controls.Configuration.Boats;
 using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
@@ -32,6 +33,38 @@ internal static class NativeSeatProfileChecks
         Check(
             BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 2,
             "Preserve the two authored sheet fallback pairs."
+        );
+        foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
+        foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
+        {
+            var displacement = seat.Position - seat.Contact;
+            Check(
+                Math.Abs(displacement.magnitude - 0.044704f) < 0.000001f
+                    && Vector3.Dot(displacement.normalized, seat.Normal.normalized) > 0.99999f,
+                "Every sheet fallback must use the shared mounting depth along its surface normal."
+            );
+        }
+        Check(
+            (
+                ShroudControls.Definition.SheetFallbacks.Single().Fallback.Port.Position
+                - new Vector3(-3.465970f, 4.874469f, -3.901223f)
+            ).magnitude < 0.000001f,
+            "Shroud must keep its captured contact with the smaller shared model's mounting depth."
+        );
+        Check(
+            (
+                SheetFallbackTemplate.Normal - new Vector3(0.00020555f, 0.99987845f, 0.01559755f)
+            ).magnitude < 0.000001f
+                && SheetFallbackTemplate.Scale == Vector3.one,
+            "Shared sheet frame or unit size differs from the installed Kakam reference."
+        );
+        Check(
+            !new SheetFallbackSeat(contact: Vector3.zero, normal: Vector3.zero).Valid
+                && !new SheetFallbackSeat(
+                    contact: Vector3.zero,
+                    normal: new Vector3(0, float.PositiveInfinity, 0)
+                ).Valid,
+            "Invalid mounting normals must make a fallback unavailable."
         );
         var rows = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")

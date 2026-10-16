@@ -272,7 +272,11 @@ namespace MoreSailwindSails.Controls
                         // enumerating seats, replacing clones or touching the ledger.
                         for (int i = 0; i < fittings.Length; i++)
                         {
-                            fittings[i].Position(state.Current.Seats[i]);
+                            fittings[i]
+                                .Position(
+                                    seat: state.Current.Seats[i],
+                                    templateScale: state.Current.TemplateScale
+                                );
                             fittings[i].Show();
                         }
                         return;
@@ -320,7 +324,11 @@ namespace MoreSailwindSails.Controls
                             replacement?.Destroy();
                     }
                     for (int i = 0; i < fittings.Length; i++)
-                        fittings[i].Position(selected.Seats[i]);
+                        fittings[i]
+                            .Position(
+                                seat: selected.Seats[i],
+                                templateScale: selected.TemplateScale
+                            );
                     foreach (var fitting in fittings)
                         fitting.Show();
                     if (!state.Logged || state.Failed || changed)
@@ -517,14 +525,14 @@ namespace MoreSailwindSails.Controls
                 Group.Dirty();
             }
 
-            internal void Position(WinchSeat seat)
+            internal void Position(WinchSeat seat, Vector3? templateScale = null)
             {
                 clone.Mount.SetPositionAndRotation(
                     manager.boat.transform.TransformPoint(seat.Position),
                     manager.boat.transform.rotation * seat.Rotation
                 );
                 var scale = clone.Mount.lossyScale;
-                var sourceScale = Source.transform.lossyScale;
+                var sourceScale = templateScale ?? Source.transform.lossyScale;
                 Winch.transform.localScale = new Vector3(
                     sourceScale.x / scale.x,
                     sourceScale.y / scale.y,

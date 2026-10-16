@@ -757,11 +757,26 @@ mounting poses still need visual acceptance.
 
 ### Manual sheet fallbacks
 
-Each authored fallback side specifies its contact point, normal, mounting
-offset, template and support requirements. A captured point alone is not a
-finished pose. Null, incomplete or non-finite pairs are unavailable as a whole.
-Fallback occupancy and claims use the same native-priority rules as borrowed
-positions; exhaustion is reported once until recovery.
+Each authored fallback side specifies only its contact point, surface normal and
+support requirements. Both sides on every boat use one shared native sheet
+model: **Kakam mast 5, left angle winch 0**. Discovery includes inactive boats
+and masts, caches the donor while it remains usable, and retries at most once
+per second when it is missing or destroyed. Discovery never activates, binds or
+claims the donor; a bound native rope does not prevent cloning it.
+
+`SheetFallbackTemplate` owns the installed model's fixed boat-relative reference
+rotation, unit size and **0.044704 m** mounting depth. The model's local +Z is
+aligned to the authored surface normal; placement does not inherit donor wheel
+input or boat motion. The contact is offset along that normal by the shared
+depth. Shroud therefore retains its captured contacts but changes from its old
+model/depth to the standard Kakam size and mounting frame.
+
+Null, incomplete or non-finite pairs are unavailable as a whole. Fallback
+occupancy and claims use the same native-priority rules as borrowed positions;
+exhaustion is reported once until recovery. A missing shared donor leaves
+fallback controls unavailable through the existing hide/retry path. Native
+allocations and halyard templates are unaffected; no saved placement data or
+migration is introduced.
 
 Authored pairs remain **Shroud / ForemastFallback** and
 [Kakam / MainmastFallback](#kakam-aft-controls). Their names preserve diagnostic
@@ -773,11 +788,12 @@ confirmation.
 ### Kakam aft controls
 
 [KakamControls.cs](../src/Controls/Configuration/Boats/KakamControls.cs) retains
-its **2026-10-07** F9 measurements. Mast **5** angle controls supply the
-symmetric, parallel aft pair's templates. The pair can serve a stay whose aft
-mast lies forward of both contacts after native stay positions exhaust. Mizzen
-**7** retains its measured reef fallback. Exact vectors and mesh-derived
-mounting depths are unchanged; the new native-first behavior needs a game check.
+its **2026-10-07** F9 measurements. The shared sheet template supplies the
+symmetric, parallel aft pair. The pair can serve a stay whose aft mast lies
+forward of both contacts after native stay positions exhaust. Mizzen **7**
+retains its measured reef fallback. Kakam's captured contacts and mounting
+depths are unchanged; the shared template and native-first behavior need a game
+check.
 
 ### Placement logging
 
@@ -892,10 +908,17 @@ Harmony targets. Optional SailInfo signature checks were skipped because its DLL
 was absent. New checks cover dependency cycles/transitive paths, complete aft
 fallback ordering, coincident claims, native reclaim, exhaustion recovery and
 native binding/mount ownership. Pinned CSharpier, Prettier and diff checks pass.
-No in-game validation was performed. Confirm Shroud's short-mast exhaustion,
-inactive donors, mixed Flying Sail height ordering and save/reload before
-accepting runtime behavior. Earlier placement acceptance does not cover this
-change.
+The shared sheet-template change also passed the Release build with zero
+warnings/errors and both suites, including the now-installed SailInfo signature
+checks. Its checks cover shared mounting depth on both boats, the fixed
+reference frame, invalid surface normals, and structural donor
+discovery/validation paths. No in-game validation was performed. Confirm
+Shroud's short-mast exhaustion, inactive donors, mixed Flying Sail height
+ordering and save/reload before accepting runtime behavior. Also inspect
+Kakam/Shroud fallback seating, rope attachment and operation, including a turned
+native donor and save/reload; exercise donor unavailability/recovery and scene
+reload in Unity. Automated checks do not execute Unity object destruction or
+lifecycle callbacks. Earlier placement acceptance does not cover this change.
 
 The **2026-10-14** configuration ownership refactor, including the per-boat
 `Configuration/Boats/` organization and shared `BoatConfiguration`

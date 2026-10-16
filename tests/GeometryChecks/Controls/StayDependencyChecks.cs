@@ -38,15 +38,7 @@ internal static class StayDependencyChecks
         );
         Check(!Reaches("aft", "aft"), "The option itself is not a dependency.");
         SheetFallbackSeat Side(float x, float z) =>
-            new SheetFallbackSeat(
-                contact: new Vector3(x, 2, z),
-                normal: Vector3.up,
-                sourceNormal: Vector3.up,
-                offset: 0,
-                templateMast: 1,
-                templateRole: x < 0 ? WinchRole.Left : WinchRole.Right,
-                templateIndex: 0
-            );
+            new SheetFallbackSeat(contact: new Vector3(x, 2, z), normal: Vector3.up);
         SheetFallbackDefinition Pair(string name, float z, float otherZ) =>
             new SheetFallbackDefinition(
                 name: name,

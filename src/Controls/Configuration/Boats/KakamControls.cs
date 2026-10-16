@@ -33,21 +33,11 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
             new SheetFallbackPair(
                 port: new SheetFallbackSeat(
                     contact: new Vector3(-0.8067125f, 2.7384885f, -6.0352715f),
-                    normal: new Vector3(0f, 0.984682f, 0.150002f),
-                    sourceNormal: new Vector3(0.00020555f, 0.99987845f, 0.01559755f),
-                    offset: 0.044704f,
-                    templateMast: 5,
-                    templateRole: WinchRole.Left,
-                    templateIndex: 0
+                    normal: new Vector3(0f, 0.984682f, 0.150002f)
                 ),
                 starboard: new SheetFallbackSeat(
                     contact: new Vector3(0.8067125f, 2.7384885f, -6.0352715f),
-                    normal: new Vector3(0f, 0.984682f, 0.150002f),
-                    sourceNormal: new Vector3(0.00020555f, 0.99987845f, 0.01559755f),
-                    offset: 0.044704f,
-                    templateMast: 5,
-                    templateRole: WinchRole.Right,
-                    templateIndex: 0
+                    normal: new Vector3(0f, 0.984682f, 0.150002f)
                 )
             );
     }
