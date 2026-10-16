@@ -633,6 +633,48 @@ aft eligibility and reservations. The new contacts lie aft of mainmast **5**'s
 installed boat-local origin (**Z ≈ -2.306270**); the previous contacts at **Z =
 -2.096566** were excluded by the aft-only rule.
 
+### Authored stay geometry and bake
+
+[assets/stays/stay.blend](../assets/stays/stay.blend) provides a straight rope
+and two matching metal bands for Fisherman's Stays.
+
+The rope is **1 m** long and **0.02 m** in diameter. Each band has a **0.42 m**
+outside diameter, approximately **0.4074 m** inside diameter, **0.10 m** axial
+height and **0.0063 m** radial wall thickness. Collar radii describe the mesh's
+vertex rings. Preserve the named `Rope`, `ForestayCollar` and `AftstayCollar`
+objects at one metre per Blender unit. The rope runs along object-local X;
+collars surround object-local Z. Camera and light objects are ignored.
+
+From the repository root with Blender **5.1.1**:
+
+```sh
+blender --background --factory-startup --disable-autoexec assets/stays/stay.blend --python-exit-code 1 --python tools/bake_stay.py
+blender --background --factory-startup --disable-autoexec assets/stays/stay.blend --python-exit-code 1 --python tools/bake_stay.py -- --check
+blender --background --factory-startup --disable-autoexec assets/stays/stay.blend --python-exit-code 1 --python tests/BlenderChecks/check_stay_bake.py
+```
+
+The baker never saves the asset. It evaluates enabled collar Solidify modifiers,
+bakes positive object scales and discards presentation translation/rotation.
+Other modifiers, parents, constraints, animation and shape keys are unsupported.
+The existing flat sail baker is unsuitable for these closed meshes, unapplied
+scales and modifiers, so the stay has a separate exporter.
+
+Canonical rope positions map scaled `(X, Y, Z)` to `(Y, -Z, X)`, centered
+transversely with length along negative Z and the aft end at zero. Collars map
+to `(X, -Y, Z)`, centered around their openings. Both maps reverse handedness;
+triangle winding is reversed and normals use inverse scale before conversion.
+Triangulation preserves UV seams and authored corner normals, including the
+current flat shading. Both collars must export identical data; the output
+contains one reusable collar. Materials are not exported by Blender.
+
+`FishermansStayBakedMesh.g.cs` supplies `CreateRope()` and `CreateCollar()` with
+fresh position, normal, UV and index arrays, plus measured rope length/radius
+and collar inner/outer radii and half-height. Output is deterministic and
+requires no Blender installation or asset bundle to build the plugin. Append
+`-- --output /tmp/stay.g.cs` for a separate output. `--check` compares without
+writing, including when output is missing or stale. Check in generated data
+alongside authoring changes.
+
 ### Stay collars on Sanbuq and Large Dhow
 
 These profiles fit collars independently of the rope body, below the rendered
