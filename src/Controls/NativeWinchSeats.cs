@@ -235,20 +235,8 @@ namespace MoreSailwindSails.Controls
                 * local;
         }
 
-        internal bool ActiveSupport(Mast mast)
-        {
-            if (!mast || !mast.gameObject.activeInHierarchy)
-                return false;
-            if (Profile == null || !Profile.Boat.MastParents.ContainsKey(mast.orderIndex))
-                return true;
-            return Profile
-                .Boat.Sections(mast.orderIndex)
-                .All(id =>
-                {
-                    var support = Mast(id);
-                    return support && support.gameObject.activeInHierarchy;
-                });
-        }
+        // Active mount points imply active supports, including during shipyard previews.
+        internal bool ActiveSupport(Mast mast) => mast && mast.gameObject.activeInHierarchy;
 
         internal bool Mounted(GPButtonRopeWinch c)
         {

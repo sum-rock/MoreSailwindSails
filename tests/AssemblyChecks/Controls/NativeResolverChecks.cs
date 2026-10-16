@@ -16,6 +16,16 @@ internal static class NativeResolverChecks
             | BindingFlags.Static;
         Type Type(string name) => assembly.GetType("MoreSailwindSails.Controls." + name, true);
         var native = Type("NativeWinchSeats");
+        var activeSupport = native.GetMethod("ActiveSupport", flags);
+        var supportCalls = CalledMethods(activeSupport).ToArray();
+        Check(
+            supportCalls.Any(m => m.Name == "get_activeInHierarchy")
+                && !supportCalls.Any(m =>
+                    m.DeclaringType.Namespace == "MoreSailwindSails.BoatConfiguration"
+                )
+                && !Instructions(activeSupport).Any(i => i.Operand is FieldInfo),
+            "Support activity must use the mount's hierarchy state without authored ancestry or inventory lookups."
+        );
         var occupied = native.GetMethod("Occupied", flags);
         Check(
             Instructions(occupied).Any(i => i.Operand is FieldInfo f && f.Name == "rope"),
