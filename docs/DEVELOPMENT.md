@@ -164,10 +164,10 @@ feature. Catalogs share exact boat-name matching and trailing `(Clone)`
 normalization. Keep one file per boat inside each configuration directory’s
 `Boats/` subdirectory, with matching `.Configuration.Boats` namespaces. Catalogs
 and definition types stay directly in `Configuration/`. New sail families own
-only the configuration they need; fisherman’s staysails currently use registered
-stays and shared mast ancestry without another per-boat profile. Preserve
-authored ordering, IDs and values when moving configuration, since stay option
-positions are saved.
+only the configuration they need; fisherman’s staysails bind to registered stays
+and use shared mast ancestry for the shared-luff collision exemption without
+another per-boat profile. Preserve authored ordering, IDs and values when moving
+configuration, since stay option positions are saved.
 
 Native integration belongs in each feature's `*SailwindPatches.cs`; staysail
 angle reporting uses `StaysailSailInfoPatches.cs`. Registration follows optional
@@ -485,9 +485,12 @@ needs testing.
 - Bind the reef controller through the stay mount's allocated winch. Route its
   halyard through active aft guides (with **5 cm** separation) and a leaf below
   the top-aft bone. Keep independent lower sheets; no fore halyard or decorative
-  upper sheets. Resolve active aft ancestry without falling back to the fore
-  mast; protect both support chains. Controls reconstruct from the native save
-  slot without migration.
+  upper sheets. Bind directly to the stay's resolved endpoints and guide;
+  availability comes from the active mount and the stay's existing prerequisite
+  and guide checks. Rigging does not resolve or recheck mast ancestry. Removal
+  and preview guards protect the mount and the stay's required parts, retaining
+  the current binding during removal previews. Controls reconstruct from the
+  native save slot without migration.
 - Optional SailInfo integration (inspected against **1.2.1**) reports actual
   mast-relative sheet angle without clamping the label. Keep scope limited to
   custom staysails and preserve settings/force readouts.
