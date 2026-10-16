@@ -49,9 +49,10 @@ Markdown, use Prettier `--check` to verify and `--write` to fix formatting.
 Documentation-only changes normally need diff/link/path review, not a build. Do
 not change dependencies to bypass first-time restore/network failures.
 
-Report automated results separately from observed game behavior. Follow the
-[runtime validation guidance](docs/DEVELOPMENT.md#runtime-validation) and keep
-validation notes current.
+In-game validation is implied and does not need to be written in documentation.
+Do not add in-game validation requirements, pending-validation reminders or
+runtime checklists to the docs. Record concrete observed behavior and automated
+check results separately when relevant.
 
-At handoff, report the version, changes, checks actually run, remaining in-game
-uncertainty and built DLL path when applicable.
+At handoff, report the version, changes, checks actually run and built DLL path
+when applicable.

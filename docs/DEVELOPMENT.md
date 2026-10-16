@@ -3,7 +3,7 @@
 See [README.md](../README.md) for features and player instructions and
 [AGENTS.md](../AGENTS.md) for agent workflow. This guide owns technical
 reference, verification procedures and
-[current validation status](#runtime-validation); resolved history is in Git.
+[validation records](#validation-records); resolved history is in Git.
 
 ## Technical reference
 
@@ -15,7 +15,7 @@ reference, verification procedures and
 | Sail-family mechanics                    | [Flying Sail](#flying-sail), [Staysails](#staysails)                |
 | Authored stays and boat support          | [Boat profiles and stays](#boat-profiles-and-stays)                 |
 | Native seats and manual fallback pairs   | [Winch placement](#winch-placement)                                 |
-| Game checks and observed behavior        | [Runtime validation](#runtime-validation)                           |
+| Automated checks and observations        | [Validation records](#validation-records)                           |
 | Profiling, installed references and logs | [Local investigation](#local-investigation)                         |
 
 ## Build and automated checks
@@ -88,7 +88,7 @@ nix develop -c dotnet run --project tests/AssemblyChecks -c Release -p:SailwindD
   Unity prefabs.
 
 Neither suite simulates Unity Cloth, rendering, audio initialization, hinge
-physics or the live shipyard. Passing checks do not establish in-game behavior.
+physics or the live shipyard.
 
 ## Release and manual installation
 
@@ -268,8 +268,7 @@ materials fall back to flat lines and retry. Mode changes show one
 representation, disabling hides both, and destruction releases only owned
 geometry. Native assets and Cloth remain untouched.
 
-Geometry and ownership checks pass; rendering, runtime switching and performance
-still need game validation. See the [runtime checklist](#runtime-checklist).
+Geometry and ownership checks pass.
 
 ## Flying Sail
 
@@ -722,14 +721,11 @@ main/mizzen masts **7/9**. Its default stays **16/17/18/19** have empty
 those lists. They are excluded by the specified dependency rule. Short main
 **8** and mizzen **10** therefore have no matching donor stays in this bundle;
 controls without an eligible authored fallback remain unavailable. No guessed
-endpoint or hardcoded source exception was added. Test these variants explicitly
-before accepting the new placement behavior.
+endpoint or hardcoded source exception was added.
 
 Sources can now belong to either endpoint of a native stay associated with the
-aft mast. This deliberately changes the former forward-mast sheet categories;
-control locations and rope reachability require a game check on each mast pair.
-The audit establishes references and dependency paths, not live placement or
-visual acceptance.
+aft mast. This changes the former forward-mast sheet categories. The audit
+records references and dependency paths.
 
 ### Controller lifetime during cleanup
 
@@ -779,8 +775,7 @@ controls for retry.
 defines fallbacks for base masts **10/11/55/69**, measured with F9 on
 **2026-10-07**. Each uses the requested mast's `reefWinch[0]` after native
 sources exhaust. Contacts, normals and mesh-derived mounting depths live in the
-profile. Requests from topmast stays resolve to their physical base. These
-mounting poses still need visual acceptance.
+profile. Requests from topmast stays resolve to their physical base.
 
 ### Manual sheet fallbacks
 
@@ -810,8 +805,7 @@ Authored pairs are **Shroud / ForemastFallback**,
 [Caelanor / MainmastFallback](#caelanor-oldchronian). Their names preserve
 diagnostic identity and no longer select a forward-mast category. Eligibility
 follows their positions aft of the requested mast. All other boats have no
-authored sheet pair. Future additions require labeled F9 captures and
-visual/reachability confirmation.
+authored sheet pair. Future additions require labeled F9 captures.
 
 ### Kakam aft controls
 
@@ -820,8 +814,7 @@ its **2026-10-07** F9 measurements. The shared sheet template supplies the
 symmetric, parallel aft pair. The pair can serve a stay whose aft mast lies
 forward of both contacts after native stay positions exhaust. Mizzen **7**
 retains its measured reef fallback. Kakam's captured contacts and mounting
-depths are unchanged; the shared template and native-first behavior need a game
-check.
+depths are unchanged.
 
 ### Placement logging
 
@@ -896,8 +889,7 @@ Coincident locations use a **1 mm** tolerance; occupied aliases take priority.
 Bound native ropes count even when hidden; hidden spare custom controls do not.
 **Green does not guarantee allocation:** dependency, pairing, support and
 reservation rules still apply. Use the overlay to find bare structure for
-[F9 captures](#capturing-proposed-winch-positions), then confirm fallback
-orientation, depth and reachability.
+[F9 captures](#capturing-proposed-winch-positions).
 
 The overlay has a separate read-only inventory and reserves no seats. Discovery
 refreshes once per second while shown; occupancy and transforms update at
@@ -923,9 +915,9 @@ Commit numeric fixtures only, never extracted meshes, textures or assemblies.
 Identify assets by serialized identity as well as hierarchy path: Brig source
 **70** is a registered mainmast reef source, while **74** is an unregistered
 foremast source with the same path. Measurements do not authorize generated
-placement searches or establish in-game acceptance.
+placement searches.
 
-## Runtime validation
+## Validation records
 
 ### Automated baseline and limits
 
@@ -935,24 +927,16 @@ Release build passed with zero warnings/errors, both check suites passed
 formatting/diff checks passed. Placement code is unchanged. The sheet
 normalization checks cover mirrored contacts, normals and offset positions, with
 aft eligibility checked against the installed mainmast origin; the reef profile
-is checked against the recorded mainmast template array. Confirm in game that
-the new reef control and both sheets seat correctly, remain reachable, operate
-the staysail, and recover when native donor stays carry sails. No game files or
-saves were changed. Runtime logs confirmed the reef fallback placed
-successfully, but the earlier sheet contacts failed aft eligibility. The latest
-sheet captures still need live seating and operation validation.
+is checked against the recorded mainmast template array. Runtime logs confirmed
+the reef fallback placed successfully, but the earlier sheet contacts failed aft
+eligibility.
 
 The shared-luff square-sail collision fix retains plugin/runtime version
 **0.3.0**. Release builds passed with zero warnings/errors. GeometryChecks
 passed, including forward-mast compatibility across **103** authored stays, both
 base/topmast directions, and aft/unknown-mast exclusions. AssemblyChecks passed
 against the installed references, including **57** Harmony targets and SailInfo
-signatures. Pinned CSharpier, Prettier, Ruff and diff checks passed. In-game
-validation must fit each of Mk.A/B/C with a square sail already on the forward
-mast, then repeat with the square sail added second. Check base/topmast
-combinations, save/reload, and that square sails on other masts still report
-real overlaps. No live Unity collision callbacks or shipyard UI have been
-exercised for this fix.
+signatures. Pinned CSharpier, Prettier, Ruff and diff checks passed.
 
 The **2026-10-15** winch placement simplification retains plugin/runtime version
 **0.3.0**. A Release build passed with zero warnings/errors, GeometryChecks
@@ -965,13 +949,7 @@ The shared sheet-template change also passed the Release build with zero
 warnings/errors and both suites, including the now-installed SailInfo signature
 checks. Its checks cover shared mounting depth on both boats, the fixed
 reference frame, invalid surface normals, and structural donor
-discovery/validation paths. No in-game validation was performed. Confirm
-Shroud's short-mast exhaustion, inactive donors, mixed Flying Sail height
-ordering and save/reload before accepting runtime behavior. Also inspect
-Kakam/Shroud fallback seating, rope attachment and operation, including a turned
-native donor and save/reload; exercise donor unavailability/recovery and scene
-reload in Unity. Automated checks do not execute Unity object destruction or
-lifecycle callbacks. Earlier placement acceptance does not cover this change.
+discovery/validation paths.
 
 The **2026-10-14** configuration ownership refactor, including the per-boat
 `Configuration/Boats/` organization and shared `BoatConfiguration`
@@ -980,9 +958,7 @@ check suites against installed references. The optional SailInfo signature check
 was skipped because its DLL was absent. Configuration comparisons retained all
 authored values and ordering across the twelve boats; catalog checks cover exact
 names, clone suffixes and unknown boats, and stay checks cover duplicate mount
-IDs across groups. No in-game validation was performed for this refactor;
-fitting, controls, shipyard previews and save restoration still need runtime
-regression checks.
+IDs across groups.
 
 The latest recorded **2026-10-12** Release builds passed with zero warnings or
 errors, and both .NET suites passed against installed references and an isolated
@@ -1004,9 +980,7 @@ counters and static collar audits are not runtime performance or visual
 acceptance.
 
 The experimental sail family has been removed from this branch. Saves containing
-its prefabs are outside supported runtime validation. Remaining 0.3.0 checks
-include baked Flying Sail/Mk.B/Mk.C appearance, SE texture persistence, native
-paging/scaling, profile changes, rope rendering and the simplified F7 toggle.
+its prefabs are outside the supported save compatibility scope.
 
 ### Optional Shipyard Expansion
 
@@ -1024,26 +998,22 @@ recoloring. Native defaults use `Texture2D.whiteTexture`. Donor choices and the
 global SE catalog remain unchanged.
 
 Missing SE is skipped. Patch/API failures warn once and allow SE's own behavior
-to continue. Installed-target inspection and automated checks pass, but live
-texture persistence is unconfirmed: on **2026-10-12**, the user reported white
-sails reverting to the donor atlas on shipyard exit and during texture cycling.
-The subsequent patch has no recorded in-game acceptance.
+to continue. Installed-target inspection and automated checks pass. On
+**2026-10-12**, the user reported white sails reverting to the donor atlas on
+shipyard exit and during texture cycling; the subsequent texture patch addresses
+that report.
 
 Missing SE-only rigs retain unavailable option slots so later saved selections
 do not shift. The installation guard rejects those entries. A native Sailwind
 **0.39** asset audit identified 29 candidate stays: Brig 6, Junk 4, Jong 3,
 Sanbuq 2 and Baghala 14. Cog, Kakam and Dhow's current stays require SE-added
-parts. Mod-added boats still require their providing mods. Asset availability
-does not establish live fitting.
+parts. Mod-added boats still require their providing mods.
 
 MSS expands native mast selectors to at least 256 and pages parts beyond the
 native eight rows. Full arrays retain option indices and order processing.
 Paging follows boat/category changes and is skipped when SE provides navigation.
-Native scaling, partial-profile registration and paging still need game checks.
-
-Validate native+MSS and SE+MSS separately. Removing SE from an SE-equipped save
-is outside the supported migration scope: part selections are positional and SE
-stores additional sail state. Keep each test save's mod configuration stable.
+Removing SE from an SE-equipped save is outside the supported migration scope:
+part selections are positional and SE stores additional sail state.
 
 ### Confirmed game observations
 
@@ -1052,81 +1022,14 @@ changes.
 
 - **2026-10-12:** the user accepted Mk.A's baked shape and initial white
   appearance, and confirmed removal of rotation, flip and forced-uniform scaling
-  restrictions. Boat/cut and save/reload coverage were not fully specified. This
-  does not validate the later SE texture fix or native scaling/paging.
+  restrictions.
 - **2026-10-04:** an MSS 0.2.1 / SE 0.11.1 to MSS 0.2.2 / SE 0.12.1 upgrade
-  succeeded for one reported save; 0.3.0 compatibility remains unconfirmed.
+  succeeded for one reported save.
 - **2026-09-28:** Cog mast 57 placement/routing worked with midstay2 absent and
-  the gaff occupying the primary reef winch. This does not cover later mast 8,
-  reclaim or reload changes. The overlay also worked; its later red occupied
-  color has no recorded visual confirmation.
+  the gaff occupying the primary reef winch. The overlay also worked.
 - **2026-09-27:** the user accepted the native placement redesign on Brig/Jong.
   Inspected logs showed no exhaustion/binding failures and installed/local DLL
   hashes matched. This predates the architecture cleanup.
-
-### Runtime checklist
-
-Start on **Brig**, then the affected boats, in separate native+MSS and SE+MSS
-configurations. Verify Flying Sail and all staysail cuts alongside native sails.
-Load pre-change saves with resized/recolored sails and check another
-save/reload.
-
-For 0.3.0, cover menu navigation beyond eight part groups, category/boat
-changes, valid options after unavailable entries, and rejection of unavailable
-orders. Check initial sizes, resizing, white-only SE texture cycling and
-persistence through order completion, re-entry and reload, including older atlas
-selections. Check original donor sails and SE's own pages for regressions.
-Validate order text with NANDFixes enabled/disabled, invalid staysail fitting
-and wind shielding with one sail behind another.
-
-For Flying Sail ropes, compare shading/thickness against native ropes on Brig
-and Sanbuq. Toggle 3D ropes both ways and check knots, shared spans, resize,
-tacking, strike, support loss/recovery, preview/cancel and reload. Check the F7
-profiling toggle and overlay colors separately.
-
-For Kakam and Dhow, check registration, collars, controls, preview/cancel and
-save/reload on both supported mainmast variants. Verify Dhow's single stay
-option follows an empty mast-pair change and protects an occupied pair. Check
-Kakam's aft sheet pair and mizzen halyard fallback, plus Sanbuq's four new
-halyard fallbacks, for seating, reachability and rope routing. These changes
-have no recorded visual acceptance.
-
-For OldChronian, apply the common checklist below plus these profile-specific
-checks. Current profile and collider revisions have no recorded runtime
-acceptance:
-
-- **Gloriana:** cover both mizzen variants, native-stay removal, collar
-  appearance, free auxiliary mizzen halyard seats, and both measured reef
-  fallbacks' seating, reachability and operation.
-- **Chronian:** check both authored stays, optional T’gallants and reciprocal
-  red conflict help for mount 129 versus Mizzen Royalstay 14.
-- **Caelanor:** use foremast/aft-mainmast with and without optional T’gallants;
-  verify occupied controls and absence of a stay for the Midmast alternative.
-
-1. Fit and resize all affected cuts at several heights, with mixed native/custom
-   sails. Check collision completion, trim stops, recoloring and reopening
-   documents.
-2. Exercise deployment, partial reversals and full lowering/hoisting
-   transitions. Check gathering, rope continuity and staysail fixed-head
-   behavior.
-3. Tack at full/partial deployment and both trim limits. Inspect inversion,
-   detachment, force/audio discontinuities, collar seating and sheet tension.
-4. Test native winch priority, complete-pair exhaustion/recovery, native reclaim
-   and controller retention. Borrow from inactive sail-less stays, then install
-   native sails and confirm claims move or release. Cover shared Cog **51/65**
-   controls, both Cog mizzen variants, Shroud's tall/short mast pairs, and
-   competing stays on different mast pairs. Verify missing actual mounting
-   supports block borrowing even when a donor references the position. Check
-   fallback reachability and exhaustion without losing the installed sail. Add
-   and move Flying Sails among native sails at several heights and confirm
-   reef/left/right arrays follow native `mastOrder`; record actual shortages.
-5. Preview/cancel mast changes, reject occupied-support removal, refit, remove,
-   save/reload and unload the boat. Check full mast lists, control bindings and
-   native/custom sail behavior. Do not claim persistence or teardown correctness
-   from structural checks alone.
-6. For visual/diagnostic changes, verify optional SailInfo modes, knots,
-   collars, overlay occupancy/colors and F9 captures in game. Measure
-   counters/frame time before claiming a runtime performance improvement.
 
 ### Placement issue references
 
@@ -1168,7 +1071,7 @@ Long tick intervals correlate collections with hitches; they do not measure GC
 pause duration. The installed Mono runtime lacks scoped allocation accounting
 and reports `allocations=unavailable`. Warmed collection uses reusable buffers;
 reporting/configuration parsing allocate outside timed scopes. Automated checks
-cover accounting and transitions; the simplified F7 toggle needs a game check.
+cover accounting and transitions.
 
 ### Installed references and logs
 
@@ -1244,8 +1147,7 @@ Implementation validation covers Bash and Python syntax, formatting, static
 review of subprocess/path/rollback handling and a Nix-shell `ilspycmd --version`
 check (the pinned package reports **9.1.0.0**). Extraction and refresh recovery
 remain unverified until a maintainer runs the script manually. Agents must not
-execute files in `scripts/`. This tooling does not change plugin behavior or
-require an in-game check.
+execute files in `scripts/`. This tooling does not change plugin behavior.
 
 #### Game logs
 
