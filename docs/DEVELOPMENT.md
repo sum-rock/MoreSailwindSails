@@ -390,6 +390,18 @@ downward from the stay's forward endpoint. Retain **15 cm** head/aft-mast
 clearances, spar-length/span fitting and native collision checks. Collision
 strips use lowest head/highest foot with **5 cm** edge margins; disable strips
 too shallow for margins plus **1 cm** height or clipped below **1 mm** width.
+
+The native shipyard checker ignores sail contacts from a staysail's side but can
+still count the same contact from a square sail's side. The staysail integration
+filters that incoming square-sail contact when the other checker belongs to a
+Fisherman's Staysail (Mk.A/B/C) on the same boat and its forward physical mast.
+Base and topmast sections share this exemption; root and child checker colliders
+both resolve through their registered sail. This exempts the pair's sail-to-sail
+contact, rather than changing the luff or collision strips. Sails on the
+aft/other masts, other sail families, unknown supports and solid obstructions
+retain their native checks. No existing collision counters or saved fitting data
+are rewritten.
+
 New selections start at **50% width/height** through native `Sail.LoadScale`.
 Native scaling and persistence handle installations without SE; when installed,
 SE patches those same native APIs. MSS does not force a scaling mode or replace
@@ -900,6 +912,18 @@ placement searches or establish in-game acceptance.
 ## Runtime validation
 
 ### Automated baseline and limits
+
+The shared-luff square-sail collision fix retains plugin/runtime version
+**0.3.0**. Release builds passed with zero warnings/errors. GeometryChecks
+passed, including forward-mast compatibility across **103** authored stays, both
+base/topmast directions, and aft/unknown-mast exclusions. AssemblyChecks passed
+against the installed references, including **57** Harmony targets and SailInfo
+signatures. Pinned CSharpier, Prettier, Ruff and diff checks passed. In-game
+validation must fit each of Mk.A/B/C with a square sail already on the forward
+mast, then repeat with the square sail added second. Check base/topmast
+combinations, save/reload, and that square sails on other masts still report
+real overlaps. No live Unity collision callbacks or shipyard UI have been
+exercised for this fix.
 
 The **2026-10-15** winch placement simplification retains plugin/runtime version
 **0.3.0**. A Release build passed with zero warnings/errors, GeometryChecks

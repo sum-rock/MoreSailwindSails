@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using MoreSailwindSails.BoatConfiguration;
 using MoreSailwindSails.Sails.FishermansStaysail.MkA;
 using MoreSailwindSails.Sails.FishermansStaysail.MkB;
 using MoreSailwindSails.Sails.FishermansStaysail.MkC;
@@ -73,6 +74,48 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
                 ___initialRot = neutral;
             }
             return false;
+        }
+    }
+
+    // Exempts the shared luff mast on the square sail's side of native sail contact checks.
+    [HarmonyPatch(typeof(ShipyardSailColChecker), "OnTriggerEnter")]
+    internal static class FishermansStaysailSquareCollisionPatch
+    {
+        private static readonly AccessTools.FieldRef<ShipyardSailColChecker, Sail> CheckerSail =
+            AccessTools.FieldRefAccess<ShipyardSailColChecker, Sail>(fieldName: "sail");
+
+        [HarmonyPrefix]
+        private static bool Prefix(Sail ___sail, Collider other)
+        {
+            // Native staysails already ignore sail contacts. Square sails do not,
+            // so their checker can block adding a staysail at the same luff mast.
+            if (!___sail || ___sail.category != SailCategory.square || !other)
+                return true;
+            if (!other.CompareTag("SailColChecker") && !other.CompareTag("SailColCheckerSub"))
+                return true;
+            var checker = other.GetComponentInParent<ShipyardSailColChecker>();
+            var staysail = checker ? CheckerSail(checker) : null;
+            if (!staysail || !staysail.GetComponent<FishermansStaysailRig>())
+                return true;
+
+            var stayMount = staysail.transform.parent
+                ? staysail.transform.parent.GetComponent<Mast>()
+                : null;
+            var squareMast = ___sail.transform.parent
+                ? ___sail.transform.parent.GetComponent<Mast>()
+                : null;
+            if (
+                !squareMast
+                || !FishermansStaysailRigging.TryResolve(mount: stayMount, pair: out var pair)
+                || squareMast.GetComponentInParent<BoatRefs>() != pair.Boat
+            )
+                return true;
+
+            return !FishermansStaysailInstallationGeometry.SharesLuffMast(
+                boat: BoatCatalog.Find(boatName: pair.Boat.name),
+                forwardSection: pair.Fore.orderIndex,
+                squareSection: squareMast.orderIndex
+            );
         }
     }
 
