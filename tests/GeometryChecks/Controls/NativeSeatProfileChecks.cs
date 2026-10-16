@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using MoreSailwindSails.BoatConfiguration;
 using MoreSailwindSails.BoatConfiguration.Boats;
+using MoreSailwindSails.Controls;
 using MoreSailwindSails.Controls.Configuration;
 using MoreSailwindSails.Controls.Configuration.Boats;
 using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
@@ -31,8 +32,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 2,
-            "Preserve the two authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 3,
+            "Preserve the three authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
@@ -65,6 +66,32 @@ internal static class NativeSeatProfileChecks
                     normal: new Vector3(0, float.PositiveInfinity, 0)
                 ).Valid,
             "Invalid mounting normals must make a fallback unavailable."
+        );
+        var caelanor = CaelanorControls.Definition;
+        var caelanorPair = caelanor.SheetFallbacks.Single().Fallback;
+        Vector3 Reflect(Vector3 value) => new Vector3(-value.x, value.y, value.z);
+        Check(
+            (caelanorPair.Port.Contact - Reflect(caelanorPair.Starboard.Contact)).magnitude
+                < 0.000001f
+                && (caelanorPair.Port.Normal - Reflect(caelanorPair.Starboard.Normal)).magnitude
+                    < 0.000001f
+                && (caelanorPair.Port.Position - Reflect(caelanorPair.Starboard.Position)).magnitude
+                    < 0.000001f
+                && caelanorPair.Port.Contact.x < 0
+                && caelanorPair.Starboard.Contact.x > 0,
+            "Caelanor sheet contacts, mounting offsets and normals must mirror at the deck centreline."
+        );
+        var reef = caelanor.HalyardFallbacks.Single();
+        Check(
+            reef.Mast == 5
+                && reef.Fallback.TemplateIndex == 0
+                && Math.Abs(
+                    (reef.Fallback.Position - reef.Fallback.Contact).magnitude - 0.07854738f
+                ) < 0.000001f
+                && SheetFallbackOrder
+                    .FromMast(fallbacks: caelanor.SheetFallbacks, mastZ: -2.306270f)
+                    .Count() == 1,
+            "Caelanor must retain its mainmast reef fallback and its aft-eligible sheet pair."
         );
         var rows = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")

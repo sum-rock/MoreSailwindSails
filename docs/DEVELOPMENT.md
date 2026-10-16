@@ -614,7 +614,22 @@ profiles boat **192** from OldChronian **0.6.0**. Mount **128** joins Foremast
 Top **2** to Mainmast Top **6**, requiring **1/2/5/6**. It uses the aft mainmast
 position; the Midmast alternative has no stay option. Endpoints sit below
 rendered wood tips, excluding offset poles. Optional T’gallants do not move or
-disable the stay; manual fallbacks are null.
+disable the stay. When native positions exhaust, the mainmast **5** has a reef
+fallback from F9 capture **#5** at `(0.204692, 1.884204, -1.520411)`, normal
+`(0.965926, 0.018054, 0.258188)`. It clones `reefWinch[0]`
+(`halyard_main_main1`); the installed coiled-rope mesh rear bound **-0.130912
+m** at scale **0.60000134** supplies a **0.07854738 m** mounting offset.
+
+The latest F9 captures **#1/#2** on `CAE_trim` replace the earlier sheet
+contacts and supply **MainmastFallback**. Average the absolute X positions and
+the common Y/Z values to place the contacts at
+`(±2.4498375, 2.416566, -4.761331)`. Port/starboard normals are
+`(±0.0654635, 0.995183, 0.072977)`, with positive normal X on port (negative
+contact X). Both sides use the existing shared sheet template and placement
+calculation. These are authored fallback data only, retaining native priority,
+aft eligibility and reservations. The new contacts lie aft of mainmast **5**'s
+installed boat-local origin (**Z ≈ -2.306270**); the previous contacts at **Z =
+-2.096566** were excluded by the aft-only rule.
 
 ### Stay collars on Sanbuq and Large Dhow
 
@@ -790,12 +805,13 @@ fallback controls unavailable through the existing hide/retry path. Native
 allocations and halyard templates are unaffected; no saved placement data or
 migration is introduced.
 
-Authored pairs remain **Shroud / ForemastFallback** and
-[Kakam / MainmastFallback](#kakam-aft-controls). Their names preserve diagnostic
-identity and no longer select a forward-mast category. Eligibility follows their
-positions aft of the requested mast. All other boats have no authored sheet
-pair. Future additions require labeled F9 captures and visual/reachability
-confirmation.
+Authored pairs are **Shroud / ForemastFallback**,
+[Kakam / MainmastFallback](#kakam-aft-controls), and
+[Caelanor / MainmastFallback](#caelanor-oldchronian). Their names preserve
+diagnostic identity and no longer select a forward-mast category. Eligibility
+follows their positions aft of the requested mast. All other boats have no
+authored sheet pair. Future additions require labeled F9 captures and
+visual/reachability confirmation.
 
 ### Kakam aft controls
 
@@ -912,6 +928,19 @@ placement searches or establish in-game acceptance.
 ## Runtime validation
 
 ### Automated baseline and limits
+
+The Caelanor captured-control fallbacks retain plugin/runtime version **0.3.0**.
+Release build passed with zero warnings/errors, both check suites passed
+(including 57 Harmony targets and installed SailInfo signatures), and pinned
+formatting/diff checks passed. Placement code is unchanged. The sheet
+normalization checks cover mirrored contacts, normals and offset positions, with
+aft eligibility checked against the installed mainmast origin; the reef profile
+is checked against the recorded mainmast template array. Confirm in game that
+the new reef control and both sheets seat correctly, remain reachable, operate
+the staysail, and recover when native donor stays carry sails. No game files or
+saves were changed. Runtime logs confirmed the reef fallback placed
+successfully, but the earlier sheet contacts failed aft eligibility. The latest
+sheet captures still need live seating and operation validation.
 
 The shared-luff square-sail collision fix retains plugin/runtime version
 **0.3.0**. Release builds passed with zero warnings/errors. GeometryChecks
