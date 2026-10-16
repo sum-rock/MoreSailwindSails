@@ -839,10 +839,14 @@ in-place changes; a one-second sweep catches delayed or inactive parts.
 Occupancy and support checks remain live, and pose changes rebuild alias lookup.
 
 Alternative placement searches run on initial allocation, invalidation or
-exhaustion retry; retained placements recheck donor dependencies and sails live.
-Empty coordinators skip discovery. Per-boat `HierarchyScans`, `CandidateBuilds`
-and `EntriesCreated` counters measure inspection/allocation activity, not frame
-time or total managed allocations.
+exhaustion retry. Retained placements check only the selected donor's live
+dependencies and sails, using the same eligibility predicate as discovery. A
+reference scan preserves membership in the current option inventory without
+traversing unrelated donors. Seat occupancy, source arrays, support and pose
+checks remain live; dependency results are not cached. Empty coordinators skip
+discovery. Per-boat `HierarchyScans`, `CandidateBuilds` and `EntriesCreated`
+counters measure inspection/allocation activity, not frame time or total managed
+allocations.
 
 ### Gloriana reef fallbacks
 
@@ -1008,6 +1012,14 @@ placement searches.
 ## Validation records
 
 ### Automated baseline and limits
+
+The **2026-10-16** stay winch update retains plugin/runtime version **0.3.0**.
+Release built with zero warnings/errors; GeometryChecks and AssemblyChecks
+passed. Executed snapshot checks cover source mutation, fresh captures, empty
+captures and **0 allocated bytes across 1,000 warmed copies** on the .NET test
+host. Structural checks cover separate release/refresh snapshots, cleanup,
+selected-donor inventory membership, shared live eligibility and retained seat
+validation. These checks do not measure Unity frame time or Mono allocations.
 
 The **2026-10-16** authored stay integration retains plugin/runtime version
 **0.3.0**. Release built with zero warnings/errors; GeometryChecks passed,

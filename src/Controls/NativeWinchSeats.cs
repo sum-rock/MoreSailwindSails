@@ -162,26 +162,38 @@ namespace MoreSailwindSails.Controls
                 if (!option)
                     continue;
                 var source = option.GetComponent<Mast>();
-                if (
-                    !source
-                    || !source.onlyStaysails
-                    || Stays.FishermansStay.FishermansStayRegistry.TryFind(
-                        mount: source,
-                        stay: out _
-                    )
-                    || (source.sails != null && source.sails.Any(sail => sail))
-                )
-                    continue;
-                if (
-                    StayDependencies.Reaches(
-                        option: option,
-                        requires: current => current ? current.requires : null,
-                        matches: dependency =>
-                            dependency && dependency.GetComponent<Mast>() == requested
-                    )
-                )
+                if (EligibleStaySource(option: option, source: source, requested: requested))
                     yield return source;
             }
+        }
+
+        // Retention checks only the selected donor against the current inventory.
+        internal bool IsStaySource(Mast source, Mast requested)
+        {
+            if (!source || !requested)
+                return false;
+            var option = source.GetComponent<BoatPartOption>();
+            return option
+                && Array.IndexOf(array: options, value: option) >= 0
+                && option.GetComponent<Mast>() == source
+                && EligibleStaySource(option: option, source: source, requested: requested);
+        }
+
+        // Discovery and retention must apply identical live donor rules.
+        private bool EligibleStaySource(BoatPartOption option, Mast source, Mast requested)
+        {
+            if (
+                !source
+                || !source.onlyStaysails
+                || Stays.FishermansStay.FishermansStayRegistry.TryFind(mount: source, stay: out _)
+                || (source.sails != null && source.sails.Any(sail => sail))
+            )
+                return false;
+            return StayDependencies.Reaches(
+                option: option,
+                requires: current => current ? current.requires : null,
+                matches: dependency => dependency && dependency.GetComponent<Mast>() == requested
+            );
         }
 
         internal static GPButtonRopeWinch[] Sources(Mast mast, WinchRole role)

@@ -47,7 +47,7 @@ namespace MoreSailwindSails.Controls
             var mast = current.SourceMast;
             int index = current.SourceIndex;
             return mast
-                && native.StaySources(requested: requested).Contains(mast)
+                && native.IsStaySource(source: mast, requested: requested)
                 && mast.leftAngleWinch != null
                 && mast.rightAngleWinch != null
                 && index >= 0

@@ -39,7 +39,7 @@ namespace MoreSailwindSails.Controls
                             )
                         );
             }
-            return native.StaySources(requested: requested).Contains(current.SourceMast)
+            return native.IsStaySource(source: current.SourceMast, requested: requested)
                 && current.SourceMast.reefWinch != null
                 && current.SourceIndex >= 0
                 && current.SourceIndex < current.SourceMast.reefWinch.Length

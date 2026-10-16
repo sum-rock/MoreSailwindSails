@@ -74,7 +74,9 @@ internal static class NativeResolverChecks
             var validate = Type(resolver).GetMethod("ValidateCurrent", flags);
             Check(
                 CalledMethods(validate).Any(m => m.Name == "Current")
-                    && !CalledMethods(validate).Any(m => m.Name is "Candidate" or "Resolve"),
+                    && CalledMethods(validate).Any(m => m.Name == "IsStaySource")
+                    && !CalledMethods(validate)
+                        .Any(m => m.Name is "Candidate" or "Resolve" or "StaySources"),
                 "Current-placement validation searches alternatives or skips live seats."
             );
         }
@@ -134,7 +136,7 @@ internal static class NativeResolverChecks
             "Manual halyard fallback bypasses allocation, active support, template validity or retained pose checks."
         );
         Check(
-            CalledMethods(halyardValidate).Any(m => m.Name == "StaySources")
+            CalledMethods(halyardValidate).Any(m => m.Name == "IsStaySource")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "ActiveSupport")
                 && Instructions(halyardValidate)
                     .Any(i => i.Operand is FieldInfo f && f.Name == "reefWinch"),
@@ -145,14 +147,26 @@ internal static class NativeResolverChecks
             .GetCustomAttribute<System.Runtime.CompilerServices.IteratorStateMachineAttribute>()
             .StateMachineType;
         var moveNext = iteratorType.GetMethod("MoveNext", flags);
+        var selected = native.GetMethod("IsStaySource", flags);
+        var eligibility = native.GetMethod("EligibleStaySource", flags);
+        Check(
+            CalledMethods(moveNext).Any(m => m == eligibility)
+                && CalledMethods(selected).Any(m => m == eligibility)
+                && CalledMethods(selected)
+                    .Any(m => m.Name == "IndexOf" && m.DeclaringType == typeof(Array))
+                && Instructions(selected).Any(i => i.Operand is FieldInfo f && f.Name == "options")
+                && !CalledMethods(selected).Any(m => m.Name == "StaySources"),
+            "Discovery and retention must share live eligibility, with selected donors still in the inventory."
+        );
         foreach (string method in new[] { "Reaches", "TryFind", "Any" })
             Check(
-                CalledMethods(moveNext).Any(m => m.Name == method),
+                CalledMethods(eligibility).Any(m => m.Name == method),
                 "Stay discovery must check dependencies, exclude owned stays and skip sails: "
                     + method
             );
         Check(
-            Instructions(moveNext).Any(i => i.Operand is FieldInfo f && f.Name == "onlyStaysails"),
+            Instructions(eligibility)
+                .Any(i => i.Operand is FieldInfo f && f.Name == "onlyStaysails"),
             "Donors must be native stays."
         );
         foreach (string field in new[] { "availableParts", "partOptions" })
