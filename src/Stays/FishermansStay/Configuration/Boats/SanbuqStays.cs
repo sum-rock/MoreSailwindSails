@@ -10,16 +10,6 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
             stays: Stays()
         );
 
-        // Rendered wooden spar envelope of SE's non-readable mizzen_topmast_sanbuq (80).
-        // Measured from the installed asset for issue #19; excludes attached rope holders.
-        internal const float StayTopmastBottom = -6.636732f;
-
-        internal const float StayTopmastTop = 1.003172f;
-
-        internal const float StayTopmastBottomRadius = 0.1483f;
-
-        internal const float StayTopmastTopRadius = 0.09405f;
-
         // Authored from installed native and boat-mod assets.
         private static FishermansStayGroupDefinition[] Stays() =>
             new[]

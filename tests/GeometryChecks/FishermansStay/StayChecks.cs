@@ -14,24 +14,6 @@ internal static class StayChecks
     internal static void Run()
     {
         var measurements = StaySparMeasurement.Load();
-        // Installed Jong donor 58 has different visual/walking mesh bounds.
-        // Both must map onto the same new stay endpoints without reflection.
-        foreach (var interval in new[] { new[] { -18.125f, 1.149f }, new[] { -18f, 0.872f } })
-        {
-            FishermansStayGeometry.FitAxis(
-                interval[0],
-                interval[1],
-                12f,
-                out float scale,
-                out float offset
-            );
-            Check(
-                scale > 0
-                    && Math.Abs(interval[0] * scale + offset + 12) < 0.00001f
-                    && Math.Abs(interval[1] * scale + offset) < 0.00001f,
-                "Visual and walking rope bounds missed their authored endpoints."
-            );
-        }
         var oldSnapshot = Enumerable.Repeat(1, 20).ToArray();
         Check(
             FishermansStaySaveState.RestoreOption(oldSnapshot, 20) == 0
@@ -134,6 +116,14 @@ internal static class StayChecks
                     );
                 var shifted = new Vector3(150, -12, 78);
                 float span = FishermansStayGeometry.Span(aft, fore);
+                var scale = FishermansStayGeometry.RopeScale(span: span);
+                var bakedFore =
+                    aft - (aft - fore).normalized * (FishermansStayBakedMesh.RopeLength * scale.z);
+                Check(
+                    scale.x == 1 && scale.y == 1 && (bakedFore - fore).magnitude < 0.00001f,
+                    "Baked rope must retain its diameter and meet both authored endpoints."
+                );
+
                 Check(
                     Math.Abs(
                         span

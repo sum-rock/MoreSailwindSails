@@ -65,16 +65,12 @@
       Link="Visuals/RoutedRopeGeometry.cs"
     />
     <Compile
-      Include="../../src/Stays/FishermansStay/FishermansStayMeshRegions.cs"
-      Link="FishermansStay/FishermansStayMeshRegions.cs"
+      Include="../../src/Stays/FishermansStay/FishermansStayMeshData.cs"
+      Link="FishermansStay/FishermansStayMeshData.cs"
     />
     <Compile
-      Include="../../src/Stays/FishermansStay/FishermansStayCollarFrame.cs"
-      Link="FishermansStay/FishermansStayCollarFrame.cs"
-    />
-    <Compile
-      Include="../../src/Stays/FishermansStay/FishermansStaySparSurface.cs"
-      Link="FishermansStay/FishermansStaySparSurface.cs"
+      Include="../../src/Stays/FishermansStay/FishermansStayBakedMesh.g.cs"
+      Link="FishermansStay/FishermansStayBakedMesh.g.cs"
     />
 
     <Compile

@@ -550,8 +550,8 @@ required masts or guides disable that variant rather than reject the boat.
 Missing excluded parts impose no restriction. Validate geometry and occupied IDs
 before construction; roll back a boat's new stays on failure. Protect occupied
 stays/supports during invalid previews and restore preview state in a finalizer.
-Normalize stay and walking geometry independently to the same endpoints; donor
-bounds may differ from `mastHeight`.
+The baked rope follows the same authored endpoints in the visual and walking
+models; native donor mesh bounds do not participate in fitting.
 
 ### Kakam and Dhow
 
@@ -636,7 +636,10 @@ installed boat-local origin (**Z ≈ -2.306270**); the previous contacts at **Z 
 ### Authored stay geometry and bake
 
 [assets/stays/stay.blend](../assets/stays/stay.blend) provides a straight rope
-and two matching metal bands for Fisherman's Stays.
+and two matching metal bands used by every Fisherman's Stay. Runtime
+construction creates one decorative rope and two instances of the baked collar.
+Each stay owns its two meshes and releases them during teardown or registration
+rollback.
 
 The rope is **1 m** long and **0.02 m** in diameter. Each band has a **0.42 m**
 outside diameter, approximately **0.4074 m** inside diameter, **0.10 m** axial
@@ -675,17 +678,37 @@ requires no Blender installation or asset bundle to build the plugin. Append
 writing, including when output is missing or stale. Check in generated data
 alongside authoring changes.
 
-### Stay collars on Sanbuq and Large Dhow
+### Stay placement and native materials
 
-These profiles fit collars independently of the rope body, below the rendered
-spar tips. Visible ropes end at collar surfaces; logical endpoints, sail fitting
-and saved IDs remain unchanged. Sanbuq reuses native coils; Large Dhow separates
-endpoint regions from combined meshes into owned copies.
+The per-boat stay definitions' `ForePoint` and `AftPoint` are the exact rope
+endpoints and collar centers. Only rope length scales; its authored diameter
+remains unchanged. Each band follows its supporting mast's capsule axis and
+scales radially to the capsule radius, retaining its axial height in mast space.
+This is an approximate fit to tapered wood: there is no rendered-surface scan,
+height correction, native collar extraction or boat-specific fitting path. The
+rope extends to the authored centers, including the portions inside masts.
 
-Fit radius to rendered wood, not capsule bounds. Sanbuq's unreadable SE mizzen
-topmast **80** uses the measured taper in its profile. Visual and walking
-representations keep separate bounds/frames. Unexpected geometry triggers
-registration rollback; teardown destroys only owned meshes.
+The mount remains at the aft endpoint with negative Z toward the forward mast.
+Boat up supplies the roll reference. An empty walking root maps through
+`BoatRefs.boatModel` into `BoatRefs.walkCol` and supplies `Mast.walkColMast` and
+`BoatPartOption.walkColObject`. Native sail fitting parents its collision
+checker to this frame. Installed Dhow and Brig models have a rotated import
+frame; using the rigidbody root directly would misplace that checker.
+
+The stay creates no colliders or walking mesh copies. Its rope and bands do not
+block players/items or restrict other sails' shipyard clearance. Physical mast
+capsules still supply cloth collision and collar sizing; sail collision
+checkers, wind-shadow colliders and winch interaction colliders remain separate.
+
+The rope reuses the configured native stay's root renderer material. Bands reuse
+`metal2`, inspected on native lantern **114** (`114 lantern M`, `level24` object
+**10909**): its root renderer references material **87** in
+`sharedassets1.assets`. This material has no separate texture map. Lookup caches
+the loaded shared material by its exact name; no native materials are modified
+or destroyed. Missing materials use the existing registration rollback. Native
+stay donors still supply controls, sheet anchors, price, mass and starting sail
+color. Mount IDs, option order, support prerequisites and saved sail attachments
+remain unchanged.
 
 ## Winch placement
 
@@ -724,7 +747,7 @@ use mount-owned cloned controls, with runtime placement claims shared per boat.
   pairs along that axis. Skip unavailable templates, supports, occupied seats or
   claims and continue aft. Preserve both authored poses; do not mirror, move or
   rank them by distance. Native positions precede fallbacks for new allocations.
-- Startup clones use the existing stay geometry donor's sheet assets and aft
+- Startup clones use the configured native stay donor's sheet assets and aft
   section's reef asset without claiming a placement. Native startup receives
   initialized mount arrays even when no placement is available.
 - Retain valid placements, including fallbacks when native positions free. Donor
@@ -967,6 +990,19 @@ placement searches.
 ## Validation records
 
 ### Automated baseline and limits
+
+The **2026-10-16** authored stay integration retains plugin/runtime version
+**0.3.0**. Release built with zero warnings/errors; GeometryChecks passed,
+including baked rope endpoints across **103** configurations, fixed rope
+cross-section and capsule-based collar sizing. AssemblyChecks passed, including
+baked construction without stay colliders, retained walking-model frame, lantern
+material reuse, owned mesh cleanup and removal of legacy donor geometry helpers.
+The updated asset was rebaked with a **1 m** reference rope and **0.10 m** band
+height. Blender **5.1.1** regression and freshness checks passed for Solidify
+thickness, UV seams, flat shading, canonical dimensions, malformed input
+rejection and source-file preservation. The existing dimension-driven fitting
+consumes the new bake without additional runtime logic. Release and both .NET
+check suites passed again with the updated measurements.
 
 The Caelanor captured-control fallbacks retain plugin/runtime version **0.3.0**.
 Release build passed with zero warnings/errors, both check suites passed
