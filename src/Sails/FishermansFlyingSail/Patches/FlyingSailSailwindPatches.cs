@@ -153,42 +153,19 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Patches
         }
     }
 
-    // Let native binding process only native-controlled sails. Restore the actual
-    // list even on exceptions; saves, mast capacity and overlap checks see all sails.
+    // Native mast ordering binds controls; restore custom guide routing and travel afterwards.
     [HarmonyPatch(typeof(Mast), "UpdateControllerAttachments")]
     internal static class FishermansFlyingSailControlsPatch
     {
-        [HarmonyPrefix]
-        private static void Prefix(Mast __instance, out List<GameObject> __state)
+        [HarmonyPostfix]
+        [HarmonyAfter("com.nandbrew.shipyardexpansion")]
+        private static void Postfix(Mast __instance)
         {
-            __state = null;
-            if (
-                __instance.sails == null
-                || !__instance.sails.Any(s => s && s.GetComponent<FishermansFlyingSailRig>())
-            )
-                return;
-            __state = __instance.sails;
-            __instance.sails = __state
-                .Where(s => s && !s.GetComponent<FishermansFlyingSailRig>())
-                .ToList();
-        }
-
-        [HarmonyFinalizer]
-        private static void Finalizer(
-            Mast __instance,
-            List<GameObject> __state,
-            Exception __exception
-        )
-        {
-            if (__state == null)
-                return;
-            __instance.sails = __state;
-            __instance.UpdateSailOrder();
-            if (__exception != null)
-                return;
-            foreach (var item in __state)
+            foreach (var item in __instance.sails)
                 if (item && item.GetComponent<FishermansFlyingSailRig>())
-                    FishermansFlyingSailRigging.For(item.GetComponent<Sail>()).AttachControls();
+                    FishermansFlyingSailRigging
+                        .For(sail: item.GetComponent<Sail>())
+                        .AttachControls();
         }
     }
 

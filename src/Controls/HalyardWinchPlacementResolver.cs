@@ -4,7 +4,7 @@ using MoreSailwindSails.Controls.Configuration;
 
 namespace MoreSailwindSails.Controls
 {
-    // Allocates halyards from the active requested mast's authored source group.
+    // Allocates stay halyards from dependency-related native stays and the aft mast fallback.
     internal sealed class HalyardWinchPlacementResolver
     {
         private readonly NativeWinchSeats native;
@@ -29,6 +29,7 @@ namespace MoreSailwindSails.Controls
                     && current.Templates.Length == 1
                     && current.Templates[0] == template
                     && current.Seats.Length == 1
+                    && native.Available(seat: current.Seats[0])
                     && current
                         .Seats[0]
                         .MatchesPose(
@@ -38,7 +39,7 @@ namespace MoreSailwindSails.Controls
                             )
                         );
             }
-            return native.HalyardSources(requested: requested).Contains(current.SourceMast)
+            return native.StaySources(requested: requested).Contains(current.SourceMast)
                 && current.SourceMast.reefWinch != null
                 && current.SourceIndex >= 0
                 && current.SourceIndex < current.SourceMast.reefWinch.Length
@@ -49,10 +50,9 @@ namespace MoreSailwindSails.Controls
         internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
         {
             var candidates = new List<NativeWinchCandidate>();
-            // Source rigs may be unfitted; Candidate checks the actual mounting
-            // support. Never broaden this to a category or nearby-mast search.
+            // Donor stays may be unfitted; Candidate checks the actual mounting support.
             if (native.ActiveSupport(mast: requested))
-                foreach (var source in native.HalyardSources(requested: requested))
+                foreach (var source in native.StaySources(requested: requested))
                 {
                     if (source.reefWinch == null)
                         continue;
@@ -92,7 +92,7 @@ namespace MoreSailwindSails.Controls
         private HalyardFallbackSeat Definition(Mast requested) =>
             requested
                 ? native
-                    .Profile?.HalyardGroups.FirstOrDefault(g => g.Mast == requested.orderIndex)
+                    .Profile?.HalyardFallbacks.FirstOrDefault(g => g.Mast == requested.orderIndex)
                     ?.Fallback
                 : null;
 
@@ -121,6 +121,12 @@ namespace MoreSailwindSails.Controls
             if (!template)
                 return null;
             string id = FallbackId(requested: requested);
+            var seat = new WinchSeat(
+                identity: id,
+                aliases: null,
+                position: definition.Position,
+                rotation: definition.Rotation(templateRotation: native.Rotation(c: template))
+            );
             return new NativeWinchCandidate
             {
                 Id = id,
@@ -128,19 +134,9 @@ namespace MoreSailwindSails.Controls
                     $"requestedMast={requested.orderIndex}, templateRig={requested.orderIndex}, index={definition.TemplateIndex}",
                 Fallback = true,
                 Templates = new[] { template },
-                Seats = new[]
-                {
-                    new WinchSeat(
-                        identity: id,
-                        aliases: null,
-                        position: definition.Position,
-                        rotation: definition.Rotation(
-                            templateRotation: native.Rotation(c: template)
-                        )
-                    ),
-                },
+                Seats = new[] { seat },
                 Supported = native.ActiveSupport(mast: requested),
-                Vacant = true,
+                Vacant = native.Available(seat: seat),
             };
         }
     }

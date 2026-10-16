@@ -26,21 +26,21 @@ internal static class RigChecks
             "BOAT junk small singleroof(90)",
             "BOAT dhow small (10)",
         };
-        // Live mast-section and native winch-source mapping, in selection order.
+        // Live mast-section mapping, in selection order.
         string[] layouts =
         {
-            "15:3>5;16:3>4;18:2>5;20:2>4;22:4>7;24:4>6;61:3>56,5;62:3>58,4;63:2>56,5;64:2>58,4;65:4>59,7;66:4>60,6",
-            "16:9>10;61:58>11;5:10>12;6:11>12;65:10>53,12;66:11>53,12",
-            "10:1>2;12:2>3;55:51>52;58:51>3;73:1>52;71:52>4",
-            "60:10>59,55;67:11>59,55;71:10>70,69;81:11>80,12;82:10>80,12;58:51>14,11;68:62>14,11;79:51>14,11;54:10>55;61:10>69;66:11>55",
-            "51:8>5;58:5>57;65:8>6",
-            "25:7>9",
-            "20:0>3,2;23:1>3,2;26:0>5,4;29:1>5,4;32:3,2>6;34:5,4>6;36:3,2>7;38:5,4>7;40:3,2>8;42:5,4>8",
-            "5:1>2;6:2>4,3",
-            "12:15,3,2>16,5,4;14:16,5,4>17,7,6",
-            "14:17,2,1>18,6,5",
-            "62:5>7;70:6>7",
-            "54:6,7>51",
+            "3>5;3>4;2>5;2>4;4>7;4>6;3>56,5;3>58,4;2>56,5;2>58,4;4>59,7;4>60,6",
+            "9>10;58>11;10>12;11>12;10>53,12;11>53,12",
+            "1>2;2>3;51>52;51>3;1>52;52>4",
+            "10>59,55;11>59,55;10>70,69;11>80,12;10>80,12;51>14,11;62>14,11;51>14,11;10>55;10>69;11>55",
+            "8>5;5>57;8>6",
+            "7>9",
+            "0>3,2;1>3,2;0>5,4;1>5,4;3,2>6;5,4>6;3,2>7;5,4>7;3,2>8;5,4>8",
+            "1>2;2>4,3",
+            "15,3,2>16,5,4;16,5,4>17,7,6",
+            "17,2,1>18,6,5",
+            "5>7;6>7",
+            "6,7>51",
         };
         Assert(FlyingSailCatalog.All.Count == names.Length, "Missing boat mapping coverage.");
         for (int i = 0; i < names.Length; i++)
@@ -53,11 +53,7 @@ internal static class RigChecks
             string actual = string.Join(
                 ";",
                 profile.Supports.Select(s =>
-                    s.SheetControlSource
-                    + ":"
-                    + string.Join(",", s.ForeSections)
-                    + ">"
-                    + string.Join(",", s.AftSections)
+                    string.Join(",", s.ForeSections) + ">" + string.Join(",", s.AftSections)
                 )
             );
             Assert(actual == layouts[i], "Mast or control mapping changed: " + names[i]);
@@ -81,21 +77,30 @@ internal static class RigChecks
         );
         var brig = FlyingSailCatalog.Find(names[0]).Supports;
         Assert(
-            brig.Single(s => s.SheetControlSource == 61).AftSections.SequenceEqual(new[] { 56, 5 }),
+            brig.Single(s =>
+                    s.ForeSections.SequenceEqual(new[] { 3 }) && s.AftSections.Contains(56)
+                )
+                .AftSections.SequenceEqual(new[] { 56, 5 }),
             "Brig topmast lost its lower mainmast support."
         );
         Assert(
-            brig.Single(s => s.SheetControlSource == 62).AftSections.SequenceEqual(new[] { 58, 4 }),
+            brig.Single(s =>
+                    s.ForeSections.SequenceEqual(new[] { 3 }) && s.AftSections.Contains(58)
+                )
+                .AftSections.SequenceEqual(new[] { 58, 4 }),
             "Alternate Brig topmast uses wrong lower section."
         );
         Reject(() =>
-            new FlyingSailDefinition(boat: Brig.Definition, supports: new[] { brig[0], brig[0] })
+            new MastSupportDefinition(foreSections: new[] { 2 }, aftSections: new[] { 2 })
         );
-        Reject(() => new MastSupportDefinition(1, new[] { 2 }, new[] { 2 }));
-        Reject(() => new MastSupportDefinition(-1, new[] { 2 }, new[] { 3 }));
-        Reject(() => new MastSupportDefinition(1, Array.Empty<int>(), new[] { 3 }));
+        Reject(() =>
+            new MastSupportDefinition(foreSections: new[] { -1 }, aftSections: new[] { 3 })
+        );
+        Reject(() =>
+            new MastSupportDefinition(foreSections: Array.Empty<int>(), aftSections: new[] { 3 })
+        );
         Console.WriteLine(
-            "PASS: twelve Fisherman boat profiles, physical mast sections, control-source selection and unknown-boat handling."
+            "PASS: twelve Fisherman boat profiles, physical mast sections, support selection and unknown-boat handling."
         );
     }
 

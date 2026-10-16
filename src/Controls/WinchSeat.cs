@@ -40,7 +40,8 @@ namespace MoreSailwindSails.Controls
             Equals(Identity, other.Identity)
             || Aliases.Contains(other.Identity)
             || other.Aliases.Contains(Identity)
-            || Aliases.Intersect(other.Aliases).Any();
+            || Aliases.Intersect(other.Aliases).Any()
+            || (Position - other.Position).sqrMagnitude <= 0.000001f;
 
         internal bool SamePose(WinchSeat other) =>
             Equals(Identity, other.Identity)

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.Controls;
 using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -15,8 +14,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
         {
             internal BoatRefs Boat;
             internal Mast Fore,
-                Aft,
-                SheetControlSource;
+                Aft;
             internal Transform ForeGuide,
                 AftGuide;
             internal Mast ForeGuideMast,
@@ -40,7 +38,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
         internal MountPair Pair { get; private set; }
         private Sail sail;
         private GameObject controlsRoot;
-        private FishermanWinchControls.OwnedWinch[] controls;
         private Transform mastGuide,
             upperGuide;
         private bool bindingDirty;
@@ -78,19 +75,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             var groups = profile.MastPairs(fore.orderIndex);
             foreach (var group in groups)
             {
-                var donor = group
-                    .Where(v => masts.ContainsKey(v.SheetControlSource))
-                    .Select(v => masts[v.SheetControlSource])
-                    .FirstOrDefault();
-                if (
-                    !donor
-                    || !FishermanWinchControls.BootstrapReady(
-                        boat: boat,
-                        forward: fore,
-                        halyard: fore
-                    )
-                )
-                    continue;
                 var foreSections = group
                     .SelectMany(v => v.ForeSections)
                     .Distinct()
@@ -128,7 +112,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                     Boat = boat,
                     Fore = fore,
                     Aft = aft,
-                    SheetControlSource = donor,
                     ForeGuide = fg,
                     AftGuide = ag,
                     ForeGuideMast = foreGuideMast,
@@ -188,8 +171,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 || Pair.Fore != resolved.Fore
                 || Pair.Aft != resolved.Aft
                 || Pair.ForeGuide != resolved.ForeGuide
-                || Pair.AftGuide != resolved.AftGuide
-                || Pair.SheetControlSource != resolved.SheetControlSource;
+                || Pair.AftGuide != resolved.AftGuide;
             controlsDirty |= changed;
             Pair = resolved;
             bindingDirty = false;
@@ -335,7 +317,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 return;
             if (!controlsRoot)
             {
-                controlsRoot = new GameObject("FishermansFlyingSail independent controls");
+                controlsRoot = new GameObject("FishermansFlyingSail rope guides");
                 controlsRoot.SetActive(false);
                 controlsRoot.transform.SetParent(Pair.Boat.transform, false);
                 mastGuide = new GameObject("FishermansFlyingSail halyard guide").transform;
@@ -344,29 +326,8 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 upperGuide.SetParent(controlsRoot.transform, false);
                 controlsRoot.SetActive(true);
             }
-            FishermanWinchControls.Reconcile(
-                ref controls,
-                Pair.Boat,
-                sail.gameObject,
-                controlsRoot.transform,
-                Pair.Fore,
-                new[] { Pair.Fore, Pair.SheetControlSource, Pair.SheetControlSource },
-                new[]
-                {
-                    "FishermansFlyingSail Halyard",
-                    "FishermansFlyingSail Port sheet",
-                    "FishermansFlyingSail Starboard sheet",
-                }
-            );
             controlsDirty = false;
             var connections = sail.GetComponent<SailConnections>();
-            controls[0].Bind(connections.reefController);
-            FishermanWinchControls.BindSheets(
-                controls[1],
-                connections.angleControllerLeft,
-                controls[2],
-                connections.angleControllerRight
-            );
             connections.colChecker.RegisterBoatWalkCol(mast.walkColMast);
             // Old saves can restore the wider donor range; keep the checker,
             // shipyard description and native sail limits in agreement.
@@ -413,9 +374,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
 
         private void OnDestroy()
         {
-            if (controls != null)
-                foreach (var control in controls)
-                    control.Dispose();
             if (controlsRoot)
                 Object.Destroy(controlsRoot);
         }

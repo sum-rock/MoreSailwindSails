@@ -70,7 +70,7 @@ internal static class PatchChecks
             throw new Exception("Native installation bypasses the custom staysail fit check.");
         if (assembly.GetType(family + "Patches.FishermansStaysailInstallGuardPatch") != null)
             throw new Exception("The redundant staysail installation guard returned.");
-        Shared.ControlRestorationChecks.Run(
+        Shared.NativeControlBindingChecks.Run(
             assembly,
             family + "Patches.FishermansStaysailControlsPatch",
             "Staysail family (Mk.A/Mk.B/Mk.C)"
@@ -202,7 +202,7 @@ internal static class PatchChecks
                 "Aft halyard route must refresh its controls and use the aft mast axis."
             );
         Console.WriteLine(
-            "PASS: Mk.A prefab identity, stay membership, fit guards, animation sampling, native bundle, control finalizer and fixed-mesh lifecycle."
+            "PASS: Mk.A prefab identity, stay membership, fit guards, animation sampling, native bundle, native control binding and fixed-mesh lifecycle."
         );
     }
 }

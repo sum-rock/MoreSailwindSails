@@ -12,53 +12,29 @@ internal static class KakamWinchChecks
 {
     internal static void Run()
     {
-        var category = KakamControls.Definition.SheetCategory(mast: 5);
+        var category = KakamControls.Definition.SheetFallbacks.Single();
         Check(
-            category == KakamControls.Definition.SheetCategory(mast: 6)
-                && category.Sources.Count == 0
-                && category.Fallback?.InvalidSide == null,
+            category.Fallback?.InvalidSide == null,
             "Both Kakam mainmast variants must use the authored aft pair."
         );
         var port = category.Fallback.Port;
         var starboard = category.Fallback.Starboard;
-        var p = port.Contact + port.Normal.normalized * port.Offset;
-        var s = starboard.Contact + starboard.Normal.normalized * starboard.Offset;
+        var p = port.Position;
+        var s = starboard.Position;
         Check(
             (p - new Vector3(-s.x, s.y, s.z)).magnitude < 0.000001f
                 && p.x < 0f
                 && p.z < -6f
-                && (port.Normal - starboard.Normal).magnitude < 0.000001f
-                && (port.SourceNormal - starboard.SourceNormal).magnitude < 0.000001f,
+                && (port.Normal - starboard.Normal).magnitude < 0.000001f,
             "Kakam sheet mounts must remain opposite and parallel on the aft trim."
         );
         Check(
-            Math.Abs(port.Offset - 0.044704f) < 0.000001f
-                && port.Offset == starboard.Offset
-                && port.TemplateMast == 5
-                && starboard.TemplateMast == 5
-                && port.TemplateRole == WinchRole.Left
-                && starboard.TemplateRole == WinchRole.Right
-                && port.TemplateIndex == 0
-                && starboard.TemplateIndex == 0,
-            "Kakam sheets lost the measured depth or matching native template rotations."
+            (p - new Vector3(-0.8067125f, 2.7826826f, -6.028539f)).magnitude < 0.00001f,
+            "Kakam sheets lost the measured shared-template mounting depth."
         );
-        var templates = new[] { new object(), new object() };
-        Check(
-            WinchBootstrapPolicy
-                .Sheets(
-                    sources: category.Sources,
-                    port: _ => throw new Exception("Forward native port seat selected."),
-                    starboard: _ => throw new Exception("Forward native starboard seat selected."),
-                    usable: (object template) => template != null,
-                    fallback: () => templates
-                )
-                .SequenceEqual(templates),
-            "Kakam startup must obtain both aft fallback templates."
-        );
-        var reef = KakamControls.Definition.HalyardGroups.Single();
+        var reef = KakamControls.Definition.HalyardFallbacks.Single();
         Check(
             reef.Mast == 7
-                && reef.Sources.SequenceEqual(new[] { 7 })
                 && reef.Fallback.Valid
                 && reef.Fallback.TemplateIndex == 0
                 && Math.Abs(reef.Fallback.Offset - 0.063862f * 0.792f) < 0.000001f
@@ -68,7 +44,7 @@ internal static class KakamWinchChecks
             "Kakam mizzen must retain its native reef seats before the measured mast-holder fallback."
         );
         Console.WriteLine(
-            "PASS: Kakam aft sheet selection, symmetric parallel mounts, fallback startup and measured mizzen halyard fallback."
+            "PASS: Kakam aft sheet selection, symmetric parallel mounts, and measured mizzen halyard fallback."
         );
     }
 

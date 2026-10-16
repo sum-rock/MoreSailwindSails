@@ -1,3 +1,4 @@
+// Discovers registered native stays and tracks their controls, supports and occupancy.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +23,7 @@ namespace MoreSailwindSails.Controls
         private readonly Dictionary<int, WinchSeat> seatsById = new Dictionary<int, WinchSeat>();
         private readonly Dictionary<Mast, GPButtonRopeWinch[][]> arrays =
             new Dictionary<Mast, GPButtonRopeWinch[][]>();
+        private BoatPartOption[] options = Array.Empty<BoatPartOption>();
         private int liveFrame = -1;
         internal long HierarchyScans { get; private set; }
         internal long CandidateBuilds { get; private set; }
@@ -78,6 +80,13 @@ namespace MoreSailwindSails.Controls
                     )
                 )
                     mastsById[mast.orderIndex] = mast;
+            var parts = Boat.GetComponent<BoatCustomParts>();
+            options = parts
+                ? parts
+                    .availableParts.SelectMany(part => part.partOptions)
+                    .Where(option => option)
+                    .ToArray()
+                : Array.Empty<BoatPartOption>();
             controlsById.Clear();
             foreach (var control in Controls)
                 controlsById[control.GetInstanceID()] = control;
@@ -139,17 +148,38 @@ namespace MoreSailwindSails.Controls
 
         internal Mast Mast(int id) => mastsById.TryGetValue(id, out var mast) ? mast : null;
 
-        internal IEnumerable<Mast> HalyardSources(Mast requested)
+        internal Mast PhysicalMast(Mast section) =>
+            section && Profile != null && Profile.Boat.MastParents.ContainsKey(section.orderIndex)
+                ? Mast(id: Profile.Boat.Base(section: section.orderIndex))
+                : section;
+
+        internal IEnumerable<Mast> StaySources(Mast requested)
         {
             if (!requested)
                 yield break;
-            var ids =
-                Profile?.HalyardSources(mast: requested.orderIndex)
-                ?? new[] { requested.orderIndex };
-            foreach (int id in ids)
+            foreach (var option in options)
             {
-                var source = id == requested.orderIndex ? requested : Mast(id: id);
-                if (source)
+                if (!option)
+                    continue;
+                var source = option.GetComponent<Mast>();
+                if (
+                    !source
+                    || !source.onlyStaysails
+                    || Stays.FishermansStay.FishermansStayRegistry.TryFind(
+                        mount: source,
+                        stay: out _
+                    )
+                    || (source.sails != null && source.sails.Any(sail => sail))
+                )
+                    continue;
+                if (
+                    StayDependencies.Reaches(
+                        option: option,
+                        requires: current => current ? current.requires : null,
+                        matches: dependency =>
+                            dependency && dependency.GetComponent<Mast>() == requested
+                    )
+                )
                     yield return source;
             }
         }
@@ -234,9 +264,15 @@ namespace MoreSailwindSails.Controls
         internal WinchSeat Seat(GPButtonRopeWinch template) =>
             template && seatsById.TryGetValue(template.GetInstanceID(), out var seat) ? seat : null;
 
-        // Look up aliases directly; do not scan the full inventory for every owner.
+        // Native seats use cached aliases; authored positions check coincident native controls.
         internal bool Available(WinchSeat seat)
         {
+            if (seat.Aliases.Length == 0)
+                return !Controls.Any(control =>
+                    control
+                    && (Position(c: control) - seat.Position).sqrMagnitude <= 0.000001f
+                    && Occupied(c: control)
+                );
             foreach (var alias in seat.Aliases)
                 if (
                     alias is int id

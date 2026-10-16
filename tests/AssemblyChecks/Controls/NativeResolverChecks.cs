@@ -103,10 +103,10 @@ internal static class NativeResolverChecks
             "Halyard array not inspected."
         );
         Check(
-            CalledMethods(halyard).Any(m => m.Name == "HalyardSources")
+            CalledMethods(halyard).Any(m => m.Name == "StaySources")
                 && CalledMethods(halyard).Any(m => m.Name == "ActiveSupport")
                 && !CalledMethods(halyard).Any(m => m.Name == "SheetCategory"),
-            "Halyard bypasses authored sources or requested active support."
+            "Halyard bypasses stay dependencies or requested active support."
         );
         var halyardValidate = Type("HalyardWinchPlacementResolver")
             .GetMethod("ValidateCurrent", flags);
@@ -124,17 +124,37 @@ internal static class NativeResolverChecks
             "Manual halyard fallback bypasses allocation, active support, template validity or retained pose checks."
         );
         Check(
-            CalledMethods(halyardValidate).Any(m => m.Name == "HalyardSources")
+            CalledMethods(halyardValidate).Any(m => m.Name == "StaySources")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "ActiveSupport")
                 && Instructions(halyardValidate)
                     .Any(i => i.Operand is FieldInfo f && f.Name == "reefWinch"),
             "Retained halyard does not validate permitted sources, active mast and source array."
         );
+        var discovery = native.GetMethod("StaySources", flags);
+        var iteratorType = discovery
+            .GetCustomAttribute<System.Runtime.CompilerServices.IteratorStateMachineAttribute>()
+            .StateMachineType;
+        var moveNext = iteratorType.GetMethod("MoveNext", flags);
+        foreach (string method in new[] { "Reaches", "TryFind", "Any" })
+            Check(
+                CalledMethods(moveNext).Any(m => m.Name == method),
+                "Stay discovery must check dependencies, exclude owned stays and skip sails: "
+                    + method
+            );
         Check(
-            CalledMethods(Type("WinchBootstrapTemplates").GetMethod("TryGet", flags))
-                .Any(m => m.Name == "HalyardSources"),
-            "Bootstrap does not use the same authored halyard sources."
+            Instructions(moveNext).Any(i => i.Operand is FieldInfo f && f.Name == "onlyStaysails"),
+            "Donors must be native stays."
         );
+        foreach (string field in new[] { "availableParts", "partOptions" })
+            Check(
+                native
+                    .GetMethods(flags)
+                    .Concat(native.GetNestedTypes(flags).SelectMany(type => type.GetMethods(flags)))
+                    .Any(method =>
+                        Instructions(method).Any(i => i.Operand is FieldInfo f && f.Name == field)
+                    ),
+                "Stay discovery must preserve registered option ordering: " + field
+            );
         foreach (
             var type in new[]
             {
@@ -161,8 +181,54 @@ internal static class NativeResolverChecks
                 .Any(m => m.DeclaringType.Name == "WinchPlacementPolicy" && m.Name == "Resolve"),
             "Sheet resolver bypasses atomic allocation policy."
         );
+        var sheetType = Type("SheetingWinchPlacementResolver");
+        foreach (string method in new[] { "Fallback", "ValidFallbackSide" })
+        {
+            var calls = CalledMethods(sheetType.GetMethod(method, flags)).ToArray();
+            Check(
+                calls.Any(m =>
+                    m.DeclaringType.Name == "SharedSheetWinchTemplate" && m.Name == "Get"
+                )
+                    && !calls.Any(m =>
+                        m.DeclaringType.Name == "NativeWinchSeats" && m.Name == "Rotation"
+                    ),
+                "Sheet fallback must share a donor and must not inherit live donor wheel rotation."
+            );
+        }
+        var sharedTemplate = Type("SharedSheetWinchTemplate");
+        var templateGet = sharedTemplate.GetMethod("Get", flags);
+        var templateCalls = CalledMethods(templateGet).ToArray();
+        Check(
+            templateCalls.Any(m => m.Name == "Usable")
+                && templateCalls.Any(m => m.Name == "Due")
+                && templateCalls.Any(m => m.Name == "Discovered")
+                && templateCalls.Any(m => m.Name == "FindObjectsOfTypeAll")
+                && templateCalls.Any(m => m.Name == "IsValid")
+                && templateCalls.Any(m =>
+                    m.Name == "GetComponentsInChildren" && m.GetParameters().Length == 1
+                ),
+            "Shared donor discovery must validate the cached object, throttle retries and include inactive hierarchy lookup."
+        );
+        foreach (
+            var method in sharedTemplate
+                .GetMethods(flags)
+                .Where(m => m.DeclaringType == sharedTemplate)
+        )
+            Check(
+                !CalledMethods(method)
+                    .Any(m => m.Name is "SetActive" or "AttachToController" or "Occupied"),
+                "Shared template discovery must neither mutate nor require a free native donor."
+            );
+        var usable = native.GetMethod("Usable", flags);
+        Check(
+            CalledMethods(usable)
+                .Any(m =>
+                    m.Name == "op_Implicit" && m.DeclaringType.FullName == "UnityEngine.Object"
+                ),
+            "Destroyed Unity donors must fail template validation and allow rediscovery."
+        );
         Console.WriteLine(
-            "PASS (structural): native rope/visibility occupancy, inactive hierarchy lookup, authored halyard sources with active requested support and non-mutating resolvers."
+            "PASS (structural): native rope/visibility occupancy, inactive hierarchy lookup, stay dependencies with active requested support and non-mutating resolvers."
         );
     }
 

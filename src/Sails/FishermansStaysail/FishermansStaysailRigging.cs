@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.BoatConfiguration;
-using MoreSailwindSails.Controls;
 using MoreSailwindSails.Stays.FishermansStay;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -18,8 +17,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             internal Mast Mount,
                 Fore,
                 Aft,
-                AftBase,
-                SheetControlSource;
+                AftBase;
             internal FishermansStay Stay;
             internal Mast[] ForeSections,
                 AftSections;
@@ -36,7 +34,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         internal MountPair Pair { get; private set; }
         private Sail sail;
         private GameObject controlsRoot;
-        private FishermanWinchControls.OwnedWinch[] controls;
         private Transform mastGuide,
             upperGuide;
         private bool bindingDirty;
@@ -81,11 +78,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 || !aftBase.gameObject.activeInHierarchy
                 || !refs.Guide
                 || !refs.Guide.gameObject.activeInHierarchy
-                || !FishermanWinchControls.BootstrapReady(
-                    boat: boat,
-                    forward: refs.Fore,
-                    halyard: aftBase
-                )
             )
                 return false;
             pair = new MountPair
@@ -98,7 +90,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 AftBase = aftBase,
                 ForeSections = foreSections,
                 AftSections = aftSections,
-                SheetControlSource = refs.Donor,
                 AftGuide = refs.Guide,
             };
             return true;
@@ -123,8 +114,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 || Pair.Mount != resolved.Mount
                 || Pair.Aft != resolved.Aft
                 || Pair.AftGuide != resolved.AftGuide
-                || Pair.AftBase != resolved.AftBase
-                || Pair.SheetControlSource != resolved.SheetControlSource;
+                || Pair.AftBase != resolved.AftBase;
             controlsDirty |= changed;
             Pair = resolved;
             bindingDirty = false;
@@ -224,7 +214,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 return;
             if (!controlsRoot)
             {
-                controlsRoot = new GameObject("FishermansStaysail independent controls");
+                controlsRoot = new GameObject("FishermansStaysail rope guides");
                 controlsRoot.SetActive(false);
                 controlsRoot.transform.SetParent(Pair.Boat.transform, false);
                 mastGuide = new GameObject("FishermansStaysail halyard guide").transform;
@@ -233,29 +223,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 upperGuide.SetParent(controlsRoot.transform, false);
                 controlsRoot.SetActive(true);
             }
-            FishermanWinchControls.Reconcile(
-                ref controls,
-                Pair.Boat,
-                sail.gameObject,
-                controlsRoot.transform,
-                Pair.Fore,
-                new[] { Pair.AftBase, Pair.SheetControlSource, Pair.SheetControlSource },
-                new[]
-                {
-                    "FishermansStaysail Halyard",
-                    "FishermansStaysail Port sheet",
-                    "FishermansStaysail Starboard sheet",
-                }
-            );
             controlsDirty = false;
             var connections = sail.GetComponent<SailConnections>();
-            controls[0].Bind(connections.reefController);
-            FishermanWinchControls.BindSheets(
-                controls[1],
-                connections.angleControllerLeft,
-                controls[2],
-                connections.angleControllerRight
-            );
             connections.colChecker.RegisterBoatWalkCol(mast.walkColMast);
             // Old saves can restore the wider donor range; keep the checker,
             // shipyard description and native sail limits in agreement.
@@ -307,9 +276,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         private void OnDestroy()
         {
-            if (controls != null)
-                foreach (var control in controls)
-                    control.Dispose();
             if (controlsRoot)
                 Object.Destroy(controlsRoot);
         }

@@ -3,86 +3,95 @@ using System.IO;
 using System.Linq;
 using MoreSailwindSails.BoatConfiguration;
 using MoreSailwindSails.BoatConfiguration.Boats;
+using MoreSailwindSails.Controls;
 using MoreSailwindSails.Controls.Configuration;
 using MoreSailwindSails.Controls.Configuration.Boats;
 using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 using MoreSailwindSails.Stays.FishermansStay.Configuration;
+using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
-// Checks supported boat categories and their installed native control inventories.
+// Checks authored fallback templates and installed donor control inventories.
 internal static class NativeSeatProfileChecks
 {
     internal static void Run()
     {
         foreach (var boat in BoatControlCatalog.All)
         {
-            foreach (
-                int fore in FishermansStayCatalog
-                    .Find(boatName: boat.BoatName)
-                    .Stays.SelectMany(g => g.Variants)
-                    .Select(v => v.Fore)
-                    .Concat(
-                        FlyingSailCatalog
-                            .Find(boatName: boat.BoatName)
-                            .Supports.SelectMany(s => s.ForeSections)
-                    )
-            )
+            foreach (var fallback in boat.SheetFallbacks)
                 Check(
-                    boat.SheetCategory(fore) != null,
-                    "Missing forward category: " + boat.BoatName + "/" + fore
-                );
-            foreach (var category in boat.SheetCategories)
-            {
-                Check(
-                    category.PhysicalMasts.Distinct().Count() == category.PhysicalMasts.Count,
-                    "Duplicate category member."
-                );
-                Check(
-                    category.Sources.Distinct().Count() == category.Sources.Count,
-                    "Duplicate source rig."
-                );
-                Check(
-                    category.PhysicalMasts.All(m => category.Sources.Any(s => s == m))
-                        || (
-                            category.Sources.Count == 0
-                            && category.Fallback?.InvalidSide == null
-                            && category.Fallback != null
-                        ),
-                    "Physical variants missing from source pool without an authored replacement pair."
-                );
-                Check(
-                    category.Fallback == null || category.Fallback.InvalidSide == null,
+                    fallback.Fallback != null && fallback.Fallback.InvalidSide == null,
                     "Invalid authored fallback pair."
                 );
-            }
+            foreach (var fallback in boat.HalyardFallbacks)
+                Check(
+                    boat.Boat.Base(section: fallback.Mast) == fallback.Mast
+                        && fallback.Fallback.Valid,
+                    "Halyard fallback must belong to a physical base mast."
+                );
         }
         Check(
-            BrigControls.Definition.SheetCategory(3) == BrigControls.Definition.SheetCategory(2),
-            "Brig variants split."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 3,
+            "Preserve the three authored sheet fallback pairs."
+        );
+        foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
+        foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
+        {
+            var displacement = seat.Position - seat.Contact;
+            Check(
+                Math.Abs(displacement.magnitude - 0.044704f) < 0.000001f
+                    && Vector3.Dot(displacement.normalized, seat.Normal.normalized) > 0.99999f,
+                "Every sheet fallback must use the shared mounting depth along its surface normal."
+            );
+        }
+        Check(
+            (
+                ShroudControls.Definition.SheetFallbacks.Single().Fallback.Port.Position
+                - new Vector3(-3.465970f, 4.874469f, -3.901223f)
+            ).magnitude < 0.000001f,
+            "Shroud must keep its captured contact with the smaller shared model's mounting depth."
         );
         Check(
-            JongControls.Definition.SheetCategory(2) != JongControls.Definition.SheetCategory(3),
-            "Jong mainmasts merged."
+            (
+                SheetFallbackTemplate.Normal - new Vector3(0.00020555f, 0.99987845f, 0.01559755f)
+            ).magnitude < 0.000001f
+                && SheetFallbackTemplate.Scale == Vector3.one,
+            "Shared sheet frame or unit size differs from the installed Kakam reference."
         );
         Check(
-            BrigControls.Definition.SheetCategory(mast: 56)
-                == BrigControls.Definition.SheetCategory(mast: 5),
-            "Topmast category lost."
+            !new SheetFallbackSeat(contact: Vector3.zero, normal: Vector3.zero).Valid
+                && !new SheetFallbackSeat(
+                    contact: Vector3.zero,
+                    normal: new Vector3(0, float.PositiveInfinity, 0)
+                ).Valid,
+            "Invalid mounting normals must make a fallback unavailable."
         );
+        var caelanor = CaelanorControls.Definition;
+        var caelanorPair = caelanor.SheetFallbacks.Single().Fallback;
+        Vector3 Reflect(Vector3 value) => new Vector3(-value.x, value.y, value.z);
         Check(
-            ShroudControls.Definition.SheetCategory(6).Fallback != null,
-            "Shroud measured fallback lost."
+            (caelanorPair.Port.Contact - Reflect(caelanorPair.Starboard.Contact)).magnitude
+                < 0.000001f
+                && (caelanorPair.Port.Normal - Reflect(caelanorPair.Starboard.Normal)).magnitude
+                    < 0.000001f
+                && (caelanorPair.Port.Position - Reflect(caelanorPair.Starboard.Position)).magnitude
+                    < 0.000001f
+                && caelanorPair.Port.Contact.x < 0
+                && caelanorPair.Starboard.Contact.x > 0,
+            "Caelanor sheet contacts, mounting offsets and normals must mirror at the deck centreline."
         );
-        var ordered = new BoatControlDefinition(
-            boat: Cog.Definition,
-            sheetCategories: CogControls.Definition.SheetCategories,
-            halyardGroups: new[] { new HalyardWinchGroup(mast: 57, sources: new[] { 58, 57 }) }
-        );
+        var reef = caelanor.HalyardFallbacks.Single();
         Check(
-            ordered.HalyardSources(mast: 57).SequenceEqual(new[] { 58, 57 })
-                && ordered.HalyardSources(mast: 8).SequenceEqual(new[] { 8 }),
-            "Halyard group order was overridden or shared with another mizzen variant."
+            reef.Mast == 5
+                && reef.Fallback.TemplateIndex == 0
+                && Math.Abs(
+                    (reef.Fallback.Position - reef.Fallback.Contact).magnitude - 0.07854738f
+                ) < 0.000001f
+                && SheetFallbackOrder
+                    .FromMast(fallbacks: caelanor.SheetFallbacks, mastZ: -2.306270f)
+                    .Count() == 1,
+            "Caelanor must retain its mainmast reef fallback and its aft-eligible sheet pair."
         );
         var rows = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
@@ -108,13 +117,6 @@ internal static class NativeSeatProfileChecks
             }
         )
             Check(rows.Any(r => r[1] == boat), "Missing boat inventory: " + boat);
-        // Verify profile constants against independently extracted shipyard groups.
-        var rigs = File.ReadAllLines(
-                Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
-            )
-            .Where(l => l.StartsWith("rig|"))
-            .Select(l => l.Split('|'))
-            .ToArray();
         var names = new[]
         {
             "Brig",
@@ -133,24 +135,6 @@ internal static class NativeSeatProfileChecks
         for (int b = 0; b < BoatControlCatalog.All.Count; b++)
         {
             var profile = BoatControlCatalog.All[b];
-            foreach (var category in profile.SheetCategories)
-            {
-                var groups = category
-                    .PhysicalMasts.Select(id =>
-                        rigs.Single(r => r[1] == names[b] && r[3] == id.ToString())[5]
-                    )
-                    .Distinct()
-                    .ToArray();
-                Check(
-                    groups.Length == 1,
-                    names[b] + "/" + category.Name + " merges separate shipyard groups."
-                );
-                foreach (var source in category.Sources)
-                    Check(
-                        rigs.Any(r => r[1] == names[b] && r[3] == source.ToString()),
-                        "Missing audited source: " + names[b] + "/" + source
-                    );
-            }
             foreach (
                 var donor in FishermansStayCatalog
                     .Find(boatName: profile.BoatName)

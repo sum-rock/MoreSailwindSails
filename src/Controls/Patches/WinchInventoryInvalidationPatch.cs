@@ -17,6 +17,10 @@ namespace MoreSailwindSails.Controls.Patches
             yield return typeof(Mast).GetMethod(name: "Awake", bindingAttr: flags);
             yield return typeof(Mast).GetMethod(name: "OnEnable", bindingAttr: flags);
             yield return typeof(Mast).GetMethod(name: "OnDisable", bindingAttr: flags);
+            yield return typeof(Mast).GetMethod(
+                name: "UpdateControllerAttachments",
+                bindingAttr: flags
+            );
             yield return typeof(BoatCustomParts).GetMethod(
                 name: "RefreshParts",
                 bindingAttr: flags

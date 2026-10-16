@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using HarmonyLib;
+using MoreSailwindSails.BoatConfiguration;
 using MoreSailwindSails.Sails.FishermansStaysail.MkA;
 using MoreSailwindSails.Sails.FishermansStaysail.MkB;
 using MoreSailwindSails.Sails.FishermansStaysail.MkC;
@@ -73,6 +74,48 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
                 ___initialRot = neutral;
             }
             return false;
+        }
+    }
+
+    // Exempts the shared luff mast on the square sail's side of native sail contact checks.
+    [HarmonyPatch(typeof(ShipyardSailColChecker), "OnTriggerEnter")]
+    internal static class FishermansStaysailSquareCollisionPatch
+    {
+        private static readonly AccessTools.FieldRef<ShipyardSailColChecker, Sail> CheckerSail =
+            AccessTools.FieldRefAccess<ShipyardSailColChecker, Sail>(fieldName: "sail");
+
+        [HarmonyPrefix]
+        private static bool Prefix(Sail ___sail, Collider other)
+        {
+            // Native staysails already ignore sail contacts. Square sails do not,
+            // so their checker can block adding a staysail at the same luff mast.
+            if (!___sail || ___sail.category != SailCategory.square || !other)
+                return true;
+            if (!other.CompareTag("SailColChecker") && !other.CompareTag("SailColCheckerSub"))
+                return true;
+            var checker = other.GetComponentInParent<ShipyardSailColChecker>();
+            var staysail = checker ? CheckerSail(checker) : null;
+            if (!staysail || !staysail.GetComponent<FishermansStaysailRig>())
+                return true;
+
+            var stayMount = staysail.transform.parent
+                ? staysail.transform.parent.GetComponent<Mast>()
+                : null;
+            var squareMast = ___sail.transform.parent
+                ? ___sail.transform.parent.GetComponent<Mast>()
+                : null;
+            if (
+                !squareMast
+                || !FishermansStaysailRigging.TryResolve(mount: stayMount, pair: out var pair)
+                || squareMast.GetComponentInParent<BoatRefs>() != pair.Boat
+            )
+                return true;
+
+            return !FishermansStaysailInstallationGeometry.SharesLuffMast(
+                boat: BoatCatalog.Find(boatName: pair.Boat.name),
+                forwardSection: pair.Fore.orderIndex,
+                squareSection: squareMast.orderIndex
+            );
         }
     }
 
@@ -185,42 +228,17 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
         }
     }
 
-    // Let native binding process only native-controlled sails. Restore the actual
-    // list even on exceptions; saves, mast capacity and overlap checks see all sails.
+    // Native mast ordering binds controls; restore custom guide routing and travel afterwards.
     [HarmonyPatch(typeof(Mast), "UpdateControllerAttachments")]
     internal static class FishermansStaysailControlsPatch
     {
-        [HarmonyPrefix]
-        private static void Prefix(Mast __instance, out List<GameObject> __state)
+        [HarmonyPostfix]
+        [HarmonyAfter("com.nandbrew.shipyardexpansion")]
+        private static void Postfix(Mast __instance)
         {
-            __state = null;
-            if (
-                __instance.sails == null
-                || !__instance.sails.Any(s => s && s.GetComponent<FishermansStaysailRig>())
-            )
-                return;
-            __state = __instance.sails;
-            __instance.sails = __state
-                .Where(s => s && !s.GetComponent<FishermansStaysailRig>())
-                .ToList();
-        }
-
-        [HarmonyFinalizer]
-        private static void Finalizer(
-            Mast __instance,
-            List<GameObject> __state,
-            Exception __exception
-        )
-        {
-            if (__state == null)
-                return;
-            __instance.sails = __state;
-            __instance.UpdateSailOrder();
-            if (__exception != null)
-                return;
-            foreach (var item in __state)
+            foreach (var item in __instance.sails)
                 if (item && item.GetComponent<FishermansStaysailRig>())
-                    FishermansStaysailRigging.For(item.GetComponent<Sail>()).AttachControls();
+                    FishermansStaysailRigging.For(sail: item.GetComponent<Sail>()).AttachControls();
         }
     }
 

@@ -1,4 +1,5 @@
-// Owns Caelanor's authored shared winch sources and fallback placements.
+// Owns Caelanor's measured mainmast reef and symmetric aft sheet fallbacks.
+using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration.Boats
 {
@@ -6,29 +7,38 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
     {
         internal static readonly BoatControlDefinition Definition = new BoatControlDefinition(
             boat: BoatConfiguration.Boats.Caelanor.Definition,
-            sheetCategories: new[]
+            sheetFallbacks: new[]
             {
-                new SheetWinchCategory(
-                    name: "Foremast",
-                    physicalMasts: new[] { 1 },
-                    sources: new[] { 1, 2, 17, 13, 14, 7, 8, 9 },
-                    fallback: null
-                ),
-                new SheetWinchCategory(
+                new SheetFallbackDefinition(
                     name: "Mainmast",
-                    physicalMasts: new[] { 5, 3 },
-                    sources: new[] { 5, 6, 18, 3, 4, 19, 10, 12, 16 },
-                    fallback: null
+                    // Latest F9 captures #1/#2: average |X|, Y/Z and mirrored normals at boat X=0.
+                    fallback: new SheetFallbackPair(
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.4498375f, 2.416566f, -4.761331f),
+                            normal: new Vector3(0.0654635f, 0.995183f, 0.072977f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.4498375f, 2.416566f, -4.761331f),
+                            normal: new Vector3(-0.0654635f, 0.995183f, 0.072977f)
+                        )
+                    )
                 ),
             },
-            halyardGroups: new[]
+            halyardFallbacks: new[]
             {
-                new HalyardWinchGroup(mast: 1, sources: new[] { 1, 7 }),
-                new HalyardWinchGroup(mast: 2, sources: new[] { 2, 8, 9 }),
-                new HalyardWinchGroup(mast: 3, sources: new[] { 3, 10 }),
-                new HalyardWinchGroup(mast: 4, sources: new[] { 4, 12, 16 }),
-                new HalyardWinchGroup(mast: 5, sources: new[] { 5, 13 }),
-                new HalyardWinchGroup(mast: 6, sources: new[] { 6, 14 }),
+                new HalyardFallbackDefinition(
+                    mast: 5,
+                    fallback: new HalyardFallbackSeat(
+                        // F9 capture #5 on the aft mainmast walking surface.
+                        contact: new Vector3(0.204692f, 1.884204f, -1.520411f),
+                        normal: new Vector3(0.965926f, 0.018054f, 0.258188f),
+                        // Installed halyard_main_main1 local +Z in boat coordinates.
+                        sourceNormal: new Vector3(0f, 0.98480805f, 0.17364808f),
+                        // Coiled rope rear bound -0.130912, native scale 0.60000134.
+                        offset: 0.07854738f,
+                        templateIndex: 0
+                    )
+                ),
             }
         );
     }
