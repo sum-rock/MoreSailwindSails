@@ -1,6 +1,5 @@
-// Builds the decorative baked rope and two metal bands without collision geometry.
+// Places decorative rope and bands using borrowed registry meshes and native materials.
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -16,7 +15,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
             Transform owner,
             Material ropeMaterial,
             int visualLayer,
-            List<Mesh> ownedMeshes
+            Mesh ropeMesh,
+            Mesh collarMesh
         )
         {
             this.owner = owner;
@@ -29,30 +29,13 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 throw new InvalidOperationException(
                     "Missing native lantern metal or stay rope material."
                 );
-            // TODO: creates identical rope and collar meshes for every variant.
-            // Sanbuq’s 26 variants therefore create **52 meshes**, although their
-            // differences are applied through transforms.
-            // Registry-owned shared meshes could reduce that to **two**, avoiding
-            // array creation and tangent calculation. This targets loading and
-            // memory; ownership must move to the registry so individual stay
-            // cleanup cannot destroy shared assets.
-            var rope = CreateMesh(
-                data: FishermansStayBakedMesh.CreateRope(),
-                name: "FishermansStay rope",
-                ownedMeshes: ownedMeshes
-            );
-            var collar = CreateMesh(
-                data: FishermansStayBakedMesh.CreateCollar(),
-                name: "FishermansStay collar",
-                ownedMeshes: ownedMeshes
-            );
             for (int i = 0; i < parts.Length; i++)
             {
                 string name =
                     i == 0 ? "Rope"
                     : i == 1 ? "Fore collar"
                     : "Aft collar";
-                var mesh = i == 0 ? rope : collar;
+                var mesh = i == 0 ? ropeMesh : collarMesh;
                 parts[i] = CreatePart(
                     name: name,
                     parent: owner,
@@ -61,23 +44,6 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     layer: visualLayer
                 );
             }
-        }
-
-        private static Mesh CreateMesh(
-            FishermansStayMeshData data,
-            string name,
-            List<Mesh> ownedMeshes
-        )
-        {
-            var mesh = new Mesh { name = name };
-            ownedMeshes.Add(mesh);
-            mesh.vertices = data.Vertices;
-            mesh.normals = data.Normals;
-            mesh.uv = data.UV;
-            mesh.triangles = data.Triangles;
-            mesh.RecalculateBounds();
-            mesh.RecalculateTangents();
-            return mesh;
         }
 
         private static Transform CreatePart(

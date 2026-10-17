@@ -1,4 +1,4 @@
-// Registers stable stay option slots and owns their construction and cleanup.
+// Registers stable stay option slots and owns their shared meshes and cleanup.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,6 +15,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
         internal readonly List<GameObject> AuxiliaryObjects = new List<GameObject>();
         internal bool Registered;
         internal bool PreviewingOrder;
+        private Mesh ropeMesh;
+        private Mesh collarMesh;
 
         internal static bool TryFind(Mast mount, out FishermansStay stay)
         {
@@ -71,9 +73,10 @@ namespace MoreSailwindSails.Stays.FishermansStay
                             );
                             continue;
                         }
+                        registry.EnsureMeshes();
                         var stay = new FishermansStay(boat: boat, configurations: available);
                         registry.Stays.Add(stay);
-                        stay.Create();
+                        stay.Create(ropeMesh: registry.ropeMesh, collarMesh: registry.collarMesh);
                         variants.Add(stay.Option);
                     }
                     registry.Parts.Add(
@@ -105,28 +108,68 @@ namespace MoreSailwindSails.Stays.FishermansStay
             }
             catch (Exception exception)
             {
-                foreach (var part in registry.Parts)
-                    parts.availableParts.Remove(part);
-                foreach (var stay in registry.Stays)
+                try
                 {
-                    if (stay.Mount)
+                    foreach (var part in registry.Parts)
+                        parts.availableParts.Remove(part);
+                    foreach (var stay in registry.Stays)
                     {
-                        int slot = stay.Mount.orderIndex;
-                        if (slot < boat.masts.Length && boat.masts[slot] == stay.Mount)
-                            boat.masts[slot] = null;
+                        if (stay.Mount)
+                        {
+                            int slot = stay.Mount.orderIndex;
+                            if (slot < boat.masts.Length && boat.masts[slot] == stay.Mount)
+                                boat.masts[slot] = null;
+                        }
+                        stay.Destroy();
                     }
-                    stay.Destroy();
+                    foreach (var item in registry.AuxiliaryObjects)
+                        if (item)
+                            Object.Destroy(item);
+                    registry.Stays.Clear();
+                    registry.Parts.Clear();
+                    registry.AuxiliaryObjects.Clear();
                 }
-                foreach (var item in registry.AuxiliaryObjects)
-                    if (item)
-                        Object.Destroy(item);
-                registry.Stays.Clear();
-                registry.Parts.Clear();
-                registry.AuxiliaryObjects.Clear();
+                finally
+                {
+                    registry.DestroyMeshes();
+                }
                 Plugin.Log.LogError(
                     $"Fisherman's Stay profile rejected for {boat.name}: {exception}"
                 );
             }
+        }
+
+        // Each boat owns one immutable mesh pair shared by all its stay visuals.
+        private void EnsureMeshes()
+        {
+            if (ropeMesh && collarMesh)
+                return;
+
+            // Record ownership before populating channels so rollback covers partial builds.
+            ropeMesh = new Mesh { name = "FishermansStay rope" };
+            PopulateMesh(mesh: ropeMesh, data: FishermansStayBakedMesh.CreateRope());
+            collarMesh = new Mesh { name = "FishermansStay collar" };
+            PopulateMesh(mesh: collarMesh, data: FishermansStayBakedMesh.CreateCollar());
+        }
+
+        private static void PopulateMesh(Mesh mesh, FishermansStayMeshData data)
+        {
+            mesh.vertices = data.Vertices;
+            mesh.normals = data.Normals;
+            mesh.uv = data.UV;
+            mesh.triangles = data.Triangles;
+            mesh.RecalculateBounds();
+            mesh.RecalculateTangents();
+        }
+
+        private void DestroyMeshes()
+        {
+            if (ropeMesh)
+                Object.Destroy(ropeMesh);
+            if (collarMesh)
+                Object.Destroy(collarMesh);
+            ropeMesh = null;
+            collarMesh = null;
         }
 
         // Empty options retain their native save slot without creating a phantom mast.
@@ -172,11 +215,18 @@ namespace MoreSailwindSails.Stays.FishermansStay
 
         private void OnDestroy()
         {
-            foreach (var stay in Stays)
-                stay.Destroy();
-            foreach (var item in AuxiliaryObjects)
-                if (item)
-                    Object.Destroy(item);
+            try
+            {
+                foreach (var stay in Stays)
+                    stay.Destroy();
+                foreach (var item in AuxiliaryObjects)
+                    if (item)
+                        Object.Destroy(item);
+            }
+            finally
+            {
+                DestroyMeshes();
+            }
         }
     }
 }

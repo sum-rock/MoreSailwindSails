@@ -637,9 +637,18 @@ installed boat-local origin (**Z ≈ -2.306270**); the previous contacts at **Z 
 
 [assets/stays/stay.blend](../assets/stays/stay.blend) provides a straight rope
 and two matching metal bands used by every Fisherman's Stay. Runtime
-construction creates one decorative rope and two instances of the baked collar.
-Each stay owns its two meshes and releases them during teardown or registration
-rollback.
+construction creates one decorative rope and two instances of the baked collar
+per stay. Each boat's registry lazily creates one rope mesh and one collar mesh
+for its first available stay; all its variants borrow that pair through
+`sharedMesh` and fit it using transforms. Registries with no available variants
+create no meshes. Sanbuq's 26 available variants therefore use two meshes rather
+than 52, with bounds and tangents calculated once per mesh.
+
+The registry records each mesh before populating its channels so partial builds
+are owned during failure recovery. Registration rollback and registry teardown
+release the pair in `finally` after scene-object cleanup and clear both fields.
+Individual stays destroy only their controls and scene objects; another stay's
+removal cannot destroy shared geometry. Meshes are not shared between boats.
 
 The rope is **1 m** long and **0.02 m** in diameter. Each band has a **0.42 m**
 outside diameter, approximately **0.4074 m** inside diameter, **0.10 m** axial
@@ -1038,6 +1047,13 @@ configurations. The Dhow aft band's inner radius is **0.08083 m**, replacing the
 **0.20 m** capsule radius; the measured wood radius is **0.08183 m**. Release,
 GeometryChecks and AssemblyChecks passed, including Dhow centering, complete
 Brig masthead-band seating and rejection of capsule-radius sizing in the visual.
+The registry mesh-sharing revision also passed Release with zero warnings/errors
+and both check suites. Assembly checks cover the instance-owned mesh pair,
+initialization guard, ownership before channel population, cleanup in rollback
+and teardown finalizers, cleared mesh fields and borrowed visual meshes.
+Geometry checks retain baked channels, independent generated arrays and authored
+placement. These are structural ownership checks, not Unity lifecycle execution
+or loading-time measurements.
 
 The Caelanor captured-control fallbacks retain plugin/runtime version **0.3.0**.
 Release build passed with zero warnings/errors, both check suites passed
