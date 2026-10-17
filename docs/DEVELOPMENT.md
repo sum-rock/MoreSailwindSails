@@ -607,7 +607,23 @@ Top **3** to Mainmast Top **5** below the rendered wood tips. Mount **129**
 joins Mainmast **4** to Mizzenmast Top **7** along Mizzen Royalstay **14**'s
 extended centerline and excludes that stay, with reciprocal shipyard conflict
 help. Both use prototype **12** and aligned aft guides. Optional T’gallants do
-not disable them; manual fallbacks are null.
+not disable them.
+
+[ChronianControls.cs](../src/Controls/Configuration/Boats/ChronianControls.cs)
+uses F9 captures **#5/#6** for **MainmastFallback** and **#8/#9** for
+**MizzenmastFallback**, both on `0_TRIM`. Each pair averages absolute X and Y/Z
+positions and mirrors contacts and surface normals across boat X=0. Contacts are
+`(±4.1310105, 5.744949, -8.2060095)` and `(±3.474694, 6.5194475, -16.214630)`.
+Both use the shared sheet template and lie aft of the mainmast origin at Z
+**-2.7997803 m**; only the second pair lies aft of the mizzen origin at Z
+**-12.799802 m**.
+
+Captures **#7/#10** on `MAINMAST/FIFE MAIN` and `MIZENMAST/FIFE MIZEN` supply
+halyard fallbacks for physical masts **4/6**. Each uses its mast's
+`reefWinch[0]` (`rope_MainMast_mast1_1` / `rope_MizenMast_mast1_1`). Their local
++Z points along boat +Z. The coiled rope rear bound **-0.13091201 m** and native
+scales **0.60000074/0.60000110** give mounting depths **0.07854730/0.07854735
+m**. Native seats retain priority for new allocations.
 
 ### Caelanor (OldChronian)
 
@@ -918,7 +934,9 @@ fallback controls unavailable through the existing hide/retry path. Native
 allocations and halyard templates are unaffected; no saved placement data or
 migration is introduced.
 
-Authored pairs are **Shroud / ForemastFallback**,
+Authored pairs are **Brig / MainmastFallback and MizzenmastFallback**, **Shroud
+/ ForemastFallback**,
+[Chronian / MainmastFallback and MizzenmastFallback](#chronian-oldchronian),
 [Kakam / MainmastFallback](#kakam-aft-controls), and
 [Caelanor / MainmastFallback](#caelanor-oldchronian). Their names preserve
 diagnostic identity and no longer select a forward-mast category. Eligibility
@@ -1038,6 +1056,12 @@ placement searches.
 ## Validation records
 
 ### Automated baseline and limits
+
+The Chronian captured-control update retains plugin/runtime version **0.3.0**.
+Release built with zero warnings/errors; GeometryChecks and AssemblyChecks
+passed. Checks cover mirrored sheet contacts, normals and offset positions, aft
+eligibility against the installed mainmast and mizzen origins, and fourteen
+authored reef fallback templates across the boat profiles.
 
 The Brig main mast 1 and mizzen mast 1 halyard additions retain plugin/runtime
 version **0.3.0**. Release built with zero warnings/errors; GeometryChecks and

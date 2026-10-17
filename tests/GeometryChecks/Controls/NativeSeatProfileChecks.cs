@@ -32,8 +32,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 5,
-            "Preserve the five authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 7,
+            "Preserve the seven authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
@@ -74,6 +74,11 @@ internal static class NativeSeatProfileChecks
             var pair in BrigControls
                 .Definition.SheetFallbacks.Select(definition => definition.Fallback)
                 .Append(caelanorPair)
+                .Concat(
+                    ChronianControls.Definition.SheetFallbacks.Select(definition =>
+                        definition.Fallback
+                    )
+                )
         )
             Check(
                 (pair.Port.Contact - Reflect(pair.Starboard.Contact)).magnitude < 0.000001f
@@ -81,8 +86,21 @@ internal static class NativeSeatProfileChecks
                     && (pair.Port.Position - Reflect(pair.Starboard.Position)).magnitude < 0.000001f
                     && pair.Port.Contact.x < 0
                     && pair.Starboard.Contact.x > 0,
-                "Brig and Caelanor sheet contacts, mounting offsets and normals must mirror at the deck centreline."
+                "Brig, Caelanor and Chronian sheet contacts, mounting offsets and normals must mirror at the deck centreline."
             );
+        Check(
+            SheetFallbackOrder
+                .FromMast(fallbacks: ChronianControls.Definition.SheetFallbacks, mastZ: -2.7997803f)
+                .Count() == 2
+                && SheetFallbackOrder
+                    .FromMast(
+                        fallbacks: ChronianControls.Definition.SheetFallbacks,
+                        mastZ: -12.799802f
+                    )
+                    .Single()
+                    .Name == "Mizzenmast",
+            "Both Chronian sheet pairs must be aft of its mainmast; only the mizzen pair is aft of its mizzen."
+        );
         var reef = caelanor.HalyardFallbacks.Single();
         Check(
             reef.Mast == 5
