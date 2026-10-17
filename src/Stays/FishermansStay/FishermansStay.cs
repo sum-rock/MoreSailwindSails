@@ -1,3 +1,4 @@
+// Owns a stay's controls and scene objects while borrowing the registry's meshes.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,7 +40,6 @@ namespace MoreSailwindSails.Stays.FishermansStay
         }
         private Mast source => references.Donor;
         private FishermansStayVisual visual;
-        private readonly List<Mesh> ownedMeshes = new List<Mesh>();
         private bool warned;
         private bool fits;
         private readonly List<Tuple<Transform, Transform>> anchors =
@@ -56,7 +56,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 ?? configurations[0];
         }
 
-        internal void Create()
+        internal void Create(Mesh ropeMesh, Mesh collarMesh)
         {
             var definition = references.Definition;
             // Native hinges use the mount's boat-local position as their anchor.
@@ -120,7 +120,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 owner: root.transform,
                 ropeMaterial: source.GetComponent<MeshRenderer>().sharedMaterial,
                 visualLayer: source.gameObject.layer,
-                ownedMeshes: ownedMeshes
+                ropeMesh: ropeMesh,
+                collarMesh: collarMesh
             );
             var original = source.GetComponent<BoatPartOption>();
             Option = root.AddComponent<BoatPartOption>();
@@ -241,10 +242,6 @@ namespace MoreSailwindSails.Stays.FishermansStay
             }
             if (WalkObject)
                 Object.Destroy(WalkObject);
-            foreach (var mesh in ownedMeshes)
-                if (mesh)
-                    Object.Destroy(mesh);
-            ownedMeshes.Clear();
         }
 
         private GPButtonRopeWinch[] CloneWinches(Mast donor, WinchRole role, string label)

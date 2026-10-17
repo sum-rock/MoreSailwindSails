@@ -637,9 +637,18 @@ installed boat-local origin (**Z ≈ -2.306270**); the previous contacts at **Z 
 
 [assets/stays/stay.blend](../assets/stays/stay.blend) provides a straight rope
 and two matching metal bands used by every Fisherman's Stay. Runtime
-construction creates one decorative rope and two instances of the baked collar.
-Each stay owns its two meshes and releases them during teardown or registration
-rollback.
+construction creates one decorative rope and two instances of the baked collar
+per stay. Each boat's registry lazily creates one rope mesh and one collar mesh
+for its first available stay; all its variants borrow that pair through
+`sharedMesh` and fit it using transforms. Registries with no available variants
+create no meshes. Sanbuq's 26 available variants therefore use two meshes rather
+than 52, with bounds and tangents calculated once per mesh.
+
+The registry records each mesh before populating its channels so partial builds
+are owned during failure recovery. Registration rollback and registry teardown
+release the pair in `finally` after scene-object cleanup and clear both fields.
+Individual stays destroy only their controls and scene objects; another stay's
+removal cannot destroy shared geometry. Meshes are not shared between boats.
 
 The rope is **1 m** long and **0.02 m** in diameter. Each band has a **0.42 m**
 outside diameter, approximately **0.4074 m** inside diameter, **0.10 m** axial
@@ -824,6 +833,12 @@ reparents controllers beneath the winch, so the binding invalidation hook also
 detaches them from hidden placement mounts and requests a retry. This preserves
 controller activity when native binding runs again during exhaustion.
 
+The coordinator reuses separate control and group snapshot lists during each
+tick. It captures groups again between release and refresh so each pass sees
+current membership, while callbacks can safely mutate the source lists. A
+`finally` clears both buffers, retaining capacity without retaining removed
+objects. Final teardown uses its own independent snapshot.
+
 ### Inventory lifetime and inspection counters
 
 Each coordinator owns one inventory and mast/seat lookup per boat. Lifecycle
@@ -833,10 +848,19 @@ in-place changes; a one-second sweep catches delayed or inactive parts.
 Occupancy and support checks remain live, and pose changes rebuild alias lookup.
 
 Alternative placement searches run on initial allocation, invalidation or
-exhaustion retry; retained placements recheck donor dependencies and sails live.
-Empty coordinators skip discovery. Per-boat `HierarchyScans`, `CandidateBuilds`
-and `EntriesCreated` counters measure inspection/allocation activity, not frame
-time or total managed allocations.
+exhaustion retry. Retained placements check only the selected donor's live
+dependencies and sails, using the same eligibility predicate as discovery. A
+reference scan preserves membership in the current option inventory without
+traversing unrelated donors. Seat occupancy, source arrays, support and pose
+checks remain live; dependency results are not cached. Authored fallback
+definitions store their identifiers once. Retained sheet fallbacks look up only
+the selected pair and check both contacts against the current boat-local mast
+position; new allocations still enumerate pairs in aft order. Authored seats
+scan coincident native controls directly without a captured predicate, retaining
+live position, rope and visibility checks. Empty coordinators skip discovery.
+Per-boat `HierarchyScans`, `CandidateBuilds` and `EntriesCreated` counters
+measure inspection/allocation activity, not frame time or total managed
+allocations.
 
 ### Gloriana reef fallbacks
 
@@ -1003,6 +1027,22 @@ placement searches.
 
 ### Automated baseline and limits
 
+The **2026-10-16** stay winch update retains plugin/runtime version **0.3.0**.
+Release built with zero warnings/errors; GeometryChecks and AssemblyChecks
+passed. Executed snapshot checks cover source mutation, fresh captures, empty
+captures and **0 allocated bytes across 1,000 warmed copies** on the .NET test
+host. Structural checks cover separate release/refresh snapshots, cleanup,
+selected-donor inventory membership, shared live eligibility and retained seat
+validation. The fallback allocation changes also passed Release with zero
+warnings/errors and both suites. Checks preserve exact sheet/halyard
+identifiers, direct lookup equivalence for missing, invalid and forward pairs,
+and immediate response to mast movement across the aft eligibility boundary.
+Direct sheet identifier access and lookup allocated **0 bytes across 10,000
+warmed calls** on the .NET test host. Structural checks confirm direct live
+occupancy scans without captured predicates and stored halyard identifiers in
+creation and retention. These checks do not measure Unity frame time or Mono
+allocations.
+
 The **2026-10-16** authored stay integration retains plugin/runtime version
 **0.3.0**. Release built with zero warnings/errors; GeometryChecks passed,
 including baked rope endpoints across **103** configurations, fixed rope
@@ -1020,6 +1060,13 @@ configurations. The Dhow aft band's inner radius is **0.08083 m**, replacing the
 **0.20 m** capsule radius; the measured wood radius is **0.08183 m**. Release,
 GeometryChecks and AssemblyChecks passed, including Dhow centering, complete
 Brig masthead-band seating and rejection of capsule-radius sizing in the visual.
+The registry mesh-sharing revision also passed Release with zero warnings/errors
+and both check suites. Assembly checks cover the instance-owned mesh pair,
+initialization guard, ownership before channel population, cleanup in rollback
+and teardown finalizers, cleared mesh fields and borrowed visual meshes.
+Geometry checks retain baked channels, independent generated arrays and authored
+placement. These are structural ownership checks, not Unity lifecycle execution
+or loading-time measurements.
 
 The Caelanor captured-control fallbacks retain plugin/runtime version **0.3.0**.
 Release build passed with zero warnings/errors, both check suites passed

@@ -30,8 +30,14 @@ namespace MoreSailwindSails.Controls
                 return false;
             if (current.Fallback)
             {
-                var category = Fallbacks(requested: requested)
-                    .FirstOrDefault(item => item.FallbackName == current.Id);
+                var category = SheetFallbackOrder.FindCurrent(
+                    fallbacks: native.Profile?.SheetFallbacks
+                        ?? Array.Empty<SheetFallbackDefinition>(),
+                    id: current.Id,
+                    mastZ: native
+                        .Boat.transform.InverseTransformPoint(requested.transform.position)
+                        .z
+                );
                 return category != null
                     && ValidFallbackSide(
                         definition: category.Fallback.Port,
@@ -47,7 +53,7 @@ namespace MoreSailwindSails.Controls
             var mast = current.SourceMast;
             int index = current.SourceIndex;
             return mast
-                && native.StaySources(requested: requested).Contains(mast)
+                && native.IsStaySource(source: mast, requested: requested)
                 && mast.leftAngleWinch != null
                 && mast.rightAngleWinch != null
                 && index >= 0

@@ -55,6 +55,80 @@ internal static class StayDependencyChecks
             candidates.SequenceEqual(new[] { first, far }),
             "Fallbacks must preserve complete pairs and follow fore-to-aft encounter order."
         );
+        var fallbacks = Array.AsReadOnly(
+            new[]
+            {
+                far,
+                forward,
+                crossing,
+                first,
+                new SheetFallbackDefinition(name: "empty", fallback: null),
+                new SheetFallbackDefinition(
+                    name: "incomplete",
+                    fallback: new SheetFallbackPair(port: Side(x: -2, z: -3), starboard: null)
+                ),
+                Pair(name: "nonfinite", z: float.NaN, otherZ: -4),
+            }
+        );
+        foreach (float mastZ in new[] { -10f, -8f, -3.001f, -3f, 0f, 1f, float.NaN })
+        foreach (string id in fallbacks.Select(item => item.FallbackName).Append("missing"))
+            Check(
+                SheetFallbackOrder.FindCurrent(fallbacks: fallbacks, id: id, mastZ: mastZ)
+                    == SheetFallbackOrder
+                        .FromMast(fallbacks: fallbacks, mastZ: mastZ)
+                        .FirstOrDefault(item => item.FallbackName == id),
+                "Direct fallback lookup differs from ordered selection: " + id
+            );
+        Check(
+            SheetFallbackOrder.FindCurrent(fallbacks: fallbacks, id: first.FallbackName, mastZ: -3)
+                == first
+                && SheetFallbackOrder.FindCurrent(
+                    fallbacks: fallbacks,
+                    id: first.FallbackName,
+                    mastZ: -3.001f
+                ) == null
+                && SheetFallbackOrder.FindCurrent(
+                    fallbacks: fallbacks,
+                    id: first.FallbackName,
+                    mastZ: 0
+                ) == first,
+            "Fallback retention must include the mast boundary and react immediately to mast movement."
+        );
+        Check(
+            SheetFallbackOrder.FindCurrent(
+                fallbacks: Array.Empty<SheetFallbackDefinition>(),
+                id: first.FallbackName,
+                mastZ: 0
+            ) == null,
+            "An empty profile must have no retained fallback."
+        );
+        foreach (var item in fallbacks)
+            Check(
+                item.FallbackName == item.Name + "Fallback"
+                    && ReferenceEquals(item.FallbackName, item.FallbackName),
+                "Sheet fallback identifiers must preserve their value and reuse the stored string."
+            );
+        void ReadCurrent()
+        {
+            if (
+                SheetFallbackOrder.FindCurrent(
+                    fallbacks: fallbacks,
+                    id: first.FallbackName,
+                    mastZ: 0
+                ) != first
+            )
+                throw new Exception("Warmed fallback lookup lost its selected pair.");
+        }
+        for (int i = 0; i < 1000; i++)
+            ReadCurrent();
+        long before = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 10000; i++)
+            ReadCurrent();
+        long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Check(allocated == 0, "Warmed fallback ID/lookup allocated bytes: " + allocated);
+        Console.WriteLine(
+            "PASS: fallback lookup equivalence, live mast boundary and 0 bytes across 10,000 warmed ID/lookups (.NET host)."
+        );
         var ledger = new WinchReservations();
         WinchCandidate Candidate(SheetFallbackDefinition pair) =>
             new WinchCandidate

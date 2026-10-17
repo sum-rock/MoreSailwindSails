@@ -7,6 +7,7 @@ namespace MoreSailwindSails.Controls.Configuration
     {
         internal readonly int Mast;
         internal readonly HalyardFallbackSeat Fallback;
+        internal string FallbackId { get; }
 
         internal HalyardFallbackDefinition(int mast, HalyardFallbackSeat fallback)
         {
@@ -14,6 +15,7 @@ namespace MoreSailwindSails.Controls.Configuration
                 throw new ArgumentException("Invalid halyard fallback.");
             Mast = mast;
             Fallback = fallback;
+            FallbackId = "halyard-fallback/" + mast;
         }
     }
 }
