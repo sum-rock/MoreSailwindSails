@@ -607,7 +607,23 @@ Top **3** to Mainmast Top **5** below the rendered wood tips. Mount **129**
 joins Mainmast **4** to Mizzenmast Top **7** along Mizzen Royalstay **14**'s
 extended centerline and excludes that stay, with reciprocal shipyard conflict
 help. Both use prototype **12** and aligned aft guides. Optional T’gallants do
-not disable them; manual fallbacks are null.
+not disable them.
+
+[ChronianControls.cs](../src/Controls/Configuration/Boats/ChronianControls.cs)
+uses F9 captures **#5/#6** for **MainmastFallback** and **#8/#9** for
+**MizzenmastFallback**, both on `0_TRIM`. Each pair averages absolute X and Y/Z
+positions and mirrors contacts and surface normals across boat X=0. Contacts are
+`(±4.1310105, 5.744949, -8.2060095)` and `(±3.474694, 6.5194475, -16.214630)`.
+Both use the shared sheet template and lie aft of the mainmast origin at Z
+**-2.7997803 m**; only the second pair lies aft of the mizzen origin at Z
+**-12.799802 m**.
+
+Captures **#7/#10** on `MAINMAST/FIFE MAIN` and `MIZENMAST/FIFE MIZEN` supply
+halyard fallbacks for physical masts **4/6**. Each uses its mast's
+`reefWinch[0]` (`rope_MainMast_mast1_1` / `rope_MizenMast_mast1_1`). Their local
++Z points along boat +Z. The coiled rope rear bound **-0.13091201 m** and native
+scales **0.60000074/0.60000110** give mounting depths **0.07854730/0.07854735
+m**. Native seats retain priority for new allocations.
 
 ### Caelanor (OldChronian)
 
@@ -650,7 +666,7 @@ release the pair in `finally` after scene-object cleanup and clear both fields.
 Individual stays destroy only their controls and scene objects; another stay's
 removal cannot destroy shared geometry. Meshes are not shared between boats.
 
-The rope is **1 m** long and **0.02 m** in diameter. Each band has a **0.42 m**
+The rope is **1 m** long and **0.04 m** in diameter. Each band has a **0.42 m**
 outside diameter, approximately **0.4074 m** inside diameter, **0.10 m** axial
 height and **0.0063 m** radial wall thickness. Collar radii describe the mesh's
 vertex rings. Preserve the named `Rope`, `ForestayCollar` and `AftstayCollar`
@@ -746,11 +762,15 @@ use mount-owned cloned controls, with runtime placement claims shared per boat.
   zero. Its reef/left/right arrays expose the owned clones for custom or vanilla
   sails. The sail rigs retain custom guides, geometry and travel limits, without
   owning another set of winches or filtering the native sail list.
-- Resolve the stay's aft section to its physical base mast. Enumerate
+- Resolve both stay sections to their physical base masts, retaining the
+  original forward section for diagnostics. Enumerate
   `BoatCustomParts.availableParts` and each `partOptions` array in registration
   order, including inactive options. Donors must have `Mast.onlyStaysails`, be
   outside our stay registry and carry no sails. Follow `requires` transitively
-  to the aft physical mast, tracking visited options to terminate cycles.
+  to **both** physical masts in one traversal, tracking visited options to
+  terminate cycles. Missing or identical endpoints cannot supply native donors.
+  Base and topmast stays on the same physical pair are eligible; a stay sharing
+  only one mast is excluded.
 - Within each eligible stay, inspect arrays in order. Sheets require complete
   left/right entries at the same index; centre controls are not candidates.
   Reefing controls are selected separately. A donor need not be installed, but
@@ -814,9 +834,22 @@ those lists. They are excluded by the specified dependency rule. Short main
 controls without an eligible authored fallback remain unavailable. No guessed
 endpoint or hardcoded source exception was added.
 
-Sources can now belong to either endpoint of a native stay associated with the
-aft mast. This changes the former forward-mast sheet categories. The audit
-records references and dependency paths.
+The **2026-10-16** pair-filter audit re-read installed `level24` and the active
+bundles under `BepInEx/plugins/`. Chronian fore/main (**2/4**) now accepts only
+stays **11/12**, while main/mizzen (**4/6**) accepts **13/14**. Brig fore/main,
+Junk, Jong and Large Dhow similarly lose donors belonging to another mast pair;
+their matching native donors remain candidates, subject to live occupancy.
+
+Gloriana fore/main (**1/2**) loses its only previously eligible donor,
+mizzenstay **6**. Its mainmast halyard fallback remains available, but it has no
+authored sheet pair. Shroud pairs **6/7** and **8/9** also lose donors **24/25**
+that belong to different physical mast pairs; neither gains a native replacement
+in the installed boat bundle. These are dependency-capacity findings, not
+measured live placements. SE-equipped Jong, Junk, Sanbuq, Cog, Kakam and Dhow
+also depend on runtime-added native prerequisites; serialized SE dependency
+lists alone do not establish their final donor capacity. Runtime selection reads
+the completed live graph and does not add exceptions for missing pair
+dependencies.
 
 ### Controller lifetime during cleanup
 
@@ -849,18 +882,31 @@ Occupancy and support checks remain live, and pose changes rebuild alias lookup.
 
 Alternative placement searches run on initial allocation, invalidation or
 exhaustion retry. Retained placements check only the selected donor's live
-dependencies and sails, using the same eligibility predicate as discovery. A
-reference scan preserves membership in the current option inventory without
-traversing unrelated donors. Seat occupancy, source arrays, support and pose
-checks remain live; dependency results are not cached. Authored fallback
-definitions store their identifiers once. Retained sheet fallbacks look up only
-the selected pair and check both contacts against the current boat-local mast
-position; new allocations still enumerate pairs in aft order. Authored seats
-scan coincident native controls directly without a captured predicate, retaining
-live position, rope and visibility checks. Empty coordinators skip discovery.
-Per-boat `HierarchyScans`, `CandidateBuilds` and `EntriesCreated` counters
-measure inspection/allocation activity, not frame time or total managed
-allocations.
+dependencies on both physical masts and its sails, using the same eligibility
+predicate as discovery. A retained cross-pair placement is released and
+reassigned through the normal allocation path. A reference scan preserves
+membership in the current option inventory without traversing unrelated donors.
+Seat occupancy, source arrays, support and pose checks remain live; dependency
+results are not cached. Authored fallback definitions store their identifiers
+once. Retained sheet fallbacks look up only the selected pair and check both
+contacts against the current boat-local mast position; new allocations still
+enumerate pairs in aft order. Authored seats scan coincident native controls
+directly without a captured predicate, retaining live position, rope and
+visibility checks. Empty coordinators skip discovery. Per-boat `HierarchyScans`,
+`CandidateBuilds` and `EntriesCreated` counters measure inspection/allocation
+activity, not frame time or total managed allocations.
+
+### Brig reef fallbacks
+
+[BrigControls.cs](../src/Controls/Configuration/Boats/BrigControls.cs) defines
+fallbacks for both mainmast variants (**5/4**) and both mizzen variants
+(**7/6**). The latest session's F9 captures **#2/#3** supply main mast 1
+(`mast_Back_0`) and mizzen mast 1 (`mast_mizzen_0`); the earlier mast 2 captures
+remain in use. Each preserves its captured contact and normal and clones the
+requested mast's `reefWinch[0]`. Installed local +Z points along boat -X; the
+coiled rope rear bound **-0.13091201 m** and native main/mizzen scales
+**1.0/0.9** give mounting depths **0.13091201/0.11782080 m**. Topmast requests
+resolve to their physical base. Native seats take priority for new allocations.
 
 ### Gloriana reef fallbacks
 
@@ -906,7 +952,9 @@ fallback controls unavailable through the existing hide/retry path. Native
 allocations and halyard templates are unaffected; no saved placement data or
 migration is introduced.
 
-Authored pairs are **Shroud / ForemastFallback**,
+Authored pairs are **Brig / MainmastFallback and MizzenmastFallback**, **Shroud
+/ ForemastFallback**,
+[Chronian / MainmastFallback and MizzenmastFallback](#chronian-oldchronian),
 [Kakam / MainmastFallback](#kakam-aft-controls), and
 [Caelanor / MainmastFallback](#caelanor-oldchronian). Their names preserve
 diagnostic identity and no longer select a forward-mast category. Eligibility
@@ -1027,6 +1075,26 @@ placement searches.
 
 ### Automated baseline and limits
 
+The **2026-10-16** native donor pair restriction retains plugin/runtime version
+**0.3.0**. Release built with zero warnings/errors; GeometryChecks and
+AssemblyChecks passed. Executed checks cover both endpoint dependencies, topmast
+chains, cycles, missing endpoints, Chronian's separate donor pairs, one
+traversal per option, and release/reallocation of a cross-pair claim. Structural
+checks cover normalization of both mast sections, forwarding both physical masts
+through allocation and retention, identical-endpoint rejection, and shared live
+donor eligibility. The installed dependency-capacity findings are recorded in
+[Dependency and mounting audit](#dependency-and-mounting-audit).
+
+The Chronian captured-control update retains plugin/runtime version **0.3.0**.
+Release built with zero warnings/errors; GeometryChecks and AssemblyChecks
+passed. Checks cover mirrored sheet contacts, normals and offset positions, aft
+eligibility against the installed mainmast and mizzen origins, and fourteen
+authored reef fallback templates across the boat profiles.
+
+The Brig main mast 1 and mizzen mast 1 halyard additions retain plugin/runtime
+version **0.3.0**. Release built with zero warnings/errors; GeometryChecks and
+AssemblyChecks passed, including all twelve authored reef fallback templates.
+
 The **2026-10-16** stay winch update retains plugin/runtime version **0.3.0**.
 Release built with zero warnings/errors; GeometryChecks and AssemblyChecks
 passed. Executed snapshot checks cover source mutation, fresh captures, empty
@@ -1049,24 +1117,24 @@ including baked rope endpoints across **103** configurations, fixed rope
 cross-section and authored collar sizing. AssemblyChecks passed, including baked
 construction without stay colliders, retained walking-model frame, lantern
 material reuse, owned mesh cleanup and removal of legacy donor geometry helpers.
-The updated asset was rebaked with a **1 m** reference rope and **0.10 m** band
-height. Blender **5.1.1** regression and freshness checks passed for Solidify
-thickness, UV seams, flat shading, canonical dimensions, malformed input
-rejection and source-file preservation. The existing dimension-driven fitting
-consumes the new bake without additional runtime logic. Release and both .NET
-check suites passed again with the updated measurements. The collar fit revision
-adds measured radii and seating offsets for all **206** bands across those
-configurations. The Dhow aft band's inner radius is **0.08083 m**, replacing the
-**0.20 m** capsule radius; the measured wood radius is **0.08183 m**. Release,
-GeometryChecks and AssemblyChecks passed, including Dhow centering, complete
-Brig masthead-band seating and rejection of capsule-radius sizing in the visual.
-The registry mesh-sharing revision also passed Release with zero warnings/errors
-and both check suites. Assembly checks cover the instance-owned mesh pair,
-initialization guard, ownership before channel population, cleanup in rollback
-and teardown finalizers, cleared mesh fields and borrowed visual meshes.
-Geometry checks retain baked channels, independent generated arrays and authored
-placement. These are structural ownership checks, not Unity lifecycle execution
-or loading-time measurements.
+The updated asset was rebaked with a **1 m** reference rope, **0.04 m** rope
+diameter and **0.10 m** band height. Blender **5.1.1** regression and freshness
+checks passed for Solidify thickness, UV seams, flat shading, canonical
+dimensions, malformed input rejection and source-file preservation. The existing
+dimension-driven fitting consumes the new bake without additional runtime logic.
+Release and both .NET check suites passed again with the updated measurements.
+The collar fit revision adds measured radii and seating offsets for all **206**
+bands across those configurations. The Dhow aft band's inner radius is **0.08083
+m**, replacing the **0.20 m** capsule radius; the measured wood radius is
+**0.08183 m**. Release, GeometryChecks and AssemblyChecks passed, including Dhow
+centering, complete Brig masthead-band seating and rejection of capsule-radius
+sizing in the visual. The registry mesh-sharing revision also passed Release
+with zero warnings/errors and both check suites. Assembly checks cover the
+instance-owned mesh pair, initialization guard, ownership before channel
+population, cleanup in rollback and teardown finalizers, cleared mesh fields and
+borrowed visual meshes. Geometry checks retain baked channels, independent
+generated arrays and authored placement. These are structural ownership checks,
+not Unity lifecycle execution or loading-time measurements.
 
 The Caelanor captured-control fallbacks retain plugin/runtime version **0.3.0**.
 Release build passed with zero warnings/errors, both check suites passed

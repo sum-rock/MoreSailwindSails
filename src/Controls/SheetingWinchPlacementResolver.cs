@@ -1,4 +1,4 @@
-// Allocates complete sheet pairs from aft-mast dependencies, then authored positions moving aft.
+// Allocates complete sheet pairs from matching physical mast pairs, then authored positions moving aft.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,7 +24,7 @@ namespace MoreSailwindSails.Controls
                 mastZ: native.Boat.transform.InverseTransformPoint(requested.transform.position).z
             );
 
-        internal bool ValidateCurrent(Mast requested, NativeWinchCandidate current)
+        internal bool ValidateCurrent(Mast forward, Mast requested, NativeWinchCandidate current)
         {
             if (current == null || !native.ActiveSupport(mast: requested))
                 return false;
@@ -53,7 +53,7 @@ namespace MoreSailwindSails.Controls
             var mast = current.SourceMast;
             int index = current.SourceIndex;
             return mast
-                && native.IsStaySource(source: mast, requested: requested)
+                && native.IsStaySource(source: mast, forward: forward, requested: requested)
                 && mast.leftAngleWinch != null
                 && mast.rightAngleWinch != null
                 && index >= 0
@@ -80,12 +80,17 @@ namespace MoreSailwindSails.Controls
                     .MatchesPose(position: definition.Position, rotation: definition.Rotation);
         }
 
-        internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
+        internal WinchResolution Resolve(
+            object owner,
+            Mast forward,
+            Mast requested,
+            WinchCandidate current
+        )
         {
             var pairs = new List<NativeWinchCandidate>();
             if (native.ActiveSupport(mast: requested))
             {
-                foreach (var mast in native.StaySources(requested: requested))
+                foreach (var mast in native.StaySources(forward: forward, requested: requested))
                 {
                     var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
                     var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();

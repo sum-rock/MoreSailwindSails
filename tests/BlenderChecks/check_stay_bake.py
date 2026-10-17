@@ -28,7 +28,7 @@ def near(actual, expected):
 rope = extract(name="Rope", rope=True)
 collar = extract(name="ForestayCollar", rope=False)
 near(rope["dimensions"]["RopeLength"], 1)
-near(rope["dimensions"]["RopeRadius"], 0.01)
+near(rope["dimensions"]["RopeRadius"], 0.02)
 near(collar["dimensions"]["CollarInnerRadius"], 0.2037)
 near(collar["dimensions"]["CollarOuterRadius"], 0.21)
 near(collar["dimensions"]["CollarHalfHeight"], 0.05)
@@ -146,7 +146,7 @@ edit_case(
 def check_scaled_rope():
     data = extract(name="Rope", rope=True)
     near(data["dimensions"]["RopeLength"], 2)
-    near(data["dimensions"]["RopeRadius"], 0.01)
+    near(data["dimensions"]["RopeRadius"], 0.02)
 
 
 edit_case(

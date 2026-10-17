@@ -153,34 +153,51 @@ namespace MoreSailwindSails.Controls
                 ? Mast(id: Profile.Boat.Base(section: section.orderIndex))
                 : section;
 
-        internal IEnumerable<Mast> StaySources(Mast requested)
+        internal IEnumerable<Mast> StaySources(Mast forward, Mast requested)
         {
-            if (!requested)
+            if (!forward || !requested || forward == requested)
                 yield break;
             foreach (var option in options)
             {
                 if (!option)
                     continue;
                 var source = option.GetComponent<Mast>();
-                if (EligibleStaySource(option: option, source: source, requested: requested))
+                if (
+                    EligibleStaySource(
+                        option: option,
+                        source: source,
+                        forward: forward,
+                        requested: requested
+                    )
+                )
                     yield return source;
             }
         }
 
         // Retention checks only the selected donor against the current inventory.
-        internal bool IsStaySource(Mast source, Mast requested)
+        internal bool IsStaySource(Mast source, Mast forward, Mast requested)
         {
-            if (!source || !requested)
+            if (!source || !forward || !requested || forward == requested)
                 return false;
             var option = source.GetComponent<BoatPartOption>();
             return option
                 && Array.IndexOf(array: options, value: option) >= 0
                 && option.GetComponent<Mast>() == source
-                && EligibleStaySource(option: option, source: source, requested: requested);
+                && EligibleStaySource(
+                    option: option,
+                    source: source,
+                    forward: forward,
+                    requested: requested
+                );
         }
 
         // Discovery and retention must apply identical live donor rules.
-        private bool EligibleStaySource(BoatPartOption option, Mast source, Mast requested)
+        private bool EligibleStaySource(
+            BoatPartOption option,
+            Mast source,
+            Mast forward,
+            Mast requested
+        )
         {
             if (
                 !source
@@ -189,10 +206,13 @@ namespace MoreSailwindSails.Controls
                 || (source.sails != null && source.sails.Any(sail => sail))
             )
                 return false;
-            return StayDependencies.Reaches(
+            return StayDependencies.ReachesBoth(
                 option: option,
                 requires: current => current ? current.requires : null,
-                matches: dependency => dependency && dependency.GetComponent<Mast>() == requested
+                matchesFirst: dependency =>
+                    dependency && dependency.GetComponent<Mast>() == forward,
+                matchesSecond: dependency =>
+                    dependency && dependency.GetComponent<Mast>() == requested
             );
         }
 

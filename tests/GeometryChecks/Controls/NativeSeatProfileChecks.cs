@@ -32,8 +32,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 3,
-            "Preserve the three authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 7,
+            "Preserve the seven authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
@@ -70,16 +70,36 @@ internal static class NativeSeatProfileChecks
         var caelanor = CaelanorControls.Definition;
         var caelanorPair = caelanor.SheetFallbacks.Single().Fallback;
         Vector3 Reflect(Vector3 value) => new Vector3(-value.x, value.y, value.z);
+        foreach (
+            var pair in BrigControls
+                .Definition.SheetFallbacks.Select(definition => definition.Fallback)
+                .Append(caelanorPair)
+                .Concat(
+                    ChronianControls.Definition.SheetFallbacks.Select(definition =>
+                        definition.Fallback
+                    )
+                )
+        )
+            Check(
+                (pair.Port.Contact - Reflect(pair.Starboard.Contact)).magnitude < 0.000001f
+                    && (pair.Port.Normal - Reflect(pair.Starboard.Normal)).magnitude < 0.000001f
+                    && (pair.Port.Position - Reflect(pair.Starboard.Position)).magnitude < 0.000001f
+                    && pair.Port.Contact.x < 0
+                    && pair.Starboard.Contact.x > 0,
+                "Brig, Caelanor and Chronian sheet contacts, mounting offsets and normals must mirror at the deck centreline."
+            );
         Check(
-            (caelanorPair.Port.Contact - Reflect(caelanorPair.Starboard.Contact)).magnitude
-                < 0.000001f
-                && (caelanorPair.Port.Normal - Reflect(caelanorPair.Starboard.Normal)).magnitude
-                    < 0.000001f
-                && (caelanorPair.Port.Position - Reflect(caelanorPair.Starboard.Position)).magnitude
-                    < 0.000001f
-                && caelanorPair.Port.Contact.x < 0
-                && caelanorPair.Starboard.Contact.x > 0,
-            "Caelanor sheet contacts, mounting offsets and normals must mirror at the deck centreline."
+            SheetFallbackOrder
+                .FromMast(fallbacks: ChronianControls.Definition.SheetFallbacks, mastZ: -2.7997803f)
+                .Count() == 2
+                && SheetFallbackOrder
+                    .FromMast(
+                        fallbacks: ChronianControls.Definition.SheetFallbacks,
+                        mastZ: -12.799802f
+                    )
+                    .Single()
+                    .Name == "Mizzenmast",
+            "Both Chronian sheet pairs must be aft of its mainmast; only the mizzen pair is aft of its mizzen."
         );
         var reef = caelanor.HalyardFallbacks.Single();
         Check(
