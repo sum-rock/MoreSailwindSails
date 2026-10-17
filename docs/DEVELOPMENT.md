@@ -862,6 +862,18 @@ Per-boat `HierarchyScans`, `CandidateBuilds` and `EntriesCreated` counters
 measure inspection/allocation activity, not frame time or total managed
 allocations.
 
+### Brig reef fallbacks
+
+[BrigControls.cs](../src/Controls/Configuration/Boats/BrigControls.cs) defines
+fallbacks for both mainmast variants (**5/4**) and both mizzen variants
+(**7/6**). The latest session's F9 captures **#2/#3** supply main mast 1
+(`mast_Back_0`) and mizzen mast 1 (`mast_mizzen_0`); the earlier mast 2 captures
+remain in use. Each preserves its captured contact and normal and clones the
+requested mast's `reefWinch[0]`. Installed local +Z points along boat -X; the
+coiled rope rear bound **-0.13091201 m** and native main/mizzen scales
+**1.0/0.9** give mounting depths **0.13091201/0.11782080 m**. Topmast requests
+resolve to their physical base. Native seats take priority for new allocations.
+
 ### Gloriana reef fallbacks
 
 [GlorianaControls.cs](../src/Controls/Configuration/Boats/GlorianaControls.cs)
@@ -1026,6 +1038,10 @@ placement searches.
 ## Validation records
 
 ### Automated baseline and limits
+
+The Brig main mast 1 and mizzen mast 1 halyard additions retain plugin/runtime
+version **0.3.0**. Release built with zero warnings/errors; GeometryChecks and
+AssemblyChecks passed, including all twelve authored reef fallback templates.
 
 The **2026-10-16** stay winch update retains plugin/runtime version **0.3.0**.
 Release built with zero warnings/errors; GeometryChecks and AssemblyChecks
