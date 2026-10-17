@@ -762,11 +762,15 @@ use mount-owned cloned controls, with runtime placement claims shared per boat.
   zero. Its reef/left/right arrays expose the owned clones for custom or vanilla
   sails. The sail rigs retain custom guides, geometry and travel limits, without
   owning another set of winches or filtering the native sail list.
-- Resolve the stay's aft section to its physical base mast. Enumerate
+- Resolve both stay sections to their physical base masts, retaining the
+  original forward section for diagnostics. Enumerate
   `BoatCustomParts.availableParts` and each `partOptions` array in registration
   order, including inactive options. Donors must have `Mast.onlyStaysails`, be
   outside our stay registry and carry no sails. Follow `requires` transitively
-  to the aft physical mast, tracking visited options to terminate cycles.
+  to **both** physical masts in one traversal, tracking visited options to
+  terminate cycles. Missing or identical endpoints cannot supply native donors.
+  Base and topmast stays on the same physical pair are eligible; a stay sharing
+  only one mast is excluded.
 - Within each eligible stay, inspect arrays in order. Sheets require complete
   left/right entries at the same index; centre controls are not candidates.
   Reefing controls are selected separately. A donor need not be installed, but
@@ -830,9 +834,22 @@ those lists. They are excluded by the specified dependency rule. Short main
 controls without an eligible authored fallback remain unavailable. No guessed
 endpoint or hardcoded source exception was added.
 
-Sources can now belong to either endpoint of a native stay associated with the
-aft mast. This changes the former forward-mast sheet categories. The audit
-records references and dependency paths.
+The **2026-10-16** pair-filter audit re-read installed `level24` and the active
+bundles under `BepInEx/plugins/`. Chronian fore/main (**2/4**) now accepts only
+stays **11/12**, while main/mizzen (**4/6**) accepts **13/14**. Brig fore/main,
+Junk, Jong and Large Dhow similarly lose donors belonging to another mast pair;
+their matching native donors remain candidates, subject to live occupancy.
+
+Gloriana fore/main (**1/2**) loses its only previously eligible donor,
+mizzenstay **6**. Its mainmast halyard fallback remains available, but it has no
+authored sheet pair. Shroud pairs **6/7** and **8/9** also lose donors **24/25**
+that belong to different physical mast pairs; neither gains a native replacement
+in the installed boat bundle. These are dependency-capacity findings, not
+measured live placements. SE-equipped Jong, Junk, Sanbuq, Cog, Kakam and Dhow
+also depend on runtime-added native prerequisites; serialized SE dependency
+lists alone do not establish their final donor capacity. Runtime selection reads
+the completed live graph and does not add exceptions for missing pair
+dependencies.
 
 ### Controller lifetime during cleanup
 
@@ -865,18 +882,19 @@ Occupancy and support checks remain live, and pose changes rebuild alias lookup.
 
 Alternative placement searches run on initial allocation, invalidation or
 exhaustion retry. Retained placements check only the selected donor's live
-dependencies and sails, using the same eligibility predicate as discovery. A
-reference scan preserves membership in the current option inventory without
-traversing unrelated donors. Seat occupancy, source arrays, support and pose
-checks remain live; dependency results are not cached. Authored fallback
-definitions store their identifiers once. Retained sheet fallbacks look up only
-the selected pair and check both contacts against the current boat-local mast
-position; new allocations still enumerate pairs in aft order. Authored seats
-scan coincident native controls directly without a captured predicate, retaining
-live position, rope and visibility checks. Empty coordinators skip discovery.
-Per-boat `HierarchyScans`, `CandidateBuilds` and `EntriesCreated` counters
-measure inspection/allocation activity, not frame time or total managed
-allocations.
+dependencies on both physical masts and its sails, using the same eligibility
+predicate as discovery. A retained cross-pair placement is released and
+reassigned through the normal allocation path. A reference scan preserves
+membership in the current option inventory without traversing unrelated donors.
+Seat occupancy, source arrays, support and pose checks remain live; dependency
+results are not cached. Authored fallback definitions store their identifiers
+once. Retained sheet fallbacks look up only the selected pair and check both
+contacts against the current boat-local mast position; new allocations still
+enumerate pairs in aft order. Authored seats scan coincident native controls
+directly without a captured predicate, retaining live position, rope and
+visibility checks. Empty coordinators skip discovery. Per-boat `HierarchyScans`,
+`CandidateBuilds` and `EntriesCreated` counters measure inspection/allocation
+activity, not frame time or total managed allocations.
 
 ### Brig reef fallbacks
 
@@ -1056,6 +1074,16 @@ placement searches.
 ## Validation records
 
 ### Automated baseline and limits
+
+The **2026-10-16** native donor pair restriction retains plugin/runtime version
+**0.3.0**. Release built with zero warnings/errors; GeometryChecks and
+AssemblyChecks passed. Executed checks cover both endpoint dependencies, topmast
+chains, cycles, missing endpoints, Chronian's separate donor pairs, one
+traversal per option, and release/reallocation of a cross-pair claim. Structural
+checks cover normalization of both mast sections, forwarding both physical masts
+through allocation and retention, identical-endpoint rejection, and shared live
+donor eligibility. The installed dependency-capacity findings are recorded in
+[Dependency and mounting audit](#dependency-and-mounting-audit).
 
 The Chronian captured-control update retains plugin/runtime version **0.3.0**.
 Release built with zero warnings/errors; GeometryChecks and AssemblyChecks

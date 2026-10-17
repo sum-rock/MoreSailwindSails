@@ -22,21 +22,116 @@ internal static class StayDependencyChecks
             ["unrelated"] = new[] { "fore", "loop" },
             ["loop"] = new[] { "unrelated", null },
         };
-        bool Reaches(string option, string mast) =>
-            StayDependencies.Reaches(
+        bool Matches(string option, string fore, string aft) =>
+            StayDependencies.ReachesBoth(
                 option: option,
                 requires: current => graph[current],
-                matches: current => current == mast
+                matchesFirst: current => current == fore,
+                matchesSecond: current => current == aft
             );
         Check(
-            Reaches("inactive stay", "aft") && Reaches("inactive stay", "fore"),
-            "Dependencies through topmasts or another endpoint were lost."
+            Matches("inactive stay", "fore", "aft")
+                && Matches("inactive stay", "aft", "fore")
+                && Matches("inactive stay", "top", "aft"),
+            "Both mast dependencies must be reachable, including below an already matched section."
         );
         Check(
-            Reaches("cycle", "aft") && !Reaches("unrelated", "aft"),
-            "Cycles must terminate without hiding reachable support."
+            Matches("cycle", "fore", "aft")
+                && !Matches("unrelated", "fore", "aft")
+                && !Matches("inactive stay", "missing", "aft")
+                && !Matches("inactive stay", "fore", "missing")
+                && !Matches(null, "fore", "aft"),
+            "Cycles must terminate and one missing endpoint must reject the donor."
         );
-        Check(!Reaches("aft", "aft"), "The option itself is not a dependency.");
+        Check(
+            !Matches("inactive stay", "inactive stay", "aft"),
+            "The source itself is not a mast dependency."
+        );
+        // Installed Chronian dependencies, including each top section's physical base.
+        graph["mizzen"] = Array.Empty<string>();
+        graph["fore top"] = new[] { "fore" };
+        graph["mizzen top"] = new[] { "mizzen" };
+        graph["11"] = new[] { "fore", "aft" };
+        graph["12"] = new[] { "fore top", "top" };
+        graph["13"] = new[] { "aft", "mizzen" };
+        graph["14"] = new[] { "top", "mizzen top" };
+        var chronian = new[] { "11", "12", "13", "14" };
+        Check(
+            chronian.Where(id => Matches(id, "fore", "aft")).SequenceEqual(new[] { "11", "12" })
+                && chronian
+                    .Where(id => Matches(id, "aft", "mizzen"))
+                    .SequenceEqual(new[] { "13", "14" }),
+            "Chronian must separate fore/main donors from main/mizzen donors."
+        );
+        var visits = new Dictionary<string, int>();
+        Check(
+            !StayDependencies.ReachesBoth(
+                option: "cycle",
+                requires: node =>
+                {
+                    visits[node] = visits.GetValueOrDefault(node) + 1;
+                    return graph[node];
+                },
+                matchesFirst: node => node == "fore",
+                matchesSecond: node => node == "missing"
+            ) && visits.Values.All(count => count == 1),
+            "Both targets must share one cycle-safe traversal."
+        );
+        var pairLedger = new WinchReservations();
+        var wrongPair = new WinchCandidate
+        {
+            Id = "14",
+            Supported = true,
+            Vacant = true,
+            Seats = new[]
+            {
+                new WinchSeat(
+                    identity: "royalstay",
+                    aliases: null,
+                    position: Vector3.zero,
+                    rotation: Quaternion.identity
+                ),
+            },
+        };
+        var authored = new WinchCandidate
+        {
+            Id = "main fallback",
+            Fallback = true,
+            Supported = true,
+            Vacant = true,
+            Seats = new[]
+            {
+                new WinchSeat(
+                    identity: "main fallback",
+                    aliases: null,
+                    position: Vector3.right,
+                    rotation: Quaternion.identity
+                ),
+            },
+        };
+        var pairOwner = new object();
+        pairLedger.TryAcquireSeats(owner: pairOwner, seats: wrongPair.Seats);
+        Check(
+            !WinchPlacementPolicy.TryRetain(
+                ledger: pairLedger,
+                owner: pairOwner,
+                current: wrongPair,
+                valid: Matches(wrongPair.Id, "fore", "aft")
+            )
+                && WinchPlacementPolicy
+                    .Resolve(
+                        ledger: pairLedger,
+                        owner: pairOwner,
+                        current: wrongPair,
+                        native: new[] { wrongPair }
+                            .Where(candidate => Matches(candidate.Id, "fore", "aft"))
+                            .ToArray(),
+                        fallback: authored
+                    )
+                    .Candidate == authored
+                && !pairLedger.HoldsSeats(owner: pairOwner, seats: wrongPair.Seats),
+            "A retained cross-pair donor must release its claim and allow the authored fallback."
+        );
         SheetFallbackSeat Side(float x, float z) =>
             new SheetFallbackSeat(contact: new Vector3(x, 2, z), normal: Vector3.up);
         SheetFallbackDefinition Pair(string name, float z, float otherZ) =>

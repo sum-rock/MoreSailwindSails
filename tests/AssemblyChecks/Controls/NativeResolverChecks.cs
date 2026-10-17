@@ -82,6 +82,16 @@ internal static class NativeResolverChecks
         )
         {
             var validate = Type(resolver).GetMethod("ValidateCurrent", flags);
+            foreach (var method in new[] { validate, Type(resolver).GetMethod("Resolve", flags) })
+                Check(
+                    method
+                        .GetParameters()
+                        .Any(p => p.Name == "forward" && p.ParameterType.Name == "Mast")
+                        && method
+                            .GetParameters()
+                            .Any(p => p.Name == "requested" && p.ParameterType.Name == "Mast"),
+                    "Allocation and retention must receive both physical masts."
+                );
             Check(
                 CalledMethods(validate).Any(m => m.Name == "Current")
                     && CalledMethods(validate).Any(m => m.Name == "IsStaySource")
@@ -91,6 +101,13 @@ internal static class NativeResolverChecks
             );
         }
         var manager = Type("FishermanWinchControls");
+        var configure = manager.GetMethod("Configure", flags);
+        Check(
+            CalledMethods(configure).Count(m => m.Name == "PhysicalMast") == 2
+                && Instructions(configure)
+                    .Any(i => i.Operand is FieldInfo f && f.Name == "ForwardBase"),
+            "Both mast sections must resolve to physical bases when the group is configured."
+        );
         var tick = manager.GetMethod("LateUpdate", flags);
         var instructions = Instructions(tick).ToArray();
         int firstReturn = Array.FindIndex(
@@ -113,6 +130,11 @@ internal static class NativeResolverChecks
         var groupRefresh = group
             .GetMethods(flags)
             .Single(m => m.Name == "Refresh" && m.GetParameters().Length == 3);
+        Check(
+            Instructions(groupRefresh)
+                .Count(i => i.Operand is FieldInfo f && f.Name == "ForwardBase") == 4,
+            "Both resolvers must receive the forward base for allocation and retention."
+        );
         var groupCalls = CalledMethods(groupRefresh).ToArray();
         Check(
             Array.FindIndex(groupCalls, m => m.Name == "TryRetain")
@@ -164,6 +186,14 @@ internal static class NativeResolverChecks
         var moveNext = iteratorType.GetMethod("MoveNext", flags);
         var selected = native.GetMethod("IsStaySource", flags);
         var eligibility = native.GetMethod("EligibleStaySource", flags);
+        foreach (var entry in new[] { moveNext, selected })
+            Check(
+                CalledMethods(entry)
+                    .Any(m =>
+                        m.Name == "op_Equality" && m.DeclaringType.FullName == "UnityEngine.Object"
+                    ),
+                "Native donor search and retention must reject a pair with identical endpoints."
+            );
         Check(
             CalledMethods(moveNext).Any(m => m == eligibility)
                 && CalledMethods(selected).Any(m => m == eligibility)
@@ -173,7 +203,7 @@ internal static class NativeResolverChecks
                 && !CalledMethods(selected).Any(m => m.Name == "StaySources"),
             "Discovery and retention must share live eligibility, with selected donors still in the inventory."
         );
-        foreach (string method in new[] { "Reaches", "TryFind", "Any" })
+        foreach (string method in new[] { "ReachesBoth", "TryFind", "Any" })
             Check(
                 CalledMethods(eligibility).Any(m => m.Name == method),
                 "Stay discovery must check dependencies, exclude owned stays and skip sails: "
