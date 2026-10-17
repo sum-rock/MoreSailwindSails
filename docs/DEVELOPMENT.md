@@ -852,9 +852,14 @@ exhaustion retry. Retained placements check only the selected donor's live
 dependencies and sails, using the same eligibility predicate as discovery. A
 reference scan preserves membership in the current option inventory without
 traversing unrelated donors. Seat occupancy, source arrays, support and pose
-checks remain live; dependency results are not cached. Empty coordinators skip
-discovery. Per-boat `HierarchyScans`, `CandidateBuilds` and `EntriesCreated`
-counters measure inspection/allocation activity, not frame time or total managed
+checks remain live; dependency results are not cached. Authored fallback
+definitions store their identifiers once. Retained sheet fallbacks look up only
+the selected pair and check both contacts against the current boat-local mast
+position; new allocations still enumerate pairs in aft order. Authored seats
+scan coincident native controls directly without a captured predicate, retaining
+live position, rope and visibility checks. Empty coordinators skip discovery.
+Per-boat `HierarchyScans`, `CandidateBuilds` and `EntriesCreated` counters
+measure inspection/allocation activity, not frame time or total managed
 allocations.
 
 ### Gloriana reef fallbacks
@@ -1028,7 +1033,15 @@ passed. Executed snapshot checks cover source mutation, fresh captures, empty
 captures and **0 allocated bytes across 1,000 warmed copies** on the .NET test
 host. Structural checks cover separate release/refresh snapshots, cleanup,
 selected-donor inventory membership, shared live eligibility and retained seat
-validation. These checks do not measure Unity frame time or Mono allocations.
+validation. The fallback allocation changes also passed Release with zero
+warnings/errors and both suites. Checks preserve exact sheet/halyard
+identifiers, direct lookup equivalence for missing, invalid and forward pairs,
+and immediate response to mast movement across the aft eligibility boundary.
+Direct sheet identifier access and lookup allocated **0 bytes across 10,000
+warmed calls** on the .NET test host. Structural checks confirm direct live
+occupancy scans without captured predicates and stored halyard identifiers in
+creation and retention. These checks do not measure Unity frame time or Mono
+allocations.
 
 The **2026-10-16** authored stay integration retains plugin/runtime version
 **0.3.0**. Release built with zero warnings/errors; GeometryChecks passed,

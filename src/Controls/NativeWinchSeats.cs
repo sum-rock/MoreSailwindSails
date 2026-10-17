@@ -268,11 +268,16 @@ namespace MoreSailwindSails.Controls
         internal bool Available(WinchSeat seat)
         {
             if (seat.Aliases.Length == 0)
-                return !Controls.Any(control =>
-                    control
-                    && (Position(c: control) - seat.Position).sqrMagnitude <= 0.000001f
-                    && Occupied(c: control)
-                );
+            {
+                foreach (var control in Controls)
+                    if (
+                        control
+                        && (Position(c: control) - seat.Position).sqrMagnitude <= 0.000001f
+                        && Occupied(c: control)
+                    )
+                        return false;
+                return true;
+            }
             foreach (var alias in seat.Aliases)
                 if (
                     alias is int id

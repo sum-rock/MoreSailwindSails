@@ -36,6 +36,13 @@ internal static class HalyardProfileChecks
             foreach (var group in BoatControlCatalog.All[i].HalyardFallbacks)
             {
                 if (
+                    group.FallbackId != "halyard-fallback/" + group.Mast
+                    || !ReferenceEquals(group.FallbackId, group.FallbackId)
+                )
+                    throw new Exception(
+                        "Halyard fallback identifiers must retain their value and stored string."
+                    );
+                if (
                     !rows.Any(row =>
                         row[1] == boats[i]
                         && row[3] == group.Mast.ToString()

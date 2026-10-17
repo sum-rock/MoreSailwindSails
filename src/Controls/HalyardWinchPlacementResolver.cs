@@ -23,9 +23,9 @@ namespace MoreSailwindSails.Controls
             if (current.Fallback)
             {
                 var definition = Definition(requested: requested);
-                var template = Template(requested: requested, definition: definition);
+                var template = Template(requested: requested, definition: definition?.Fallback);
                 return template
-                    && current.Id == FallbackId(requested: requested)
+                    && current.Id == definition.FallbackId
                     && current.Templates.Length == 1
                     && current.Templates[0] == template
                     && current.Seats.Length == 1
@@ -33,8 +33,8 @@ namespace MoreSailwindSails.Controls
                     && current
                         .Seats[0]
                         .MatchesPose(
-                            position: definition.Position,
-                            rotation: definition.Rotation(
+                            position: definition.Fallback.Position,
+                            rotation: definition.Fallback.Rotation(
                                 templateRotation: native.Rotation(c: template)
                             )
                         );
@@ -89,15 +89,12 @@ namespace MoreSailwindSails.Controls
             return result;
         }
 
-        private HalyardFallbackSeat Definition(Mast requested) =>
+        private HalyardFallbackDefinition Definition(Mast requested) =>
             requested
-                ? native
-                    .Profile?.HalyardFallbacks.FirstOrDefault(g => g.Mast == requested.orderIndex)
-                    ?.Fallback
+                ? native.Profile?.HalyardFallbacks.FirstOrDefault(g =>
+                    g.Mast == requested.orderIndex
+                )
                 : null;
-
-        private static string FallbackId(Mast requested) =>
-            "halyard-fallback/" + requested.orderIndex;
 
         private GPButtonRopeWinch Template(Mast requested, HalyardFallbackSeat definition)
         {
@@ -117,21 +114,23 @@ namespace MoreSailwindSails.Controls
         private NativeWinchCandidate Fallback(Mast requested)
         {
             var definition = Definition(requested: requested);
-            var template = Template(requested: requested, definition: definition);
+            var template = Template(requested: requested, definition: definition?.Fallback);
             if (!template)
                 return null;
-            string id = FallbackId(requested: requested);
+            string id = definition.FallbackId;
             var seat = new WinchSeat(
                 identity: id,
                 aliases: null,
-                position: definition.Position,
-                rotation: definition.Rotation(templateRotation: native.Rotation(c: template))
+                position: definition.Fallback.Position,
+                rotation: definition.Fallback.Rotation(
+                    templateRotation: native.Rotation(c: template)
+                )
             );
             return new NativeWinchCandidate
             {
                 Id = id,
                 Context =
-                    $"requestedMast={requested.orderIndex}, templateRig={requested.orderIndex}, index={definition.TemplateIndex}",
+                    $"requestedMast={requested.orderIndex}, templateRig={requested.orderIndex}, index={definition.Fallback.TemplateIndex}",
                 Fallback = true,
                 Templates = new[] { template },
                 Seats = new[] { seat },

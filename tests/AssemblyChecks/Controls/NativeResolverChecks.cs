@@ -59,9 +59,19 @@ internal static class NativeResolverChecks
                 CalledMethods(current).Any(m => m.Name == check),
                 "Current placement misses live " + check
             );
+        var available = native.GetMethod("Available", flags);
+        var availableCalls = CalledMethods(available).ToArray();
         Check(
-            CalledMethods(native.GetMethod("Available", flags)).Any(m => m.Name == "Occupied"),
-            "Alias occupancy is frozen between discovery scans."
+            availableCalls.Any(m => m.Name == "Occupied")
+                && availableCalls.Any(m => m.Name == "Position")
+                && availableCalls.Any(m => m.Name == "TryGetValue")
+                && availableCalls.Any(m =>
+                    m.Name == "op_Implicit" && m.DeclaringType.FullName == "UnityEngine.Object"
+                )
+                && !availableCalls.Any(m => m.DeclaringType == typeof(Enumerable))
+                && !Instructions(available)
+                    .Any(i => i.Code == System.Reflection.Emit.OpCodes.Newobj),
+            "Occupancy must scan live controls and cached aliases without LINQ or captured predicates."
         );
         foreach (
             string resolver in new[]
@@ -123,6 +133,11 @@ internal static class NativeResolverChecks
         var halyardValidate = Type("HalyardWinchPlacementResolver")
             .GetMethod("ValidateCurrent", flags);
         var halyardFallback = Type("HalyardWinchPlacementResolver").GetMethod("Fallback", flags);
+        foreach (var method in new[] { halyardValidate, halyardFallback })
+            Check(
+                CalledMethods(method).Any(m => m.Name == "get_FallbackId"),
+                "Halyard creation and retention must share the authored fallback identifier."
+            );
         Check(
             CalledMethods(halyard).Any(m => m.Name == "Fallback")
                 && CalledMethods(halyard)
@@ -206,6 +221,14 @@ internal static class NativeResolverChecks
             "Sheet resolver bypasses atomic allocation policy."
         );
         var sheetType = Type("SheetingWinchPlacementResolver");
+        var sheetValidateCalls = CalledMethods(sheetType.GetMethod("ValidateCurrent", flags))
+            .ToArray();
+        Check(
+            sheetValidateCalls.Any(m => m.Name == "FindCurrent")
+                && sheetValidateCalls.Any(m => m.Name == "InverseTransformPoint")
+                && !sheetValidateCalls.Any(m => m.Name is "Fallbacks" or "FirstOrDefault"),
+            "Retained sheet fallbacks must look up the selected pair directly using the live mast position."
+        );
         foreach (string method in new[] { "Fallback", "ValidFallbackSide" })
         {
             var calls = CalledMethods(sheetType.GetMethod(method, flags)).ToArray();
