@@ -3,3 +3,7 @@ obj/
 result
 result-*
 __pycache__/
+
+# Blender backup saves; keep the authored .blend files.
+*.blend[0-9]*
+*.blend.*

@@ -12,7 +12,7 @@ internal static class Program
         ProfileChecks.Run();
         NativeAvailabilityChecks.Run();
         StayChecks.Run();
-        CollarChecks.Run();
+        AuthoredMeshChecks.Run();
         Utils.ProfilingChecks.Run();
         Utils.WinchCaptureChecks.Run();
         Utils.WinchMountOverlayChecks.Run();

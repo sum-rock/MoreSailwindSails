@@ -14,24 +14,6 @@ internal static class StayChecks
     internal static void Run()
     {
         var measurements = StaySparMeasurement.Load();
-        // Installed Jong donor 58 has different visual/walking mesh bounds.
-        // Both must map onto the same new stay endpoints without reflection.
-        foreach (var interval in new[] { new[] { -18.125f, 1.149f }, new[] { -18f, 0.872f } })
-        {
-            FishermansStayGeometry.FitAxis(
-                interval[0],
-                interval[1],
-                12f,
-                out float scale,
-                out float offset
-            );
-            Check(
-                scale > 0
-                    && Math.Abs(interval[0] * scale + offset + 12) < 0.00001f
-                    && Math.Abs(interval[1] * scale + offset) < 0.00001f,
-                "Visual and walking rope bounds missed their authored endpoints."
-            );
-        }
         var oldSnapshot = Enumerable.Repeat(1, 20).ToArray();
         Check(
             FishermansStaySaveState.RestoreOption(oldSnapshot, 20) == 0
@@ -134,6 +116,14 @@ internal static class StayChecks
                     );
                 var shifted = new Vector3(150, -12, 78);
                 float span = FishermansStayGeometry.Span(aft, fore);
+                var scale = FishermansStayGeometry.RopeScale(span: span);
+                var bakedFore =
+                    aft - (aft - fore).normalized * (FishermansStayBakedMesh.RopeLength * scale.z);
+                Check(
+                    scale.x == 1 && scale.y == 1 && (bakedFore - fore).magnitude < 0.00001f,
+                    "Baked rope must retain its diameter and meet both authored endpoints."
+                );
+
                 Check(
                     Math.Abs(
                         span
@@ -198,17 +188,19 @@ internal static class StayChecks
         var sample = brig[0];
         Reject(() =>
             new FishermansStayVariantDefinition(
-                128,
-                15,
-                "bad",
-                3,
-                Vector3.zero,
-                5,
-                Vector3.zero,
-                false,
-                0,
-                new[] { 3, 5 },
-                new[] { 5 }
+                mountIndex: 128,
+                donor: 15,
+                label: "bad",
+                fore: 3,
+                forePoint: Vector3.zero,
+                foreCollarRadius: 0.1f,
+                aft: 5,
+                aftPoint: Vector3.zero,
+                aftCollarRadius: 0.1f,
+                extendedGuide: false,
+                guideIndex: 0,
+                required: new[] { 3, 5 },
+                forbidden: new[] { 5 }
             )
         );
         Reject(() =>

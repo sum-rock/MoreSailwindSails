@@ -20,34 +20,23 @@ namespace MoreSailwindSails.Stays.FishermansStay
             return span;
         }
 
-        internal static void FitAxis(
-            float min,
-            float max,
-            float span,
-            out float scale,
-            out float offset
-        )
-        {
-            if (
-                float.IsNaN(min)
-                || float.IsInfinity(min)
-                || float.IsNaN(max)
-                || float.IsInfinity(max)
-                || float.IsNaN(span)
-                || float.IsInfinity(span)
-                || span < 0.25f
-                || max - min < 0.25f
-            )
-                throw new ArgumentException("Invalid stay mesh interval.");
-            scale = span / (max - min);
-            offset = -max * scale;
-        }
+        // Keep the authored cross-section; only the rope's length follows its mounts.
+        internal static Vector3 RopeScale(float span) =>
+            new Vector3(1, 1, span / FishermansStayBakedMesh.RopeLength);
 
-        internal static Vector3 FrameUp(Vector3 donorUp, Vector3 forward)
+        // Existing mast collision dimensions provide a simple, shared sizing rule.
+        internal static Vector3 CollarScale(float radius) =>
+            new Vector3(
+                radius / FishermansStayBakedMesh.CollarInnerRadius,
+                radius / FishermansStayBakedMesh.CollarInnerRadius,
+                1
+            );
+
+        internal static Vector3 FrameUp(Vector3 up, Vector3 forward)
         {
-            var up = donorUp - forward * Vector3.Dot(donorUp, forward);
+            up -= forward * Vector3.Dot(up, forward);
             if (up.sqrMagnitude < 0.001f)
-                throw new ArgumentException("The donor stay has no usable roll reference.");
+                throw new ArgumentException("The stay has no usable roll reference.");
             return up.normalized;
         }
 

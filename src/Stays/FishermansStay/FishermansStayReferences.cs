@@ -91,7 +91,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                             if (!definition.HasRequiredParts(present: masts.ContainsKey))
                                 return unavailable;
                             var donor = masts[definition.Donor];
-                            if (!donor.onlyStaysails || !donor.walkColMast || !boat.walkCol)
+                            if (!donor.onlyStaysails || !boat.walkCol || !boat.boatModel)
                                 throw new InvalidOperationException(
                                     $"Invalid donor {definition.Donor}."
                                 );
