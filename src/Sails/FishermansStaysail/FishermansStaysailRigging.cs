@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using MoreSailwindSails.BoatConfiguration;
+// Binds staysail geometry and controls to the registered stay's endpoints and prerequisites.
 using MoreSailwindSails.Stays.FishermansStay;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -16,19 +13,10 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             internal BoatRefs Boat;
             internal Mast Mount,
                 Fore,
-                Aft,
-                AftBase;
+                Aft;
             internal FishermansStay Stay;
-            internal Mast[] ForeSections,
-                AftSections;
             internal Transform AftGuide;
-            internal bool Active =>
-                Mount
-                && Mount.gameObject.activeInHierarchy
-                && Stay.Available
-                && AftGuide
-                && AftGuide.gameObject.activeInHierarchy
-                && ForeSections.Concat(AftSections).All(m => m && m.gameObject.activeInHierarchy);
+            internal bool Active => Mount && Mount.gameObject.activeInHierarchy && Stay.Available;
         }
 
         internal MountPair Pair { get; private set; }
@@ -61,25 +49,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 return false;
             var refs = stay.References;
             var boat = mount.GetComponentInParent<BoatRefs>();
-            var profile = BoatCatalog.Find(boat.name);
-            int baseId = profile.Base(refs.Aft.orderIndex);
-            var foreSections = profile
-                .Sections(refs.Fore.orderIndex)
-                .Select(id => boat.masts[id])
-                .ToArray();
-            var aftSections = profile
-                .Sections(refs.Aft.orderIndex)
-                .Select(id => boat.masts[id])
-                .ToArray();
-            var aftBase = boat.masts[baseId];
-            if (
-                foreSections.Concat(aftSections).Any(m => !m || !m.gameObject.activeInHierarchy)
-                || !aftBase
-                || !aftBase.gameObject.activeInHierarchy
-                || !refs.Guide
-                || !refs.Guide.gameObject.activeInHierarchy
-            )
-                return false;
             pair = new MountPair
             {
                 Boat = boat,
@@ -87,9 +56,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 Stay = stay,
                 Fore = refs.Fore,
                 Aft = refs.Aft,
-                AftBase = aftBase,
-                ForeSections = foreSections,
-                AftSections = aftSections,
                 AftGuide = refs.Guide,
             };
             return true;
@@ -112,9 +78,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             bool changed =
                 Pair == null
                 || Pair.Mount != resolved.Mount
+                || Pair.Fore != resolved.Fore
                 || Pair.Aft != resolved.Aft
-                || Pair.AftGuide != resolved.AftGuide
-                || Pair.AftBase != resolved.AftBase;
+                || Pair.AftGuide != resolved.AftGuide;
             controlsDirty |= changed;
             Pair = resolved;
             bindingDirty = false;
@@ -264,14 +230,20 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         internal bool DependsOn(BoatPartOption option)
         {
-            if (Pair == null)
+            if (Pair == null || !option)
                 return false;
-            return new[] { Pair.Mount }
-                .Concat(Pair.ForeSections)
-                .Concat(Pair.AftSections)
-                .Any(m =>
-                    m && (m.GetComponent<BoatPartOption>() == option || option.childMast == m)
-                );
+            if (Pair.Mount && (Pair.Stay.Option == option || option.childMast == Pair.Mount))
+                return true;
+            foreach (var required in Pair.Stay.References.Required)
+                if (
+                    required
+                    && (
+                        required == option
+                        || (option.childMast && required.GetComponent<Mast>() == option.childMast)
+                    )
+                )
+                    return true;
+            return false;
         }
 
         private void OnDestroy()

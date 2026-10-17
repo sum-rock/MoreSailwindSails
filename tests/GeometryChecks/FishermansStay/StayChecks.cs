@@ -127,6 +127,11 @@ internal static class StayChecks
                     stay.Required.Contains(stay.Fore) && stay.Required.Contains(stay.Aft),
                     "Missing supporting section dependency."
                 );
+                foreach (int endpoint in new[] { stay.Fore, stay.Aft })
+                    Check(
+                        masts[endpoint].Parents.All(stay.Required.Contains),
+                        $"Stay {boat.BoatName}/{stay.MountIndex} omitted a supporting mast prerequisite."
+                    );
                 var shifted = new Vector3(150, -12, 78);
                 float span = FishermansStayGeometry.Span(aft, fore);
                 Check(

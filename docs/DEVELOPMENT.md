@@ -164,10 +164,10 @@ feature. Catalogs share exact boat-name matching and trailing `(Clone)`
 normalization. Keep one file per boat inside each configuration directory’s
 `Boats/` subdirectory, with matching `.Configuration.Boats` namespaces. Catalogs
 and definition types stay directly in `Configuration/`. New sail families own
-only the configuration they need; fisherman’s staysails currently use registered
-stays and shared mast ancestry without another per-boat profile. Preserve
-authored ordering, IDs and values when moving configuration, since stay option
-positions are saved.
+only the configuration they need; fisherman’s staysails bind to registered stays
+and use shared mast ancestry for the shared-luff collision exemption without
+another per-boat profile. Preserve authored ordering, IDs and values when moving
+configuration, since stay option positions are saved.
 
 Native integration belongs in each feature's `*SailwindPatches.cs`; staysail
 angle reporting uses `StaysailSailInfoPatches.cs`. Registration follows optional
@@ -485,9 +485,12 @@ needs testing.
 - Bind the reef controller through the stay mount's allocated winch. Route its
   halyard through active aft guides (with **5 cm** separation) and a leaf below
   the top-aft bone. Keep independent lower sheets; no fore halyard or decorative
-  upper sheets. Resolve active aft ancestry without falling back to the fore
-  mast; protect both support chains. Controls reconstruct from the native save
-  slot without migration.
+  upper sheets. Bind directly to the stay's resolved endpoints and guide;
+  availability comes from the active mount and the stay's existing prerequisite
+  and guide checks. Rigging does not resolve or recheck mast ancestry. Removal
+  and preview guards protect the mount and the stay's required parts, retaining
+  the current binding during removal previews. Controls reconstruct from the
+  native save slot without migration.
 - Optional SailInfo integration (inspected against **1.2.1**) reports actual
   mast-relative sheet angle without clamping the label. Keep scope limited to
   custom staysails and preserve settings/force readouts.
@@ -665,8 +668,10 @@ use mount-owned cloned controls, with runtime placement claims shared per boat.
 - Within each eligible stay, inspect arrays in order. Sheets require complete
   left/right entries at the same index; centre controls are not candidates.
   Reefing controls are selected separately. A donor need not be installed, but
-  each control's actual mounting ancestors and the requested mast must be
-  active.
+  each control's mounting parent, containing mast/option and the requested mast
+  must be active in the hierarchy. An active mast or stay implies active
+  supports, both at sea and during shipyard previews; do not traverse authored
+  mast ancestry to recheck activity.
 - Bound ropes block borrowing even when hidden, as do active native renderers or
   colliders. Check shared references and all coincident aliases. Claim sheet
   pairs atomically and reefing positions individually; reference identity and
@@ -703,10 +708,10 @@ changed.
 
 Registered native stays and the modded boat options expose separate control
 references whose mounting parents can remain present when the source stay is
-inactive. Keep the live ancestor checks: an active direct parent alone does not
-establish that the complete support hierarchy is fitted. Shared identities in
-Cog's stays **51/65** and shared positions across mast pairs require the same
-occupancy checks and ledger as different variants.
+inactive. Check the actual mounting objects with `activeInHierarchy`, which
+already includes Unity parent activity. Shared identities in Cog's stays
+**51/65** and shared positions across mast pairs require the same occupancy
+checks and ledger as different variants.
 
 OldChronian's dependencies identify both endpoint groups and transitively
 include lower sections: Gloriana stay **6 → 2,4 → 3**, Chronian stay **12 → 3,5
@@ -937,6 +942,15 @@ passed, including forward-mast compatibility across **103** authored stays, both
 base/topmast directions, and aft/unknown-mast exclusions. AssemblyChecks passed
 against the installed references, including **57** Harmony targets and SailInfo
 signatures. Pinned CSharpier, Prettier, Ruff and diff checks passed.
+
+The **2026-10-16** staysail binding and control activity simplifications retain
+plugin/runtime version **0.3.0**. Release built with zero warnings/errors, and
+GeometryChecks and AssemblyChecks passed against installed references, including
+SailInfo and **57** Harmony targets. Checks confirm prerequisite coverage of
+measured endpoint ancestors across all **103** stay variants, binding through
+stay availability without ancestry lookup, and removal/preview dependency
+wiring. Shared control activity checks use the mount's hierarchy state without
+authored ancestry or inventory lookups; the structural regression check passed.
 
 The **2026-10-15** winch placement simplification retains plugin/runtime version
 **0.3.0**. A Release build passed with zero warnings/errors, GeometryChecks
