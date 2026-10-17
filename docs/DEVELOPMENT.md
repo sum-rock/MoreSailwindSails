@@ -650,7 +650,7 @@ release the pair in `finally` after scene-object cleanup and clear both fields.
 Individual stays destroy only their controls and scene objects; another stay's
 removal cannot destroy shared geometry. Meshes are not shared between boats.
 
-The rope is **1 m** long and **0.02 m** in diameter. Each band has a **0.42 m**
+The rope is **1 m** long and **0.04 m** in diameter. Each band has a **0.42 m**
 outside diameter, approximately **0.4074 m** inside diameter, **0.10 m** axial
 height and **0.0063 m** radial wall thickness. Collar radii describe the mesh's
 vertex rings. Preserve the named `Rope`, `ForestayCollar` and `AftstayCollar`
@@ -1049,24 +1049,24 @@ including baked rope endpoints across **103** configurations, fixed rope
 cross-section and authored collar sizing. AssemblyChecks passed, including baked
 construction without stay colliders, retained walking-model frame, lantern
 material reuse, owned mesh cleanup and removal of legacy donor geometry helpers.
-The updated asset was rebaked with a **1 m** reference rope and **0.10 m** band
-height. Blender **5.1.1** regression and freshness checks passed for Solidify
-thickness, UV seams, flat shading, canonical dimensions, malformed input
-rejection and source-file preservation. The existing dimension-driven fitting
-consumes the new bake without additional runtime logic. Release and both .NET
-check suites passed again with the updated measurements. The collar fit revision
-adds measured radii and seating offsets for all **206** bands across those
-configurations. The Dhow aft band's inner radius is **0.08083 m**, replacing the
-**0.20 m** capsule radius; the measured wood radius is **0.08183 m**. Release,
-GeometryChecks and AssemblyChecks passed, including Dhow centering, complete
-Brig masthead-band seating and rejection of capsule-radius sizing in the visual.
-The registry mesh-sharing revision also passed Release with zero warnings/errors
-and both check suites. Assembly checks cover the instance-owned mesh pair,
-initialization guard, ownership before channel population, cleanup in rollback
-and teardown finalizers, cleared mesh fields and borrowed visual meshes.
-Geometry checks retain baked channels, independent generated arrays and authored
-placement. These are structural ownership checks, not Unity lifecycle execution
-or loading-time measurements.
+The updated asset was rebaked with a **1 m** reference rope, **0.04 m** rope
+diameter and **0.10 m** band height. Blender **5.1.1** regression and freshness
+checks passed for Solidify thickness, UV seams, flat shading, canonical
+dimensions, malformed input rejection and source-file preservation. The existing
+dimension-driven fitting consumes the new bake without additional runtime logic.
+Release and both .NET check suites passed again with the updated measurements.
+The collar fit revision adds measured radii and seating offsets for all **206**
+bands across those configurations. The Dhow aft band's inner radius is **0.08083
+m**, replacing the **0.20 m** capsule radius; the measured wood radius is
+**0.08183 m**. Release, GeometryChecks and AssemblyChecks passed, including Dhow
+centering, complete Brig masthead-band seating and rejection of capsule-radius
+sizing in the visual. The registry mesh-sharing revision also passed Release
+with zero warnings/errors and both check suites. Assembly checks cover the
+instance-owned mesh pair, initialization guard, ownership before channel
+population, cleanup in rollback and teardown finalizers, cleared mesh fields and
+borrowed visual meshes. Geometry checks retain baked channels, independent
+generated arrays and authored placement. These are structural ownership checks,
+not Unity lifecycle execution or loading-time measurements.
 
 The Caelanor captured-control fallbacks retain plugin/runtime version **0.3.0**.
 Release build passed with zero warnings/errors, both check suites passed
