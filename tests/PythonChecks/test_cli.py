@@ -17,16 +17,22 @@ def test_help_needs_no_blender_or_game():
     assert "bpy" not in sys.modules
 
 
-def test_asset_command_passes_cut_and_read_only_flag(monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    "prefix, blender",
+    [
+        (["assets", "--blender", "custom blender", "bake"], "custom blender"),
+        (["bake"], "blender"),
+    ],
+)
+def test_asset_command_passes_cut_and_read_only_flag(
+    monkeypatch, tmp_path, prefix, blender
+):
     calls = []
     monkeypatch.setattr(runner, "run", lambda **kw: calls.append(kw))
     result = CliRunner().invoke(
         main,
         [
-            "assets",
-            "--blender",
-            "custom blender",
-            "bake",
+            *prefix,
             "staysail",
             "--cut",
             "b",
@@ -38,7 +44,7 @@ def test_asset_command_passes_cut_and_read_only_flag(monkeypatch, tmp_path):
     assert result.exit_code == 0, result.output
     assert calls == [
         dict(
-            blender="custom blender",
+            blender=blender,
             action="bake",
             asset="staysail",
             cut="B",

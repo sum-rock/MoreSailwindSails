@@ -1042,6 +1042,19 @@ uv run --locked mss assets bake flying_sail --check
 uv run --locked mss generate-fallback-halyards brig --output /tmp/brig-halyards.cs
 ```
 
+The executable root launcher enters the pinned Nix environment and runs the same
+CLI through uv, without requiring a separate shell setup:
+
+```sh
+./mss --help
+./mss bake flying_sail
+./mss generate-fallback-halyards brig
+```
+
+`bake` is also available at the CLI root as an alias for `assets bake`. The
+launcher locates its checkout when invoked from another directory and preserves
+arguments and the caller's working directory.
+
 The environment is the ignored repository-local `.venv`, never a global tool
 installation. Activate it with `source .venv/bin/activate` to invoke `mss`
 directly. Asset commands launch Blender with its own Python and disabled file

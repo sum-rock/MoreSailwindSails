@@ -2,7 +2,7 @@
 
 import click
 
-from tools.assets.cli import assets
+from tools.assets.cli import assets, bake
 from tools.halyards.cli import generate_fallback_halyards
 from tools.maintenance.decompile import decompile
 from tools.maintenance.install import install_local
@@ -17,6 +17,7 @@ def main() -> None:
 
 for command in (
     assets,
+    bake,
     generate_fallback_halyards,
     install_local,
     release,

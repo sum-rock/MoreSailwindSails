@@ -58,8 +58,11 @@ def asset_command(*, action: str, asset: str):
 
 
 @assets.group()
-def bake() -> None:
+@click.pass_context
+def bake(context: click.Context) -> None:
     """Bake an authored asset into deterministic C# mesh data."""
+    context.ensure_object(dict)
+    context.obj.setdefault("blender", "blender")
 
 
 @assets.group()
