@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Discovery
 {
     internal static class StayDependencies
     {

@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using static MoreSailwindSails.Tests.AssemblyChecks.Shared.IlReader;
 
-namespace MoreSailwindSails.Tests.AssemblyChecks.FishermansStay;
+namespace MoreSailwindSails.Tests.AssemblyChecks.Controls.Runtime;
 
 // Checks winch ownership and controller lifetime contracts without running Unity.
 internal static class WinchChecks
@@ -17,10 +17,19 @@ internal static class WinchChecks
             | BindingFlags.NonPublic
             | BindingFlags.Static
             | BindingFlags.Instance;
-        var manager = assembly.GetType("MoreSailwindSails.Controls.FishermanWinchControls", true);
-        var owned = manager.GetNestedType("OwnedWinch", BindingFlags.NonPublic);
-        var clone = manager.GetNestedType("Clone", BindingFlags.NonPublic);
-        var group = manager.GetNestedType("ControlGroup", BindingFlags.NonPublic);
+        var manager = assembly.GetType("MoreSailwindSails.Controls.WinchControls", true);
+        var owned = assembly.GetType(
+            "MoreSailwindSails.Controls.Runtime.OwnedWinch",
+            throwOnError: true
+        );
+        var clone = assembly.GetType(
+            "MoreSailwindSails.Controls.Runtime.WinchClone",
+            throwOnError: true
+        );
+        var group = assembly.GetType(
+            "MoreSailwindSails.Controls.Runtime.WinchGroup",
+            throwOnError: true
+        );
         var prepare = owned.GetMethod("Prepare", all);
         var calls = CalledMethods(prepare).ToArray();
         Check(
@@ -204,7 +213,10 @@ internal static class WinchChecks
             CalledMethods(manager.GetMethod("Configure", all)).Any(m => m.Name == "PhysicalMast"),
             "Stay allocation must resolve the aft physical base mast."
         );
-        var native = assembly.GetType("MoreSailwindSails.Controls.NativeWinchSeats", true);
+        var native = assembly.GetType(
+            "MoreSailwindSails.Controls.Discovery.NativeWinchInventory",
+            true
+        );
         var usable = native.GetMethod("Usable", all);
         var show = usable.GetParameters()[0].ParameterType.GetMethod("ShowWinch", all);
         foreach (string component in new[] { "Renderer", "Collider" })

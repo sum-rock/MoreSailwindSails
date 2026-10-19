@@ -1,7 +1,8 @@
+// Owns boat-local claims on seat identities, aliases and coincident positions.
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Placement
 {
     // Boat-owned allocation by seat identity and aliases, without geometric clearance.
     internal sealed class WinchReservations

@@ -58,7 +58,7 @@ internal static class WinchDiagnosticChecks
                     "Diagnostic mutates a native rendering/physics source: " + method.Name
                 );
                 Check(
-                    owner != "MoreSailwindSails.Controls.WinchReservations",
+                    owner != "MoreSailwindSails.Controls.Placement.WinchReservations",
                     "Diagnostic participates in placement reservations: " + method.Name
                 );
             }
@@ -66,7 +66,7 @@ internal static class WinchDiagnosticChecks
         var trace = assembly.GetType("MoreSailwindSails.Utils.WinchMountTrace", throwOnError: true);
         Check(
             CalledMethods(trace.GetMethod("Status", flags))
-                .Any(m => m.DeclaringType.Name == "NativeWinchSeats" && m.Name == "Occupied"),
+                .Any(m => m.DeclaringType.Name == "NativeWinchInventory" && m.Name == "Occupied"),
             "Diagnostic must use the native occupancy predicate, including hidden bound ropes."
         );
         Console.WriteLine(

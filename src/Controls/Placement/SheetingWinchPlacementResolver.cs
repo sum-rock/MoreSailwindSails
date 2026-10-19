@@ -3,16 +3,20 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Discovery;
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Placement
 {
     internal sealed class SheetingWinchPlacementResolver
     {
-        private readonly NativeWinchSeats native;
+        private readonly NativeWinchInventory native;
         private readonly WinchReservations ledger;
 
-        internal SheetingWinchPlacementResolver(NativeWinchSeats native, WinchReservations ledger)
+        internal SheetingWinchPlacementResolver(
+            NativeWinchInventory native,
+            WinchReservations ledger
+        )
         {
             this.native = native;
             this.ledger = ledger;
@@ -24,7 +28,7 @@ namespace MoreSailwindSails.Controls
                 mastZ: native.Boat.transform.InverseTransformPoint(requested.transform.position).z
             );
 
-        internal bool ValidateCurrent(Mast forward, Mast requested, NativeWinchCandidate current)
+        internal bool ValidateCurrent(Mast forward, Mast requested, WinchPlacementCandidate current)
         {
             if (current == null || !native.ActiveSupport(mast: requested))
                 return false;
@@ -66,7 +70,7 @@ namespace MoreSailwindSails.Controls
 
         private bool ValidFallbackSide(
             SheetFallbackSeat definition,
-            NativeWinchCandidate current,
+            WinchPlacementCandidate current,
             int index
         )
         {
@@ -87,7 +91,7 @@ namespace MoreSailwindSails.Controls
             WinchCandidate current
         )
         {
-            var pairs = new List<NativeWinchCandidate>();
+            var pairs = new List<WinchPlacementCandidate>();
             if (native.ActiveSupport(mast: requested))
             {
                 foreach (var mast in native.StaySources(forward: forward, requested: requested))
@@ -142,7 +146,7 @@ namespace MoreSailwindSails.Controls
             return result;
         }
 
-        private NativeWinchCandidate Fallback(SheetFallbackDefinition category)
+        private WinchPlacementCandidate Fallback(SheetFallbackDefinition category)
         {
             var definitions = new[] { category.Fallback.Port, category.Fallback.Starboard };
             var template = SharedSheetWinchTemplate.Get();
@@ -159,7 +163,7 @@ namespace MoreSailwindSails.Controls
                         )
                 )
                 .ToArray();
-            return new NativeWinchCandidate
+            return new WinchPlacementCandidate
             {
                 Id = category.FallbackName,
                 Context = "fallback=" + category.FallbackName,

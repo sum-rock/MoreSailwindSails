@@ -15,7 +15,7 @@ internal static class NativeResolverChecks
             | BindingFlags.Instance
             | BindingFlags.Static;
         Type Type(string name) => assembly.GetType("MoreSailwindSails.Controls." + name, true);
-        var native = Type("NativeWinchSeats");
+        var native = Type("Discovery.NativeWinchInventory");
         var activeSupport = native.GetMethod("ActiveSupport", flags);
         var supportCalls = CalledMethods(activeSupport).ToArray();
         Check(
@@ -81,8 +81,14 @@ internal static class NativeResolverChecks
             }
         )
         {
-            var validate = Type(resolver).GetMethod("ValidateCurrent", flags);
-            foreach (var method in new[] { validate, Type(resolver).GetMethod("Resolve", flags) })
+            var validate = Type("Placement." + resolver).GetMethod("ValidateCurrent", flags);
+            foreach (
+                var method in new[]
+                {
+                    validate,
+                    Type("Placement." + resolver).GetMethod("Resolve", flags),
+                }
+            )
                 Check(
                     method
                         .GetParameters()
@@ -100,7 +106,7 @@ internal static class NativeResolverChecks
                 "Current-placement validation searches alternatives or skips live seats."
             );
         }
-        var manager = Type("FishermanWinchControls");
+        var manager = Type("WinchControls");
         var configure = manager.GetMethod("Configure", flags);
         Check(
             CalledMethods(configure).Count(m => m.Name == "PhysicalMast") == 2
@@ -126,7 +132,7 @@ internal static class NativeResolverChecks
                     .Any(i => i.Operand is MethodInfo m && m.Name == "get_Count"),
             "Empty manager cannot skip inventory work."
         );
-        var group = manager.GetNestedType("ControlGroup", BindingFlags.NonPublic);
+        var group = Type("Runtime.WinchGroup");
         var groupRefresh = group
             .GetMethods(flags)
             .Single(m => m.Name == "Refresh" && m.GetParameters().Length == 3);
@@ -141,7 +147,7 @@ internal static class NativeResolverChecks
                 < Array.FindIndex(groupCalls, m => m.Name == "Resolve"),
             "Stable claims search before validation."
         );
-        var halyard = Type("HalyardWinchPlacementResolver").GetMethod("Resolve", flags);
+        var halyard = Type("Placement.HalyardWinchPlacementResolver").GetMethod("Resolve", flags);
         Check(
             Instructions(halyard).Any(i => i.Operand is FieldInfo f && f.Name == "reefWinch"),
             "Halyard array not inspected."
@@ -152,9 +158,10 @@ internal static class NativeResolverChecks
                 && !CalledMethods(halyard).Any(m => m.Name == "SheetCategory"),
             "Halyard bypasses stay dependencies or requested active support."
         );
-        var halyardValidate = Type("HalyardWinchPlacementResolver")
+        var halyardValidate = Type("Placement.HalyardWinchPlacementResolver")
             .GetMethod("ValidateCurrent", flags);
-        var halyardFallback = Type("HalyardWinchPlacementResolver").GetMethod("Fallback", flags);
+        var halyardFallback = Type("Placement.HalyardWinchPlacementResolver")
+            .GetMethod("Fallback", flags);
         foreach (var method in new[] { halyardValidate, halyardFallback })
             Check(
                 CalledMethods(method).Any(m => m.Name == "get_FallbackId"),
@@ -168,7 +175,9 @@ internal static class NativeResolverChecks
                 && CalledMethods(halyardFallback).Any(m => m.Name == "Template")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "Template")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "MatchesPose")
-                && CalledMethods(Type("HalyardWinchPlacementResolver").GetMethod("Template", flags))
+                && CalledMethods(
+                        Type("Placement.HalyardWinchPlacementResolver").GetMethod("Template", flags)
+                    )
                     .Any(m => m.Name == "TemplateUsable"),
             "Manual halyard fallback bypasses allocation, active support, template validity or retained pose checks."
         );
@@ -228,8 +237,8 @@ internal static class NativeResolverChecks
             var type in new[]
             {
                 native,
-                Type("SheetingWinchPlacementResolver"),
-                Type("HalyardWinchPlacementResolver"),
+                Type("Placement.SheetingWinchPlacementResolver"),
+                Type("Placement.HalyardWinchPlacementResolver"),
             }
         )
         foreach (var method in type.GetMethods(flags).Where(m => m.DeclaringType == type))
@@ -244,13 +253,13 @@ internal static class NativeResolverChecks
                     ),
                 "Resolver mutates native controls or generates seats: " + method.Name
             );
-        var sheets = Type("SheetingWinchPlacementResolver").GetMethod("Resolve", flags);
+        var sheets = Type("Placement.SheetingWinchPlacementResolver").GetMethod("Resolve", flags);
         Check(
             CalledMethods(sheets)
                 .Any(m => m.DeclaringType.Name == "WinchPlacementPolicy" && m.Name == "Resolve"),
             "Sheet resolver bypasses atomic allocation policy."
         );
-        var sheetType = Type("SheetingWinchPlacementResolver");
+        var sheetType = Type("Placement.SheetingWinchPlacementResolver");
         var sheetValidateCalls = CalledMethods(sheetType.GetMethod("ValidateCurrent", flags))
             .ToArray();
         Check(
@@ -267,12 +276,12 @@ internal static class NativeResolverChecks
                     m.DeclaringType.Name == "SharedSheetWinchTemplate" && m.Name == "Get"
                 )
                     && !calls.Any(m =>
-                        m.DeclaringType.Name == "NativeWinchSeats" && m.Name == "Rotation"
+                        m.DeclaringType.Name == "NativeWinchInventory" && m.Name == "Rotation"
                     ),
                 "Sheet fallback must share a donor and must not inherit live donor wheel rotation."
             );
         }
-        var sharedTemplate = Type("SharedSheetWinchTemplate");
+        var sharedTemplate = Type("Discovery.SharedSheetWinchTemplate");
         var templateGet = sharedTemplate.GetMethod("Get", flags);
         var templateCalls = CalledMethods(templateGet).ToArray();
         Check(

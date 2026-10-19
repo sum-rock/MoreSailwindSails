@@ -1,5 +1,5 @@
 // Defines immutable winch role data.
-namespace MoreSailwindSails.Controls.Configuration
+namespace MoreSailwindSails.Controls
 {
     internal enum WinchRole
     {

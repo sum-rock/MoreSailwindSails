@@ -38,6 +38,6 @@ namespace MoreSailwindSails.Controls.Patches
         [HarmonyPostfix]
         [HarmonyAfter("com.nandbrew.shipyardexpansion")]
         private static void Postfix(Component __instance) =>
-            FishermanWinchControls.InvalidateInventory(component: __instance);
+            WinchControls.InvalidateInventory(component: __instance);
     }
 }

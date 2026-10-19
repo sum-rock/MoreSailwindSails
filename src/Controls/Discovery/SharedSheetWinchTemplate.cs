@@ -1,9 +1,10 @@
 // Discovers one shared sheet fallback donor without activating or claiming its native control.
 using MoreSailwindSails.BoatConfiguration;
 using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Runtime;
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Discovery
 {
     internal static class SharedSheetWinchTemplate
     {
@@ -33,7 +34,7 @@ namespace MoreSailwindSails.Controls
                 {
                     if (mast.orderIndex != SheetFallbackTemplate.Mast)
                         continue;
-                    var sources = NativeWinchSeats.Sources(
+                    var sources = NativeWinchInventory.Sources(
                         mast: mast,
                         role: SheetFallbackTemplate.Role
                     );
@@ -50,7 +51,6 @@ namespace MoreSailwindSails.Controls
         }
 
         private static bool Usable(GPButtonRopeWinch control) =>
-            NativeWinchSeats.Usable(c: control)
-            && !control.GetComponent<FishermanOwnedWinchMarker>();
+            NativeWinchInventory.Usable(c: control) && !control.GetComponent<OwnedWinchMarker>();
     }
 }

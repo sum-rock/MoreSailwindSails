@@ -1,4 +1,5 @@
-namespace MoreSailwindSails.Controls
+// Schedules periodic inventory discovery and immediate lifecycle invalidation.
+namespace MoreSailwindSails.Controls.Discovery
 {
     // Bounds hierarchy discovery while allowing immediate lifecycle invalidation.
     internal sealed class WinchDiscoverySchedule

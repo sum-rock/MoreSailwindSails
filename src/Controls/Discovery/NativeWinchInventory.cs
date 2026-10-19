@@ -3,12 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Placement;
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Discovery
 {
     // One inventory per coordinator. Never activate source rigs or register masts.
-    internal sealed class NativeWinchSeats
+    internal sealed class NativeWinchInventory
     {
         internal readonly BoatRefs Boat;
         internal readonly BoatControlDefinition Profile;
@@ -31,7 +32,7 @@ namespace MoreSailwindSails.Controls
         internal GPButtonRopeWinch[] Controls { get; private set; } =
             Array.Empty<GPButtonRopeWinch>();
 
-        internal NativeWinchSeats(BoatRefs boat, Func<GPButtonRopeWinch, bool> owned)
+        internal NativeWinchInventory(BoatRefs boat, Func<GPButtonRopeWinch, bool> owned)
         {
             Boat = boat;
             Profile = BoatControlCatalog.Find(boatName: boat.name);
@@ -308,7 +309,7 @@ namespace MoreSailwindSails.Controls
             return true;
         }
 
-        internal bool Current(NativeWinchCandidate candidate)
+        internal bool Current(WinchPlacementCandidate candidate)
         {
             for (int i = 0; i < candidate.Templates.Length; i++)
             {
@@ -327,7 +328,7 @@ namespace MoreSailwindSails.Controls
             return true;
         }
 
-        internal NativeWinchCandidate Candidate(
+        internal WinchPlacementCandidate Candidate(
             string id,
             string context,
             params GPButtonRopeWinch[] templates
@@ -337,7 +338,7 @@ namespace MoreSailwindSails.Controls
             if (templates.Any(t => !TemplateUsable(t) || Seat(t) == null))
                 return null;
             var seats = templates.Select(Seat).ToArray();
-            return new NativeWinchCandidate
+            return new WinchPlacementCandidate
             {
                 Id = id,
                 Context = context,

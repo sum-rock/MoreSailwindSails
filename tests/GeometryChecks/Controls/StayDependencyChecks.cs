@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls;
 using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Discovery;
+using MoreSailwindSails.Controls.Placement;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;

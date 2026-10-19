@@ -6,6 +6,7 @@ using MoreSailwindSails.BoatConfiguration.Boats;
 using MoreSailwindSails.Controls;
 using MoreSailwindSails.Controls.Configuration;
 using MoreSailwindSails.Controls.Configuration.Boats;
+using MoreSailwindSails.Controls.Placement;
 using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 using MoreSailwindSails.Stays.FishermansStay.Configuration;
 using UnityEngine;

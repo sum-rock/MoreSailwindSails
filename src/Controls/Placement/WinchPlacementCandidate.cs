@@ -1,9 +1,10 @@
+// Adds source templates and live donor references to native or authored placements.
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Placement
 {
     // Retains the source slot needed to validate a placement without searching alternatives.
-    internal sealed class NativeWinchCandidate : WinchCandidate
+    internal sealed class WinchPlacementCandidate : WinchCandidate
     {
         internal GPButtonRopeWinch[] Templates;
         internal Vector3? TemplateScale;
