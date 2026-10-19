@@ -21,7 +21,11 @@ take precedence over historical design choices.
   `docs/DEVELOPMENT.md`.
 - Implementation requests authorize editing, building and checking. Do not
   commit, push, alter saves or replace installed game files as part of a build.
-  **Never execute files from `scripts/` or use it as the working directory.**
+  `mss install-local`, `mss release`, `mss decompile` and `mss logs` are manual
+  maintainer workflows. Do not run them against real installations, repositories
+  or services without an explicit user request for that operation. Test them
+  with temporary fixtures and mocked external operations; migration is not
+  execution authorization.
 - Use installed assemblies/assets as the behavioral reference; upstream source
   may differ. Never commit proprietary assemblies or extracted game assets.
 

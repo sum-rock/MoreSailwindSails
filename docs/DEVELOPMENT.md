@@ -106,22 +106,30 @@ IDs:
 | Fisherman's Stay mounts       | **128–255**     |
 
 Distribute only the plugin DLL. Builds/checks do not install it, alter saves or
-publish releases. The scripts below are **manual maintainer workflows**; agents
-must never execute files from `scripts/` or use it as their working directory.
+publish releases. The commands below are manual maintainer workflows. Agents
+need an explicit request for the operation before running them against real
+installations or services; implementation tests use temporary fixtures and
+mocked external operations.
 
-- `scripts/install-local.sh` requires an existing Release DLL and a valid
-  BepInEx plugin directory, **rebuilds** the plugin, then copies it into that
-  directory. Close Sailwind first. Its optional argument selects a different
-  installation. The copy uses that argument, but the build uses the project's
-  default `SailwindDir`; it does not forward the destination as a build
-  property.
-- `scripts/tag-release.sh` requires a clean checkout, switches to `master`,
+Run from the repository root inside `nix develop`:
+
+- `uv run mss install-local [--game-dir PATH]` validates the BepInEx plugin
+  directory, rebuilds Release against the selected game's `SailwindDir`, then
+  copies the DLL with mode `0644`. No previous build is required; failed builds
+  leave the installed DLL untouched. Close Sailwind first.
+- `uv run mss release` requires a clean checkout, switches to `master`,
   fetches/fast-forwards and requires equality with the fetched remote head. It
-  checks matching plugin/project versions and tag availability, then requests
-  explicit confirmation before creating/pushing annotated `v<version>`,
-  rebuilding Release and publishing via authenticated `gh`. Branch
-  switching/fetching happen before confirmation. Build/publication failure can
-  leave a pushed tag.
+  checks matching plugin/project versions, tag availability, release notes and
+  GitHub authentication, then rebuilds Release before requesting confirmation.
+  Confirmation creates/pushes annotated `v<version>` and publishes the DLL using
+  `docs/RELEASE_NOTES.md`. Branch switching/fetching and building happen before
+  confirmation. A failed push retains the local tag for inspection; a failed
+  publication retains the pushed tag. Check the remote state before retrying;
+  the command never deletes remote tags.
+
+The release command delegates to `run_release()`, which sequences named steps
+for checkout preparation, version/tag validation, publication prerequisites,
+building, confirmation, checkout revalidation, tagging and publication.
 
 After installation, confirm `MoreSailwindSails 0.3.0 loaded!` and registration
 of the intended prefabs in `BepInEx/LogOutput.log`. Compare installed and built
@@ -1007,17 +1015,21 @@ after loading. Hidden overlays do not scan.
 
 Python tooling is packaged under `tools/`. `assets/` owns Blender workers and
 launch commands; `halyards/` owns installed-asset inspection and placement
-calculations. `settings.py` centralizes repository and game paths. The root
-`pyproject.toml` declares Click, UnityPy, NumPy and TypeTreeGeneratorAPI, with
-pytest in the development group. `uv.lock` pins all resolved dependencies. Nix
-supplies Python, uv, Blender, Git, GitHub CLI, GNU coreutils, ILSpy, .NET,
-formatters and the native libraries used by Python wheels. Its shell clears
-`PYTHONPATH` so unrelated Nix Python packages cannot shadow the locked
-dependencies. Removing the library path prevented NumPy from loading
-`libstdc++.so.6`; retaining Nix's `PYTHONPATH` made the venv's pytest entry
-point import an incompatible Nix pytest package. The shell leaves uv's
-environment location and Python download policy at their defaults. `uv run`
-creates and syncs the repository-local `.venv` automatically.
+calculations; `maintenance/` owns installation, release publication,
+decompilation and log following. `mss` is the sole CLI; the former `scripts/`
+commands have been removed without compatibility wrappers. The `settings.py`
+module in `tools/` centralizes repository file paths, game/log defaults, release
+branch/remote and decompiler snapshot names. Release version checks read the
+configured plugin and project files directly. The root `pyproject.toml` declares
+Click, UnityPy, NumPy and TypeTreeGeneratorAPI, with pytest in the development
+group. `uv.lock` pins all resolved dependencies. Nix supplies Python, uv,
+Blender, Git, GitHub CLI, GNU coreutils, ILSpy, .NET, formatters and the native
+libraries used by Python wheels. Its shell clears `PYTHONPATH` so unrelated Nix
+Python packages cannot shadow the locked dependencies. Removing the library path
+prevented NumPy from loading `libstdc++.so.6`; retaining Nix's `PYTHONPATH` made
+the venv's pytest entry point import an incompatible Nix pytest package. The
+shell leaves uv's environment location and Python download policy at their
+defaults. `uv run` creates and syncs the repository-local `.venv` automatically.
 
 From the repository root:
 
@@ -1086,6 +1098,16 @@ runtime placement continues to use the authored definitions.
 ## Validation records
 
 ### Automated baseline and limits
+
+The maintainer CLI consolidation retains **mss-tools 0.1.0** and plugin/runtime
+version **0.3.0**. The default Python suite passed **61** checks; **8**
+installed game checks were skipped. Temporary fixtures and mocked external
+commands cover installation build failures, release
+ordering/cancellation/publication failures, snapshot ownership and rollback, and
+log command handling. Ruff lint/format checks passed. The Nix shell supplies
+Git, GitHub CLI, GNU tail, .NET, ILSpy and Blender; their version commands
+passed. No installation, publication, real game decompilation, plugin build or
+Blender bake was performed for this migration.
 
 The **2026-10-18** Python tooling update adds **mss-tools 0.1.0** and retains
 plugin/runtime version **0.3.0**. uv lock verification and repeatable sync
@@ -1320,26 +1342,22 @@ read-only. The installed mod DLL is distinct from build output.
 
 #### Local decompiled game reference
 
-Maintainers can manually run the Bash wrapper from the repository root to create
-or refresh `/home/august/Documents/SailwindGame`:
+Maintainers can create or refresh `~/Documents/SailwindGame` from the repository
+root:
 
 ```sh
-./scripts/decompile-sailwind.sh
+nix develop
+uv run mss decompile
 ```
 
-The wrapper locates the repository's Nix flake and launches the Python script,
-forwarding all arguments. It can also be invoked by absolute path from another
-directory; relative argument paths remain relative to the caller's directory.
-The pinned Nix shell supplies Python 3, .NET 8 and ILSpy CLI through
-`pkgs.ilspycmd`. `flake.lock` pins the decompiler package along with the other
-development tools. The script finds `ilspycmd` on `PATH` and records its full
-version output without parsing or validating it. It does not install tools.
-Existing `.tools/` directories from earlier runs are unused and left intact.
-Initial Nix downloads may require network access. Override the default paths
-when needed:
+The CLI uses `ilspycmd` from `PATH`; the pinned Nix shell supplies it and .NET.
+Commands do not launch nested Nix shells or install tools. Relative argument
+paths remain relative to the caller's directory. ILSpy's full version output is
+recorded without parsing or validating it. Existing `.tools/` directories from
+earlier runs are unused and left intact. Override the default paths when needed:
 
 ```sh
-./scripts/decompile-sailwind.sh \
+uv run mss decompile \
   --game-dir "/path/to/Sailwind" \
   --output-dir "/path/to/local/SailwindGame"
 ```
@@ -1366,8 +1384,9 @@ report the staging directory containing diagnostics and any recovery files.
 Failed staging directories remain available for manual inspection and cleanup. A
 per-directory lock prevents concurrent refreshes. Only generated `source/`,
 `manifest.json` and `decompile.log` are replaced; existing snapshot paths
-require this script's ownership marker in the manifest. Keep personal notes
-outside `source/`. Other files in the destination are preserved.
+require the existing `MoreSailwindSails/decompile-sailwind.py` ownership marker
+in the manifest, retained for compatibility with earlier snapshots. Keep
+personal notes outside `source/`. Other files in the destination are preserved.
 
 After a successful run, review `decompile.log` for warnings and compare the
 manifest's hashes with the installed inputs:
@@ -1379,11 +1398,9 @@ rg -n 'class .*Sail|class .*Shipyard|class .*Winch|class .*Save' \
   /home/august/Documents/SailwindGame/source
 ```
 
-Implementation validation covers Bash and Python syntax, formatting, static
-review of subprocess/path/rollback handling and a Nix-shell `ilspycmd --version`
-check (the pinned package reports **9.1.0.0**). Extraction and refresh recovery
-remain unverified until a maintainer runs the script manually. Agents must not
-execute files in `scripts/`. This tooling does not change plugin behavior.
+Automated tests use synthetic assemblies and a fake decompiler to check snapshot
+refresh, ownership validation, input changes, locking and publication rollback.
+They do not extract installed game code.
 
 #### Game logs
 
@@ -1394,10 +1411,11 @@ Read both logs; Unity warnings may be absent from BepInEx output:
 /home/august/.local/share/Steam/steamapps/compatdata/1764530/pfx/drive_c/users/steamuser/AppData/LocalLow/Raw Lion Workshop/Sailwind/Player.log
 ```
 
-For manual live monitoring, maintainers can run `./scripts/tail-player-log.sh`
-and `./scripts/tail-bepinex-log.sh` from the repository root in separate
-terminals. Each displays 5,000 lines and follows the default Steam log with
-`tail -F`; Ctrl+C stops it. Agents must not execute these scripts.
+For manual live monitoring, run `uv run mss logs player` and
+`uv run mss logs bepinex` in separate Nix-shell terminals. Each displays 5,000
+lines and follows the default Steam log with GNU `tail -F`, including missing
+files and replacement logs across game restarts. Override the file with
+`--path PATH` and the initial line count with `--lines N`; Ctrl+C stops it.
 
 Capture logs before restarting a freeze. Distinguish other mods' exceptions and
 suspected causes from confirmed evidence. Prefer `rg`/`rg --files`; inspect

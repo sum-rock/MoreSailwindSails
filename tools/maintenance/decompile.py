@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
 """Manually refresh a local, searchable reference of Sailwind's managed code."""
 
-import argparse
+import click
 from datetime import datetime, timezone
 import fcntl
 import hashlib
@@ -14,9 +13,7 @@ import sys
 import tempfile
 
 
-GENERATOR = "MoreSailwindSails/decompile-sailwind.py"
-ASSEMBLIES = ("Assembly-CSharp.dll", "Assembly-CSharp-firstpass.dll")
-SNAPSHOT_ENTRIES = ("source", "manifest.json", "decompile.log")
+from tools import settings
 
 
 def sha256(path):
@@ -49,30 +46,35 @@ def run_command(arguments, log, commands):
 
 
 def validate_destination(output_dir):
-    for name in (*SNAPSHOT_ENTRIES, ".decompile.lock"):
+    for name in (*settings.DECOMPILE_ENTRIES, settings.DECOMPILE_LOCK):
         if (output_dir / name).is_symlink():
             raise RuntimeError(
                 f"Refusing to replace or follow symlink: {output_dir / name}"
             )
-    existing = [name for name in SNAPSHOT_ENTRIES if (output_dir / name).exists()]
+    existing = [
+        name for name in settings.DECOMPILE_ENTRIES if (output_dir / name).exists()
+    ]
     if existing:
-        manifest_path = output_dir / "manifest.json"
+        manifest_path = output_dir / settings.DECOMPILE_MANIFEST
         if not manifest_path.is_file():
             raise RuntimeError("Existing snapshot paths have no ownership manifest.")
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-        if not isinstance(manifest, dict) or manifest.get("generator") != GENERATOR:
+        if (
+            not isinstance(manifest, dict)
+            or manifest.get("generator") != settings.DECOMPILE_GENERATOR
+        ):
             raise RuntimeError(
-                "Existing manifest does not identify this script's output."
+                "Existing manifest does not identify this tool's output."
             )
 
 
 def publish_snapshot(staging_dir, output_dir):
-    backup_dir = staging_dir / "previous"
+    backup_dir = staging_dir / settings.DECOMPILE_BACKUP
     backup_dir.mkdir()
     backed_up = []
     published = []
     try:
-        for name in SNAPSHOT_ENTRIES:
+        for name in settings.DECOMPILE_ENTRIES:
             destination = output_dir / name
             if destination.exists():
                 destination.rename(target=backup_dir / name)
@@ -89,8 +91,8 @@ def publish_snapshot(staging_dir, output_dir):
 
 
 def refresh(game_dir, output_dir):
-    managed_dir = game_dir / "Sailwind_Data" / "Managed"
-    assemblies = [managed_dir / name for name in ASSEMBLIES]
+    managed_dir = game_dir / settings.MANAGED_DIRECTORY
+    assemblies = [managed_dir / name for name in settings.DECOMPILE_ASSEMBLIES]
     for assembly in assemblies:
         if not assembly.is_file():
             raise RuntimeError(f"Required game assembly is missing: {assembly}")
@@ -101,12 +103,16 @@ def refresh(game_dir, output_dir):
         )
 
     validate_destination(output_dir=output_dir)
-    staging_dir = Path(tempfile.mkdtemp(prefix=".decompile-", dir=output_dir))
+    staging_dir = Path(
+        tempfile.mkdtemp(prefix=settings.DECOMPILE_STAGING_PREFIX, dir=output_dir)
+    )
     print(f"Staging extraction in {staging_dir}", flush=True)
     try:
         commands = []
         hashes = {path.name: sha256(path=path) for path in assemblies}
-        with (staging_dir / "decompile.log").open(mode="w", encoding="utf-8") as log:
+        with (staging_dir / settings.DECOMPILE_LOG).open(
+            mode="w", encoding="utf-8"
+        ) as log:
             tool_version = run_command(
                 arguments=[decompiler, "--version"], log=log, commands=commands
             ).strip()
@@ -114,7 +120,7 @@ def refresh(game_dir, output_dir):
             file_counts = {}
             for assembly in assemblies:
                 print(f"Decompiling {assembly.name}...", flush=True)
-                destination = staging_dir / "source" / assembly.stem
+                destination = staging_dir / settings.DECOMPILE_SOURCE / assembly.stem
                 destination.mkdir(parents=True)
                 run_command(
                     arguments=[
@@ -146,7 +152,7 @@ def refresh(game_dir, output_dir):
                     raise RuntimeError(f"Input changed during extraction: {assembly}")
 
         manifest = {
-            "generator": GENERATOR,
+            "generator": settings.DECOMPILE_GENERATOR,
             "extracted_at_utc": datetime.now(tz=timezone.utc).isoformat(),
             "tool": {"name": "ilspycmd", "version": tool_version},
             "reference_directory": str(managed_dir),
@@ -154,14 +160,16 @@ def refresh(game_dir, output_dir):
                 {
                     "path": str(assembly),
                     "sha256": hashes[assembly.name],
-                    "output_directory": f"source/{assembly.stem}",
+                    "output_directory": (
+                        Path(settings.DECOMPILE_SOURCE) / assembly.stem
+                    ).as_posix(),
                     "source_file_count": file_counts[assembly.name],
                 }
                 for assembly in assemblies
             ],
             "commands": commands,
         }
-        (staging_dir / "manifest.json").write_text(
+        (staging_dir / settings.DECOMPILE_MANIFEST).write_text(
             data=json.dumps(obj=manifest, indent=2) + "\n", encoding="utf-8"
         )
         publish_snapshot(staging_dir=staging_dir, output_dir=output_dir)
@@ -180,44 +188,40 @@ def refresh(game_dir, output_dir):
                 f"Snapshot published, but staging cleanup failed: {error}",
                 file=sys.stderr,
             )
-    print(f"Reference ready: {output_dir / 'source'}")
-    print(f"Review diagnostics: {output_dir / 'decompile.log'}")
+    print(f"Reference ready: {output_dir / settings.DECOMPILE_SOURCE}")
+    print(f"Review diagnostics: {output_dir / settings.DECOMPILE_LOG}")
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--game-dir",
-        type=Path,
-        default=Path.home() / ".local/share/Steam/steamapps/common/Sailwind",
-        help="Installed Sailwind directory (default: this user's Steam installation).",
-    )
-    parser.add_argument(
-        "--output-dir",
-        type=Path,
-        default=Path("/home/august/Documents/SailwindGame"),
-        help=(
-            "Local reference directory (default: /home/august/Documents/SailwindGame)."
-        ),
-    )
-    arguments = parser.parse_args()
-    game_dir = arguments.game_dir.expanduser().resolve()
-    output_dir = arguments.output_dir.expanduser().resolve()
-    repository_dir = Path(__file__).resolve().parent.parent
+@click.command()
+@click.option(
+    "--game-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=settings.DEFAULT_GAME,
+    show_default=True,
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(path_type=Path, file_okay=False),
+    default=settings.DEFAULT_REFERENCE,
+    show_default=True,
+)
+def decompile(game_dir: Path, output_dir: Path) -> None:
+    """Refresh the local decompiled reference of installed game assemblies."""
+    game_dir = game_dir.expanduser().resolve()
+    output_dir = output_dir.expanduser().resolve()
     try:
-        for protected in (game_dir, repository_dir):
+        for protected in (game_dir, settings.ROOT):
             if (
                 output_dir == protected
                 or protected in output_dir.parents
                 or output_dir in protected.parents
             ):
                 raise RuntimeError(
-                    "The output directory must be separate "
-                    "from the game and repository."
+                    "The output directory must be separate from the game and repository."
                 )
         output_dir.mkdir(parents=True, exist_ok=True)
         validate_destination(output_dir=output_dir)
-        with (output_dir / ".decompile.lock").open(mode="a") as lock:
+        with (output_dir / settings.DECOMPILE_LOCK).open(mode="a") as lock:
             try:
                 fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
             except BlockingIOError:
@@ -226,13 +230,7 @@ def main():
                 ) from None
             refresh(game_dir=game_dir, output_dir=output_dir)
     except (OSError, RuntimeError, ValueError) as error:
-        print(f"Error: {error}", file=sys.stderr)
-        return 1
+        raise click.ClickException(str(error)) from error
     except KeyboardInterrupt:
-        print("Extraction interrupted.", file=sys.stderr)
-        return 130
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())
+        click.echo("Extraction interrupted.", err=True)
+        raise click.exceptions.Exit(code=130) from None
