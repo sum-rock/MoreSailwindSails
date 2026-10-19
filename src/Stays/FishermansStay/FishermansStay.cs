@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls;
-using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Runtime;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -44,8 +44,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
         private bool fits;
         private readonly List<Tuple<Transform, Transform>> anchors =
             new List<Tuple<Transform, Transform>>();
-        private readonly List<FishermanWinchControls.OwnedWinch> controls =
-            new List<FishermanWinchControls.OwnedWinch>();
+        private readonly List<OwnedWinch> controls = new List<OwnedWinch>();
 
         internal FishermansStay(BoatRefs boat, FishermansStayReferences[] configurations)
         {
@@ -78,13 +77,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 .Where(c => c)
                 .ToArray();
             Mount.startingSailColor = source.startingSailColor;
-            FishermanWinchControls.Configure(
-                boat,
-                Mount.gameObject,
-                references.Fore,
-                references.Aft,
-                Mount
-            );
+            WinchControls.Configure(boat, Mount.gameObject, references.Fore, references.Aft, Mount);
             Mount.leftAngleWinch = CloneWinches(source, WinchRole.Left, "Port sheet");
             Mount.rightAngleWinch = CloneWinches(source, WinchRole.Right, "Starboard sheet");
             // Audited stay donors use paired sheets; centre controls are not pair candidates.
@@ -164,7 +157,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     var next = fitted[0];
                     if (next != references)
                     {
-                        FishermanWinchControls.Configure(
+                        WinchControls.Configure(
                             boat: boat,
                             owner: Mount.gameObject,
                             forward: next.Fore,
@@ -246,7 +239,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
 
         private GPButtonRopeWinch[] CloneWinches(Mast donor, WinchRole role, string label)
         {
-            var control = FishermanWinchControls.Create(
+            var control = WinchControls.Create(
                 boat,
                 Mount.gameObject,
                 Mount.transform,

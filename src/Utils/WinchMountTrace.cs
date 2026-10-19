@@ -1,4 +1,5 @@
-using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Discovery;
+using MoreSailwindSails.Controls.Runtime;
 using UnityEngine;
 
 namespace MoreSailwindSails.Utils
@@ -15,17 +16,17 @@ namespace MoreSailwindSails.Utils
         {
             Control = control;
             Renderer = control.GetComponent<Renderer>();
-            Owned = control.GetComponent<FishermanOwnedWinchMarker>();
+            Owned = control.GetComponent<OwnedWinchMarker>();
             Shapes = shapes;
         }
 
-        internal WinchMountStatus Status(NativeWinchSeats inventory) =>
+        internal WinchMountStatus Status(NativeWinchInventory inventory) =>
             !Control
                 ? WinchMountStatus.Hidden
                 : WinchMountOverlayGeometry.Classify(
                     owned: Owned,
                     visible: Control.gameObject.activeInHierarchy && Renderer && Renderer.enabled,
-                    occupied: NativeWinchSeats.Occupied(c: Control),
+                    occupied: NativeWinchInventory.Occupied(c: Control),
                     mounted: inventory.Mounted(c: Control)
                 );
     }

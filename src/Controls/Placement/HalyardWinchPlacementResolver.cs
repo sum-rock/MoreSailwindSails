@@ -1,22 +1,27 @@
+// Allocates halyards from matching native stays and the aft mast fallback.
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Discovery;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Placement
 {
-    // Allocates stay halyards from dependency-related native stays and the aft mast fallback.
+    // Allocates halyards from native stays on the same physical mast pair and the aft mast fallback.
     internal sealed class HalyardWinchPlacementResolver
     {
-        private readonly NativeWinchSeats native;
+        private readonly NativeWinchInventory native;
         private readonly WinchReservations ledger;
 
-        internal HalyardWinchPlacementResolver(NativeWinchSeats native, WinchReservations ledger)
+        internal HalyardWinchPlacementResolver(
+            NativeWinchInventory native,
+            WinchReservations ledger
+        )
         {
             this.native = native;
             this.ledger = ledger;
         }
 
-        internal bool ValidateCurrent(Mast requested, NativeWinchCandidate current)
+        internal bool ValidateCurrent(Mast forward, Mast requested, WinchPlacementCandidate current)
         {
             if (current == null || !native.ActiveSupport(mast: requested))
                 return false;
@@ -39,7 +44,11 @@ namespace MoreSailwindSails.Controls
                             )
                         );
             }
-            return native.IsStaySource(source: current.SourceMast, requested: requested)
+            return native.IsStaySource(
+                    source: current.SourceMast,
+                    forward: forward,
+                    requested: requested
+                )
                 && current.SourceMast.reefWinch != null
                 && current.SourceIndex >= 0
                 && current.SourceIndex < current.SourceMast.reefWinch.Length
@@ -47,19 +56,24 @@ namespace MoreSailwindSails.Controls
                 && native.Current(candidate: current);
         }
 
-        internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
+        internal WinchResolution Resolve(
+            object owner,
+            Mast forward,
+            Mast requested,
+            WinchCandidate current
+        )
         {
-            var candidates = new List<NativeWinchCandidate>();
+            var candidates = new List<WinchPlacementCandidate>();
             // Donor stays may be unfitted; Candidate checks the actual mounting support.
             if (native.ActiveSupport(mast: requested))
-                foreach (var source in native.StaySources(requested: requested))
+                foreach (var source in native.StaySources(forward: forward, requested: requested))
                 {
                     if (source.reefWinch == null)
                         continue;
                     for (int i = 0; i < source.reefWinch.Length; i++)
                     {
                         var control = source.reefWinch[i];
-                        if (!NativeWinchSeats.Usable(c: control))
+                        if (!NativeWinchInventory.Usable(c: control))
                             continue;
                         var candidate = native.Candidate(
                             id: "halyard/" + control.GetInstanceID(),
@@ -111,7 +125,7 @@ namespace MoreSailwindSails.Controls
             return native.TemplateUsable(control: template) ? template : null;
         }
 
-        private NativeWinchCandidate Fallback(Mast requested)
+        private WinchPlacementCandidate Fallback(Mast requested)
         {
             var definition = Definition(requested: requested);
             var template = Template(requested: requested, definition: definition?.Fallback);
@@ -126,7 +140,7 @@ namespace MoreSailwindSails.Controls
                     templateRotation: native.Rotation(c: template)
                 )
             );
-            return new NativeWinchCandidate
+            return new WinchPlacementCandidate
             {
                 Id = id,
                 Context =

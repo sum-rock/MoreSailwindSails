@@ -1,7 +1,8 @@
+// Finds complete native sheet pairs at matching source-array indices.
 using System;
 using System.Collections.Generic;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Discovery
 {
     internal static class NativeSheetPairing
     {

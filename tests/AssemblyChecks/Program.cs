@@ -54,7 +54,7 @@ internal static class Program
         FlyingSailChecks.Run(assembly);
         StayChecks.Run(assembly);
         FishermansStay.CollarChecks.Run(assembly);
-        FishermansStay.WinchChecks.Run(assembly);
+        Controls.Runtime.WinchChecks.Run(assembly);
         Controls.NativeResolverChecks.Run(assembly);
         Utils.WinchDiagnosticChecks.Run(assembly);
         FishermansStaysail.RegistrationChecks.Run(assembly);

@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using static MoreSailwindSails.Tests.AssemblyChecks.Shared.IlReader;
 
 namespace MoreSailwindSails.Tests.AssemblyChecks.Controls;
@@ -15,7 +16,7 @@ internal static class NativeResolverChecks
             | BindingFlags.Instance
             | BindingFlags.Static;
         Type Type(string name) => assembly.GetType("MoreSailwindSails.Controls." + name, true);
-        var native = Type("NativeWinchSeats");
+        var native = Type("Discovery.NativeWinchInventory");
         var activeSupport = native.GetMethod("ActiveSupport", flags);
         var supportCalls = CalledMethods(activeSupport).ToArray();
         Check(
@@ -81,7 +82,23 @@ internal static class NativeResolverChecks
             }
         )
         {
-            var validate = Type(resolver).GetMethod("ValidateCurrent", flags);
+            var validate = Type("Placement." + resolver).GetMethod("ValidateCurrent", flags);
+            foreach (
+                var method in new[]
+                {
+                    validate,
+                    Type("Placement." + resolver).GetMethod("Resolve", flags),
+                }
+            )
+                Check(
+                    method
+                        .GetParameters()
+                        .Any(p => p.Name == "forward" && p.ParameterType.Name == "Mast")
+                        && method
+                            .GetParameters()
+                            .Any(p => p.Name == "requested" && p.ParameterType.Name == "Mast"),
+                    "Allocation and retention must receive both physical masts."
+                );
             Check(
                 CalledMethods(validate).Any(m => m.Name == "Current")
                     && CalledMethods(validate).Any(m => m.Name == "IsStaySource")
@@ -90,7 +107,14 @@ internal static class NativeResolverChecks
                 "Current-placement validation searches alternatives or skips live seats."
             );
         }
-        var manager = Type("FishermanWinchControls");
+        var manager = Type("WinchControls");
+        var configure = manager.GetMethod("Configure", flags);
+        Check(
+            CalledMethods(configure).Count(m => m.Name == "PhysicalMast") == 2
+                && Instructions(configure)
+                    .Any(i => i.Operand is FieldInfo f && f.Name == "ForwardBase"),
+            "Both mast sections must resolve to physical bases when the group is configured."
+        );
         var tick = manager.GetMethod("LateUpdate", flags);
         var instructions = Instructions(tick).ToArray();
         int firstReturn = Array.FindIndex(
@@ -109,17 +133,22 @@ internal static class NativeResolverChecks
                     .Any(i => i.Operand is MethodInfo m && m.Name == "get_Count"),
             "Empty manager cannot skip inventory work."
         );
-        var group = manager.GetNestedType("ControlGroup", BindingFlags.NonPublic);
+        var group = Type("Runtime.WinchGroup");
         var groupRefresh = group
             .GetMethods(flags)
             .Single(m => m.Name == "Refresh" && m.GetParameters().Length == 3);
+        Check(
+            Instructions(groupRefresh)
+                .Count(i => i.Operand is FieldInfo f && f.Name == "ForwardBase") == 4,
+            "Both resolvers must receive the forward base for allocation and retention."
+        );
         var groupCalls = CalledMethods(groupRefresh).ToArray();
         Check(
             Array.FindIndex(groupCalls, m => m.Name == "TryRetain")
                 < Array.FindIndex(groupCalls, m => m.Name == "Resolve"),
             "Stable claims search before validation."
         );
-        var halyard = Type("HalyardWinchPlacementResolver").GetMethod("Resolve", flags);
+        var halyard = Type("Placement.HalyardWinchPlacementResolver").GetMethod("Resolve", flags);
         Check(
             Instructions(halyard).Any(i => i.Operand is FieldInfo f && f.Name == "reefWinch"),
             "Halyard array not inspected."
@@ -130,9 +159,10 @@ internal static class NativeResolverChecks
                 && !CalledMethods(halyard).Any(m => m.Name == "SheetCategory"),
             "Halyard bypasses stay dependencies or requested active support."
         );
-        var halyardValidate = Type("HalyardWinchPlacementResolver")
+        var halyardValidate = Type("Placement.HalyardWinchPlacementResolver")
             .GetMethod("ValidateCurrent", flags);
-        var halyardFallback = Type("HalyardWinchPlacementResolver").GetMethod("Fallback", flags);
+        var halyardFallback = Type("Placement.HalyardWinchPlacementResolver")
+            .GetMethod("Fallback", flags);
         foreach (var method in new[] { halyardValidate, halyardFallback })
             Check(
                 CalledMethods(method).Any(m => m.Name == "get_FallbackId"),
@@ -146,7 +176,9 @@ internal static class NativeResolverChecks
                 && CalledMethods(halyardFallback).Any(m => m.Name == "Template")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "Template")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "MatchesPose")
-                && CalledMethods(Type("HalyardWinchPlacementResolver").GetMethod("Template", flags))
+                && CalledMethods(
+                        Type("Placement.HalyardWinchPlacementResolver").GetMethod("Template", flags)
+                    )
                     .Any(m => m.Name == "TemplateUsable"),
             "Manual halyard fallback bypasses allocation, active support, template validity or retained pose checks."
         );
@@ -164,6 +196,14 @@ internal static class NativeResolverChecks
         var moveNext = iteratorType.GetMethod("MoveNext", flags);
         var selected = native.GetMethod("IsStaySource", flags);
         var eligibility = native.GetMethod("EligibleStaySource", flags);
+        foreach (var entry in new[] { moveNext, selected })
+            Check(
+                CalledMethods(entry)
+                    .Any(m =>
+                        m.Name == "op_Equality" && m.DeclaringType.FullName == "UnityEngine.Object"
+                    ),
+                "Native donor search and retention must reject a pair with identical endpoints."
+            );
         Check(
             CalledMethods(moveNext).Any(m => m == eligibility)
                 && CalledMethods(selected).Any(m => m == eligibility)
@@ -173,7 +213,7 @@ internal static class NativeResolverChecks
                 && !CalledMethods(selected).Any(m => m.Name == "StaySources"),
             "Discovery and retention must share live eligibility, with selected donors still in the inventory."
         );
-        foreach (string method in new[] { "Reaches", "TryFind", "Any" })
+        foreach (string method in new[] { "ReachesBoth", "TryFind", "Any" })
             Check(
                 CalledMethods(eligibility).Any(m => m.Name == method),
                 "Stay discovery must check dependencies, exclude owned stays and skip sails: "
@@ -198,8 +238,8 @@ internal static class NativeResolverChecks
             var type in new[]
             {
                 native,
-                Type("SheetingWinchPlacementResolver"),
-                Type("HalyardWinchPlacementResolver"),
+                Type("Placement.SheetingWinchPlacementResolver"),
+                Type("Placement.HalyardWinchPlacementResolver"),
             }
         )
         foreach (var method in type.GetMethods(flags).Where(m => m.DeclaringType == type))
@@ -214,13 +254,47 @@ internal static class NativeResolverChecks
                     ),
                 "Resolver mutates native controls or generates seats: " + method.Name
             );
-        var sheets = Type("SheetingWinchPlacementResolver").GetMethod("Resolve", flags);
+        var sheets = Type("Placement.SheetingWinchPlacementResolver").GetMethod("Resolve", flags);
         Check(
             CalledMethods(sheets)
                 .Any(m => m.DeclaringType.Name == "WinchPlacementPolicy" && m.Name == "Resolve"),
             "Sheet resolver bypasses atomic allocation policy."
         );
-        var sheetType = Type("SheetingWinchPlacementResolver");
+        var sheetType = Type("Placement.SheetingWinchPlacementResolver");
+        foreach (string method in new[] { "Fallbacks", "ValidateCurrent" })
+        {
+            var body = Instructions(sheetType.GetMethod(method, flags)).ToArray();
+            Check(
+                body.Count(i => i.Operand is MethodInfo m && m.Name == "get_position") == 1
+                    && Enumerable
+                        .Range(start: 2, count: body.Length - 2)
+                        .Any(i =>
+                            body[i].Operand is MethodInfo m
+                            && m.Name == "get_position"
+                            && body[i - 1].Operand is MethodInfo transform
+                            && transform.Name == "get_transform"
+                            && body[i - 2].Code == OpCodes.Ldarg_1
+                        ),
+                "Sheet fallback selection and retention must measure the forward physical mast: "
+                    + method
+            );
+        }
+        var sheetResolveBody = Instructions(sheets).ToArray();
+        Check(
+            Enumerable
+                .Range(start: 1, count: sheetResolveBody.Length - 1)
+                .Any(i =>
+                    sheetResolveBody[i].Operand is MethodInfo m
+                    && m.Name == "Fallbacks"
+                    && sheetResolveBody[i - 1].Code == OpCodes.Ldarg_2
+                ),
+            "Sheet allocation must pass its forward physical mast to fallback ordering."
+        );
+        foreach (var method in new[] { sheets, sheetType.GetMethod("ValidateCurrent", flags) })
+            Check(
+                CalledMethods(method).Count(m => m.Name == "ActiveSupport") == 2,
+                "Sheet selection and retention must check both physical mast supports."
+            );
         var sheetValidateCalls = CalledMethods(sheetType.GetMethod("ValidateCurrent", flags))
             .ToArray();
         Check(
@@ -237,12 +311,12 @@ internal static class NativeResolverChecks
                     m.DeclaringType.Name == "SharedSheetWinchTemplate" && m.Name == "Get"
                 )
                     && !calls.Any(m =>
-                        m.DeclaringType.Name == "NativeWinchSeats" && m.Name == "Rotation"
+                        m.DeclaringType.Name == "NativeWinchInventory" && m.Name == "Rotation"
                     ),
                 "Sheet fallback must share a donor and must not inherit live donor wheel rotation."
             );
         }
-        var sharedTemplate = Type("SharedSheetWinchTemplate");
+        var sharedTemplate = Type("Discovery.SharedSheetWinchTemplate");
         var templateGet = sharedTemplate.GetMethod("Get", flags);
         var templateCalls = CalledMethods(templateGet).ToArray();
         Check(

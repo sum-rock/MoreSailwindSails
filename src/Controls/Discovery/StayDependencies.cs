@@ -2,23 +2,30 @@
 using System;
 using System.Collections.Generic;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Discovery
 {
     internal static class StayDependencies
     {
-        internal static bool Reaches<T>(
+        internal static bool ReachesBoth<T>(
             T option,
             Func<T, IEnumerable<T>> requires,
-            Predicate<T> matches
+            Predicate<T> matchesFirst,
+            Predicate<T> matchesSecond
         )
             where T : class
         {
+            if (option == null)
+                return false;
             var visited = new HashSet<T>();
+            bool foundFirst = false,
+                foundSecond = false;
             bool Visit(T current)
             {
                 if (current == null || !visited.Add(current))
                     return false;
-                if (matches(current))
+                foundFirst = foundFirst || matchesFirst(current);
+                foundSecond = foundSecond || matchesSecond(current);
+                if (foundFirst && foundSecond)
                     return true;
                 foreach (var dependency in requires(current) ?? Array.Empty<T>())
                     if (Visit(dependency))

@@ -1,32 +1,41 @@
-// Allocates complete sheet pairs from aft-mast dependencies, then authored positions moving aft.
+// Allocates complete sheet pairs from matching physical mast pairs, then authored positions moving aft.
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Discovery;
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Placement
 {
+    // Resolves and validates native sheet pairs and fallbacks aft of the forward physical mast.
     internal sealed class SheetingWinchPlacementResolver
     {
-        private readonly NativeWinchSeats native;
+        private readonly NativeWinchInventory native;
         private readonly WinchReservations ledger;
 
-        internal SheetingWinchPlacementResolver(NativeWinchSeats native, WinchReservations ledger)
+        internal SheetingWinchPlacementResolver(
+            NativeWinchInventory native,
+            WinchReservations ledger
+        )
         {
             this.native = native;
             this.ledger = ledger;
         }
 
-        private IEnumerable<SheetFallbackDefinition> Fallbacks(Mast requested) =>
+        private IEnumerable<SheetFallbackDefinition> Fallbacks(Mast forward) =>
             SheetFallbackOrder.FromMast(
                 fallbacks: native.Profile?.SheetFallbacks ?? Array.Empty<SheetFallbackDefinition>(),
-                mastZ: native.Boat.transform.InverseTransformPoint(requested.transform.position).z
+                mastZ: native.Boat.transform.InverseTransformPoint(forward.transform.position).z
             );
 
-        internal bool ValidateCurrent(Mast requested, NativeWinchCandidate current)
+        internal bool ValidateCurrent(Mast forward, Mast requested, WinchPlacementCandidate current)
         {
-            if (current == null || !native.ActiveSupport(mast: requested))
+            if (
+                current == null
+                || !native.ActiveSupport(mast: forward)
+                || !native.ActiveSupport(mast: requested)
+            )
                 return false;
             if (current.Fallback)
             {
@@ -34,9 +43,7 @@ namespace MoreSailwindSails.Controls
                     fallbacks: native.Profile?.SheetFallbacks
                         ?? Array.Empty<SheetFallbackDefinition>(),
                     id: current.Id,
-                    mastZ: native
-                        .Boat.transform.InverseTransformPoint(requested.transform.position)
-                        .z
+                    mastZ: native.Boat.transform.InverseTransformPoint(forward.transform.position).z
                 );
                 return category != null
                     && ValidFallbackSide(
@@ -53,7 +60,7 @@ namespace MoreSailwindSails.Controls
             var mast = current.SourceMast;
             int index = current.SourceIndex;
             return mast
-                && native.IsStaySource(source: mast, requested: requested)
+                && native.IsStaySource(source: mast, forward: forward, requested: requested)
                 && mast.leftAngleWinch != null
                 && mast.rightAngleWinch != null
                 && index >= 0
@@ -66,7 +73,7 @@ namespace MoreSailwindSails.Controls
 
         private bool ValidFallbackSide(
             SheetFallbackSeat definition,
-            NativeWinchCandidate current,
+            WinchPlacementCandidate current,
             int index
         )
         {
@@ -80,12 +87,19 @@ namespace MoreSailwindSails.Controls
                     .MatchesPose(position: definition.Position, rotation: definition.Rotation);
         }
 
-        internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
+        internal WinchResolution Resolve(
+            object owner,
+            Mast forward,
+            Mast requested,
+            WinchCandidate current
+        )
         {
-            var pairs = new List<NativeWinchCandidate>();
-            if (native.ActiveSupport(mast: requested))
+            var pairs = new List<WinchPlacementCandidate>();
+            bool supportsActive =
+                native.ActiveSupport(mast: forward) && native.ActiveSupport(mast: requested);
+            if (supportsActive)
             {
-                foreach (var mast in native.StaySources(requested: requested))
+                foreach (var mast in native.StaySources(forward: forward, requested: requested))
                 {
                     var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
                     var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
@@ -117,9 +131,9 @@ namespace MoreSailwindSails.Controls
                         );
                     }
                 }
-                // Append authored pairs in encounter order. The shared policy skips occupied,
-                // unsupported or claimed pairs and acquires both sides together.
-                foreach (var category in Fallbacks(requested: requested))
+                // Append authored pairs moving aft from the forward physical mast.
+                // The policy skips unavailable pairs and acquires both sides together.
+                foreach (var category in Fallbacks(forward: forward))
                 {
                     var fallback = Fallback(category: category);
                     if (fallback != null)
@@ -132,12 +146,12 @@ namespace MoreSailwindSails.Controls
                 current: current,
                 native: pairs.ToArray()
             );
-            if (!native.ActiveSupport(mast: requested))
+            if (!supportsActive)
                 result.MissingSupports++;
             return result;
         }
 
-        private NativeWinchCandidate Fallback(SheetFallbackDefinition category)
+        private WinchPlacementCandidate Fallback(SheetFallbackDefinition category)
         {
             var definitions = new[] { category.Fallback.Port, category.Fallback.Starboard };
             var template = SharedSheetWinchTemplate.Get();
@@ -154,7 +168,7 @@ namespace MoreSailwindSails.Controls
                         )
                 )
                 .ToArray();
-            return new NativeWinchCandidate
+            return new WinchPlacementCandidate
             {
                 Id = category.FallbackName,
                 Context = "fallback=" + category.FallbackName,

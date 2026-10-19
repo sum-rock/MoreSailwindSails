@@ -3,12 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Placement;
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Discovery
 {
     // One inventory per coordinator. Never activate source rigs or register masts.
-    internal sealed class NativeWinchSeats
+    internal sealed class NativeWinchInventory
     {
         internal readonly BoatRefs Boat;
         internal readonly BoatControlDefinition Profile;
@@ -31,7 +32,7 @@ namespace MoreSailwindSails.Controls
         internal GPButtonRopeWinch[] Controls { get; private set; } =
             Array.Empty<GPButtonRopeWinch>();
 
-        internal NativeWinchSeats(BoatRefs boat, Func<GPButtonRopeWinch, bool> owned)
+        internal NativeWinchInventory(BoatRefs boat, Func<GPButtonRopeWinch, bool> owned)
         {
             Boat = boat;
             Profile = BoatControlCatalog.Find(boatName: boat.name);
@@ -153,34 +154,51 @@ namespace MoreSailwindSails.Controls
                 ? Mast(id: Profile.Boat.Base(section: section.orderIndex))
                 : section;
 
-        internal IEnumerable<Mast> StaySources(Mast requested)
+        internal IEnumerable<Mast> StaySources(Mast forward, Mast requested)
         {
-            if (!requested)
+            if (!forward || !requested || forward == requested)
                 yield break;
             foreach (var option in options)
             {
                 if (!option)
                     continue;
                 var source = option.GetComponent<Mast>();
-                if (EligibleStaySource(option: option, source: source, requested: requested))
+                if (
+                    EligibleStaySource(
+                        option: option,
+                        source: source,
+                        forward: forward,
+                        requested: requested
+                    )
+                )
                     yield return source;
             }
         }
 
         // Retention checks only the selected donor against the current inventory.
-        internal bool IsStaySource(Mast source, Mast requested)
+        internal bool IsStaySource(Mast source, Mast forward, Mast requested)
         {
-            if (!source || !requested)
+            if (!source || !forward || !requested || forward == requested)
                 return false;
             var option = source.GetComponent<BoatPartOption>();
             return option
                 && Array.IndexOf(array: options, value: option) >= 0
                 && option.GetComponent<Mast>() == source
-                && EligibleStaySource(option: option, source: source, requested: requested);
+                && EligibleStaySource(
+                    option: option,
+                    source: source,
+                    forward: forward,
+                    requested: requested
+                );
         }
 
         // Discovery and retention must apply identical live donor rules.
-        private bool EligibleStaySource(BoatPartOption option, Mast source, Mast requested)
+        private bool EligibleStaySource(
+            BoatPartOption option,
+            Mast source,
+            Mast forward,
+            Mast requested
+        )
         {
             if (
                 !source
@@ -189,10 +207,13 @@ namespace MoreSailwindSails.Controls
                 || (source.sails != null && source.sails.Any(sail => sail))
             )
                 return false;
-            return StayDependencies.Reaches(
+            return StayDependencies.ReachesBoth(
                 option: option,
                 requires: current => current ? current.requires : null,
-                matches: dependency => dependency && dependency.GetComponent<Mast>() == requested
+                matchesFirst: dependency =>
+                    dependency && dependency.GetComponent<Mast>() == forward,
+                matchesSecond: dependency =>
+                    dependency && dependency.GetComponent<Mast>() == requested
             );
         }
 
@@ -288,7 +309,7 @@ namespace MoreSailwindSails.Controls
             return true;
         }
 
-        internal bool Current(NativeWinchCandidate candidate)
+        internal bool Current(WinchPlacementCandidate candidate)
         {
             for (int i = 0; i < candidate.Templates.Length; i++)
             {
@@ -307,7 +328,7 @@ namespace MoreSailwindSails.Controls
             return true;
         }
 
-        internal NativeWinchCandidate Candidate(
+        internal WinchPlacementCandidate Candidate(
             string id,
             string context,
             params GPButtonRopeWinch[] templates
@@ -317,7 +338,7 @@ namespace MoreSailwindSails.Controls
             if (templates.Any(t => !TemplateUsable(t) || Seat(t) == null))
                 return null;
             var seats = templates.Select(Seat).ToArray();
-            return new NativeWinchCandidate
+            return new WinchPlacementCandidate
             {
                 Id = id,
                 Context = context,

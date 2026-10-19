@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls.Configuration;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Placement
 {
     internal static class SheetFallbackOrder
     {

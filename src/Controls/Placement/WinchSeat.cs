@@ -1,8 +1,9 @@
+// Describes an immutable placement pose and the identities that conflict with it.
 using System;
 using System.Linq;
 using UnityEngine;
 
-namespace MoreSailwindSails.Controls
+namespace MoreSailwindSails.Controls.Placement
 {
     // Pure, immutable allocation datum. Identities are native instance IDs or
     // authored fallback names; aliases include every native control at this seat.

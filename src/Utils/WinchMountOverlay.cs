@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Discovery;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -12,7 +12,7 @@ namespace MoreSailwindSails.Utils
         private readonly Dictionary<Mesh, Vector3[]> meshEdges = new Dictionary<Mesh, Vector3[]>();
         private readonly List<WinchMountTrace> traces = new List<WinchMountTrace>();
         private BoatRefs boat;
-        private NativeWinchSeats inventory;
+        private NativeWinchInventory inventory;
         private Material material;
         private float nextDiscovery;
         private Vector3[] positions = Array.Empty<Vector3>();
@@ -63,7 +63,7 @@ namespace MoreSailwindSails.Utils
             boat = surface.Boat;
             // This separate read-only inventory includes owned controls for display only.
             // It never participates in placement or reserves any seats.
-            inventory = new NativeWinchSeats(boat: boat, owned: c => false);
+            inventory = new NativeWinchInventory(boat: boat, owned: c => false);
             Refresh();
             Notify(
                 message: "Winch mount overlay: "
