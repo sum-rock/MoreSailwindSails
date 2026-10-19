@@ -17,7 +17,7 @@ def bake() -> str:
         namespace="MoreSailwindSails.Sails.FishermansFlyingSail",
         class_name="FishermansFlyingSailBakedMesh",
         data_type="FishermansFlyingSailMeshData",
-        source_comment="// Baked by tools/bake_flying_sail.py from the Flying Sail Blender authoring mesh.",
+        source_comment="// Baked by mss assets bake flying_sail from the Flying Sail Blender authoring mesh.",
     )
 
 

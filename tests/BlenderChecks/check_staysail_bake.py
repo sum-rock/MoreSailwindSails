@@ -7,7 +7,7 @@ import sys
 
 
 root = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(root / "tools/bake_staysail.py"))
+tool = runpy.run_path(str(root / "tools/assets/bake_staysail.py"))
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--cut", choices=("A", "B", "C"), default="A")
 args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []

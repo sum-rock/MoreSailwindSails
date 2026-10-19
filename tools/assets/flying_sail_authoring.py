@@ -3,7 +3,7 @@
 import math
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 WIDTH = 4.6
 RISE = WIDTH * math.tan(math.radians(20))
 HEIGHTS = (RISE, -2 * WIDTH, -2 * WIDTH - RISE)

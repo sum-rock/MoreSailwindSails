@@ -4,7 +4,7 @@ import math
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 WIDTH = 13.8
 HEAD_SLOPE_DEGREES = 20.0
 CUTS = ("A", "B", "C")
