@@ -14,8 +14,8 @@ internal static class GlorianaHalyardChecks
     {
         CheckGroup(
             mast: 2,
-            contact: new Vector3(-0.005373f, 1.887422f, 0.791344f),
-            normal: new Vector3(-0.098015f, 0.003737f, 0.995178f),
+            contact: new Vector3(0.613389f, 1.827591f, 0.040833f),
+            normal: new Vector3(0.773011f, 0f, -0.634393f),
             sourceNormal: new Vector3(0f, 0.98480785f, -0.17364828f),
             templateIndex: 1
         );
