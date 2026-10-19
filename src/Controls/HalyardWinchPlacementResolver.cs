@@ -4,7 +4,7 @@ using MoreSailwindSails.Controls.Configuration;
 
 namespace MoreSailwindSails.Controls
 {
-    // Allocates stay halyards from dependency-related native stays and the aft mast fallback.
+    // Allocates stay halyards from native stays on the same physical mast pair and the aft mast fallback.
     internal sealed class HalyardWinchPlacementResolver
     {
         private readonly NativeWinchSeats native;
@@ -16,7 +16,7 @@ namespace MoreSailwindSails.Controls
             this.ledger = ledger;
         }
 
-        internal bool ValidateCurrent(Mast requested, NativeWinchCandidate current)
+        internal bool ValidateCurrent(Mast forward, Mast requested, NativeWinchCandidate current)
         {
             if (current == null || !native.ActiveSupport(mast: requested))
                 return false;
@@ -39,7 +39,11 @@ namespace MoreSailwindSails.Controls
                             )
                         );
             }
-            return native.IsStaySource(source: current.SourceMast, requested: requested)
+            return native.IsStaySource(
+                    source: current.SourceMast,
+                    forward: forward,
+                    requested: requested
+                )
                 && current.SourceMast.reefWinch != null
                 && current.SourceIndex >= 0
                 && current.SourceIndex < current.SourceMast.reefWinch.Length
@@ -47,12 +51,17 @@ namespace MoreSailwindSails.Controls
                 && native.Current(candidate: current);
         }
 
-        internal WinchResolution Resolve(object owner, Mast requested, WinchCandidate current)
+        internal WinchResolution Resolve(
+            object owner,
+            Mast forward,
+            Mast requested,
+            WinchCandidate current
+        )
         {
             var candidates = new List<NativeWinchCandidate>();
             // Donor stays may be unfitted; Candidate checks the actual mounting support.
             if (native.ActiveSupport(mast: requested))
-                foreach (var source in native.StaySources(requested: requested))
+                foreach (var source in native.StaySources(forward: forward, requested: requested))
                 {
                     if (source.reefWinch == null)
                         continue;

@@ -64,10 +64,16 @@ namespace MoreSailwindSails.Controls
             var manager = For(boat: boat);
             manager.native.Prepare();
             halyard = manager.native.PhysicalMast(section: halyard);
+            var forwardBase = manager.native.PhysicalMast(section: forward);
             var group = manager.Group(owner: owner);
-            if (group.Forward != forward || group.HalyardMast != halyard)
+            if (
+                group.Forward != forward
+                || group.ForwardBase != forwardBase
+                || group.HalyardMast != halyard
+            )
                 group.Suspend();
             group.Forward = forward;
+            group.ForwardBase = forwardBase;
             group.HalyardMast = halyard;
             group.NativeMount = nativeMount;
         }
@@ -155,6 +161,7 @@ namespace MoreSailwindSails.Controls
             private readonly FishermanWinchControls manager;
             internal readonly GameObject Owner;
             internal Mast Forward,
+                ForwardBase,
                 HalyardMast,
                 NativeMount;
             private readonly OwnedWinch[] sheetFittings = new OwnedWinch[2];
@@ -276,10 +283,12 @@ namespace MoreSailwindSails.Controls
                             current: state.Current,
                             valid: pair
                                 ? manager.sheets.ValidateCurrent(
+                                    forward: ForwardBase,
                                     requested: HalyardMast,
                                     current: state.Current
                                 )
                                 : manager.halyards.ValidateCurrent(
+                                    forward: ForwardBase,
                                     requested: HalyardMast,
                                     current: state.Current
                                 )
@@ -303,10 +312,16 @@ namespace MoreSailwindSails.Controls
                     var result = pair
                         ? manager.sheets.Resolve(
                             owner: state,
+                            forward: ForwardBase,
                             requested: HalyardMast,
                             current: state.Current
                         )
-                        : manager.halyards.Resolve(state, HalyardMast, state.Current);
+                        : manager.halyards.Resolve(
+                            owner: state,
+                            forward: ForwardBase,
+                            requested: HalyardMast,
+                            current: state.Current
+                        );
                     var selected = result.Candidate as NativeWinchCandidate;
                     if (selected == null)
                     {
