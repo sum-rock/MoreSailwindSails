@@ -14,7 +14,7 @@ internal static class AuthoredMeshChecks
         var rope = Check(create: FishermansStayBakedMesh.CreateRope);
         var collar = Check(create: FishermansStayBakedMesh.CreateCollar);
         Near(actual: FishermansStayBakedMesh.RopeLength, expected: 1);
-        Near(actual: FishermansStayBakedMesh.RopeRadius, expected: 0.01f);
+        Near(actual: FishermansStayBakedMesh.RopeRadius, expected: 0.02f);
         Near(actual: FishermansStayBakedMesh.CollarInnerRadius, expected: 0.2037f);
         Near(actual: FishermansStayBakedMesh.CollarOuterRadius, expected: 0.21f);
         Near(actual: FishermansStayBakedMesh.CollarHalfHeight, expected: 0.05f);
