@@ -145,12 +145,30 @@ internal static class StayDependencyChecks
         var first = Pair("first", -3, -4);
         var forward = Pair("forward", 1, 1);
         var crossing = Pair("crossing", 1, -6);
+        const float forwardMastZ = 0f;
+        const float aftMastZ = -6f;
         var candidates = SheetFallbackOrder
-            .FromMast(fallbacks: new[] { far, forward, crossing, first }, mastZ: 0)
+            .FromMast(fallbacks: new[] { far, forward, crossing, first }, mastZ: forwardMastZ)
             .ToArray();
         Check(
             candidates.SequenceEqual(new[] { first, far }),
             "Fallbacks must preserve complete pairs and follow fore-to-aft encounter order."
+        );
+        Check(
+            SheetFallbackOrder
+                .FromMast(fallbacks: candidates, mastZ: aftMastZ)
+                .SequenceEqual(new[] { far })
+                && SheetFallbackOrder.FindCurrent(
+                    fallbacks: candidates,
+                    id: first.FallbackName,
+                    mastZ: forwardMastZ
+                ) == first
+                && SheetFallbackOrder.FindCurrent(
+                    fallbacks: candidates,
+                    id: first.FallbackName,
+                    mastZ: aftMastZ
+                ) == null,
+            "The forward mast boundary must allow selecting and retaining the first pair between the masts."
         );
         var fallbacks = Array.AsReadOnly(
             new[]

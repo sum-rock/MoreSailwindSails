@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using static MoreSailwindSails.Tests.AssemblyChecks.Shared.IlReader;
 
 namespace MoreSailwindSails.Tests.AssemblyChecks.Controls;
@@ -260,6 +261,40 @@ internal static class NativeResolverChecks
             "Sheet resolver bypasses atomic allocation policy."
         );
         var sheetType = Type("Placement.SheetingWinchPlacementResolver");
+        foreach (string method in new[] { "Fallbacks", "ValidateCurrent" })
+        {
+            var body = Instructions(sheetType.GetMethod(method, flags)).ToArray();
+            Check(
+                body.Count(i => i.Operand is MethodInfo m && m.Name == "get_position") == 1
+                    && Enumerable
+                        .Range(start: 2, count: body.Length - 2)
+                        .Any(i =>
+                            body[i].Operand is MethodInfo m
+                            && m.Name == "get_position"
+                            && body[i - 1].Operand is MethodInfo transform
+                            && transform.Name == "get_transform"
+                            && body[i - 2].Code == OpCodes.Ldarg_1
+                        ),
+                "Sheet fallback selection and retention must measure the forward physical mast: "
+                    + method
+            );
+        }
+        var sheetResolveBody = Instructions(sheets).ToArray();
+        Check(
+            Enumerable
+                .Range(start: 1, count: sheetResolveBody.Length - 1)
+                .Any(i =>
+                    sheetResolveBody[i].Operand is MethodInfo m
+                    && m.Name == "Fallbacks"
+                    && sheetResolveBody[i - 1].Code == OpCodes.Ldarg_2
+                ),
+            "Sheet allocation must pass its forward physical mast to fallback ordering."
+        );
+        foreach (var method in new[] { sheets, sheetType.GetMethod("ValidateCurrent", flags) })
+            Check(
+                CalledMethods(method).Count(m => m.Name == "ActiveSupport") == 2,
+                "Sheet selection and retention must check both physical mast supports."
+            );
         var sheetValidateCalls = CalledMethods(sheetType.GetMethod("ValidateCurrent", flags))
             .ToArray();
         Check(
