@@ -1003,21 +1003,63 @@ rendering. Unreadable meshes and skinned renderers use approximate bounds. Menus
 hide it; loading, losing the boat or disabling releases its resources. Reselect
 after loading. Hidden overlays do not scan.
 
-### Python developer tools
+### Python tools and fallback halyard generation
 
-Python asset tooling lives under `tools/assets/`. The root `pyproject.toml` and
-`uv.lock` manage the CLI and its dependencies in the ignored local `.venv`. The
-Nix shell supplies uv, Blender and native libraries; it clears `PYTHONPATH` to
-keep Nix packages from shadowing the locked Python dependencies.
+Python tooling is packaged under `tools/`. `assets/` owns Blender workers and
+launch commands; `halyards/` owns installed-asset inspection and placement
+calculations. `settings.py` centralizes repository and game paths. The root
+`pyproject.toml` declares Click, UnityPy, NumPy and TypeTreeGeneratorAPI, with
+pytest in the development group. `uv.lock` pins all resolved dependencies. Nix
+supplies Python, uv, Blender, Git, GitHub CLI, GNU coreutils, ILSpy, .NET,
+formatters and the native libraries used by Python wheels. Its shell clears
+`PYTHONPATH` so unrelated Nix Python packages cannot shadow the locked
+dependencies. Removing the library path prevented NumPy from loading
+`libstdc++.so.6`; retaining Nix's `PYTHONPATH` made the venv's pytest entry
+point import an incompatible Nix pytest package. The shell leaves uv's
+environment location and Python download policy at their defaults. `uv run`
+creates and syncs the repository-local `.venv` automatically.
+
+From the repository root:
 
 ```sh
 nix develop
 uv run --locked mss --help
+uv run --locked pytest
+uv run --locked pytest --installed-game="$HOME/.local/share/Steam/steamapps/common/Sailwind"
 uv run --locked mss assets bake flying_sail --check
+uv run --locked mss generate-fallback-halyards brig --output /tmp/brig-halyards.cs
 ```
 
-Asset commands launch Blender with its own Python. `--check` compares a bake
-without writing it; `assets --blender PATH` selects a different executable.
+The environment is the ignored repository-local `.venv`, never a global tool
+installation. Activate it with `source .venv/bin/activate` to invoke `mss`
+directly. Asset commands launch Blender with its own Python and disabled file
+auto-execution. Override the executable with `mss assets --blender PATH ...`.
+`--check` compares a bake without writing it; generation replaces its selected
+`.blend` output. CLI help and halyard generation do not require Blender.
+
+The halyard command accepts `brig`, `junk`, `jong`, `sanbuq`, `baghala` (alias
+`large_dhow`), `cog`, `kakam` and `dhow`. It reads native assets and installed
+Shipyard Expansion content by default. Use `--native-only` to exclude SE,
+`--game-dir PATH` for another installation, and `--mast ID` to select a physical
+base mast. Topmast ancestry comes from the existing C# boat profiles.
+
+The generator samples the rendered mast surface every five degrees, beginning at
+the native template's height. It then alternates upward and downward in five
+centimetre increments, bounded by `--height-range` (default 0.5 metres). Native
+controls include all compatible registered mast/stay options, even when
+inactive. Clearance uses conservative bounds around the entire rotation of
+rendered winch geometry; `--clearance` defaults to 0.02 metres. Static triangle
+checks reject nearby structure while allowing mounting-face contact.
+
+Output contains complete named-argument `HalyardFallbackDefinition` entries in
+mast-ID order, including contact, normals, offset and template index. Source
+identities and asset hashes accompany the entries. Review and transfer selected
+entries into `src/Controls/Configuration/Boats/`; the command does not edit
+those files. Definitions go to stdout or `--output`, and coverage/rejection
+reasons go to stderr. Unresolved requested masts produce exit status 1 while
+preserving any successful entries. The conservative bounds can reject viable
+positions; increasing the height range expands the search without relaxing
+collision checks. No proprietary meshes or assemblies are exported.
 
 ### Asset provenance and measurement fixtures
 
@@ -1034,14 +1076,36 @@ Commit numeric fixtures only, never extracted meshes, textures or assemblies.
   mast IDs and candidate stays.
 - Earlier rail/surface fixtures remain references for manual fallback authoring.
 
-Identify assets by serialized identity as well as hierarchy path: Brig source
-**70** is a registered mainmast reef source, while **74** is an unregistered
-foremast source with the same path. Measurements do not authorize generated
-placement searches.
+Identify assets by serialized identity as well as hierarchy path: Brig sources
+**70/74** have the same hierarchy name and distinct control references. The
+older SE **0.11.1** fixture marked **74** unregistered; the installed SE
+**0.12.1** registers both. Fresh inspections take precedence over historical
+fixture membership. The offline generator produces reviewable authoring data;
+runtime placement continues to use the authored definitions.
 
 ## Validation records
 
 ### Automated baseline and limits
+
+The **2026-10-18** Python tooling update adds **mss-tools 0.1.0** and retains
+plugin/runtime version **0.3.0**. uv lock verification and repeatable sync
+passed with the environment at the repository's `.venv`. All **33** Python
+checks passed, including installed native/SE mast inventories, Brig reference
+transforms, component-header alignment, synthetic collision geometry and CLI
+behavior. Release built with zero warnings/errors; GeometryChecks and
+AssemblyChecks passed. All five Blender regression checks and public bake
+freshness commands passed; authored `.blend` files and baked numerical geometry
+remained unchanged. The public generation commands also produced temporary
+Flying Sail and Mk.B assets.
+
+The installed native-plus-SE audit evaluated **53** physical mast options with
+**2 cm** clearance and a **±0.5 m** search range. It emitted **7** seats: Brig
+**1/10**, Junk **1/8**, Jong **4/9**, Kakam **1/3**; Sanbuq **0/7**, Baghala
+**0/7**, Cog **0/6** and Dhow **0/3**. Remaining options were explicitly
+unresolved within those conservative bounds. A wider **±2.5 m** search produced
+a Brig mainmast **5** seat. Repeated Brig **79** generation produced
+byte-identical C# output. No generated definitions were applied to boat
+profiles.
 
 The **2026-10-16** stay winch update retains plugin/runtime version **0.3.0**.
 Release built with zero warnings/errors; GeometryChecks and AssemblyChecks

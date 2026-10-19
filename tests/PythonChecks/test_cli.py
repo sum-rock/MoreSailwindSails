@@ -4,6 +4,7 @@ import subprocess
 import sys
 
 from click.testing import CliRunner
+import pytest
 
 from tools.cli import main
 from tools.assets import runner
@@ -12,7 +13,7 @@ from tools.assets import runner
 def test_help_needs_no_blender_or_game():
     result = CliRunner().invoke(main, ["--help"])
     assert result.exit_code == 0
-    assert "assets" in result.output
+    assert "generate-fallback-halyards" in result.output
     assert "bpy" not in sys.modules
 
 
@@ -79,3 +80,58 @@ def test_missing_blender_and_failed_worker(monkeypatch):
 
     monkeypatch.setattr(runner, "run", fail)
     assert CliRunner().invoke(main, ["assets", "bake", "stay"]).exit_code == 1
+
+
+def test_generator_separates_diagnostics_and_retains_partial_output(
+    monkeypatch, tmp_path
+):
+    from tools.halyards import generate
+
+    def fake(**kwargs):
+        kwargs["report"]("Mast 4 unresolved")
+        return "new HalyardFallbackDefinition();\n", 1
+
+    monkeypatch.setattr(generate, "generate", fake)
+    result = CliRunner().invoke(
+        main, ["generate-fallback-halyards", "brig", "--game-dir", str(tmp_path)]
+    )
+    assert result.exit_code == 1
+    assert result.stdout == "new HalyardFallbackDefinition();\n"
+    assert "Mast 4 unresolved" in result.stderr
+    output = tmp_path / "seats.cs"
+    result = CliRunner().invoke(
+        main,
+        [
+            "generate-fallback-halyards",
+            "brig",
+            "--game-dir",
+            str(tmp_path),
+            "--output",
+            str(output),
+        ],
+    )
+    assert (
+        output.read_text() == "new HalyardFallbackDefinition();\n" and not result.stdout
+    )
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["assets", "bake", "staysail", "--cut", "D"],
+        ["assets", "generate", "stay"],
+        ["generate-fallback-halyards", "shroud"],
+        ["generate-fallback-halyards", "brig", "--clearance", "-1"],
+    ],
+)
+def test_invalid_commands(args):
+    assert CliRunner().invoke(main, args).exit_code == 2
+
+
+def test_missing_installed_assets_are_a_concise_error(tmp_path):
+    result = CliRunner().invoke(
+        main, ["generate-fallback-halyards", "brig", "--game-dir", str(tmp_path)]
+    )
+    assert result.exit_code == 1
+    assert "Missing installed Sailwind input:" in result.stderr
+    assert not result.stdout
