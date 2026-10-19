@@ -32,8 +32,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 3,
-            "Preserve the three authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 5,
+            "Preserve the five authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
@@ -70,17 +70,19 @@ internal static class NativeSeatProfileChecks
         var caelanor = CaelanorControls.Definition;
         var caelanorPair = caelanor.SheetFallbacks.Single().Fallback;
         Vector3 Reflect(Vector3 value) => new Vector3(-value.x, value.y, value.z);
-        Check(
-            (caelanorPair.Port.Contact - Reflect(caelanorPair.Starboard.Contact)).magnitude
-                < 0.000001f
-                && (caelanorPair.Port.Normal - Reflect(caelanorPair.Starboard.Normal)).magnitude
-                    < 0.000001f
-                && (caelanorPair.Port.Position - Reflect(caelanorPair.Starboard.Position)).magnitude
-                    < 0.000001f
-                && caelanorPair.Port.Contact.x < 0
-                && caelanorPair.Starboard.Contact.x > 0,
-            "Caelanor sheet contacts, mounting offsets and normals must mirror at the deck centreline."
-        );
+        foreach (
+            var pair in BrigControls
+                .Definition.SheetFallbacks.Select(definition => definition.Fallback)
+                .Append(caelanorPair)
+        )
+            Check(
+                (pair.Port.Contact - Reflect(pair.Starboard.Contact)).magnitude < 0.000001f
+                    && (pair.Port.Normal - Reflect(pair.Starboard.Normal)).magnitude < 0.000001f
+                    && (pair.Port.Position - Reflect(pair.Starboard.Position)).magnitude < 0.000001f
+                    && pair.Port.Contact.x < 0
+                    && pair.Starboard.Contact.x > 0,
+                "Brig and Caelanor sheet contacts, mounting offsets and normals must mirror at the deck centreline."
+            );
         var reef = caelanor.HalyardFallbacks.Single();
         Check(
             reef.Mast == 5
