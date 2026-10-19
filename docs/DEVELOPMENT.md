@@ -34,8 +34,8 @@ dotnet restore
 ```
 
 Initial Nix/NuGet restores need network access. Keep `flake.lock` and
-`.config/dotnet-tools.json` pinned. The flake also provides Python 3, ILSpy CLI
-and pins Prettier for Markdown and Ruff for Python formatting. Run
+`.config/dotnet-tools.json` pinned. The flake also provides Blender, Python 3,
+ILSpy CLI and pins Prettier for Markdown and Ruff for Python formatting. Run
 `pre-commit install` inside the development shell to enable the CSharpier and
 Markdown/Python formatting hooks, which invoke Nix on later commits. Hooks
 format staged files; review and stage any formatting changes before retrying the
@@ -315,23 +315,23 @@ island with a 5% margin.
 From the repository root with Blender **5.1.1**:
 
 ```sh
-blender --background --factory-startup --python-exit-code 1 --python tools/generate_flying_sail.py
-blender --background assets/flying_sail/fishermans_flying_sail.blend --python-exit-code 1 --python tools/bake_flying_sail.py
+uv run --locked mss assets generate flying_sail
+uv run --locked mss assets bake flying_sail
 blender --background assets/flying_sail/fishermans_flying_sail.blend --python-exit-code 1 --python tests/BlenderChecks/check_flying_sail_bake.py
 ```
 
-Generation replaces the asset; append `-- --output /tmp/flying-sail.blend` to
+Generation replaces the asset; append `--output /tmp/flying-sail.blend` to
 preserve hand edits. Baking reads without saving the asset and exports
 normalized positions, UVs and triangles to `FishermansFlyingSailBakedMesh.g.cs`.
-Append `-- --check` to verify freshness or `-- --output /tmp/flying-sail.g.cs`
-for a separate output. Include generated C# with asset changes; .NET builds need
-no Blender or asset bundle.
+Append `--check` to verify freshness or `--output /tmp/flying-sail.g.cs` for a
+separate output. Include generated C# with asset changes; .NET builds need no
+Blender or asset bundle.
 
 The baker rejects incompatible outlines, topology, transforms, modifiers, shape
 keys and UVs. Runtime geometry scales the baked cut and adds camber/luff bow;
 bones and corners derive from the mesh. UVs remain fixed during live shaping.
 Shared authoring utilities live in
-[tools/sail_authoring.py](../tools/sail_authoring.py).
+[tools/assets/sail_authoring.py](../tools/assets/sail_authoring.py).
 
 ### Rope visuals and knots
 
@@ -408,13 +408,13 @@ saved sizes with new-sail defaults.
 
 ### Blender authoring meshes
 
-[tools/generate_staysail.py](../tools/generate_staysail.py) creates editable
-[Mk.A](../assets/staysails/fishermans_staysail_mka.blend),
+[tools/assets/generate_staysail.py](../tools/assets/generate_staysail.py)
+creates editable [Mk.A](../assets/staysails/fishermans_staysail_mka.blend),
 [Mk.B](../assets/staysails/fishermans_staysail_mkb.blend) and
 [Mk.C](../assets/staysails/fishermans_staysail_mkc.blend) assets. Nominal
 dimensions live in
-[tools/staysail_authoring.py](../tools/staysail_authoring.py); shared grid, UV
-and export utilities live in `tools/sail_authoring.py`.
+[tools/assets/staysail_authoring.py](../tools/assets/staysail_authoring.py);
+shared grid, UV and export utilities live in `tools/assets/sail_authoring.py`.
 
 Each cut is 13.8 units wide with a 20° head slope and **24 × 32** quad grid. A/B
 luffs are 13.8 units; C's is 20.7. Blender X points aft, Z up and Y is zero; the
@@ -425,8 +425,8 @@ exported.
 From the repository root with Blender **5.1.1**, using B as an example:
 
 ```sh
-blender --background --factory-startup --python-exit-code 1 --python tools/generate_staysail.py -- --cut B
-blender --background assets/staysails/fishermans_staysail_mkb.blend --python-exit-code 1 --python tools/bake_staysail.py -- --cut B
+uv run --locked mss assets generate staysail --cut B
+uv run --locked mss assets bake staysail --cut B
 blender --background assets/staysails/fishermans_staysail_mkb.blend --python-exit-code 1 --python tests/BlenderChecks/check_staysail_bake.py -- --cut B
 ```
 
@@ -660,8 +660,8 @@ collars surround object-local Z. Camera and light objects are ignored.
 From the repository root with Blender **5.1.1**:
 
 ```sh
-blender --background --factory-startup --disable-autoexec assets/stays/stay.blend --python-exit-code 1 --python tools/bake_stay.py
-blender --background --factory-startup --disable-autoexec assets/stays/stay.blend --python-exit-code 1 --python tools/bake_stay.py -- --check
+uv run --locked mss assets bake stay
+uv run --locked mss assets bake stay --check
 blender --background --factory-startup --disable-autoexec assets/stays/stay.blend --python-exit-code 1 --python tests/BlenderChecks/check_stay_bake.py
 ```
 
@@ -683,7 +683,7 @@ contains one reusable collar. Materials are not exported by Blender.
 fresh position, normal, UV and index arrays, plus measured rope length/radius
 and collar inner/outer radii and half-height. Output is deterministic and
 requires no Blender installation or asset bundle to build the plugin. Append
-`-- --output /tmp/stay.g.cs` for a separate output. `--check` compares without
+`--output /tmp/stay.g.cs` for a separate output. `--check` compares without
 writing, including when output is missing or stale. Check in generated data
 alongside authoring changes.
 
@@ -1002,6 +1002,22 @@ refreshes once per second while shown; occupancy and transforms update at
 rendering. Unreadable meshes and skinned renderers use approximate bounds. Menus
 hide it; loading, losing the boat or disabling releases its resources. Reselect
 after loading. Hidden overlays do not scan.
+
+### Python developer tools
+
+Python asset tooling lives under `tools/assets/`. The root `pyproject.toml` and
+`uv.lock` manage the CLI and its dependencies in the ignored local `.venv`. The
+Nix shell supplies uv, Blender and native libraries; it clears `PYTHONPATH` to
+keep Nix packages from shadowing the locked Python dependencies.
+
+```sh
+nix develop
+uv run --locked mss --help
+uv run --locked mss assets bake flying_sail --check
+```
+
+Asset commands launch Blender with its own Python. `--check` compares a bake
+without writing it; `assets --blender PATH` selects a different executable.
 
 ### Asset provenance and measurement fixtures
 

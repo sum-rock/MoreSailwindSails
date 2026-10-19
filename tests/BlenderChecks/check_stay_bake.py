@@ -10,7 +10,7 @@ import tempfile
 import bpy
 
 ROOT = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(ROOT / "tools/bake_stay.py"))
+tool = runpy.run_path(str(ROOT / "tools/assets/bake_stay.py"))
 bake, extract, main = tool["bake"], tool["extract"], tool["main"]
 asset = Path(bpy.data.filepath)
 before = hashlib.sha256(asset.read_bytes()).digest()

@@ -17,7 +17,7 @@ def bake(cut: str = "A") -> str:
         namespace=f"MoreSailwindSails.Sails.FishermansStaysail.Mk{cut}",
         class_name=f"FishermansStaysailMk{cut}BakedMesh",
         data_type="FishermansStaysailMeshData",
-        source_comment=f"// Baked by tools/bake_staysail.py from the Mk.{cut} Blender authoring mesh.",
+        source_comment=f"// Baked by mss assets bake staysail from the Mk.{cut} Blender authoring mesh.",
     )
 
 
