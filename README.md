@@ -214,7 +214,7 @@ Experimental spritsails developed between releases are not included in 0.3.0.
 - Fixed missing **Flying Sail corner knots**.
 - Added an optional **winch mounting-point overlay** to help inspect occupied
   and available locations. It is disabled by default; see the
-  [diagnostic instructions](docs/DEVELOPMENT.md#viewing-winch-mounting-points).
+  [diagnostic instructions](wiki/How-winches-are-placed.md#viewing-winch-mounting-points).
 - Removed **Leopard support** pending further compatibility work.
 
 ### 0.2.0
@@ -226,4 +226,4 @@ Experimental spritsails developed between releases are not included in 0.3.0.
 - Support for new Baghala and a fix for custom sail sound initialization.
 
 For building the mod, technical details and testing notes, see the
-[development guide](docs/DEVELOPMENT.md).
+[Developer Guide](wiki/developer-guide/Developer-Guide.md).

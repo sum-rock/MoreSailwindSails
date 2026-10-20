@@ -17,8 +17,11 @@ precedence over historical design choices.
   comments.
 - Update `README.md` only when the user explicitly requests a README change.
   Feature, bug-fix, release and general documentation work do not imply
-  permission to edit it. Put useful modding reference updates in `wiki/` and
-  report verification results in the change description or handoff.
+  permission to edit it.
+- Update pages in `wiki/` only when the user explicitly requests a wiki change.
+  Feature, bug-fix, release and general documentation work do not imply
+  permission to edit the wiki. Report technical changes and verification results
+  in the change description or handoff.
 - Implementation requests authorize editing, building and checking. Do not
   commit, push, alter saves or replace installed game files as part of a build.
   `mss install-local`, `mss release`, `mss decompile` and `mss logs` are manual
@@ -38,14 +41,13 @@ precedence over historical design choices.
   implementation.
 - Resist changes that would break save compatability relative to the last tagged
   release.
-- Document reusable modding knowledge in the [wiki](wiki/Home.md), with source
-  links and inspected versions for asset-dependent claims. Keep implementation
-  history and validation logs in change descriptions, not reference pages.
-  Update an existing topic instead of duplicating it. `docs/DEVELOPMENT.md` is
-  only a navigation pointer.
-- Maintain wiki pages locally in `wiki/`. Publishing to GitHub Wiki is a
-  separate operation requiring an explicit request; local documentation work
-  does not authorize a push.
+- When a wiki update is explicitly requested, document reusable modding
+  knowledge with source links and inspected versions for asset-dependent claims.
+  Keep implementation history and validation logs in change descriptions, not
+  reference pages. Update an existing topic instead of duplicating it.
+- Wiki pages live locally in `wiki/`. Publishing to GitHub Wiki is a separate
+  operation requiring an explicit request; local documentation work does not
+  authorize a push.
 
 ## Verification and handoff
 
