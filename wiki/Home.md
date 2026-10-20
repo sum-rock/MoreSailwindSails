@@ -1,0 +1,42 @@
+# Sailwind rigging modding reference
+
+This wiki explains how to identify boat rigging, add custom stays, build sail
+shapes and physics, and connect shipyard options and controls. It is for
+Sailwind modders, with MoreSailwindSails as a working example.
+
+## Find an answer
+
+| I want to…                                             | Start here                                             |
+| ------------------------------------------------------ | ------------------------------------------------------ |
+| Look up a boat's mast and stay indexes                 | [Boat reference](Boats)                                |
+| Browse the sail families                               | [Sail reference](Sails)                                |
+| Understand Staysail IDs, shape, physics, and assets    | [Fisherman's Staysails](Fishermans-Staysails)          |
+| Understand Flying Sail IDs, shape, physics, and assets | [Fisherman's Flying Sails](Fishermans-Flying-Sails)    |
+| Understand Fisherman's Stay configuration              | [Fisherman's Stay](Fishermans-Stay)                    |
+| Understand how winches are placed                      | [How winches are placed](How-winches-are-placed)       |
+| Check a mapping against my installed game              | [Boat inspection command](MSS-command#boat-inspection) |
+| Build this mod or contribute a correction              | [Developer Guide](Developer-Guide)                     |
+
+## Developer Guide
+
+- [Building and contributing](Building-and-contributing): environment setup,
+  builds, automated checks, and contributions.
+- [mss command](MSS-command): asset tools, boat inspection, fallback generation,
+  installation, releases, decompilation, and logs.
+
+## What the references describe
+
+The boat pages cover objects used by this mod's stay definitions. Each page
+separates installed object names and providers from authored parent
+relationships and custom stay mappings. They are a reference for those fittings,
+not a complete inventory of every object on a boat.
+
+Source links identify revision
+[`43540e5`](https://github.com/sum-rock/MoreSailwindSails/tree/43540e59195537d3f5504c983f4c48ee5a9317fb),
+whose plugin version is **0.3.0**. Each boat page lists the inspected game/mod
+versions and date. Available parts can change between versions; the
+[boat inspection command](MSS-command#boat-inspection) can check supported boats
+against your installation.
+
+For player instructions, see the
+[project README](https://github.com/sum-rock/MoreSailwindSails#readme).

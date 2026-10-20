@@ -4,6 +4,7 @@ import click
 
 from tools.assets.cli import assets, bake
 from tools.halyards.cli import generate_fallback_halyards
+from tools.inspection import inspect_boat
 from tools.maintenance.decompile import decompile
 from tools.maintenance.install import install_local
 from tools.maintenance.logs import logs
@@ -19,6 +20,7 @@ for command in (
     assets,
     bake,
     generate_fallback_halyards,
+    inspect_boat,
     install_local,
     release,
     decompile,
