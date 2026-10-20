@@ -1,3 +1,4 @@
+// Renders native winch wireframes and authored fallback boxes for the selected boat.
 using System;
 using System.Collections.Generic;
 using MoreSailwindSails.Controls.Discovery;
@@ -9,8 +10,10 @@ namespace MoreSailwindSails.Utils
     // Draws optional winch diagnostics using owned camera resources, never native renderers.
     internal sealed class WinchMountOverlay : MonoBehaviour
     {
+        private static readonly Color FallbackColor = new Color(r: 0.7f, g: 0.3f, b: 1f, a: 1f);
         private readonly Dictionary<Mesh, Vector3[]> meshEdges = new Dictionary<Mesh, Vector3[]>();
         private readonly List<WinchMountTrace> traces = new List<WinchMountTrace>();
+        private readonly List<Vector3[]> fallbackBoxes = new List<Vector3[]>();
         private BoatRefs boat;
         private NativeWinchInventory inventory;
         private Material material;
@@ -64,6 +67,7 @@ namespace MoreSailwindSails.Utils
             // This separate read-only inventory includes owned controls for display only.
             // It never participates in placement or reserves any seats.
             inventory = new NativeWinchInventory(boat: boat, owned: c => false);
+            CacheFallbackBoxes();
             Refresh();
             Notify(
                 message: "Winch mount overlay: "
@@ -71,6 +75,35 @@ namespace MoreSailwindSails.Utils
                     + ". The position-capture shortcut remains available."
             );
         }
+
+        private void CacheFallbackBoxes()
+        {
+            fallbackBoxes.Clear();
+            var profile = inventory.Profile;
+            if (profile == null)
+                return;
+            // Authored positions remain visible regardless of allocation or support availability.
+            foreach (var definition in profile.SheetFallbacks)
+            {
+                var pair = definition.Fallback;
+                if (pair?.Port != null && pair.Port.Valid)
+                    AddFallbackBox(position: pair.Port.Position);
+                if (pair?.Starboard != null && pair.Starboard.Valid)
+                    AddFallbackBox(position: pair.Starboard.Position);
+            }
+            foreach (var definition in profile.HalyardFallbacks)
+                AddFallbackBox(position: definition.Fallback.Position);
+        }
+
+        private void AddFallbackBox(Vector3 position) =>
+            fallbackBoxes.Add(
+                WinchMountOverlayGeometry.BoundsEdges(
+                    bounds: new Bounds(
+                        center: position,
+                        size: new Vector3(x: 0.3f, y: 0.3f, z: 0.3f)
+                    )
+                )
+            );
 
         private void LateUpdate()
         {
@@ -229,6 +262,11 @@ namespace MoreSailwindSails.Utils
                                 GL.Vertex(v: transform.MultiplyPoint3x4(point));
                         }
                     }
+                    GL.Color(c: FallbackColor);
+                    var boatTransform = boat.transform.localToWorldMatrix;
+                    foreach (var edges in fallbackBoxes)
+                    foreach (var point in edges)
+                        GL.Vertex(v: boatTransform.MultiplyPoint3x4(point));
                 }
                 finally
                 {
@@ -250,28 +288,36 @@ namespace MoreSailwindSails.Utils
             {
                 GUI.color = Color.white;
                 GUI.Box(
-                    position: new Rect(16f, 16f, 360f, 132f),
+                    position: new Rect(16f, 16f, 360f, 176f),
                     text: "Winch mounts: " + boat.name
                 );
                 Legend(
                     y: 42f,
-                    state: WinchMountStatus.Unused,
+                    color: ColorFor(state: WinchMountStatus.Unused),
                     text: "Green: unused on fitted supports"
                 );
                 Legend(
                     y: 64f,
-                    state: WinchMountStatus.Occupied,
+                    color: ColorFor(state: WinchMountStatus.Occupied),
                     text: "Red: occupied (including hidden bound ropes)"
                 );
                 Legend(
                     y: 86f,
-                    state: WinchMountStatus.Unfitted,
+                    color: ColorFor(state: WinchMountStatus.Unfitted),
                     text: "Cyan: unused on unfitted supports"
                 );
+                Legend(y: 108f, color: FallbackColor, text: "Purple: defined fallback placement");
                 GUI.color = Color.white;
                 GUI.Label(
-                    position: new Rect(26f, 110f, 340f, 26f),
-                    text: locationCount + " locations; green does not guarantee allocation."
+                    position: new Rect(26f, 132f, 340f, 24f),
+                    text: locationCount
+                        + " winch locations; "
+                        + fallbackBoxes.Count
+                        + " fallback boxes."
+                );
+                GUI.Label(
+                    position: new Rect(26f, 154f, 340f, 26f),
+                    text: "Green does not guarantee allocation."
                 );
             }
             finally
@@ -280,9 +326,9 @@ namespace MoreSailwindSails.Utils
             }
         }
 
-        private static void Legend(float y, WinchMountStatus state, string text)
+        private static void Legend(float y, Color color, string text)
         {
-            GUI.color = ColorFor(state: state);
+            GUI.color = color;
             GUI.Label(position: new Rect(26f, y, 340f, 24f), text: text);
         }
 
@@ -296,6 +342,7 @@ namespace MoreSailwindSails.Utils
             boat = null;
             inventory = null;
             traces.Clear();
+            fallbackBoxes.Clear();
             meshEdges.Clear();
             positions = Array.Empty<Vector3>();
             states = Array.Empty<WinchMountStatus>();

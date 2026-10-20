@@ -9,8 +9,10 @@ starboard pair, while the halyard is placed independently.
 Placement depends on the supporting mast pair, usable winch templates, fitted
 supports, and occupancy. This page explains that selection process and why
 controls can move or remain hidden.
-[Fisherman's Flying Sails](Fishermans-Flying-Sails) bind through the physical
-mast's native control arrays and sail ordering.
+[Fisherman's Flying Sails](Fishermans-Flying-Sails) use the existing winch
+positions on the mast they are attached to. The game assigns those winches using
+its normal rules; the mod does not choose custom or fallback positions for
+Flying Sails.
 
 ## Winch templates and mounting positions
 
@@ -111,8 +113,9 @@ search does not generate a new position on an arbitrary deck or rail surface.
 
 ## Inspecting placement
 
-The diagnostic overlay shows which mounting positions are occupied and whether
-their supports are fitted. Position capture supplies coordinates for authoring
+The diagnostic overlay shows which mounting positions are occupied, whether
+their supports are fitted, and where fallback positions are defined. Position
+capture and the automatic halyard generator supply coordinates for authoring
 fallbacks. These tools expose placement data without changing the allocator's
 selection rules.
 
@@ -130,14 +133,23 @@ Close menus, aim at a boat surface within **10 metres**, and press **F8**. Press
 F8 again to hide the overlay. `ToggleWinchMountOverlay` changes the shortcut;
 setting it to `None` disables that shortcut.
 
-| Color | Meaning                                |
-| ----- | -------------------------------------- |
-| Green | Unused position on fitted supports     |
-| Red   | Occupied, including hidden bound ropes |
-| Cyan  | Unused position on unfitted supports   |
+| Color  | Meaning                                |
+| ------ | -------------------------------------- |
+| Green  | Unused position on fitted supports     |
+| Red    | Occupied, including hidden bound ropes |
+| Cyan   | Unused position on unfitted supports   |
+| Purple | Defined fallback placement             |
 
 Green describes occupancy and support. A sail still needs a compatible template,
 source mast pair, and, for sheets, a complete pair of positions.
+
+Purple wireframe boxes mark every defined sheet and halyard fallback position on
+the selected boat, including both sides of sheet pairs. Each box is 0.3 metres
+across in boat-local coordinates, centered on the control position including its
+placement offset, and moves with the boat. Boxes appear regardless of occupancy,
+fitted supports, or template availability. The overlay lists their count
+separately from winch locations. A purple box identifies a definition; it does
+not indicate whether that position can currently be allocated.
 
 ### Coordinate frames
 
@@ -173,6 +185,24 @@ reserve a control. It supplies a measurement for an authored fallback; that
 fallback's rotation and supporting parts are defined separately in the boat's
 control configuration.
 
+### Generating halyard fallback positions
+
+The `mss` command can automatically search installed boat geometry for clear
+halyard fallback positions near native winch height. For example, from the
+repository root:
+
+```sh
+./mss generate-fallback-halyards brig --mast 5
+```
+
+The command emits candidate `HalyardFallbackDefinition` entries for review and
+incorporation into the boat's control configuration. It reads installed assets
+without modifying them or automatically editing the configuration. Once the
+definitions are incorporated into a built plugin, the overlay shows their
+positions as purple boxes. See
+[Fallback halyard generation](MSS-command#fallback-halyard-generation) for
+supported boats, search options, output files, and handling unresolved masts.
+
 ## Source
 
 - [Diagnostic settings and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Plugin.cs)
@@ -192,4 +222,7 @@ control configuration.
 - [Boat control configuration](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Configuration/BoatControlCatalog.cs)
 - [Surface picking and frame conversion](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Utils/BoatSurfacePicker.cs)
 - [Position logging](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Utils/LogFallbackWinchPlacement.cs)
-- [Overlay colors and drawing](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Utils/WinchMountOverlay.cs)
+- [Overlay colors and drawing](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Utils/WinchMountOverlay.cs)
+- [Halyard generator options](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/tools/halyards/cli.py)
+  and
+  [geometry search](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/tools/halyards/generate.py)
