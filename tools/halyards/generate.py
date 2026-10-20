@@ -6,7 +6,7 @@ import math
 import numpy as np
 
 from tools.halyards.boat import Boat
-from tools.halyards.controls import control_box, template_geometry
+from tools.halyards.controls import control_sphere, template_geometry
 from tools.halyards.geometry import transform_points, unit, vector
 from tools.halyards.profiles import read_profile
 from tools.halyards.scene import Scene, identity
@@ -81,7 +81,7 @@ def structure_meshes(*, boat):
     return meshes + boat.extra_structure
 
 
-def evaluate(*, boat, mast_id, boxes, structures, clearance, height_range):
+def evaluate(*, boat, mast_id, spheres, structures, clearance, height_range):
     scene = boat.scene
     mast = boat.masts[mast_id]
     origin, axis, surface = mast_surface(boat=boat, mast=mast)
@@ -92,19 +92,11 @@ def evaluate(*, boat, mast_id, boxes, structures, clearance, height_range):
     ]
     if not candidates:
         raise ValueError("No native reef template")
-    for template_index, template in candidates:
-        try:
-            points, rotation, offset = template_geometry(boat=boat, control=template)
-            break
-        except ValueError:
-            continue
-    else:
-        raise ValueError("No reef template has usable rendered geometry")
     obstacles = [
-        box
-        for key, box in boxes.items()
+        sphere
+        for key, sphere in spheres.items()
         if boat.control_compatible(boat.controls[key], mast)
-    ] + boat.extra_boxes
+    ] + boat.extra_spheres
     structure = [
         triangles
         for node, triangles in structures
@@ -112,47 +104,62 @@ def evaluate(*, boat, mast_id, boxes, structures, clearance, height_range):
         and boat.compatible(node, mast)
     ]
     structure = np.concatenate(structure) if structure else np.empty((0, 3, 3))
-    template_origin = (boat.frame @ scene.matrix(template))[:3, 3]
-    # Limit static collision work to the searched lower-mast volume.
-    search_center = origin + axis * ((template_origin - origin) @ axis)
     relative = surface.reshape(-1, 3) - origin
     mast_radius = np.linalg.norm(
         relative - np.outer(relative @ axis, axis), axis=1
     ).max()
-    reach = (
-        height_range + np.linalg.norm(points, axis=1).max() + mast_radius + clearance
-    )
-    obstacles = [
-        box
-        for box in obstacles
-        if np.all(box.center + np.abs(box.axes) @ box.half >= search_center - reach)
-        and np.all(box.center - np.abs(box.axes) @ box.half <= search_center + reach)
-    ]
-    if len(structure):
-        keep = np.all(structure.max(axis=1) >= search_center - reach, axis=1) & np.all(
-            structure.min(axis=1) <= search_center + reach, axis=1
+    usable_template = False
+    for template_index, template in candidates:
+        try:
+            points, rotation, offset = template_geometry(boat=boat, control=template)
+        except ValueError:
+            continue
+        usable_template = True
+        template_origin = (boat.frame @ scene.matrix(template))[:3, 3]
+        # Each template searches its own height against the full compatible geometry.
+        search_center = origin + axis * ((template_origin - origin) @ axis)
+        reach = (
+            height_range
+            + np.linalg.norm(points, axis=1).max()
+            + mast_radius
+            + abs(offset)
+            + 0.005  # Include the maximum outward seating correction.
+            + clearance
         )
-        structure = structure[keep]
-    seat = search(
-        axis_origin=origin,
-        axis=axis,
-        surface=surface,
-        template_points=points,
-        template_rotation=rotation,
-        template_origin=template_origin,
-        offset=offset,
-        template_index=template_index,
-        obstacles=obstacles,
-        structure=structure,
-        clearance=clearance,
-        height_range=height_range,
-    )
-    if seat is None:
-        raise ValueError(
-            "No clear mast-surface position within the requested height range"
+        nearby_obstacles = [
+            sphere
+            for sphere in obstacles
+            if np.all(sphere.center + sphere.radius >= search_center - reach)
+            and np.all(sphere.center - sphere.radius <= search_center + reach)
+        ]
+        nearby_structure = structure
+        if len(structure):
+            keep = np.all(
+                structure.max(axis=1) >= search_center - reach, axis=1
+            ) & np.all(structure.min(axis=1) <= search_center + reach, axis=1)
+            nearby_structure = structure[keep]
+        seat = search(
+            axis_origin=origin,
+            axis=axis,
+            surface=surface,
+            template_points=points,
+            template_rotation=rotation,
+            template_origin=template_origin,
+            offset=offset,
+            template_index=template_index,
+            obstacles=nearby_obstacles,
+            structure=nearby_structure,
+            clearance=clearance,
+            height_range=height_range,
         )
-    source = f"{boat.profile.name} mast {mast_id}; template {identity(template)[0]}:{identity(template)[1]}; clearance {clearance:g} m"
-    return seat, source
+        if seat is not None:
+            source = f"{boat.profile.name} mast {mast_id}; template {identity(template)[0]}:{identity(template)[1]}; clearance {clearance:g} m"
+            return seat, source
+    if not usable_template:
+        raise ValueError("No reef template has usable rendered geometry")
+    raise ValueError(
+        "No clear mast-surface position within the requested height range of any usable reef template"
+    )
 
 
 def generate(*, boat, game_dir, native_only, mast_id, clearance, height_range, report):
@@ -184,8 +191,8 @@ def generate(*, boat, game_dir, native_only, mast_id, clearance, height_range, r
         f"Coverage: {'native + SE' if scene.has_se else 'native'}; physical masts {targets}"
     )
     report(f"Measuring {len(boat.controls)} native control objects")
-    boxes = {
-        key: control_box(boat=boat, control=control)
+    spheres = {
+        key: control_sphere(boat=boat, control=control)
         for key, control in boat.controls.items()
     }
     structures = structure_meshes(boat=boat)
@@ -212,7 +219,7 @@ def generate(*, boat, game_dir, native_only, mast_id, clearance, height_range, r
             seat, source = evaluate(
                 boat=boat,
                 mast_id=index,
-                boxes=boxes,
+                spheres=spheres,
                 structures=structures,
                 clearance=clearance,
                 height_range=height_range,

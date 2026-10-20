@@ -7,11 +7,12 @@ import pytest
 
 from tools.halyards.geometry import (
     Box,
-    boxes_clear,
+    Sphere,
+    spheres_clear,
+    sphere_from_points,
     from_to,
     quaternion,
     ray_surface,
-    swept_box,
     transform_matrix,
     transform_points,
     triangles_intersect_box,
@@ -87,27 +88,44 @@ def test_raked_scaled_surface_search():
 
 def test_exhaustion_does_not_emit_unsafe_seat():
     args = arguments()
-    args["obstacles"] = [Box(np.array([0.0, 1.0, 0.0]), np.eye(3), np.ones(3) * 5)]
+    args["obstacles"] = [Sphere(center=np.array([0.0, 1.0, 0.0]), radius=5)]
     assert search(**args) is None
 
 
 def test_search_moves_around_obstacle():
     args = arguments()
     baseline = search(**args)
-    args["obstacles"] = [Box(baseline.contact, np.eye(3), np.array([0.15, 0.2, 0.15]))]
+    args["obstacles"] = [Sphere(center=baseline.contact, radius=0.2)]
     seat = search(**args)
     assert seat is not None and np.linalg.norm(seat.contact - baseline.contact) > 0.2
     assert seat.contact[1] == pytest.approx(1)
 
 
-def test_clearance_uses_shape_and_rotation_sweep():
-    box = swept_box(
-        np.array([[0.3, 0.0, -0.05], [-0.3, 0.0, 0.05]]), np.zeros(3), np.eye(3)
+def test_mesh_radius_uses_origin_and_full_three_dimensional_extent():
+    origin = np.array([10.0, 20.0, 30.0])
+    sphere = sphere_from_points(
+        points=np.array([[0.03, 0.04, 0.12], [-0.1, 0, 0]]) + origin,
+        origin=origin,
     )
-    assert box.half[1] == pytest.approx(0.3)
-    other = Box(np.array([0.0, 0.35, 0.0]), np.eye(3), np.array([0.02, 0.02, 0.02]))
-    assert boxes_clear(box, other, 0.02)
-    assert not boxes_clear(box, other, 0.04)
+    np.testing.assert_allclose(sphere.center, origin)
+    assert sphere.radius == pytest.approx(0.13)
+
+
+def test_radius_clearance_includes_both_winches_and_gap():
+    a = Sphere(center=np.zeros(3), radius=0.125)
+    b = Sphere(center=np.array([0.25, 0, 0]), radius=0.125)
+    assert spheres_clear(a=a, b=b, clearance=0)
+    assert not spheres_clear(a=a, b=b, clearance=0.01)
+    b.center[0] = 0.26
+    assert spheres_clear(a=a, b=b, clearance=0.01)
+    b.center[0] = 0.259
+    assert not spheres_clear(a=a, b=b, clearance=0.01)
+
+
+def test_diagonal_gap_does_not_reserve_square_box_corners():
+    a = Sphere(center=np.zeros(3), radius=0.1)
+    b = Sphere(center=np.array([0.16, 0.16, 0]), radius=0.1)
+    assert spheres_clear(a=a, b=b, clearance=0.01)
 
 
 def test_static_triangle_inside_box_is_collision():
@@ -142,3 +160,112 @@ def test_ray_miss_and_nearest_surface():
     )
     assert contact[0] == pytest.approx(0.3)
     assert normal[0] > 0.9
+
+
+@pytest.mark.parametrize(
+    "height_range, opening, expected",
+    [
+        (2.0, 1.0, True),
+        (2.0, 1.02, True),
+        (2.0, 3.0, True),
+        (2.0, 0.98, False),
+        (0.0, 1.0, True),
+        (0.0, 1.02, False),
+        (0.03, 1.04, False),
+    ],
+)
+def test_search_height_levels_are_upward_in_two_cm_steps(
+    monkeypatch, height_range, opening, expected
+):
+    import importlib
+
+    search_module = importlib.import_module("tools.halyards.search")
+    heights = []
+
+    def surface_with_opening(origin, direction, triangles):
+        heights.append(float(origin[1]))
+        if abs(origin[1] - opening) > 1e-8:
+            return None
+        return ray_surface(origin=origin, direction=direction, triangles=triangles)
+
+    monkeypatch.setattr(search_module, "ray_surface", surface_with_opening)
+    args = arguments()
+    args["height_range"] = height_range
+    args["clearance"] = 0.01
+    result = search(**args)
+    assert (result is not None) == expected
+    if expected:
+        assert result.contact[1] == pytest.approx(opening)
+    levels = np.unique(heights)
+    last = opening if expected else 1 + math.floor(height_range / 0.02 + 1e-8) * 0.02
+    np.testing.assert_allclose(
+        levels, 1 + np.arange(round((last - 1) / 0.02) + 1) * 0.02
+    )
+
+
+@pytest.mark.parametrize("required_mm", [0, 1, 3, 5, 6])
+def test_outward_retry_uses_smallest_clear_offset(monkeypatch, required_mm):
+    import importlib
+
+    module = importlib.import_module("tools.halyards.search")
+    args = arguments()
+    args["height_range"] = 0
+    calls = []
+    # Isolate one surface candidate so failed retries cannot escape to another angle.
+    hits = iter([(np.array([0.0, 1.0, -0.3]), np.array([0.0, 0.0, -1.0]))])
+    monkeypatch.setattr(module, "ray_surface", lambda *args: next(hits, None))
+
+    def intersects(triangles, box):
+        displacement = -box.center[2] - 0.3
+        calls.append(displacement)
+        return displacement < args["offset"] + required_mm * 0.001 - 1e-8
+
+    monkeypatch.setattr(module, "triangles_intersect_box", intersects)
+    result = search(**args)
+    if required_mm <= 5:
+        assert result is not None
+        expected = float(np.float32(args["offset"] + required_mm * 0.001))
+        assert result.offset == expected
+        assert calls[-1] == pytest.approx(expected, abs=2e-8)
+    else:
+        assert result is None
+    assert len(calls) == min(required_mm + 1, 6)
+    assert np.diff(calls) == pytest.approx(np.full(len(calls) - 1, 0.001), abs=2e-8)
+
+
+@pytest.mark.parametrize(
+    "blocker", ["initial winch", "retry winch", "structure", "structure only"]
+)
+def test_outward_retry_rechecks_obstacles_and_requires_mast_collision(
+    monkeypatch, blocker
+):
+    import importlib
+
+    module = importlib.import_module("tools.halyards.search")
+    args = arguments()
+    args["height_range"] = 0
+    args["obstacles"] = [Sphere(center=np.zeros(3), radius=0.1)]
+    args["structure"] = np.ones((1, 3, 3))
+    hits = iter([(np.array([0.0, 1.0, -0.3]), np.array([0.0, 0.0, -1.0]))])
+    monkeypatch.setattr(module, "ray_surface", lambda *args: next(hits, None))
+    attempted = []
+
+    def clear(*, a, b, clearance):
+        delta = -a.center[2] - 0.3 - args["offset"]
+        attempted.append(delta)
+        return blocker != "initial winch" and not (
+            blocker == "retry winch" and delta > 0.0005
+        )
+
+    def intersects(triangles, box):
+        delta = -box.center[2] - 0.3 - args["offset"]
+        if triangles is args["surface"]:
+            return blocker != "structure only" and delta < 0.0005
+        return blocker in ("structure", "structure only")
+
+    monkeypatch.setattr(module, "spheres_clear", clear)
+    monkeypatch.setattr(module, "triangles_intersect_box", intersects)
+    assert search(**args) is None
+    assert len(attempted) == (
+        1 if blocker in ("initial winch", "structure only") else 6
+    )

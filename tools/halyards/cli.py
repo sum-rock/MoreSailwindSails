@@ -47,16 +47,16 @@ from tools.settings import DEFAULT_GAME
 @click.option(
     "--clearance",
     type=click.FloatRange(min=0),
-    default=0.02,
+    default=0.01,
     show_default=True,
     help="Minimum winch clearance in metres.",
 )
 @click.option(
     "--height-range",
     type=click.FloatRange(min=0),
-    default=0.5,
+    default=2.0,
     show_default=True,
-    help="Maximum distance above/below native winch height in metres.",
+    help="Maximum distance upward along the mast from each reference winch in metres; searched in 2 cm steps.",
 )
 def generate_fallback_halyards(
     boat: str,

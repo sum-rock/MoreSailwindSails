@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from tools.halyards.boat import Boat
-from tools.halyards.controls import control_box, template_geometry
+from tools.halyards.controls import control_points, control_sphere, template_geometry
 from tools.halyards.profiles import read_profile
 from tools.halyards.scene import identity
 
@@ -31,9 +31,13 @@ def test_brig_native_and_se_reference_frames(installed_scene):
         # Native model import rotation/translation must be included for SE coordinates.
         source = boat.masts[56]
         extra = scene.ptr(source, scene.data(source)["reefWinch"][0])
-        box = control_box(boat=boat, control=extra)
+        sphere = control_sphere(boat=boat, control=extra)
         np.testing.assert_allclose(
-            box.center, [0.36005939, 5.8431, -5.81233134], atol=1e-5
+            sphere.center, (boat.frame @ scene.matrix(extra))[:3, 3], atol=1e-5
+        )
+        points = control_points(boat=boat, control=extra)
+        assert sphere.radius == pytest.approx(
+            np.linalg.norm(points - sphere.center, axis=1).max()
         )
         assert identity(extra) in boat.controls
         # Current SE registers both; the older 0.11.1 fixture marked 74 unregistered.

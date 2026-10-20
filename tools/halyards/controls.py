@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from tools.halyards.geometry import swept_box, transform_points
+from tools.halyards.geometry import sphere_from_points, transform_points
 
 
 def control_points(*, boat, control):
@@ -17,12 +17,11 @@ def control_points(*, boat, control):
     return np.concatenate(points)
 
 
-def control_box(*, boat, control):
+def control_sphere(*, boat, control):
     scene = boat.scene
-    return swept_box(
-        control_points(boat=boat, control=control),
-        (boat.frame @ scene.matrix(control))[:3, 3],
-        boat.rotation_frame @ scene.rotation(control),
+    return sphere_from_points(
+        points=control_points(boat=boat, control=control),
+        origin=(boat.frame @ scene.matrix(control))[:3, 3],
     )
 
 

@@ -84,20 +84,23 @@ def box_from_points(points, axes=None):
     return Box(center=((low + high) / 2) @ axes.T, axes=axes, half=(high - low) / 2)
 
 
-def boxes_clear(a: Box, b: Box, clearance: float) -> bool:
-    # Inflation is conservative: a separating plane after inflation proves the gap.
-    axes = np.vstack(
-        (
-            a.axes.T,
-            b.axes.T,
-            np.cross(a.axes.T[:, None, :], b.axes.T[None, :, :]).reshape(-1, 3),
-        )
+@dataclass
+class Sphere:
+    """Rendered winch extent measured from its placement origin."""
+
+    center: np.ndarray
+    radius: float
+
+
+def sphere_from_points(points, origin):
+    return Sphere(
+        center=np.asarray(origin, dtype=float),
+        radius=float(np.linalg.norm(np.asarray(points) - origin, axis=1).max()),
     )
-    lengths = np.linalg.norm(axes, axis=1)
-    axes = axes[lengths > 1e-9] / lengths[lengths > 1e-9, None]
-    ra = np.abs(axes @ a.axes) @ (a.half + clearance / 2)
-    rb = np.abs(axes @ b.axes) @ (b.half + clearance / 2)
-    return bool(np.any(np.abs(axes @ (b.center - a.center)) > ra + rb + 1e-7))
+
+
+def spheres_clear(a: Sphere, b: Sphere, clearance: float) -> bool:
+    return bool(np.linalg.norm(b.center - a.center) >= a.radius + b.radius + clearance)
 
 
 def swept_box(points, origin, rotation):
