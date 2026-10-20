@@ -20,4 +20,5 @@
 - [How winches are placed](How-winches-are-placed)
 - [Developer Guide](Developer-Guide)
   - [Building and contributing](Building-and-contributing)
+  - [Profiling](Profiling)
   - [mss command](MSS-command)
