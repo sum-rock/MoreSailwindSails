@@ -1,0 +1,61 @@
+name: Publish wiki
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "wiki/**"
+      - ".github/workflows/publish-wiki.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-wiki
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Check out wiki source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          # Read the latest master so rerunning an older job cannot roll back pages.
+          ref: master
+          path: source
+          persist-credentials: false
+
+      - name: Check out GitHub wiki
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: ${{ github.repository }}.wiki
+          ref: master
+          path: published-wiki
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Mirror and publish pages
+        working-directory: published-wiki
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f ../source/wiki/Home.md
+
+          # wiki/ owns all published pages; preserve the wiki repository's history.
+          rsync -a --delete --exclude='.git/' ../source/wiki/ ./
+          git add --all
+          if git diff --cached --quiet; then
+            echo "Wiki is already up to date."
+            exit 0
+          fi
+
+          source_commit=$(git -C ../source rev-parse HEAD)
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Publish wiki from ${source_commit}"
+          git push origin HEAD:master
