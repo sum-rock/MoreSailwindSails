@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
 
-// Checks Kakam's aft sheet replacement, symmetric mounting poses and captured reef fallback.
+// Checks Kakam's aft sheet replacement, symmetric mounting poses and generated reef fallbacks.
 internal static class KakamWinchChecks
 {
     internal static void Run()
@@ -32,19 +32,19 @@ internal static class KakamWinchChecks
             (p - new Vector3(-0.8067125f, 2.7826826f, -6.028539f)).magnitude < 0.00001f,
             "Kakam sheets lost the measured shared-template mounting depth."
         );
-        var reef = KakamControls.Definition.HalyardFallbacks.Single();
+        var reef = KakamControls.Definition.HalyardFallbacks.Single(group => group.Mast == 7);
         Check(
             reef.Mast == 7
                 && reef.Fallback.Valid
                 && reef.Fallback.TemplateIndex == 0
                 && Math.Abs(reef.Fallback.Offset - 0.063862f * 0.792f) < 0.000001f
                 && (
-                    reef.Fallback.Contact - new Vector3(-0.000950f, 2.005890f, -4.232710f)
+                    reef.Fallback.Contact - new Vector3(-3.87228647e-06f, 2.38216734f, -4.20065403f)
                 ).magnitude < 0.000001f,
-            "Kakam mizzen must retain its native reef seats before the measured mast-holder fallback."
+            "Kakam mizzen must retain its native reef seats before the generated mast fallback."
         );
         Console.WriteLine(
-            "PASS: Kakam aft sheet selection, symmetric parallel mounts, and measured mizzen halyard fallback."
+            "PASS: Kakam aft sheet selection, symmetric parallel mounts, and generated mizzen halyard fallback."
         );
     }
 
