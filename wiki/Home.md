@@ -13,9 +13,18 @@ Sailwind modders, with MoreSailwindSails as a working example.
 | Understand Staysail IDs, shape, physics, and assets    | [Fisherman's Staysails](Fishermans-Staysails)          |
 | Understand Flying Sail IDs, shape, physics, and assets | [Fisherman's Flying Sails](Fishermans-Flying-Sails)    |
 | Understand Fisherman's Stay configuration              | [Fisherman's Stay](Fishermans-Stay)                    |
-| Understand how winches are placed                      | [How winches are placed](How-winches-are-placed)       |
+| Understand control placement and ownership             | [Controls reference](Controls)                         |
+| Look up fallback donors and mounting measurements      | [Fallback winch templates](Fallback-winch-templates)   |
 | Check a mapping against my installed game              | [Boat inspection command](MSS-command#boat-inspection) |
 | Build this mod or contribute a correction              | [Developer Guide](Developer-Guide)                     |
+
+## Controls
+
+- [How winches are placed](How-winches-are-placed): native positions, authored
+  fallbacks, occupancy, reservations, and placement diagnostics.
+- [Fallback winch templates](Fallback-winch-templates): donor array indexes,
+  per-pair sheet templates, halyard templates, mounting frames, and runtime
+  clones.
 
 ## Developer Guide
 
