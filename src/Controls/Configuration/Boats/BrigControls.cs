@@ -13,6 +13,13 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                 new SheetFallbackDefinition(
                     name: "Mainmast",
                     fallback: new SheetFallbackPair(
+                        // Sailwind 0.39.2: rope_winch_mastB_angle_left; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 5,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(-0.00412714f, 0.96962647f, 0.24455566f),
+                        offset: 0.0766848f,
                         // F9 #3/#4 hull captures: average |X|, Y/Z; mirror at boat X=0.
                         port: new SheetFallbackSeat(
                             contact: new Vector3(-3.203389f, 2.9924165f, -2.802583f),
@@ -27,6 +34,13 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                 new SheetFallbackDefinition(
                     name: "Mizzenmast",
                     fallback: new SheetFallbackPair(
+                        // Sailwind 0.39.2: rope_winch_mizzen_angle_left; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 7,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(-0.00333571f, 0.99976479f, 0.02143006f),
+                        offset: 0.0766848f,
                         // F9 #5/#6 stern trim captures: average |X|, Y/Z; mirror at X=0.
                         port: new SheetFallbackSeat(
                             contact: new Vector3(-2.662798f, 5.4580005f, -12.127725f),

@@ -31,6 +31,12 @@ serialized files used for its object IDs. Custom stay mappings come from the
 linked MoreSailwindSails source. Missing optional-mod parts can make a
 configuration unavailable without changing its saved position.
 
+Winch donors are documented in the [Controls reference](Controls), including
+[the fallback donor table](Fallback-winch-templates#sheet-donors). The object
+tables on these boat pages identify mast and stay components, not individual
+winches. A fallback's `TemplateIndex` is a slot in one of those masts' winch
+arrays; it is not another mast index or a prefab ID.
+
 ## Table conventions
 
 - **Shipyard label** is the inspected `BoatPartOption.optionName`, preserving

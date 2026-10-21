@@ -193,12 +193,29 @@ internal static class NativeSeatPolicyChecks
             normal: Vector3.up
         );
         Check(
-            new SheetFallbackPair(invalidSeat, null).InvalidSide == "port",
+            new SheetFallbackPair(
+                templateMast: 5,
+                templateRole: WinchRole.Left,
+                templateIndex: 0,
+                sourceNormal: Vector3.up,
+                offset: 0.044704f,
+                port: invalidSeat,
+                starboard: null
+            ).InvalidSide == "port",
             "Invalid vector accepted."
         );
         var origin = new SheetFallbackSeat(contact: Vector3.zero, normal: Vector3.up);
         Check(
-            origin.Valid && new SheetFallbackPair(origin, null).InvalidSide == "starboard",
+            origin.Valid
+                && new SheetFallbackPair(
+                    templateMast: 5,
+                    templateRole: WinchRole.Left,
+                    templateIndex: 0,
+                    sourceNormal: Vector3.up,
+                    offset: 0.044704f,
+                    port: origin,
+                    starboard: null
+                ).InvalidSide == "starboard",
             "Origin or half-defined fallback mishandled."
         );
         Console.WriteLine(

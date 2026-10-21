@@ -131,14 +131,14 @@ namespace MoreSailwindSails.Controls.Runtime
             Group.Dirty();
         }
 
-        internal void Position(WinchSeat seat, Vector3? templateScale = null)
+        internal void Position(WinchSeat seat)
         {
             clone.Mount.SetPositionAndRotation(
                 position: boat.transform.TransformPoint(position: seat.Position),
                 rotation: boat.transform.rotation * seat.Rotation
             );
             var scale = clone.Mount.lossyScale;
-            var sourceScale = templateScale ?? Source.transform.lossyScale;
+            var sourceScale = Source.transform.lossyScale;
             Winch.transform.localScale = new Vector3(
                 sourceScale.x / scale.x,
                 sourceScale.y / scale.y,

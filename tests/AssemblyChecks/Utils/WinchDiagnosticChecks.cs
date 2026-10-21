@@ -64,6 +64,27 @@ internal static class WinchDiagnosticChecks
             }
         }
         var trace = assembly.GetType("MoreSailwindSails.Utils.WinchMountTrace", throwOnError: true);
+        var overlay = assembly.GetType(
+            "MoreSailwindSails.Utils.WinchMountOverlay",
+            throwOnError: true
+        );
+        var boxes = overlay.GetMethod("CacheFallbackBoxes", flags);
+        Check(
+            CalledMethods(boxes)
+                .Count(m => m.DeclaringType.Name == "SheetFallbackSeat" && m.Name == "Position")
+                == 2
+                && Instructions(boxes)
+                    .Count(i =>
+                        i.Operand is FieldInfo f
+                        && f.DeclaringType.Name == "SheetFallbackPair"
+                        && f.Name == "Offset"
+                    ) == 2
+                && !CalledMethods(boxes)
+                    .Any(m =>
+                        m.Name == "Template" || m.DeclaringType.Name == "NativeWinchInventory"
+                    ),
+            "Both sheet overlay boxes must use the pair's offset even when its donor is unavailable."
+        );
         Check(
             CalledMethods(trace.GetMethod("Status", flags))
                 .Any(m => m.DeclaringType.Name == "NativeWinchInventory" && m.Name == "Occupied"),

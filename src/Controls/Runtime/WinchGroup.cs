@@ -164,11 +164,7 @@ namespace MoreSailwindSails.Controls.Runtime
                     // enumerating seats, replacing clones or touching the ledger.
                     for (int i = 0; i < fittings.Length; i++)
                     {
-                        fittings[i]
-                            .Position(
-                                seat: state.Current.Seats[i],
-                                templateScale: state.Current.TemplateScale
-                            );
+                        fittings[i].Position(seat: state.Current.Seats[i]);
                         fittings[i].Show();
                     }
                     return;
@@ -223,8 +219,7 @@ namespace MoreSailwindSails.Controls.Runtime
                         replacement?.Destroy();
                 }
                 for (int i = 0; i < fittings.Length; i++)
-                    fittings[i]
-                        .Position(seat: selected.Seats[i], templateScale: selected.TemplateScale);
+                    fittings[i].Position(seat: selected.Seats[i]);
                 foreach (var fitting in fittings)
                     fitting.Show();
                 if (!state.Logged || state.Failed || changed)

@@ -40,6 +40,13 @@ internal static class WinchChecks
         );
         var position = CalledMethods(owned.GetMethod("Position", all)).ToArray();
         Check(
+            owned.GetMethod("Position", all).GetParameters().Length == 1
+                && position.Any(m => m.Name == "get_Source")
+                && position.Count(m => m.Name == "get_lossyScale") == 2
+                && position.Any(m => m.Name == "set_localScale"),
+            "Clones must preserve donor world scale while compensating for their mount's scale."
+        );
+        Check(
             position.Any(m => m.Name == "SetPositionAndRotation")
                 && !position.Any(m =>
                     m.Name is "set_localRotation" or "set_localEulerAngles" or "Rotate"

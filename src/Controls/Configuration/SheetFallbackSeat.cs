@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration
 {
-    // Authored contact and support data, placed with the shared sheet model.
+    // Aligns an authored surface contact with its pair's donor mounting frame.
     internal sealed class SheetFallbackSeat
     {
         internal readonly Vector3 Contact,
@@ -27,11 +27,10 @@ namespace MoreSailwindSails.Controls.Configuration
 
         internal bool Valid => Finite(Contact) && Finite(Normal) && Normal.sqrMagnitude > 0.000001f;
 
-        internal Vector3 Position => Contact + Normal.normalized * SheetFallbackTemplate.Offset;
+        internal Vector3 Position(float offset) => Contact + Normal.normalized * offset;
 
-        internal Quaternion Rotation =>
-            Quaternion.FromToRotation(SheetFallbackTemplate.Normal, Normal)
-            * SheetFallbackTemplate.Rotation;
+        internal Quaternion Rotation(Vector3 sourceNormal, Quaternion templateRotation) =>
+            Quaternion.FromToRotation(sourceNormal, Normal) * templateRotation;
 
         private static bool Finite(Vector3 v) =>
             !float.IsNaN(v.x)

@@ -1,5 +1,8 @@
 # How winches are placed
 
+Part of the [Controls reference](Controls). For donor selections and mounting
+measurements, see [Fallback winch templates](Fallback-winch-templates).
+
 MoreSailwindSails places the sheet and halyard winches for Fisherman's Stays
 using available positions on the boat's fitted rigging. It keeps a valid
 existing placement; when a new placement is needed, it checks compatible native
@@ -68,11 +71,20 @@ coordinates. Eligible pairs are ordered by their forwardmost contact point,
 progressing aft along **−Z**. Both sides' specified supporting masts must be
 fitted.
 
-Fallback sheets use a shared template: **Kakam mast 5, `leftAngleWinch[0]`**,
-cloned into both authored positions. The template is found among loaded scene
-boats, including inactive boats and unfitted masts; its original position does
-not need to be free. If that template is unavailable, the fallback pair cannot
-be created.
+Each `SheetFallbackPair` specifies one donor on the **same boat** using
+`TemplateMast`, `TemplateRole`, and `TemplateIndex`. Both sides clone that
+donor, with separate authored contacts and surface normals. The existing
+inventory includes unfitted donor masts; the donor's original position may be
+occupied. Only the destination supports and positions must be available. The
+supporting forward and aft physical masts must also remain fitted.
+
+The pair supplies its donor's `SourceNormal` and measured `Offset`. Placement
+uses the donor's cached mounting rotation and native scale, aligning each clone
+to its destination surface. A missing or destroyed donor, missing array entry,
+or control without a renderer or collider makes that pair unavailable. Mod-owned
+clones are excluded as donors. Other eligible candidates can still be tried. See
+[Fallback winch templates](Fallback-winch-templates#sheet-donors) for the
+configured donor slots and their object names.
 
 ### Halyard winch
 
@@ -87,7 +99,9 @@ orientation and a `TemplateIndex` into the base mast's `reefWinch` array. The
 original template position may be occupied because the clone is placed at the
 fallback position. That destination must still be free, and the aft base mast
 must be fitted. A missing fallback definition or template leaves no fallback
-candidate.
+candidate. Its mounting normal and offset are authored per fallback; rotation
+and scale come from the selected donor, as described in
+[Halyard donors](Fallback-winch-templates#halyard-donors).
 
 The halyard winch is separate from the upper rope guide. The guide comes from
 the stay definition's aft attachment section and `guideIndex`, as described in
@@ -205,24 +219,28 @@ supported boats, search options, output files, and handling unresolved masts.
 
 ## Source
 
-- [Diagnostic settings and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Plugin.cs)
-- [Native control discovery](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Discovery/NativeWinchInventory.cs)
-- [Stay control construction](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Stays/FishermansStay/FishermansStay.cs)
-- [Control setup and base-mast resolution](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/WinchControls.cs)
-- [Stay dependency traversal](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Discovery/StayDependencies.cs)
-- [Matching native sheet pairs](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Discovery/NativeSheetPairing.cs)
-- [Halyard placement](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Placement/HalyardWinchPlacementResolver.cs)
-- [Sheet placement](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Placement/SheetingWinchPlacementResolver.cs)
-- [Sheet fallback ordering](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Placement/SheetFallbackOrder.cs)
-- [Shared sheet template discovery](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Discovery/SharedSheetWinchTemplate.cs)
-- [Shared sheet template identity](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Configuration/SheetFallbackTemplate.cs)
-- [Candidate selection](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Placement/WinchPlacementPolicy.cs)
-- [Position reservations](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Placement/WinchReservations.cs)
-- [Placement retention and retry](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Runtime/WinchGroup.cs)
-- [Boat control configuration](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Controls/Configuration/BoatControlCatalog.cs)
-- [Surface picking and frame conversion](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Utils/BoatSurfacePicker.cs)
-- [Position logging](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Utils/LogFallbackWinchPlacement.cs)
-- [Overlay colors and drawing](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Utils/WinchMountOverlay.cs)
-- [Halyard generator options](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/tools/halyards/cli.py)
+This page describes
+[revision `d8d9974`](https://github.com/sum-rock/MoreSailwindSails/tree/d8d99742a28657fe7397b669a4160cfd0284094c),
+whose plugin metadata version is **0.3.0**.
+
+- [Diagnostic settings and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Plugin.cs)
+- [Native control discovery](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Discovery/NativeWinchInventory.cs)
+- [Stay control construction](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Stays/FishermansStay/FishermansStay.cs)
+- [Control setup and base-mast resolution](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/WinchControls.cs)
+- [Stay dependency traversal](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Discovery/StayDependencies.cs)
+- [Matching native sheet pairs](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Discovery/NativeSheetPairing.cs)
+- [Halyard placement](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/HalyardWinchPlacementResolver.cs)
+- [Sheet placement](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/SheetingWinchPlacementResolver.cs)
+- [Per-pair donor and mounting data](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/SheetFallbackPair.cs)
+- [Sheet surface alignment](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/SheetFallbackSeat.cs)
+- [Sheet fallback ordering](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/SheetFallbackOrder.cs)
+- [Candidate selection](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/WinchPlacementPolicy.cs)
+- [Position reservations](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/WinchReservations.cs)
+- [Placement retention and retry](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Runtime/WinchGroup.cs)
+- [Boat control configuration](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/BoatControlCatalog.cs)
+- [Surface picking and frame conversion](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Utils/BoatSurfacePicker.cs)
+- [Position logging](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Utils/LogFallbackWinchPlacement.cs)
+- [Overlay colors and drawing](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Utils/WinchMountOverlay.cs)
+- [Halyard generator options](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/tools/halyards/cli.py)
   and
-  [geometry search](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/tools/halyards/generate.py)
+  [geometry search](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/tools/halyards/generate.py)
