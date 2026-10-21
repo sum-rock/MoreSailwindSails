@@ -35,6 +35,12 @@ namespace MoreSailwindSails.Controls.Configuration
                 throw new ArgumentException("Unknown or duplicate halyard fallback mast.");
             if (SheetFallbacks.GroupBy(c => c.Name).Any(g => g.Count() != 1))
                 throw new ArgumentException("Duplicate sheet fallback name.");
+            if (
+                SheetFallbacks.Any(g =>
+                    g.Fallback == null || !Boat.MastParents.ContainsKey(g.Fallback.TemplateMast)
+                )
+            )
+                throw new ArgumentException("Unknown sheet fallback donor mast.");
         }
     }
 }

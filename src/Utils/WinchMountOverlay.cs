@@ -87,9 +87,9 @@ namespace MoreSailwindSails.Utils
             {
                 var pair = definition.Fallback;
                 if (pair?.Port != null && pair.Port.Valid)
-                    AddFallbackBox(position: pair.Port.Position);
+                    AddFallbackBox(position: pair.Port.Position(offset: pair.Offset));
                 if (pair?.Starboard != null && pair.Starboard.Valid)
-                    AddFallbackBox(position: pair.Starboard.Position);
+                    AddFallbackBox(position: pair.Starboard.Position(offset: pair.Offset));
             }
             foreach (var definition in profile.HalyardFallbacks)
                 AddFallbackBox(position: definition.Fallback.Position);

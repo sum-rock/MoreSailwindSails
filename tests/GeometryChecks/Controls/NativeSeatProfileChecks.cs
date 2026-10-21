@@ -18,6 +18,7 @@ internal static class NativeSeatProfileChecks
 {
     internal static void Run()
     {
+        SheetFallbackDonorChecks.Run();
         foreach (var boat in BoatControlCatalog.All)
         {
             foreach (var fallback in boat.SheetFallbacks)
@@ -39,26 +40,20 @@ internal static class NativeSeatProfileChecks
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
         {
-            var displacement = seat.Position - seat.Contact;
+            var displacement = seat.Position(offset: pair.Fallback.Offset) - seat.Contact;
             Check(
-                Math.Abs(displacement.magnitude - 0.044704f) < 0.000001f
+                Math.Abs(displacement.magnitude - pair.Fallback.Offset) < 0.000001f
                     && Vector3.Dot(displacement.normalized, seat.Normal.normalized) > 0.99999f,
-                "Every sheet fallback must use the shared mounting depth along its surface normal."
+                "Every sheet fallback must use the configured donor mounting depth along its surface normal."
             );
         }
+        var shroud = ShroudControls.Definition.SheetFallbacks.Single().Fallback;
         Check(
             (
-                ShroudControls.Definition.SheetFallbacks.Single().Fallback.Port.Position
-                - new Vector3(-3.465970f, 4.874469f, -3.901223f)
+                shroud.Port.Position(offset: shroud.Offset)
+                - new Vector3(-3.465970f, 4.917776f, -3.901223f)
             ).magnitude < 0.000001f,
-            "Shroud must keep its captured contact with the smaller shared model's mounting depth."
-        );
-        Check(
-            (
-                SheetFallbackTemplate.Normal - new Vector3(0.00020555f, 0.99987845f, 0.01559755f)
-            ).magnitude < 0.000001f
-                && SheetFallbackTemplate.Scale == Vector3.one,
-            "Shared sheet frame or unit size differs from the installed Kakam reference."
+            "Shroud must retain its captured contact with its rope-coil donor's mounting depth."
         );
         Check(
             !new SheetFallbackSeat(contact: Vector3.zero, normal: Vector3.zero).Valid
@@ -89,7 +84,10 @@ internal static class NativeSeatProfileChecks
             Check(
                 (pair.Port.Contact - Reflect(pair.Starboard.Contact)).magnitude < 0.000001f
                     && (pair.Port.Normal - Reflect(pair.Starboard.Normal)).magnitude < 0.000001f
-                    && (pair.Port.Position - Reflect(pair.Starboard.Position)).magnitude < 0.000001f
+                    && (
+                        pair.Port.Position(offset: pair.Offset)
+                        - Reflect(pair.Starboard.Position(offset: pair.Offset))
+                    ).magnitude < 0.000001f
                     && pair.Port.Contact.x < 0
                     && pair.Starboard.Contact.x > 0,
                 "Brig, Caelanor, Gloriana and Chronian sheet contacts, mounting offsets and normals must mirror at the deck centreline."

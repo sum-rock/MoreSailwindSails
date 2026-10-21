@@ -139,7 +139,15 @@ internal static class StayDependencyChecks
         SheetFallbackDefinition Pair(string name, float z, float otherZ) =>
             new SheetFallbackDefinition(
                 name: name,
-                fallback: new SheetFallbackPair(port: Side(-2, z), starboard: Side(3, otherZ))
+                fallback: new SheetFallbackPair(
+                    templateMast: 5,
+                    templateRole: WinchRole.Left,
+                    templateIndex: 0,
+                    sourceNormal: Vector3.up,
+                    offset: 0.044704f,
+                    port: Side(-2, z),
+                    starboard: Side(3, otherZ)
+                )
             );
         var far = Pair("far", -8, -9);
         var first = Pair("first", -3, -4);
@@ -180,7 +188,15 @@ internal static class StayDependencyChecks
                 new SheetFallbackDefinition(name: "empty", fallback: null),
                 new SheetFallbackDefinition(
                     name: "incomplete",
-                    fallback: new SheetFallbackPair(port: Side(x: -2, z: -3), starboard: null)
+                    fallback: new SheetFallbackPair(
+                        templateMast: 5,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: Vector3.up,
+                        offset: 0.044704f,
+                        port: Side(x: -2, z: -3),
+                        starboard: null
+                    )
                 ),
                 Pair(name: "nonfinite", z: float.NaN, otherZ: -4),
             }

@@ -46,12 +46,16 @@ namespace MoreSailwindSails.Controls.Placement
                     mastZ: native.Boat.transform.InverseTransformPoint(forward.transform.position).z
                 );
                 return category != null
+                    && current.Templates?.Length == 2
+                    && current.Seats?.Length == 2
                     && ValidFallbackSide(
+                        pair: category.Fallback,
                         definition: category.Fallback.Port,
                         current: current,
                         index: 0
                     )
                     && ValidFallbackSide(
+                        pair: category.Fallback,
                         definition: category.Fallback.Starboard,
                         current: current,
                         index: 1
@@ -72,19 +76,26 @@ namespace MoreSailwindSails.Controls.Placement
         }
 
         private bool ValidFallbackSide(
+            SheetFallbackPair pair,
             SheetFallbackSeat definition,
             WinchPlacementCandidate current,
             int index
         )
         {
-            var template = SharedSheetWinchTemplate.Get();
+            var template = Template(pair: pair);
             return template
                 && current.Templates[index] == template
                 && definition.Supports.All(id => native.ActiveSupport(mast: native.Mast(id: id)))
                 && native.Available(seat: current.Seats[index])
                 && current
                     .Seats[index]
-                    .MatchesPose(position: definition.Position, rotation: definition.Rotation);
+                    .MatchesPose(
+                        position: definition.Position(offset: pair.Offset),
+                        rotation: definition.Rotation(
+                            sourceNormal: pair.SourceNormal,
+                            templateRotation: native.Rotation(c: template)
+                        )
+                    );
         }
 
         internal WinchResolution Resolve(
@@ -151,30 +162,48 @@ namespace MoreSailwindSails.Controls.Placement
             return result;
         }
 
+        private GPButtonRopeWinch Template(SheetFallbackPair pair)
+        {
+            if (pair == null)
+                return null;
+            var mast = native.Mast(id: pair.TemplateMast);
+            var sources = NativeWinchInventory.Sources(mast: mast, role: pair.TemplateRole);
+            if (sources == null || pair.TemplateIndex >= sources.Length)
+                return null;
+            var template = sources[pair.TemplateIndex];
+            // A donor can be occupied or on an unfitted mast; only the destination is reserved.
+            return native.TemplateUsable(control: template) ? template : null;
+        }
+
         private WinchPlacementCandidate Fallback(SheetFallbackDefinition category)
         {
-            var definitions = new[] { category.Fallback.Port, category.Fallback.Starboard };
-            var template = SharedSheetWinchTemplate.Get();
+            var pair = category.Fallback;
+            var definitions = new[] { pair.Port, pair.Starboard };
+            var template = Template(pair: pair);
             if (!template)
                 return null;
+            var rotation = native.Rotation(c: template);
             var seats = definitions
                 .Select(
                     (definition, index) =>
                         new WinchSeat(
                             identity: category.FallbackName + "/" + index,
                             aliases: null,
-                            position: definition.Position,
-                            rotation: definition.Rotation
+                            position: definition.Position(offset: pair.Offset),
+                            rotation: definition.Rotation(
+                                sourceNormal: pair.SourceNormal,
+                                templateRotation: rotation
+                            )
                         )
                 )
                 .ToArray();
             return new WinchPlacementCandidate
             {
                 Id = category.FallbackName,
-                Context = "fallback=" + category.FallbackName,
+                Context =
+                    $"fallback={category.FallbackName}, templateRig={pair.TemplateMast}, role={pair.TemplateRole}, index={pair.TemplateIndex}",
                 Fallback = true,
                 Templates = new[] { template, template },
-                TemplateScale = SheetFallbackTemplate.Scale,
                 Seats = seats,
                 Supported = definitions.All(definition =>
                     definition.Supports.All(id => native.ActiveSupport(mast: native.Mast(id: id)))

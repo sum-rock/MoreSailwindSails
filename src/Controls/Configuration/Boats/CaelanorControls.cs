@@ -13,6 +13,13 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                     name: "Mainmast",
                     // Latest F9 captures #1/#2: average |X|, Y/Z and mirrored normals at boat X=0.
                     fallback: new SheetFallbackPair(
+                        // OldChronian 0.6.0: sheet_main_main_L; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 5,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.17364825f, 0.98480774f, 0f),
+                        offset: 0.07854738f,
                         port: new SheetFallbackSeat(
                             contact: new Vector3(-2.4498375f, 2.416566f, -4.761331f),
                             normal: new Vector3(0.0654635f, 0.995183f, 0.072977f)

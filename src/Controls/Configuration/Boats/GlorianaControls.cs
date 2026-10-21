@@ -12,6 +12,13 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                 new SheetFallbackDefinition(
                     name: "Mainmast",
                     fallback: new SheetFallbackPair(
+                        // OldChronian 0.6.0: sheet_mainmast1_L; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 2,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.34202027f, 0.93969257f, 0f),
+                        offset: 0.0916384f,
                         // F9 #5/#6 trim captures, 2026-10-17: average |X|, Y/Z and mirrored normals.
                         port: new SheetFallbackSeat(
                             contact: new Vector3(-1.8593095f, 6.2631075f, -12.393245f),
@@ -26,6 +33,13 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                 new SheetFallbackDefinition(
                     name: "MainmastForward",
                     fallback: new SheetFallbackPair(
+                        // OldChronian 0.6.0: sheet_mainmast1_L; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 2,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.34202027f, 0.93969257f, 0f),
+                        offset: 0.0916384f,
                         // F9 #7/#8 trim captures, 2026-10-17: average |X|, Y/Z and mirrored normals.
                         port: new SheetFallbackSeat(
                             contact: new Vector3(-3.1751935f, 3.5531495f, -0.929988f),

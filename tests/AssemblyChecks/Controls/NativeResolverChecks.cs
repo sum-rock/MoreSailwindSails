@@ -307,39 +307,53 @@ internal static class NativeResolverChecks
         {
             var calls = CalledMethods(sheetType.GetMethod(method, flags)).ToArray();
             Check(
-                calls.Any(m =>
-                    m.DeclaringType.Name == "SharedSheetWinchTemplate" && m.Name == "Get"
-                )
-                    && !calls.Any(m =>
-                        m.DeclaringType.Name == "NativeWinchInventory" && m.Name == "Rotation"
-                    ),
-                "Sheet fallback must share a donor and must not inherit live donor wheel rotation."
+                calls.Any(m => m.DeclaringType == sheetType && m.Name == "Template")
+                    && calls.Any(m => m.DeclaringType == native && m.Name == "Rotation"),
+                "Sheet allocation and retention must resolve the pair's donor and cached mounting frame."
             );
         }
-        var sharedTemplate = Type("Discovery.SharedSheetWinchTemplate");
-        var templateGet = sharedTemplate.GetMethod("Get", flags);
+        var templateGet = sheetType.GetMethod("Template", flags);
         var templateCalls = CalledMethods(templateGet).ToArray();
         Check(
-            templateCalls.Any(m => m.Name == "Usable")
-                && templateCalls.Any(m => m.Name == "Due")
-                && templateCalls.Any(m => m.Name == "Discovered")
-                && templateCalls.Any(m => m.Name == "FindObjectsOfTypeAll")
-                && templateCalls.Any(m => m.Name == "IsValid")
-                && templateCalls.Any(m =>
-                    m.Name == "GetComponentsInChildren" && m.GetParameters().Length == 1
-                ),
-            "Shared donor discovery must validate the cached object, throttle retries and include inactive hierarchy lookup."
+            templateCalls.Any(m => m.DeclaringType == native && m.Name == "Mast")
+                && templateCalls.Any(m => m.DeclaringType == native && m.Name == "Sources")
+                && templateCalls.Any(m => m.DeclaringType == native && m.Name == "TemplateUsable")
+                && Instructions(templateGet).Any(i => i.Code == OpCodes.Ldlen),
+            "Sheet donors must resolve the configured local mast/array, check its bounds, and validate the control."
         );
-        foreach (
-            var method in sharedTemplate
-                .GetMethods(flags)
-                .Where(m => m.DeclaringType == sharedTemplate)
-        )
-            Check(
-                !CalledMethods(method)
-                    .Any(m => m.Name is "SetActive" or "AttachToController" or "Occupied"),
-                "Shared template discovery must neither mutate nor require a free native donor."
-            );
+        Check(
+            !templateCalls.Any(m =>
+                m.Name
+                    is "SetActive"
+                        or "AttachToController"
+                        or "Occupied"
+                        or "ActiveSupport"
+                        or "FindObjectsOfTypeAll"
+                        or "GetComponentsInChildren"
+            ),
+            "Donor lookup must use the existing inventory and allow occupied or unfitted sources without mutation."
+        );
+        var rotation = native.GetMethod("Rotation", flags);
+        Check(
+            CalledMethods(rotation).Any(m => m.Name == "TryGetValue")
+                && Instructions(rotation)
+                    .Any(i => i.Operand is FieldInfo f && f.Name == "wheelFrames"),
+            "Donor mounting rotation must retain the cached wheel frame across wheel input."
+        );
+        var templateUsable = native.GetMethod("TemplateUsable", flags);
+        Check(
+            CalledMethods(templateUsable).Any(m => m.Name == "Usable")
+                && Instructions(templateUsable)
+                    .Any(i => i.Operand is FieldInfo f && f.Name == "owned"),
+            "Missing/destroyed controls and mod-owned clones must not become donors."
+        );
+        var seatType = Type("Configuration.SheetFallbackSeat");
+        var seatRotation = CalledMethods(seatType.GetMethod("Rotation", flags)).ToArray();
+        Check(
+            seatRotation.Any(m => m.Name == "FromToRotation")
+                && seatRotation.Any(m => m.Name == "op_Multiply"),
+            "Sheet mounting must align the donor normal to the destination before applying the donor rotation."
+        );
         var usable = native.GetMethod("Usable", flags);
         Check(
             CalledMethods(usable)

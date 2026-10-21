@@ -19,8 +19,8 @@ internal static class KakamWinchChecks
         );
         var port = category.Fallback.Port;
         var starboard = category.Fallback.Starboard;
-        var p = port.Position;
-        var s = starboard.Position;
+        var p = port.Position(offset: category.Fallback.Offset);
+        var s = starboard.Position(offset: category.Fallback.Offset);
         Check(
             (p - new Vector3(-s.x, s.y, s.z)).magnitude < 0.000001f
                 && p.x < 0f
@@ -30,7 +30,7 @@ internal static class KakamWinchChecks
         );
         Check(
             (p - new Vector3(-0.8067125f, 2.7826826f, -6.028539f)).magnitude < 0.00001f,
-            "Kakam sheets lost the measured shared-template mounting depth."
+            "Kakam sheets lost the measured native-template mounting depth."
         );
         var reef = KakamControls.Definition.HalyardFallbacks.Single(group => group.Mast == 7);
         Check(
