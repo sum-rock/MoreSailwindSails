@@ -1,13 +1,59 @@
-// Owns Sanbuq's generated halyard placements and retained manual fallbacks.
+// Owns Sanbuq's authored sheet pairs and generated/manual halyard fallbacks.
 using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration.Boats
 {
-    // Supplies per-base-mast halyard seats using native reef templates.
+    // Supplies hull-mounted sheet pairs and per-base-mast halyard seats.
     internal static class SanbuqControls
     {
         internal static readonly BoatControlDefinition Definition = new BoatControlDefinition(
             boat: BoatConfiguration.Boats.Sanbuq.Definition,
+            sheetFallbacks: new[]
+            {
+                new SheetFallbackDefinition(
+                    name: "Midships",
+                    fallback: new SheetFallbackPair(
+                        // Same inspected native donor and mounting frame as the stern pair.
+                        templateMast: 12,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.06932204f, 0.99134989f, 0.11144437f),
+                        offset: 0.065328836f,
+                        // F9 #3/#4 on structure/Cube_013, 2026-10-20; average |X|, Y/Z
+                        // and mirrored normals to make the pair symmetric across boat X=0.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.2968935f, 2.4462205f, 0.385985f),
+                            normal: new Vector3(0.999634f, 0f, -0.0270515f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.2968935f, 2.4462205f, 0.385985f),
+                            normal: new Vector3(-0.999634f, 0f, -0.0270515f)
+                        )
+                    )
+                ),
+                new SheetFallbackDefinition(
+                    name: "Stern",
+                    fallback: new SheetFallbackPair(
+                        // Sailwind 0.39.2: rope_winch_back_angle_left (1); inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 12,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.06932204f, 0.99134989f, 0.11144437f),
+                        offset: 0.065328836f,
+                        // F9 #2/#1 on structure/Cube_013, 2026-10-20; average |X|, Y/Z
+                        // and mirrored normals to make the pair symmetric across boat X=0.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.073849f, 3.511429f, -10.657480f),
+                            normal: new Vector3(0.998812f, 0f, 0.0487285f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.073849f, 3.511429f, -10.657480f),
+                            normal: new Vector3(-0.998812f, 0f, 0.0487285f)
+                        )
+                    )
+                ),
+            },
             halyardFallbacks: HalyardFallbacks()
         );
 
@@ -86,12 +132,13 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                         templateIndex: 0
                     )
                 ),
-                // Sanbuq mast 69; template CAB-027b2b1c061051d0fa7aa2e47cc92195:3744291732535404025; clearance 0.01 m
+                // Sanbuq mast 69; template CAB-027b2b1c061051d0fa7aa2e47cc92195:3744291732535404025.
                 new HalyardFallbackDefinition(
                     mast: 69,
                     fallback: new HalyardFallbackSeat(
-                        contact: new Vector3(-0.27669847f, 4.95300007f, -5.03652191f),
-                        normal: new Vector3(-0.831440449f, 0.00835106708f, -0.555551171f),
+                        // F9 capture #8, SE_cols_sanbuq/mizzen_mast, 2026-10-21.
+                        contact: new Vector3(-0.219128f, 4.053619f, -5.133003f),
+                        normal: new Vector3(-0.555551f, 0.008284f, -0.831441f),
                         sourceNormal: new Vector3(1.68587405e-07f, -1.19209282e-07f, -1f),
                         offset: 0.0819170624f,
                         templateIndex: 0

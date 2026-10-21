@@ -3,12 +3,34 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration.Boats
 {
+    // Supplies mirrored hull-mounted sheet pairs and per-mast halyard seats.
     internal static class ChronianControls
     {
         internal static readonly BoatControlDefinition Definition = new BoatControlDefinition(
             boat: BoatConfiguration.Boats.Chronian.Definition,
             sheetFallbacks: new[]
             {
+                new SheetFallbackDefinition(
+                    name: "MainmastForward",
+                    fallback: new SheetFallbackPair(
+                        // Same inspected native donor and mounting frame as the mainmast pair.
+                        templateMast: 4,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.2588185f, 0.96592597f, 0.00000018f),
+                        offset: 0.07854724f,
+                        // F9 #1/#2 on structure_container/1_TRIM, 2026-10-20;
+                        // average |X|, Y/Z and mirror across boat X=0.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-4.3953975f, 4.2576155f, -0.563150f),
+                            normal: new Vector3(0.000182f, 0.999904f, 0.013889f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(4.3953975f, 4.2576155f, -0.563150f),
+                            normal: new Vector3(-0.000182f, 0.999904f, 0.013889f)
+                        )
+                    )
+                ),
                 new SheetFallbackDefinition(
                     name: "Mainmast",
                     fallback: new SheetFallbackPair(

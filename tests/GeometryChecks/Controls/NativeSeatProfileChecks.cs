@@ -34,8 +34,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 9,
-            "Preserve the nine authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 25,
+            "Preserve the twenty-five authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
@@ -47,7 +47,9 @@ internal static class NativeSeatProfileChecks
                 "Every sheet fallback must use the configured donor mounting depth along its surface normal."
             );
         }
-        var shroud = ShroudControls.Definition.SheetFallbacks.Single().Fallback;
+        var shroud = ShroudControls
+            .Definition.SheetFallbacks.Single(pair => pair.Name == "Foremast")
+            .Fallback;
         Check(
             (
                 shroud.Port.Position(offset: shroud.Offset)
@@ -71,6 +73,16 @@ internal static class NativeSeatProfileChecks
                 .Definition.SheetFallbacks.Select(definition => definition.Fallback)
                 .Append(caelanorPair)
                 .Concat(
+                    ShroudControls.Definition.SheetFallbacks.Select(definition =>
+                        definition.Fallback
+                    )
+                )
+                .Concat(
+                    LargeDhowControls.Definition.SheetFallbacks.Select(definition =>
+                        definition.Fallback
+                    )
+                )
+                .Concat(
                     GlorianaControls.Definition.SheetFallbacks.Select(definition =>
                         definition.Fallback
                     )
@@ -90,7 +102,7 @@ internal static class NativeSeatProfileChecks
                     ).magnitude < 0.000001f
                     && pair.Port.Contact.x < 0
                     && pair.Starboard.Contact.x > 0,
-                "Brig, Caelanor, Gloriana and Chronian sheet contacts, mounting offsets and normals must mirror at the deck centreline."
+                "Brig, Caelanor, Gloriana, Chronian, LargeDhow and Shroud sheet contacts, mounting offsets and normals must mirror at the deck centreline."
             );
         Check(
             SheetFallbackOrder
