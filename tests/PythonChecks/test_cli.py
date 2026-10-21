@@ -141,3 +141,29 @@ def test_missing_installed_assets_are_a_concise_error(tmp_path):
     assert result.exit_code == 1
     assert "Missing installed Sailwind input:" in result.stderr
     assert not result.stdout
+
+
+@pytest.mark.parametrize(
+    "options, clearance, height_range",
+    [([], 0.01, 2.0), (["--clearance", "0.03", "--height-range", "0.6"], 0.03, 0.6)],
+)
+def test_halyard_search_defaults_and_overrides(
+    monkeypatch, tmp_path, options, clearance, height_range
+):
+    from tools.halyards import generate
+
+    calls = []
+
+    def fake(**kwargs):
+        calls.append(kwargs)
+        return "", 0
+
+    monkeypatch.setattr(generate, "generate", fake)
+    result = CliRunner().invoke(
+        main,
+        ["generate-fallback-halyards", "brig", "--game-dir", str(tmp_path), *options],
+    )
+    assert result.exit_code == 0, result.output
+    assert len(calls) == 1
+    assert calls[0]["clearance"] == clearance
+    assert calls[0]["height_range"] == height_range

@@ -56,11 +56,11 @@ internal static class HalyardProfileChecks
                     );
                 count++;
             }
-        if (count != 14)
-            throw new Exception("Preserve all fourteen authored halyard fallbacks.");
+        if (count != 54)
+            throw new Exception("Preserve all fifty-four authored halyard fallbacks.");
         StayDependencyChecks.Run();
         Console.WriteLine(
-            "PASS: fourteen authored reef fallbacks retain recorded native templates."
+            "PASS: fifty-four authored reef fallbacks retain recorded native templates."
         );
     }
 }

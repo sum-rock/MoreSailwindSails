@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 from tools.halyards.controls import control_points
-from tools.halyards.geometry import swept_box, transform_points
+from tools.halyards.geometry import sphere_from_points, transform_points
 from tools.halyards.scene import identity
 
 
@@ -130,7 +130,6 @@ def adapt(*, boat):
                     parent = boat.frame @ scene.matrix(scene.parent(control))
                     local = np.linalg.inv(parent) @ original
                     local[:3, 3] += delta
-                    rotation = boat.rotation_frame @ scene.rotation(control)
                     if angle is not None:
                         radians = math.radians(angle)
                         turn = np.array(
@@ -143,14 +142,11 @@ def adapt(*, boat):
                         local[:3, :3] = turn @ np.diag(
                             np.linalg.norm(local[:3, :3], axis=0)
                         )
-                        rotation = (
-                            boat.rotation_frame
-                            @ scene.rotation(scene.parent(control))
-                            @ turn
-                        )
                     moved = parent @ local
                     points = transform_points(
                         moved @ np.linalg.inv(original),
                         control_points(boat=boat, control=control),
                     )
-                    boat.extra_boxes.append(swept_box(points, moved[:3, 3], rotation))
+                    boat.extra_spheres.append(
+                        sphere_from_points(points=points, origin=moved[:3, 3])
+                    )

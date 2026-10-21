@@ -49,7 +49,7 @@ class Boat:
         self.se = None
         self.se_nodes = []
         self.excluded = set()
-        self.extra_boxes = []
+        self.extra_spheres = []
         self.extra_structure = []
         self.options = Options()
         if scene.has_se:
