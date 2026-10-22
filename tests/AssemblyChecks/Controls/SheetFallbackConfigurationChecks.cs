@@ -84,7 +84,10 @@ internal static class SheetFallbackConfigurationChecks
                         !(bool)
                             resolver
                                 .GetMethod("ValidateCurrent", flags)
-                                .Invoke(instance, new object[] { null, null, candidate, 0f }),
+                                .Invoke(
+                                    instance,
+                                    new object[] { null, null, candidate, 0f, Type.Missing, null }
+                                ),
                         "Forced mode must reject native retention before inspecting native support data."
                     );
                 }
@@ -110,7 +113,7 @@ internal static class SheetFallbackConfigurationChecks
         int modeRead = Array.FindIndex(body, i => i.Operand is FieldInfo f && f == snapshot);
         int nativeSearch = Array.FindIndex(
             body,
-            i => i.Operand is MethodInfo m && m.Name == "StaySources"
+            i => i.Operand is MethodInfo m && m.Name == "ControlSources"
         );
         int fallbacks = Array.FindIndex(
             body,

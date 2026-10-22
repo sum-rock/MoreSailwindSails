@@ -1,8 +1,7 @@
-// Owns one mount's paired sheet and halyard placement, retention, retry and release.
+// Owns one consumer's paired sheet and halyard placement, retention, retry and release.
 using System;
 using System.Linq;
 using MoreSailwindSails.Controls.Placement;
-using MoreSailwindSails.Sails.FishermansStaysail;
 using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Runtime
@@ -38,36 +37,78 @@ namespace MoreSailwindSails.Controls.Runtime
         }
         private readonly WinchPlacementState sheetState = new WinchPlacementState();
         private readonly WinchPlacementState halyardState = new WinchPlacementState();
-        private GameObject sheetSail;
-        private FishermansStaysailRig sheetRig;
+        internal ISailControlRig Consumer;
+        private SailControlRequest request;
+        private bool requestReady;
         private float? fittedSheetSpan;
+
+        internal void Publish() =>
+            Consumer?.OnControlsChanged(
+                controls: new SailControlSet
+                {
+                    Left = port?.Winch,
+                    Right = starboard?.Winch,
+                    Reef = reef?.Winch,
+                }
+            );
+
+        internal void UpdateRequest()
+        {
+            if (Consumer == null)
+                return;
+            requestReady =
+                Consumer.TryGetControlRequest(out var next)
+                && next.Owner == Owner
+                && next.Boat == boat
+                && next.Supports != null
+                && next.Supports.All(m => m && m.gameObject.activeInHierarchy);
+            if (!requestReady)
+            {
+                Suspend();
+                return;
+            }
+            if (request.SourcePolicy != next.SourcePolicy || request.SourceMast != next.SourceMast)
+                Suspend();
+            bool supportsChanged =
+                request.Forward != next.Forward
+                || request.Halyard != next.Halyard
+                || request.NativeMount != next.NativeMount;
+            request = next;
+            if (supportsChanged)
+                WinchControls.Configure(
+                    boat: boat,
+                    owner: Owner,
+                    forward: next.Forward,
+                    halyard: next.Halyard,
+                    nativeMount: next.NativeMount
+                );
+            Bind(control: port, controller: next.Left);
+            Bind(control: starboard, controller: next.Right);
+            Bind(control: reef, controller: next.Reef);
+        }
+
+        private static void Bind(OwnedWinch control, RopeController controller)
+        {
+            if (control == null || !control.Winch)
+                return;
+            if (control.Winch.rope != controller)
+            {
+                control.Suspend(preserveControllers: true);
+                control.Winch.rope = null;
+                if (controller)
+                    control.Bind(controller: controller);
+            }
+        }
 
         internal void ResetSheetSpan()
         {
-            if (sheetRig)
-                sheetRig.InvalidateSheetSpan();
             fittedSheetSpan = null;
             sheetState.RetryAfter = 0f;
         }
 
         private float SheetBoundary()
         {
-            GameObject currentSail = null;
-            if (NativeMount && NativeMount.sails != null)
-                foreach (var sail in NativeMount.sails)
-                    if (sail && sail.transform.parent == NativeMount.transform)
-                    {
-                        currentSail = sail;
-                        break;
-                    }
-            if (sheetSail != currentSail)
-            {
-                sheetSail = currentSail;
-                // Component discovery happens only when the fitted sail changes.
-                sheetRig = currentSail ? currentSail.GetComponent<FishermansStaysailRig>() : null;
-                sheetState.RetryAfter = 0f;
-            }
-            float? span = sheetRig ? sheetRig.FittedSheetSpan : (float?)0f;
+            float? span = request.FittedSheetSpan;
             if (span != fittedSheetSpan)
             {
                 fittedSheetSpan = span;
@@ -108,7 +149,8 @@ namespace MoreSailwindSails.Controls.Runtime
                 starboard = control;
         }
 
-        private bool Active => Owner && Owner.activeInHierarchy;
+        private bool Active =>
+            Owner && Owner.activeInHierarchy && (Consumer == null || requestReady);
         private bool SheetWanted =>
             Active && port != null && starboard != null && port.Wanted && starboard.Wanted;
         private bool HalyardWanted => Active && reef != null && reef.Wanted;
@@ -118,8 +160,6 @@ namespace MoreSailwindSails.Controls.Runtime
             if (!SheetWanted)
             {
                 Release(state: sheetState, fittings: sheetFittings);
-                sheetSail = null;
-                sheetRig = null;
                 fittedSheetSpan = null;
             }
             if (!HalyardWanted)
@@ -156,7 +196,11 @@ namespace MoreSailwindSails.Controls.Runtime
             if (reef == control)
                 reef = null;
             if (port == null && starboard == null && reef == null)
+            {
+                Consumer?.OnControlsChanged(controls: default);
+                Consumer = null;
                 manager.Remove(group: this);
+            }
         }
 
         private void Release(
@@ -201,12 +245,16 @@ namespace MoreSailwindSails.Controls.Runtime
                                 forward: ForwardBase,
                                 requested: HalyardMast,
                                 current: state.Current,
-                                aftBoundaryZ: aftBoundaryZ
+                                aftBoundaryZ: aftBoundaryZ,
+                                sourcePolicy: request.SourcePolicy,
+                                fittedMast: request.SourceMast
                             )
                             : halyards.ValidateCurrent(
                                 forward: ForwardBase,
                                 requested: HalyardMast,
-                                current: state.Current
+                                current: state.Current,
+                                sourcePolicy: request.SourcePolicy,
+                                fittedMast: request.SourceMast
                             )
                     )
                 )
@@ -227,13 +275,17 @@ namespace MoreSailwindSails.Controls.Runtime
                         forward: ForwardBase,
                         requested: HalyardMast,
                         current: state.Current,
-                        aftBoundaryZ: aftBoundaryZ
+                        aftBoundaryZ: aftBoundaryZ,
+                        sourcePolicy: request.SourcePolicy,
+                        fittedMast: request.SourceMast
                     )
                     : halyards.Resolve(
                         owner: state,
                         forward: ForwardBase,
                         requested: HalyardMast,
-                        current: state.Current
+                        current: state.Current,
+                        sourcePolicy: request.SourcePolicy,
+                        fittedMast: request.SourceMast
                     );
                 var selected = result.Candidate as WinchPlacementCandidate;
                 if (selected == null)

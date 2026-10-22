@@ -103,10 +103,21 @@ internal static class WinchChecks
         Check(
             !cleanupCalls.Any(m => m.Name == "ToArray")
                 && cleanupCalls
-                    .Where(m => m.Name is "Snapshot" or "ReleaseUnused" or "Refresh")
+                    .Where(m =>
+                        m.Name is "Snapshot" or "UpdateRequest" or "ReleaseUnused" or "Refresh"
+                    )
                     .Select(m => m.Name)
                     .SequenceEqual(
-                        new[] { "Snapshot", "Snapshot", "ReleaseUnused", "Snapshot", "Refresh" }
+                        new[]
+                        {
+                            "Snapshot",
+                            "Snapshot",
+                            "UpdateRequest",
+                            "Snapshot",
+                            "ReleaseUnused",
+                            "Snapshot",
+                            "Refresh",
+                        }
                     ),
             "Tick must snapshot cleanup and each group pass separately, releasing before refresh."
         );
@@ -134,9 +145,12 @@ internal static class WinchChecks
         );
         var adopt = owned.GetMethod("Adopt", all);
         CheckOrderedCalls(adopt, "Detach", "Destroy", "Bind");
+        var publish = assembly
+            .GetType("MoreSailwindSails.Stays.FishermansStay.FishermansStayControls", true)
+            .GetMethod("OnControlsChanged", all);
         foreach (string field in new[] { "reefWinch", "leftAngleWinch", "rightAngleWinch" })
             Check(
-                Instructions(adopt).Any(i => i.Operand is FieldInfo f && f.Name == field),
+                Instructions(publish).Any(i => i.Operand is FieldInfo f && f.Name == field),
                 "Template replacement leaves a stale native mount array: " + field
             );
         var refresh = group

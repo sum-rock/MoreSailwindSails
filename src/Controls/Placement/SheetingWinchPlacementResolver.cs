@@ -36,7 +36,9 @@ namespace MoreSailwindSails.Controls.Placement
             Mast forward,
             Mast requested,
             WinchPlacementCandidate current,
-            float aftBoundaryZ
+            float aftBoundaryZ,
+            NativeControlSourcePolicy sourcePolicy = NativeControlSourcePolicy.MatchingStays,
+            Mast fittedMast = null
         )
         {
             if (
@@ -73,7 +75,13 @@ namespace MoreSailwindSails.Controls.Placement
             var mast = current.SourceMast;
             int index = current.SourceIndex;
             return mast
-                && native.IsStaySource(source: mast, forward: forward, requested: requested)
+                && native.IsControlSource(
+                    source: mast,
+                    forward: forward,
+                    requested: requested,
+                    policy: sourcePolicy,
+                    fittedMast: fittedMast
+                )
                 && mast.leftAngleWinch != null
                 && mast.rightAngleWinch != null
                 && index >= 0
@@ -112,7 +120,9 @@ namespace MoreSailwindSails.Controls.Placement
             Mast forward,
             Mast requested,
             WinchCandidate current,
-            float aftBoundaryZ
+            float aftBoundaryZ,
+            NativeControlSourcePolicy sourcePolicy = NativeControlSourcePolicy.MatchingStays,
+            Mast fittedMast = null
         )
         {
             var pairs = new List<WinchPlacementCandidate>();
@@ -122,7 +132,14 @@ namespace MoreSailwindSails.Controls.Placement
             {
                 if (!forceSheetFallbacks)
                 {
-                    foreach (var mast in native.StaySources(forward: forward, requested: requested))
+                    foreach (
+                        var mast in native.ControlSources(
+                            forward: forward,
+                            requested: requested,
+                            policy: sourcePolicy,
+                            fittedMast: fittedMast
+                        )
+                    )
                     {
                         var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
                         var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();

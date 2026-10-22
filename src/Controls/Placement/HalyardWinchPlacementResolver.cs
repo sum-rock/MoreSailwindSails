@@ -1,4 +1,4 @@
-// Allocates halyards from matching native stays and the aft mast fallback.
+// Allocates halyards from consumer-selected native sources and its requested mast fallback.
 using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Controls.Configuration;
@@ -6,7 +6,7 @@ using MoreSailwindSails.Controls.Discovery;
 
 namespace MoreSailwindSails.Controls.Placement
 {
-    // Allocates halyards from native stays on the same physical mast pair and the aft mast fallback.
+    // Uses the same source policy for selection and retention, with an independent fallback mast.
     internal sealed class HalyardWinchPlacementResolver
     {
         private readonly NativeWinchInventory native;
@@ -21,7 +21,13 @@ namespace MoreSailwindSails.Controls.Placement
             this.ledger = ledger;
         }
 
-        internal bool ValidateCurrent(Mast forward, Mast requested, WinchPlacementCandidate current)
+        internal bool ValidateCurrent(
+            Mast forward,
+            Mast requested,
+            WinchPlacementCandidate current,
+            NativeControlSourcePolicy sourcePolicy = NativeControlSourcePolicy.MatchingStays,
+            Mast fittedMast = null
+        )
         {
             if (current == null || !native.ActiveSupport(mast: requested))
                 return false;
@@ -44,10 +50,12 @@ namespace MoreSailwindSails.Controls.Placement
                             )
                         );
             }
-            return native.IsStaySource(
+            return native.IsControlSource(
                     source: current.SourceMast,
                     forward: forward,
-                    requested: requested
+                    requested: requested,
+                    policy: sourcePolicy,
+                    fittedMast: fittedMast
                 )
                 && current.SourceMast.reefWinch != null
                 && current.SourceIndex >= 0
@@ -60,13 +68,22 @@ namespace MoreSailwindSails.Controls.Placement
             object owner,
             Mast forward,
             Mast requested,
-            WinchCandidate current
+            WinchCandidate current,
+            NativeControlSourcePolicy sourcePolicy = NativeControlSourcePolicy.MatchingStays,
+            Mast fittedMast = null
         )
         {
             var candidates = new List<WinchPlacementCandidate>();
             // Donor stays may be unfitted; Candidate checks the actual mounting support.
             if (native.ActiveSupport(mast: requested))
-                foreach (var source in native.StaySources(forward: forward, requested: requested))
+                foreach (
+                    var source in native.ControlSources(
+                        forward: forward,
+                        requested: requested,
+                        policy: sourcePolicy,
+                        fittedMast: fittedMast
+                    )
+                )
                 {
                     if (source.reefWinch == null)
                         continue;

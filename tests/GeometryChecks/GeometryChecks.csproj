@@ -6,6 +6,10 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile
+      Include="../../src/Controls/SailControlGeometry.cs"
+      Link="Controls/SailControlGeometry.cs"
+    />
     <None
       Update="FishermansStay/NativeRigAvailability.txt"
       CopyToOutputDirectory="PreserveNewest"

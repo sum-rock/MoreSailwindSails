@@ -154,6 +154,40 @@ namespace MoreSailwindSails.Controls.Discovery
                 ? Mast(id: Profile.Boat.Base(section: section.orderIndex))
                 : section;
 
+        internal IEnumerable<Mast> ControlSources(
+            Mast forward,
+            Mast requested,
+            NativeControlSourcePolicy policy,
+            Mast fittedMast
+        )
+        {
+            if (policy == NativeControlSourcePolicy.FittedMast)
+            {
+                if (
+                    ActiveSupport(mast: fittedMast)
+                    && Array.IndexOf(array: Masts, value: fittedMast) >= 0
+                )
+                    yield return fittedMast;
+                yield break;
+            }
+            foreach (var source in StaySources(forward: forward, requested: requested))
+                yield return source;
+        }
+
+        internal bool IsControlSource(
+            Mast source,
+            Mast forward,
+            Mast requested,
+            NativeControlSourcePolicy policy,
+            Mast fittedMast
+        ) =>
+            policy == NativeControlSourcePolicy.FittedMast
+                ? source
+                    && source == fittedMast
+                    && ActiveSupport(mast: source)
+                    && Array.IndexOf(array: Masts, value: source) >= 0
+                : IsStaySource(source: source, forward: forward, requested: requested);
+
         internal IEnumerable<Mast> StaySources(Mast forward, Mast requested)
         {
             if (!forward || !requested || forward == requested)

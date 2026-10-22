@@ -411,7 +411,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                                 )
                             )
                     );
-                    fittedSheetSpan = FishermansStaysailFrameGeometry.SheetSpan(
+                    fittedSheetSpan = MoreSailwindSails.Controls.SailControlGeometry.SheetSpan(
                         neutralWidthInBoat: rigging.Pair.Boat.transform.InverseTransformVector(
                             neutralWidth
                         )

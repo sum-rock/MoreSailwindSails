@@ -26,7 +26,7 @@ internal static class SheetSpanChecks
             axis: Vector3.right,
             angle: 60
         );
-        float span = FishermansStaysailFrameGeometry.SheetSpan(neutralWidthInBoat: width).Value;
+        float span = SailControlGeometry.SheetSpan(neutralWidthInBoat: width).Value;
         Check(Math.Abs(span - 4f) < 0.00001f, "Use projected fitted width, not edge length.");
         var boatScale = new Vector3(2, 3, 4);
         var worldWidth = Rotate(
@@ -38,20 +38,16 @@ internal static class SheetSpanChecks
             Rotate(value: worldWidth, axis: Vector3.up, angle: -53),
             new Vector3(0.5f, 1f / 3, 0.25f)
         );
-        float rotated = FishermansStaysailFrameGeometry
-            .SheetSpan(neutralWidthInBoat: localWidth)
-            .Value;
+        float rotated = SailControlGeometry.SheetSpan(neutralWidthInBoat: localWidth).Value;
         Check(
             Math.Abs(rotated - span) < 0.00001f,
             "Boat rotation and scale must not change the local span."
         );
         Check(
-            FishermansStaysailFrameGeometry.SheetSpan(neutralWidthInBoat: -width) == span
-                && FishermansStaysailFrameGeometry.SheetSpan(neutralWidthInBoat: Vector3.zero)
-                    == null
-                && FishermansStaysailFrameGeometry.SheetSpan(
-                    neutralWidthInBoat: new Vector3(float.NaN, 0, 1)
-                ) == null,
+            SailControlGeometry.SheetSpan(neutralWidthInBoat: -width) == span
+                && SailControlGeometry.SheetSpan(neutralWidthInBoat: Vector3.zero) == null
+                && SailControlGeometry.SheetSpan(neutralWidthInBoat: new Vector3(float.NaN, 0, 1))
+                    == null,
             "Mirrored scale must preserve extent; invalid geometry must defer fallbacks."
         );
 

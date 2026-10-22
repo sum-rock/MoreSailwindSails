@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Runtime;
 using MoreSailwindSails.Sails.FishermansFlyingSail.Configuration;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -8,7 +10,7 @@ using Object = UnityEngine.Object;
 namespace MoreSailwindSails.Sails.FishermansFlyingSail
 {
     // Runtime support belongs to the sail; no synthetic Mast or shipyard part is created.
-    internal sealed class FishermansFlyingSailRigging : MonoBehaviour
+    internal sealed class FishermansFlyingSailRigging : MonoBehaviour, ISailControlRig
     {
         internal sealed class MountPair
         {
@@ -37,6 +39,153 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
 
         internal MountPair Pair { get; private set; }
         private Sail sail;
+        private SailConnections connections;
+        private FishermansFlyingSailRig sailRig;
+        private BoatRefs controlBoat;
+        private readonly Mast[] controlSupports = new Mast[4];
+        private OwnedWinch leftControl,
+            rightControl,
+            reefControl;
+
+        public bool TryGetControlRequest(out SailControlRequest request)
+        {
+            request = default;
+            if (
+                !sail
+                || !sail.gameObject.activeInHierarchy
+                || Pair == null
+                || !Pair.Active
+                || sail.transform.parent != Pair.Fore.transform
+                || !connections
+            )
+                return false;
+            controlSupports[0] = Pair.Fore;
+            controlSupports[1] = Pair.Aft;
+            controlSupports[2] = Pair.ForeGuideMast;
+            controlSupports[3] = Pair.AftGuideMast;
+            request = new SailControlRequest
+            {
+                Owner = sail.gameObject,
+                Boat = Pair.Boat,
+                Forward = Pair.Fore,
+                Halyard = Pair.Fore,
+                Supports = controlSupports,
+                SourcePolicy = NativeControlSourcePolicy.FittedMast,
+                SourceMast = Pair.Fore,
+                FittedSheetSpan = sailRig ? sailRig.FittedSheetSpan : null,
+                Left = connections.angleControllerLeft,
+                Right = connections.angleControllerRight,
+                Reef = connections.reefController,
+            };
+            return true;
+        }
+
+        public void OnControlsChanged(SailControlSet controls)
+        {
+            // Controllers bind through the request. Physical mast arrays retain native controls.
+        }
+
+        internal void ReleaseNativeBindings(Mast mast)
+        {
+            connections = sail.GetComponent<SailConnections>();
+            sailRig = sail.GetComponent<FishermansFlyingSailRig>();
+            var boat = mast.GetComponentInParent<BoatRefs>();
+            ReleaseNative(controls: mast.leftAngleWinch, boat: boat);
+            ReleaseNative(controls: mast.rightAngleWinch, boat: boat);
+            ReleaseNative(controls: mast.reefWinch, boat: boat);
+        }
+
+        private void ReleaseNative(GPButtonRopeWinch[] controls, BoatRefs boat)
+        {
+            if (controls == null || !connections)
+                return;
+            foreach (var control in controls)
+                if (
+                    control
+                    && control.rope
+                    && (
+                        control.rope == connections.angleControllerLeft
+                        || control.rope == connections.angleControllerRight
+                        || control.rope == connections.reefController
+                    )
+                )
+                {
+                    // Missing placements must not leave controllers beneath inactive rigging.
+                    if (boat)
+                        control.rope.transform.SetParent(
+                            parent: boat.transform,
+                            worldPositionStays: true
+                        );
+                    control.rope = null;
+                    control.ShowWinch(false);
+                }
+        }
+
+        private float controlRetryAfter;
+        private bool controlWarning;
+
+        private bool EnsureControls()
+        {
+            if (Time.unscaledTime < controlRetryAfter)
+                return false;
+            if (controlBoat && controlBoat != Pair.Boat)
+                ReleaseControls();
+            controlBoat = Pair.Boat;
+            connections = connections ? connections : sail.GetComponent<SailConnections>();
+            sailRig = sailRig ? sailRig : sail.GetComponent<FishermansFlyingSailRig>();
+            try
+            {
+                EnsureControl(control: ref leftControl, role: WinchRole.Left);
+                EnsureControl(control: ref rightControl, role: WinchRole.Right);
+                EnsureControl(control: ref reefControl, role: WinchRole.Reef);
+                WinchControls.Register(boat: controlBoat, owner: sail.gameObject, consumer: this);
+                controlWarning = false;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                ReleaseControls();
+                controlRetryAfter = Time.unscaledTime + 1f;
+                if (!controlWarning)
+                    Plugin.Log.LogWarning($"Flying Sail controls unavailable: {exception}");
+                controlWarning = true;
+                return false;
+            }
+        }
+
+        private void EnsureControl(ref OwnedWinch control, WinchRole role)
+        {
+            if (control != null && control.Winch)
+                return;
+            control?.Retire();
+            control = CreateControl(role: role);
+        }
+
+        private OwnedWinch CreateControl(WinchRole role) =>
+            WinchControls.Create(
+                boat: controlBoat,
+                owner: sail.gameObject,
+                parent: controlBoat.transform,
+                donorMast: Pair.Fore,
+                role: role,
+                label: "FishermansFlyingSail " + role
+            );
+
+        private void ReleaseControls()
+        {
+            if (controlBoat)
+                WinchControls.Unregister(boat: controlBoat, owner: gameObject, consumer: this);
+            leftControl?.Retire();
+            rightControl?.Retire();
+            reefControl?.Retire();
+            leftControl = rightControl = reefControl = null;
+            controlBoat = null;
+        }
+
+        private void OnEnable() => controlsDirty = true;
+
+        private void OnDisable() => ReleaseControls();
+
         private GameObject controlsRoot;
         private Transform mastGuide,
             upperGuide;
@@ -326,6 +475,8 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                 upperGuide.SetParent(controlsRoot.transform, false);
                 controlsRoot.SetActive(true);
             }
+            if (!EnsureControls())
+                return;
             controlsDirty = false;
             var connections = sail.GetComponent<SailConnections>();
             connections.colChecker.RegisterBoatWalkCol(mast.walkColMast);
@@ -343,7 +494,16 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
 
         internal void UpdateHalyard(Transform[] attachments, bool struck)
         {
-            if (!controlsRoot || controlsDirty)
+            if (
+                !controlsRoot
+                || controlsDirty
+                || leftControl == null
+                || !leftControl.Winch
+                || rightControl == null
+                || !rightControl.Winch
+                || reefControl == null
+                || !reefControl.Winch
+            )
                 AttachControls();
             if (!controlsRoot)
                 return;
@@ -374,6 +534,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
 
         private void OnDestroy()
         {
+            ReleaseControls();
             if (controlsRoot)
                 Object.Destroy(controlsRoot);
         }

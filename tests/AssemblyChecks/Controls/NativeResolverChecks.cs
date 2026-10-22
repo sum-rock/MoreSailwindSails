@@ -40,7 +40,8 @@ internal static class NativeResolverChecks
         var spanGroup = Type("Runtime.WinchGroup");
         var boundaryCalls = CalledMethods(spanGroup.GetMethod("SheetBoundary", flags)).ToArray();
         Check(
-            boundaryCalls.Any(m => m.Name == "get_FittedSheetSpan")
+            Instructions(spanGroup.GetMethod("SheetBoundary", flags))
+                .Any(i => i.Operand is FieldInfo f && f.Name == "FittedSheetSpan")
                 && boundaryCalls.Any(m => m.Name == "Boundary")
                 && !boundaryCalls.Any(m => m.Name is "GetComponentsInChildren" or "RefreshFrame"),
             "Placement must read cached span without traversing sail geometry."
@@ -48,7 +49,14 @@ internal static class NativeResolverChecks
         Check(
             CalledMethods(Type("WinchControls").GetMethod("Configure", flags))
                 .Any(m => m.Name == "ResetSheetSpan")
-                && CalledMethods(spanGroup.GetMethod("ResetSheetSpan", flags))
+                && CalledMethods(
+                        assembly
+                            .GetType(
+                                "MoreSailwindSails.Stays.FishermansStay.FishermansStayControls",
+                                true
+                            )
+                            .GetMethod("TryGetControlRequest", flags)
+                    )
                     .Any(m => m.Name == "InvalidateSheetSpan"),
             "Supporting mast changes must invalidate the fitted span."
         );
@@ -137,7 +145,7 @@ internal static class NativeResolverChecks
                 );
             Check(
                 CalledMethods(validate).Any(m => m.Name == "Current")
-                    && CalledMethods(validate).Any(m => m.Name == "IsStaySource")
+                    && CalledMethods(validate).Any(m => m.Name == "IsControlSource")
                     && !CalledMethods(validate)
                         .Any(m => m.Name is "Candidate" or "Resolve" or "StaySources"),
                 "Current-placement validation searches alternatives or skips live seats."
@@ -190,7 +198,7 @@ internal static class NativeResolverChecks
             "Halyard array not inspected."
         );
         Check(
-            CalledMethods(halyard).Any(m => m.Name == "StaySources")
+            CalledMethods(halyard).Any(m => m.Name == "ControlSources")
                 && CalledMethods(halyard).Any(m => m.Name == "ActiveSupport")
                 && !CalledMethods(halyard).Any(m => m.Name == "SheetCategory"),
             "Halyard bypasses stay dependencies or requested active support."
@@ -219,7 +227,7 @@ internal static class NativeResolverChecks
             "Manual halyard fallback bypasses allocation, active support, template validity or retained pose checks."
         );
         Check(
-            CalledMethods(halyardValidate).Any(m => m.Name == "IsStaySource")
+            CalledMethods(halyardValidate).Any(m => m.Name == "IsControlSource")
                 && CalledMethods(halyardValidate).Any(m => m.Name == "ActiveSupport")
                 && Instructions(halyardValidate)
                     .Any(i => i.Operand is FieldInfo f && f.Name == "reefWinch"),
