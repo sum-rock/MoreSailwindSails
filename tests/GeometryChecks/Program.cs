@@ -17,6 +17,7 @@ internal static class Program
         Utils.WinchCaptureChecks.Run();
         Utils.WinchMountOverlayChecks.Run();
         Controls.NativeSeatProfileChecks.Run();
+        Controls.SheetSpanChecks.Run();
         Controls.HalyardProfileChecks.Run();
         Controls.KakamWinchChecks.Run();
         Controls.NativeSeatAllocationChecks.Run();

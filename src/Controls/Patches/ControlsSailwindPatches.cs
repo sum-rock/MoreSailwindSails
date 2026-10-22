@@ -1,3 +1,4 @@
+// Groups Controls patches for native Sailwind inventory invalidation.
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;

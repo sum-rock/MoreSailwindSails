@@ -57,6 +57,24 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         private Vector3 lastScale;
         private Vector3 lastFramePosition;
         private Quaternion lastFrameRotation;
+        private float? fittedSheetSpan;
+
+        internal float? FittedSheetSpan =>
+            isActiveAndEnabled
+            && boundToMast
+            && lastMount
+            && Sail
+            && Sail.transform.parent == lastMount.transform
+                ? fittedSheetSpan
+                : null;
+
+        internal void InvalidateSheetSpan()
+        {
+            fittedSheetSpan = null;
+            bindingDirty = true;
+        }
+
+        private void OnDisable() => InvalidateSheetSpan();
 
         private void OnEnable() => bindingDirty = true;
 
@@ -276,12 +294,16 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                     || Bones == null
                     || Bones.Length != FishermansStaysailGeometry.BoneCount
                 )
+                {
+                    InvalidateSheetSpan();
                     return false;
+                }
                 var mount = Sail.transform.parent
                     ? Sail.transform.parent.GetComponent<Mast>()
                     : null;
                 if (mount != lastMount)
                 {
+                    InvalidateSheetSpan();
                     bool wasBound = boundToMast;
                     lastMount = mount;
                     fixedHead = default;
@@ -300,7 +322,10 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                     bindingDirty = true;
                 }
                 if (!rigging || !rigging.Bind(mount))
+                {
+                    InvalidateSheetSpan();
                     return false;
+                }
 
                 if (!cutInitialized)
                     InitializeCut(rigging.HeadSlope);
@@ -376,6 +401,21 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                     lastScale = scaleRoot.localScale;
                     lastFramePosition = MastFrame.localPosition;
                     lastFrameRotation = MastFrame.localRotation;
+                    var neutralWidth = mount.transform.TransformVector(
+                        MastFrame.localRotation
+                            * (
+                                scaleRoot.localRotation
+                                * Vector3.Scale(
+                                    new Vector3(0f, 0f, -Corners[0].z),
+                                    scaleRoot.localScale
+                                )
+                            )
+                    );
+                    fittedSheetSpan = MoreSailwindSails.Controls.SailControlGeometry.SheetSpan(
+                        neutralWidthInBoat: rigging.Pair.Boat.transform.InverseTransformVector(
+                            neutralWidth
+                        )
+                    );
                     boundToMast = true;
                     bindingDirty = false;
                     refreshRequested = true;

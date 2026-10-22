@@ -8,31 +8,42 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Placement
 {
-    // Resolves and validates native sheet pairs and fallbacks aft of the forward physical mast.
+    // Resolves native sheet pairs and validates authored pairs against the fitted aft boundary.
     internal sealed class SheetingWinchPlacementResolver
     {
         private readonly NativeWinchInventory native;
         private readonly WinchReservations ledger;
+        private readonly bool forceSheetFallbacks;
 
         internal SheetingWinchPlacementResolver(
             NativeWinchInventory native,
-            WinchReservations ledger
+            WinchReservations ledger,
+            bool forceSheetFallbacks
         )
         {
             this.native = native;
             this.ledger = ledger;
+            this.forceSheetFallbacks = forceSheetFallbacks;
         }
 
-        private IEnumerable<SheetFallbackDefinition> Fallbacks(Mast forward) =>
-            SheetFallbackOrder.FromMast(
+        private IEnumerable<SheetFallbackDefinition> Fallbacks(float aftBoundaryZ) =>
+            SheetFallbackOrder.FromBoundary(
                 fallbacks: native.Profile?.SheetFallbacks ?? Array.Empty<SheetFallbackDefinition>(),
-                mastZ: native.Boat.transform.InverseTransformPoint(forward.transform.position).z
+                aftBoundaryZ: aftBoundaryZ
             );
 
-        internal bool ValidateCurrent(Mast forward, Mast requested, WinchPlacementCandidate current)
+        internal bool ValidateCurrent(
+            Mast forward,
+            Mast requested,
+            WinchPlacementCandidate current,
+            float aftBoundaryZ,
+            NativeControlSourcePolicy sourcePolicy = NativeControlSourcePolicy.MatchingStays,
+            Mast fittedMast = null
+        )
         {
             if (
                 current == null
+                || (forceSheetFallbacks && !current.Fallback)
                 || !native.ActiveSupport(mast: forward)
                 || !native.ActiveSupport(mast: requested)
             )
@@ -43,7 +54,7 @@ namespace MoreSailwindSails.Controls.Placement
                     fallbacks: native.Profile?.SheetFallbacks
                         ?? Array.Empty<SheetFallbackDefinition>(),
                     id: current.Id,
-                    mastZ: native.Boat.transform.InverseTransformPoint(forward.transform.position).z
+                    aftBoundaryZ: aftBoundaryZ
                 );
                 return category != null
                     && current.Templates?.Length == 2
@@ -64,7 +75,13 @@ namespace MoreSailwindSails.Controls.Placement
             var mast = current.SourceMast;
             int index = current.SourceIndex;
             return mast
-                && native.IsStaySource(source: mast, forward: forward, requested: requested)
+                && native.IsControlSource(
+                    source: mast,
+                    forward: forward,
+                    requested: requested,
+                    policy: sourcePolicy,
+                    fittedMast: fittedMast
+                )
                 && mast.leftAngleWinch != null
                 && mast.rightAngleWinch != null
                 && index >= 0
@@ -102,7 +119,10 @@ namespace MoreSailwindSails.Controls.Placement
             object owner,
             Mast forward,
             Mast requested,
-            WinchCandidate current
+            WinchCandidate current,
+            float aftBoundaryZ,
+            NativeControlSourcePolicy sourcePolicy = NativeControlSourcePolicy.MatchingStays,
+            Mast fittedMast = null
         )
         {
             var pairs = new List<WinchPlacementCandidate>();
@@ -110,41 +130,51 @@ namespace MoreSailwindSails.Controls.Placement
                 native.ActiveSupport(mast: forward) && native.ActiveSupport(mast: requested);
             if (supportsActive)
             {
-                foreach (var mast in native.StaySources(forward: forward, requested: requested))
+                if (!forceSheetFallbacks)
                 {
-                    var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
-                    var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
                     foreach (
-                        var indices in NativeSheetPairing.Indices(
-                            port: left,
-                            starboard: right,
-                            usable: native.TemplateUsable,
-                            invalid: index =>
-                                native.Diagnose(
-                                    key: $"pair/{mast.GetInstanceID()}/{index}",
-                                    message: $"Unmatched native sheet pair: boat={native.Boat.name}, source={mast.orderIndex}, index={index}."
-                                )
+                        var mast in native.ControlSources(
+                            forward: forward,
+                            requested: requested,
+                            policy: sourcePolicy,
+                            fittedMast: fittedMast
                         )
                     )
                     {
-                        var candidate = native.Candidate(
-                            id: $"native/{left[indices[0]].GetInstanceID()}/{right[indices[1]].GetInstanceID()}",
-                            context: $"requestedMast={requested.orderIndex}, sourceRig={mast.orderIndex}, index={indices[0]}",
-                            templates: new[] { left[indices[0]], right[indices[1]] }
-                        );
-                        if (candidate == null)
-                            continue;
-                        candidate.SourceMast = mast;
-                        candidate.SourceIndex = indices[0];
-                        WinchPlacementPolicy.AddSupportedRepresentative(
-                            candidates: pairs,
-                            candidate: candidate
-                        );
+                        var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
+                        var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
+                        foreach (
+                            var indices in NativeSheetPairing.Indices(
+                                port: left,
+                                starboard: right,
+                                usable: native.TemplateUsable,
+                                invalid: index =>
+                                    native.Diagnose(
+                                        key: $"pair/{mast.GetInstanceID()}/{index}",
+                                        message: $"Unmatched native sheet pair: boat={native.Boat.name}, source={mast.orderIndex}, index={index}."
+                                    )
+                            )
+                        )
+                        {
+                            var candidate = native.Candidate(
+                                id: $"native/{left[indices[0]].GetInstanceID()}/{right[indices[1]].GetInstanceID()}",
+                                context: $"requestedMast={requested.orderIndex}, sourceRig={mast.orderIndex}, index={indices[0]}",
+                                templates: new[] { left[indices[0]], right[indices[1]] }
+                            );
+                            if (candidate == null)
+                                continue;
+                            candidate.SourceMast = mast;
+                            candidate.SourceIndex = indices[0];
+                            WinchPlacementPolicy.AddSupportedRepresentative(
+                                candidates: pairs,
+                                candidate: candidate
+                            );
+                        }
                     }
                 }
-                // Append authored pairs moving aft from the forward physical mast.
+                // Append authored pairs moving aft from the fitted sail boundary.
                 // The policy skips unavailable pairs and acquires both sides together.
-                foreach (var category in Fallbacks(forward: forward))
+                foreach (var category in Fallbacks(aftBoundaryZ: aftBoundaryZ))
                 {
                     var fallback = Fallback(category: category);
                     if (fallback != null)

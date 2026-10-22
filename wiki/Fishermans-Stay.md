@@ -21,6 +21,16 @@ The donor supplies initial paired sheet templates, and the aft mast supplies the
 initial halyard template. The final control positions are chosen separately; see
 [how sheets and halyards are found](How-winches-are-placed#how-staysail-sheets-and-halyards-are-found).
 
+The
+[stay control adapter](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Stays/FishermansStay/FishermansStayControls.cs)
+registers the mount with the
+[shared allocator](Controls#consumer-contract-and-ownership) and publishes owned
+clones into the mount's winch arrays. It supplies the fitted sail's rope
+controllers and neutral sheet span. Other sail types fitted to the stay use a
+zero span, keeping the forward-base-mast boundary. Removing the sail releases
+placement claims; destroying the stay unregisters its controls. This adapter
+description follows revision `fcdf300` (plugin metadata **0.3.0**).
+
 For Brig, foremast **3** and main mast **5** support the stay. Donor **15** is
 the middle top stay 1-1. Topmasts **55** and **56** have separate variants, so
 this configuration excludes them.
@@ -122,7 +132,7 @@ order with no entry for an appended group selects **None**.
 - [Geometry calculations](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Stays/FishermansStay/FishermansStayGeometry.cs)
 - [Variant fields and allowed values](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Stays/FishermansStay/Configuration/FishermansStayVariantDefinition.cs)
 - [Reference and endpoint checks](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Stays/FishermansStay/FishermansStayReferences.cs)
-- [Stay construction and fitting](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Stays/FishermansStay/FishermansStay.cs)
+- [Stay construction and fitting](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Stays/FishermansStay/FishermansStay.cs)
 - [Stay catalog](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Stays/FishermansStay/Configuration/FishermansStayCatalog.cs)
 - [Shared boat catalog](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/BoatConfiguration/BoatCatalog.cs)
 - [Geometry checks for authored stays](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tests/GeometryChecks/FishermansStay/StayChecks.cs)

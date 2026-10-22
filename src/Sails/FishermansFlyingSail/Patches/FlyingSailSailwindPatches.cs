@@ -161,6 +161,12 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Patches
         [HarmonyAfter("com.nandbrew.shipyardexpansion")]
         private static void Postfix(Mast __instance)
         {
+            // Release every participating sail before any consumer allocates a seat.
+            foreach (var item in __instance.sails)
+                if (item && item.GetComponent<FishermansFlyingSailRig>())
+                    FishermansFlyingSailRigging
+                        .For(sail: item.GetComponent<Sail>())
+                        .ReleaseNativeBindings(mast: __instance);
             foreach (var item in __instance.sails)
                 if (item && item.GetComponent<FishermansFlyingSailRig>())
                     FishermansFlyingSailRigging

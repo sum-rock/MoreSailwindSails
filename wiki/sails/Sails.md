@@ -9,5 +9,5 @@ asset ownership.
 | [Fisherman's Flying Sails](Fishermans-Flying-Sails) | 400                                | Physical mast with aft mast support, through **Other** |
 
 See the [boat reference](Boats) for mast and stay indexes, and
-[staysail control discovery](How-winches-are-placed#how-staysail-sheets-and-halyards-are-found)
-for how stays find their sheet and halyard controls.
+[Controls reference](Controls) for the shared sheet and halyard allocator, each
+family's native sources, and authored fallbacks.

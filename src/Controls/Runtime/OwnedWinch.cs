@@ -94,15 +94,7 @@ namespace MoreSailwindSails.Controls.Runtime
             clone = replacement;
             // Preserve the binding even if AttachToController throws while updating visuals.
             Winch.rope = controller;
-            if (Group.NativeMount)
-            {
-                if (Role == WinchRole.Reef)
-                    Group.NativeMount.reefWinch = new[] { Winch };
-                else if (Role == WinchRole.Left)
-                    Group.NativeMount.leftAngleWinch = new[] { Winch };
-                else if (Role == WinchRole.Right)
-                    Group.NativeMount.rightAngleWinch = new[] { Winch };
-            }
+            Group.Publish();
             previous.Destroy();
             if (controller)
                 Bind(controller: controller);
@@ -184,4 +176,7 @@ namespace MoreSailwindSails.Controls.Runtime
             manager.Remove(control: this);
         }
     }
+
+    // Marks owned clones so native discovery and diagnostics do not treat them as donor controls.
+    internal sealed class OwnedWinchMarker : MonoBehaviour { }
 }

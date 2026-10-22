@@ -37,6 +37,16 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
         public bool OriginalAutoAnchor;
         public FishermansFlyingSailSupportLine SupportLine;
         public Transform Shadow;
+        private float? fittedSheetSpan;
+        internal float? FittedSheetSpan =>
+            isActiveAndEnabled
+            && boundToMast
+            && !bindingDirty
+            && Sail
+            && lastMount
+            && Sail.transform.parent == lastMount.transform
+                ? fittedSheetSpan
+                : null;
         private float clothLoad;
         private float camber = 1;
         private int camberSide = 1;
@@ -309,7 +319,11 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                     bindingDirty = true;
                 }
                 if (!rigging || !rigging.Bind(mount))
+                {
+                    fittedSheetSpan = null;
+                    bindingDirty = true;
                     return false;
+                }
 
                 rigging.LuffSailFrame(out var forePoint, out var foreAxis);
                 var scaleRoot = Sail.cloth.transform.parent;
@@ -388,6 +402,21 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
                     lastScale = scaleRoot.localScale;
                     lastFramePosition = FlyingFrame.localPosition;
                     lastFrameRotation = FlyingFrame.localRotation;
+                    var neutralWidth = mount.transform.TransformVector(
+                        FlyingFrame.localRotation
+                            * (
+                                scaleRoot.localRotation
+                                * Vector3.Scale(
+                                    new Vector3(0f, 0f, Corners[1].z - Corners[0].z),
+                                    scaleRoot.localScale
+                                )
+                            )
+                    );
+                    fittedSheetSpan = MoreSailwindSails.Controls.SailControlGeometry.SheetSpan(
+                        neutralWidthInBoat: rigging.Pair.Boat.transform.InverseTransformVector(
+                            neutralWidth
+                        )
+                    );
                     boundToMast = true;
                     bindingDirty = false;
                     refreshRequested = true;
@@ -574,6 +603,8 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
 
         private void OnDisable()
         {
+            fittedSheetSpan = null;
+            bindingDirty = true;
             if (SupportLine)
                 SupportLine.Hide();
         }

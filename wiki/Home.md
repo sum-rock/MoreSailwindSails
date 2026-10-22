@@ -6,25 +6,29 @@ Sailwind modders, with MoreSailwindSails as a working example.
 
 ## Find an answer
 
-| I want to…                                             | Start here                                             |
-| ------------------------------------------------------ | ------------------------------------------------------ |
-| Look up a boat's mast and stay indexes                 | [Boat reference](Boats)                                |
-| Browse the sail families                               | [Sail reference](Sails)                                |
-| Understand Staysail IDs, shape, physics, and assets    | [Fisherman's Staysails](Fishermans-Staysails)          |
-| Understand Flying Sail IDs, shape, physics, and assets | [Fisherman's Flying Sails](Fishermans-Flying-Sails)    |
-| Understand Fisherman's Stay configuration              | [Fisherman's Stay](Fishermans-Stay)                    |
-| Understand control placement and ownership             | [Controls reference](Controls)                         |
-| Look up fallback donors and mounting measurements      | [Fallback winch templates](Fallback-winch-templates)   |
-| Check a mapping against my installed game              | [Boat inspection command](MSS-command#boat-inspection) |
-| Build this mod or contribute a correction              | [Developer Guide](Developer-Guide)                     |
+| I want to…                                             | Start here                                                 |
+| ------------------------------------------------------ | ---------------------------------------------------------- |
+| Look up a boat's mast and stay indexes                 | [Boat reference](Boats)                                    |
+| Browse the sail families                               | [Sail reference](Sails)                                    |
+| Understand Staysail IDs, shape, physics, and assets    | [Fisherman's Staysails](Fishermans-Staysails)              |
+| Understand Flying Sail IDs, shape, physics, and assets | [Fisherman's Flying Sails](Fishermans-Flying-Sails)        |
+| Understand Fisherman's Stay configuration              | [Fisherman's Stay](Fishermans-Stay)                        |
+| Understand control placement and ownership             | [Controls reference](Controls)                             |
+| Look up fallback donors and mounting measurements      | [Fallback winch templates](Fallback-winch-templates)       |
+| Inspect winch positions or capture a fallback contact  | [Winch placement diagnostics](Winch-placement-diagnostics) |
+| Check a mapping against my installed game              | [Boat inspection command](MSS-command#boat-inspection)     |
+| Build this mod or contribute a correction              | [Developer Guide](Developer-Guide)                         |
 
 ## Controls
 
 - [How winches are placed](How-winches-are-placed): native positions, authored
-  fallbacks, occupancy, reservations, and placement diagnostics.
+  fallbacks, fitted sail spans, occupancy, and shared reservations for both sail
+  families.
 - [Fallback winch templates](Fallback-winch-templates): donor array indexes,
   per-pair sheet templates, halyard templates, mounting frames, and runtime
   clones.
+- [Winch placement diagnostics](Winch-placement-diagnostics): overlay colors,
+  native-scale model previews, forced sheet fallbacks, and surface captures.
 
 ## Developer Guide
 

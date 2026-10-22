@@ -7,14 +7,6 @@ precedence over historical design choices.
 
 ## Scope and workflow
 
-- Use named arguments rather than positional arguments whenever possible to
-  improve readability.
-- Prefer one class per file as a rule and describe the responsibility of the
-  class within a code comment at the top of the file. Stay/sail feature patches
-  are an exception: group their top-level patch classes by integration
-  responsibility in one file per integration within each feature's `Patches/`
-  directory. Include a file responsibility comment and class responsibility
-  comments.
 - Update `README.md` only when the user explicitly requests a README change.
   Feature, bug-fix, release and general documentation work do not imply
   permission to edit it.
@@ -41,13 +33,46 @@ precedence over historical design choices.
   implementation.
 - Resist changes that would break save compatability relative to the last tagged
   release.
-- When a wiki update is explicitly requested, document reusable modding
-  knowledge with source links and inspected versions for asset-dependent claims.
-  Keep implementation history and validation logs in change descriptions, not
-  reference pages. Update an existing topic instead of duplicating it.
+
+### Code Style
+
+- Use named arguments rather than positional arguments whenever possible to
+  improve readability.
+- Prefer one class per file as a rule and describe the responsibility of the
+  class within a code comment at the top of the file. Classes without methods
+  such as structs, enums, and interfaces should be placed in the same file as
+  their primary consumer. For exmaple, a struct that defines common shapes for
+  arguments would belong in the same file as the class which accepts that shape.
+  - Patches may be excluded from the one-class-per-file rule. Module level
+    patches should be grouped by the thing they are patching. For example,
+    FishermanStaySailwindPatches.cs would contain patches in the FishermanStay
+    module that patch the base game. Place patches for other mods in the
+    Compatibility module unless the patch is inextricably applied to a specific
+    module/feature.
+- When multiple files contain support classes for a parent class, those files
+  should be grouped in a module within the directory containing the class that
+  they support. Directory trees over 4 levels deep within the src/ directory
+  should be strongly avoided.
+  - `src/level_one/level_two/level_three/level_four/avoid`
+
+### Wiki Style
+
 - Wiki pages live locally in `wiki/`. Publishing to GitHub Wiki is a separate
   operation requiring an explicit request; local documentation work does not
   authorize a push.
+- When a wiki update is explicitly requested, document reusable modding
+  knowledge with source links.
+- Always assert code as the source of truth when documenting in the wiki. Do not
+  assume what is written there is accurate.
+- Write clearly, accurately, and consicly. Do not sacrifice clarity for sort
+  cryptic statements. Include examples where helpful to assist the reader in
+  understanding.
+
+### Commit Messages
+
+- When asked to write commit messages, the first line should describe in the
+  present tense what changed. The message should contain details of WHY the
+  change occured and what it solves.
 
 ## Verification and handoff
 

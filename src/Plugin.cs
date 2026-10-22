@@ -22,14 +22,17 @@ namespace MoreSailwindSails
         public const string PluginRuntimeVersion = "0.3.0";
 
         internal static ManualLogSource Log { get; private set; }
+        internal static bool ForceSheetFallbacks { get; private set; }
         private ConfigEntry<KeyboardShortcut> captureWinchPosition;
         private ConfigEntry<bool> enableWinchMountOverlay;
         private ConfigEntry<KeyboardShortcut> toggleWinchMountOverlay;
+        private ConfigEntry<KeyboardShortcut> toggleWinchModelPreview;
         private Utils.WinchMountOverlay winchMountOverlay;
 
         private void Awake()
         {
             Log = Logger;
+            ConfigureSheetFallbacks(config: Config);
             captureWinchPosition = Config.Bind(
                 "Diagnostics",
                 "CaptureWinchPosition",
@@ -48,12 +51,34 @@ namespace MoreSailwindSails
                 defaultValue: new KeyboardShortcut(KeyCode.F8),
                 description: "Aim at a boat within 10 metres and press to show its winch locations; press again to hide. Requires EnableWinchMountOverlay. Set to None to disable the shortcut."
             );
+            toggleWinchModelPreview = Config.Bind(
+                section: "Diagnostics",
+                key: "ToggleWinchModelPreview",
+                defaultValue: new KeyboardShortcut(
+                    mainKey: KeyCode.F8,
+                    modifiers: new[] { KeyCode.LeftShift }
+                ),
+                description: "Toggle winch model previews while the winch mount overlay is open. Purple boxes continue to mark fallbacks. Set to None to disable the shortcut."
+            );
             Utils.Profiling.PerformanceProfile.Configure(config: Config);
             var harmony = new Harmony(PluginGuid);
             harmony.PatchAll(typeof(Plugin).Assembly);
             Sails.FishermansStaysail.Patches.FishermansStaysailSailInfoPatch.Install(harmony);
             Compatibility.Patches.SailInfoNamesPatch.Install(harmony: harmony);
             Logger.LogInfo($"{PluginName} {PluginVersion} loaded!");
+        }
+
+        // Snapshot once at startup; runtime config edits take effect after restarting the game.
+        internal static void ConfigureSheetFallbacks(ConfigFile config)
+        {
+            ForceSheetFallbacks = config
+                .Bind(
+                    section: "Diagnostics",
+                    key: "ForceSheetFallbacks",
+                    defaultValue: false,
+                    description: "Force Fisherman's Stay sheet controls to use authored fallbacks. Sail-size and occupancy rules still apply; controls remain hidden if no eligible fallback is free. Requires a game restart."
+                )
+                .Value;
         }
 
         private void LateUpdate()
@@ -68,7 +93,10 @@ namespace MoreSailwindSails
             }
             if (!winchMountOverlay)
                 winchMountOverlay = gameObject.AddComponent<Utils.WinchMountOverlay>();
-            if (toggleWinchMountOverlay.Value.IsDown())
+            winchMountOverlay.PreviewShortcut = toggleWinchModelPreview.Value.ToString();
+            if (toggleWinchModelPreview.Value.IsDown())
+                winchMountOverlay.ToggleModels();
+            else if (toggleWinchMountOverlay.Value.IsDown())
                 winchMountOverlay.Toggle();
         }
 

@@ -37,8 +37,14 @@ Building does not copy it to the installed game.
 
 GeometryChecks covers calculations and authored configuration, including stay
 endpoints, mount identities, fitting dependencies, and saved option behavior.
-AssemblyChecks inspects the installed game signatures and the compiled mod's
-integration structure. These suites do not run a Unity scene.
+Control checks cover neutral fitted-span projection, fallback boundaries and
+retention, donor selections and mounting depths, authored sheet/halyard
+profiles, and preview transforms and position grouping. AssemblyChecks inspects
+the installed game signatures and the compiled mod's integration structure,
+including shared consumer wiring, native-binding handoff, physical mast array
+preservation, and diagnostic preview structure. Its startup configuration checks
+use temporary BepInEx files to check defaults, overrides, and isolation from
+live reloads. These suites do not run a Unity scene.
 
 For a different game location, pass the MSBuild property to both test projects
 and pass the same directory as the AssemblyChecks runtime argument. For example:
@@ -54,6 +60,45 @@ For Python tooling changes, use `uv sync --locked`, `uv run pytest`, and
 `ruff format --check .` inside the same shell. Installation and release commands
 are separate maintainer operations; use the build commands above to produce a
 local DLL.
+
+## Check documentation changes
+
+Inside the same pinned development shell, format and check each changed Markdown
+file. For example:
+
+```sh
+prettier --write wiki/controls/Controls.md
+prettier --check wiki/controls/Controls.md
+git diff --check
+```
+
+Review the diff, page links, heading anchors, and source paths at their cited
+revisions. Wiki page links use page names such as `Controls`, even though the
+local Markdown files are grouped in directories. Documentation-only changes
+normally need these checks rather than a plugin build. Describe actual checks
+and results in the change description.
+
+## Code and documentation conventions
+
+[AGENTS.md](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/AGENTS.md)
+records the repository guidance at this revision; consult the checkout's current
+file when contributing.
+
+- Prefer named arguments and straightforward code paths. Keep save identities
+  compatible with the last tagged release and avoid patching external
+  dependencies.
+- Prefer one class per file with a comment describing its responsibility. Keep
+  request structs, enums, and interfaces with their primary consumer rather than
+  scattering simple contracts across separate files.
+- Group support files by responsibility beneath their parent module. Strongly
+  avoid directory trees more than four levels deep within `src/`.
+- Group module patches by the thing they patch. Other-mod patches belong in
+  Compatibility unless they are inseparable from a feature.
+- Ground wiki explanations in code and link the relevant sources. Focus on
+  reusable modding knowledge and examples. README and wiki edits each require an
+  explicit request; publishing the wiki is a separate operation.
+- Write commit subjects in the present tense and use the body to explain why the
+  change was needed and what it solves.
 
 ## Contributing changes
 
@@ -73,5 +118,12 @@ produce a local DLL without performing either.
 
 - [Pinned development environment](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/flake.nix)
 - [Plugin target and assembly references](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/MoreSailwindSails.csproj)
-- [AssemblyChecks entry point](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tests/AssemblyChecks/Program.cs)
+- [AssemblyChecks entry point](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/AssemblyChecks/Program.cs)
+- [Fitted-span cases](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/GeometryChecks/Controls/SheetSpanChecks.cs)
+- [Authored sheet profiles](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/GeometryChecks/Controls/NativeSeatProfileChecks.cs)
+  and
+  [halyard profiles](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/GeometryChecks/Controls/HalyardProfileChecks.cs)
+- [Consumer interface checks](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/AssemblyChecks/Controls/SailControlInterfaceChecks.cs)
+- [Startup configuration checks](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/AssemblyChecks/Controls/SheetFallbackConfigurationChecks.cs)
+- [Diagnostic structure checks](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/AssemblyChecks/Utils/WinchDiagnosticChecks.cs)
 - [Python tooling and test configuration](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/pyproject.toml)

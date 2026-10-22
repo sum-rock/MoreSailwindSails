@@ -1,4 +1,4 @@
-// Coordinates mount-owned controls and transient placement claims for one boat.
+// Coordinates registered consumers, owned controls and placement claims for one boat.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,7 +35,8 @@ namespace MoreSailwindSails.Controls
                 );
                 manager.sheets = new SheetingWinchPlacementResolver(
                     native: manager.native,
-                    ledger: manager.reservations
+                    ledger: manager.reservations,
+                    forceSheetFallbacks: Plugin.ForceSheetFallbacks
                 );
                 manager.halyards = new HalyardWinchPlacementResolver(
                     native: manager.native,
@@ -62,6 +63,34 @@ namespace MoreSailwindSails.Controls
             return group;
         }
 
+        internal static void Register(BoatRefs boat, GameObject owner, ISailControlRig consumer)
+        {
+            var group = For(boat: boat).Group(owner: owner);
+            if (group.Consumer != null && !ReferenceEquals(group.Consumer, consumer))
+                throw new InvalidOperationException("Control owner already registered.");
+            group.Consumer = consumer;
+            group.Publish();
+            group.UpdateRequest();
+        }
+
+        internal static void Unregister(BoatRefs boat, GameObject owner, ISailControlRig consumer)
+        {
+            var manager = boat ? boat.GetComponent<WinchControls>() : null;
+            if (!manager)
+                return;
+            var group = manager.groups.FirstOrDefault(g =>
+                g.Owner == owner && ReferenceEquals(g.Consumer, consumer)
+            );
+            if (group == null)
+                return;
+            group.Suspend();
+            group.Consumer = null;
+            foreach (var control in manager.controls.Where(c => c.Group == group).ToArray())
+                control.Retire();
+            manager.groups.Remove(group);
+            consumer.OnControlsChanged(controls: default);
+        }
+
         internal static void Configure(
             BoatRefs boat,
             GameObject owner,
@@ -79,8 +108,12 @@ namespace MoreSailwindSails.Controls
                 group.Forward != forward
                 || group.ForwardBase != forwardBase
                 || group.HalyardMast != halyard
+                || group.NativeMount != nativeMount
             )
+            {
                 group.Suspend();
+                group.ResetSheetSpan();
+            }
             group.Forward = forward;
             group.ForwardBase = forwardBase;
             group.HalyardMast = halyard;
@@ -117,6 +150,7 @@ namespace MoreSailwindSails.Controls
             );
             manager.controls.Add(control);
             control.Group.Set(control: control);
+            control.Group.Publish();
             return control;
         }
 
@@ -142,6 +176,8 @@ namespace MoreSailwindSails.Controls
                 if (controls.Count == 0)
                     return;
                 native.Prepare();
+                foreach (var group in Snapshot(source: groups, buffer: groupSnapshot))
+                    group.UpdateRequest();
                 // Release inactive owners before anyone competes for their seats.
                 foreach (var group in Snapshot(source: groups, buffer: groupSnapshot))
                     group.ReleaseUnused();
@@ -176,5 +212,12 @@ namespace MoreSailwindSails.Controls
             foreach (var control in controls.ToArray())
                 control.Dispose();
         }
+    }
+
+    // Supplies sail-specific requirements without coupling placement to a sail family.
+    internal interface ISailControlRig
+    {
+        bool TryGetControlRequest(out SailControlRequest request);
+        void OnControlsChanged(SailControlSet controls);
     }
 }

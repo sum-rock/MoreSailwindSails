@@ -88,4 +88,15 @@ namespace MoreSailwindSails.Controls.Placement
             return result;
         }
     }
+
+    // Reports a selected placement and the reasons other candidates were unavailable.
+    internal sealed class WinchResolution
+    {
+        internal WinchCandidate Candidate;
+        internal int NativeUnavailable,
+            Reserved,
+            MissingSupports,
+            FallbackBlocked;
+        internal string MissingFallbackSide;
+    }
 }

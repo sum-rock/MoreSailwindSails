@@ -40,6 +40,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
         }
         private Mast source => references.Donor;
         private FishermansStayVisual visual;
+        private FishermansStayControls controlRig;
         private bool warned;
         private bool fits;
         private readonly List<Tuple<Transform, Transform>> anchors =
@@ -100,6 +101,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     $"Incomplete controls for Fisherman's Stay mount {definition.MountIndex} ({definition.Label}): missing {string.Join(", ", missing)}; sheet mapping={source.orderIndex}, halyard mapping={references.Aft.orderIndex}."
                 );
             }
+            controlRig = new FishermansStayControls(stay: this, boat: boat);
+            WinchControls.Register(boat: boat, owner: Mount.gameObject, consumer: controlRig);
             Mount.midRopeAtt = CloneAnchors(source.midRopeAtt, "Sheet attachment");
             Mount.mastReefAtt = CloneAnchors(new[] { references.Guide }, "Halyard guide");
             Mount.mastReefAttExtension = CloneAnchors(
@@ -225,6 +228,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
 
         internal void Destroy()
         {
+            if (Mount && controlRig != null)
+                WinchControls.Unregister(boat: boat, owner: Mount.gameObject, consumer: controlRig);
             foreach (var control in controls)
                 control.Dispose();
             controls.Clear();

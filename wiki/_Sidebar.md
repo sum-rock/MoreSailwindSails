@@ -20,6 +20,7 @@
 - [Controls](Controls)
   - [How winches are placed](How-winches-are-placed)
   - [Fallback winch templates](Fallback-winch-templates)
+  - [Winch placement diagnostics](Winch-placement-diagnostics)
 - [Developer Guide](Developer-Guide)
   - [Building and contributing](Building-and-contributing)
   - [Profiling](Profiling)
