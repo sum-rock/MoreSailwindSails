@@ -3,7 +3,8 @@
 Part of the [Controls reference](Controls). This page describes the donor
 objects used at authored fallback positions. See
 [How winches are placed](How-winches-are-placed) for candidate ordering,
-occupancy, reservations, and diagnostics.
+occupancy, and reservations; use
+[Winch placement diagnostics](Winch-placement-diagnostics) for inspection tools.
 
 ## Template identity and ownership
 
@@ -48,29 +49,48 @@ original donor position may already be occupied. A donor must exist, have a
 renderer and collider, and not be a mod-owned clone. Its selection does not
 reserve or activate the original control.
 
-The nine configured pairs use these donors. Configuration links include the
-authored contact points, normals, offsets, and supporting-part requirements.
+The **25 configured pairs across 12 boats** use these donors. Configuration
+links include the authored contact points, normals, offsets, and supporting-part
+requirements.
 
-| Boat configuration   | Fallback pair     | Donor mast | Source array slot   | Donor object name              |
-| -------------------- | ----------------- | ---------- | ------------------- | ------------------------------ |
-| [Brig][brig]         | `Mainmast`        | 5          | `leftAngleWinch[0]` | `rope_winch_mastB_angle_left`  |
-| [Brig][brig]         | `Mizzenmast`      | 7          | `leftAngleWinch[0]` | `rope_winch_mizzen_angle_left` |
-| [Kakam][kakam]       | `Mainmast`        | 5          | `leftAngleWinch[0]` | `rope_winch_angle_left`        |
-| [Gloriana][gloriana] | `Mainmast`        | 2          | `leftAngleWinch[0]` | `sheet_mainmast1_L`            |
-| [Gloriana][gloriana] | `MainmastForward` | 2          | `leftAngleWinch[0]` | `sheet_mainmast1_L`            |
-| [Chronian][chronian] | `Mainmast`        | 4          | `leftAngleWinch[0]` | `rope_mainmain_reef_port`      |
-| [Chronian][chronian] | `Mizzenmast`      | 6          | `leftAngleWinch[0]` | `rope_mizenmain_reef_port`     |
-| [Caelanor][caelanor] | `Mainmast`        | 5          | `leftAngleWinch[0]` | `sheet_main_main_L`            |
-| [Shroud][shroud]     | `Foremast`        | 6          | `reefWinch[0]`      | `Coil_Foremast_Reef_1`         |
+| Boat configuration   | Fallback pair     | Donor mast | Source array slot   | Donor object name                |
+| -------------------- | ----------------- | ---------- | ------------------- | -------------------------------- |
+| [Brig][brig]         | `Mainmast`        | 5          | `leftAngleWinch[0]` | `rope_winch_mastB_angle_left`    |
+| [Brig][brig]         | `Mizzenmast`      | 7          | `leftAngleWinch[0]` | `rope_winch_mizzen_angle_left`   |
+| [Junk][junk]         | `Forward`         | 10         | `leftAngleWinch[0]` | `winch_angle_mid_left`           |
+| [Junk][junk]         | `Aft`             | 10         | `leftAngleWinch[0]` | `winch_angle_mid_left`           |
+| [Jong][jong]         | `Forward`         | 2          | `leftAngleWinch[0]` | `winch_angle_main_front_left`    |
+| [Jong][jong]         | `Midships`        | 2          | `leftAngleWinch[0]` | `winch_angle_main_front_left`    |
+| [Jong][jong]         | `Aft`             | 2          | `leftAngleWinch[0]` | `winch_angle_main_front_left`    |
+| [Sanbuq][sanbuq]     | `Midships`        | 12         | `leftAngleWinch[0]` | `rope_winch_back_angle_left (1)` |
+| [Sanbuq][sanbuq]     | `Stern`           | 12         | `leftAngleWinch[0]` | `rope_winch_back_angle_left (1)` |
+| [Baghala][baghala]   | `Forward`         | 2          | `leftAngleWinch[0]` | `rope_winch_mainmast_left`       |
+| [Baghala][baghala]   | `Midships`        | 2          | `leftAngleWinch[0]` | `rope_winch_mainmast_left`       |
+| [Baghala][baghala]   | `Stern`           | 2          | `leftAngleWinch[0]` | `rope_winch_mainmast_left`       |
+| [Cog][cog]           | `Stern`           | 8          | `leftAngleWinch[0]` | `winch_angle_mizzen_left (2)`    |
+| [Kakam][kakam]       | `Mainmast`        | 5          | `leftAngleWinch[0]` | `rope_winch_angle_left`          |
+| [Dhow][dhow]         | `Stern`           | 6          | `leftAngleWinch[0]` | `rope_winch_angle (left)`        |
+| [Gloriana][gloriana] | `Mainmast`        | 2          | `leftAngleWinch[0]` | `sheet_mainmast1_L`              |
+| [Gloriana][gloriana] | `MainmastForward` | 2          | `leftAngleWinch[0]` | `sheet_mainmast1_L`              |
+| [Chronian][chronian] | `MainmastForward` | 4          | `leftAngleWinch[0]` | `rope_mainmain_reef_port`        |
+| [Chronian][chronian] | `Mainmast`        | 4          | `leftAngleWinch[0]` | `rope_mainmain_reef_port`        |
+| [Chronian][chronian] | `Mizzenmast`      | 6          | `leftAngleWinch[0]` | `rope_mizenmain_reef_port`       |
+| [Caelanor][caelanor] | `Mainmast`        | 5          | `leftAngleWinch[0]` | `sheet_main_main_L`              |
+| [Shroud][shroud]     | `Foremast`        | 6          | `reefWinch[0]`      | `Coil_Foremast_Reef_1`           |
+| [Shroud][shroud]     | `Midships`        | 6          | `reefWinch[0]`      | `Coil_Foremast_Reef_1`           |
+| [Shroud][shroud]     | `Aft`             | 6          | `reefWinch[0]`      | `Coil_Foremast_Reef_1`           |
+| [Shroud][shroud]     | `Stern`           | 6          | `reefWinch[0]`      | `Coil_Foremast_Reef_1`           |
 
-Brig and Kakam use wheel models. Gloriana, Chronian, Caelanor, and Shroud use
-rope-coil models. Shroud deliberately takes its **sheet** template from a reef
-array: `TemplateRole` identifies where to find the donor, while the clone's
+The base-game boats use wheel models. Gloriana, Chronian, Caelanor, and Shroud
+use rope-coil models. Shroud deliberately takes its **sheet** template from a
+reef array: `TemplateRole` identifies where to find the donor, while the clone's
 binding determines which rope it controls.
 
-Junk, Jong, Sanbuq, Baghala, Cog, and Dhow have no authored sheet fallback pairs
-in this revision. They use the native candidates described in the placement
-guide. The complete set of boat profiles is in [BoatControlCatalog][catalog].
+Baghala's source configuration is named `LargeDhowControls`. The source comments
+record the installed donor inspections and captured contacts, including the
+2026-10-20 and 2026-10-21 additions. The complete set of boat profiles is in
+[BoatControlCatalog][catalog]. A configured pair still needs to pass the
+[fitted-span and availability rules](How-winches-are-placed#fitted-span-and-fallback-eligibility).
 
 If a pair's donor is missing or unusable, that pair cannot be allocated. The
 allocator can try other eligible candidates; it does not substitute a donor from
@@ -91,6 +111,22 @@ The donor's original seat may be occupied, but the requested mast must be fitted
 and the fallback destination must be available. A missing definition, array, or
 usable donor leaves no halyard fallback candidate. Halyard selection is
 independent of the sheet pair's template. See [halyard resolution][halyards].
+
+The catalog contains **62 halyard definitions**. Definitions count mast
+mappings, not unique physical positions: alternative mast configurations can
+share a seat. These captured placements supplement or replace generated
+positions:
+
+| Boat             | Mast indexes    | Authored placement                                                                                                                     |
+| ---------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| [Shroud][shroud] | 5/6, 7/8, 9/10  | Six definitions use three captured halyard stands, one per physical mast location; both mast heights share a seat and reef-coil donor. |
+| [Jong][jong]     | 1, 3; 4, 51, 53 | Captures supply the formerly unresolved seats for 1 and 3 and reposition seats for 4, 51, and 53.                                      |
+| [Junk][junk]     | 10, 11          | Both mainmast alternatives use the same intentional off-rail contact and normal, matching the boat's halyard layout.                   |
+| [Sanbuq][sanbuq] | 69              | A captured contact and normal replace the generated position on the SE mizzenmast.                                                     |
+
+Exact contacts, normals, offsets, and donor indexes are in the linked boat
+configurations. Shared coordinates do not create independent usable positions;
+the allocator still applies occupancy and reservation checks.
 
 ## Mounting measurements
 
@@ -119,6 +155,28 @@ surface; the offset positions the model's origin so its rear meets that surface.
 Both placement and the diagnostic overlay use the same authored offset. See
 [sheet alignment][seat], [halyard alignment][halyard-seat], and the
 [installed-control measurement helper][measurements].
+
+Captured sheet pairs can be made symmetric by averaging the two measurements'
+absolute X values and their signed Y and Z coordinates, then assigning opposite
+X signs to port and starboard. Reflect the normals into a common side before
+averaging, then mirror X for the opposite side. The authored configurations
+record which captures were combined; runtime placement uses those definitions
+without repeating the averaging.
+
+Halyard definitions can come from the
+[geometry generator](MSS-command#fallback-halyard-generation) or from
+[F9 surface captures](Winch-placement-diagnostics#capturing-a-proposed-position).
+The captured replacements retain the measured donor mounting depths where the
+configuration says so. An unresolved generator result does not prevent authoring
+a measured seat separately. Native-scale
+[model previews](Winch-placement-diagnostics#previewing-winch-models) display
+the resulting mounting frame without reserving it.
+
+## Source
+
+This reference follows [revision `fcdf300`][revision], whose plugin metadata
+version is **0.3.0**. The linked configuration and implementation are the source
+of truth; recorded donor inspections describe their cited installed assets.
 
 [revision]:
   https://github.com/sum-rock/MoreSailwindSails/tree/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5
@@ -156,3 +214,15 @@ Both placement and the diagnostic overlay use the same authored offset. See
   https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/HalyardFallbackSeat.cs
 [measurements]:
   https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tools/halyards/controls.py
+[junk]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/JunkControls.cs
+[jong]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/JongControls.cs
+[sanbuq]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/SanbuqControls.cs
+[baghala]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/LargeDhowControls.cs
+[cog]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/CogControls.cs
+[dhow]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/DhowControls.cs
