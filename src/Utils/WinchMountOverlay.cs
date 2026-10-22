@@ -1,7 +1,11 @@
-// Renders native winch wireframes and authored fallback boxes for the selected boat.
+// Renders winch wireframes, fallback markers and optional model previews for the selected boat.
 using System;
 using System.Collections.Generic;
+using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Configuration;
 using MoreSailwindSails.Controls.Discovery;
+using MoreSailwindSails.Controls.Placement;
+using MoreSailwindSails.Controls.Runtime;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -14,6 +18,13 @@ namespace MoreSailwindSails.Utils
         private readonly Dictionary<Mesh, Vector3[]> meshEdges = new Dictionary<Mesh, Vector3[]>();
         private readonly List<WinchMountTrace> traces = new List<WinchMountTrace>();
         private readonly List<Vector3[]> fallbackBoxes = new List<Vector3[]>();
+        private readonly List<WinchModelPreview> models = new List<WinchModelPreview>();
+        private readonly List<WinchModelPreview> fallbackModels = new List<WinchModelPreview>();
+        private readonly List<Vector3> drawnModels = new List<Vector3>();
+        private readonly HashSet<int> visibleModelGroups = new HashSet<int>();
+        private bool showModels;
+        private int unavailableFallbacks;
+        internal string PreviewShortcut { get; set; }
         private BoatRefs boat;
         private NativeWinchInventory inventory;
         private Material material;
@@ -30,6 +41,17 @@ namespace MoreSailwindSails.Utils
         {
             Camera.onPostRender -= Draw;
             Clear();
+        }
+
+        internal void ToggleModels()
+        {
+            if (!boat || !BoatSurfacePicker.CanInspect)
+                return;
+            showModels = !showModels;
+            if (showModels)
+                Refresh();
+            else
+                ClearModels();
         }
 
         internal void Toggle()
@@ -117,6 +139,11 @@ namespace MoreSailwindSails.Utils
                 return;
             if (Time.unscaledTime >= nextDiscovery)
                 Refresh();
+            if (showModels && Camera.main)
+            {
+                GroupLocations();
+                DrawModels(camera: Camera.main);
+            }
         }
 
         private void Refresh()
@@ -174,7 +201,152 @@ namespace MoreSailwindSails.Utils
             states = new WinchMountStatus[traces.Count];
             groups = new int[traces.Count];
             best = new int[traces.Count];
+            if (showModels)
+                CacheModels();
             nextDiscovery = Time.unscaledTime + 1f;
+        }
+
+        private void CacheModels()
+        {
+            ClearModels();
+            foreach (var trace in traces)
+                models.Add(new WinchModelPreview(source: trace.Control));
+            var profile = inventory.Profile;
+            if (profile == null)
+                return;
+            foreach (var definition in profile.SheetFallbacks)
+            {
+                var pair = definition.Fallback;
+                if (pair == null)
+                    continue;
+                var source = Template(
+                    mast: pair.TemplateMast,
+                    role: pair.TemplateRole,
+                    index: pair.TemplateIndex
+                );
+                AddSheetModel(source: source, pair: pair, seat: pair.Port);
+                AddSheetModel(source: source, pair: pair, seat: pair.Starboard);
+            }
+            foreach (var definition in profile.HalyardFallbacks)
+            {
+                var source = Template(
+                    mast: definition.Mast,
+                    role: WinchRole.Reef,
+                    index: definition.Fallback.TemplateIndex
+                );
+                AddFallbackModel(
+                    source: source,
+                    position: definition.Fallback.Position,
+                    rotation: source
+                        ? definition.Fallback.Rotation(
+                            templateRotation: inventory.Rotation(c: source)
+                        )
+                        : Quaternion.identity
+                );
+            }
+        }
+
+        private GPButtonRopeWinch Template(int mast, WinchRole role, int index)
+        {
+            var sources = NativeWinchInventory.Sources(mast: inventory.Mast(id: mast), role: role);
+            if (sources == null || index < 0 || index >= sources.Length)
+                return null;
+            var source = sources[index];
+            return
+                NativeWinchInventory.Usable(c: source) && !source.GetComponent<OwnedWinchMarker>()
+                ? source
+                : null;
+        }
+
+        private void AddSheetModel(
+            GPButtonRopeWinch source,
+            SheetFallbackPair pair,
+            SheetFallbackSeat seat
+        )
+        {
+            if (seat == null || !seat.Valid)
+                return;
+            AddFallbackModel(
+                source: source,
+                position: seat.Position(offset: pair.Offset),
+                rotation: source
+                    ? seat.Rotation(
+                        sourceNormal: pair.SourceNormal,
+                        templateRotation: inventory.Rotation(c: source)
+                    )
+                    : Quaternion.identity
+            );
+        }
+
+        private void AddFallbackModel(
+            GPButtonRopeWinch source,
+            Vector3 position,
+            Quaternion rotation
+        )
+        {
+            var model = new WinchModelPreview(
+                source: source,
+                seat: new WinchSeat(
+                    identity: position,
+                    aliases: null,
+                    position: position,
+                    rotation: rotation
+                )
+            );
+            if (model.Available)
+                fallbackModels.Add(model);
+            else
+            {
+                unavailableFallbacks++;
+                model.Dispose();
+            }
+        }
+
+        private void DrawModels(Camera camera)
+        {
+            drawnModels.Clear();
+            visibleModelGroups.Clear();
+            for (int i = 0; i < models.Count; i++)
+                if (models[i].Available && models[i].Visible)
+                {
+                    drawnModels.Add(positions[i]);
+                    visibleModelGroups.Add(groups[i]);
+                }
+            // Authored previews take precedence over unused native aliases at the same position.
+            foreach (var model in fallbackModels)
+                DrawModel(model: model, camera: camera);
+            for (int i = 0; i < models.Count; i++)
+                if (groups[i] == i && !visibleModelGroups.Contains(i))
+                    DrawModel(model: models[i], camera: camera);
+        }
+
+        private void DrawModel(WinchModelPreview model, Camera camera)
+        {
+            if (!model.Available)
+                return;
+            var position = model.Position(boat: boat.transform);
+            if (
+                WinchMountOverlayGeometry.ContainsPosition(
+                    positions: drawnModels,
+                    position: position
+                )
+            )
+                return;
+            model.Draw(camera: camera, boat: boat.transform);
+            drawnModels.Add(position);
+        }
+
+        private void ClearModels()
+        {
+            foreach (var model in models)
+                model.Dispose();
+            foreach (var model in fallbackModels)
+                model.Dispose();
+            models.Clear();
+            fallbackModels.Clear();
+            drawnModels.Clear();
+            visibleModelGroups.Clear();
+            unavailableFallbacks = 0;
         }
 
         // Installed Unity lacks GetComponentInParent(includeInactive); walk inactive parents explicitly.
@@ -220,18 +392,7 @@ namespace MoreSailwindSails.Utils
                 || camera != Camera.main
             )
                 return;
-            for (int i = 0; i < traces.Count; i++)
-            {
-                var trace = traces[i];
-                states[i] = trace.Status(inventory: inventory);
-                positions[i] = trace.Control ? inventory.Position(c: trace.Control) : Vector3.zero;
-            }
-            WinchMountOverlayGeometry.Group(
-                positions: positions,
-                states: states,
-                groups: groups,
-                best: best
-            );
+            GroupLocations();
             locationCount = 0;
             if (!material.SetPass(pass: 0))
             {
@@ -279,6 +440,22 @@ namespace MoreSailwindSails.Utils
             }
         }
 
+        private void GroupLocations()
+        {
+            for (int i = 0; i < traces.Count; i++)
+            {
+                var trace = traces[i];
+                states[i] = trace.Status(inventory: inventory);
+                positions[i] = trace.Control ? inventory.Position(c: trace.Control) : Vector3.zero;
+            }
+            WinchMountOverlayGeometry.Group(
+                positions: positions,
+                states: states,
+                groups: groups,
+                best: best
+            );
+        }
+
         private void OnGUI()
         {
             if (!boat || !material || !BoatSurfacePicker.CanInspect || !Camera.main)
@@ -288,7 +465,7 @@ namespace MoreSailwindSails.Utils
             {
                 GUI.color = Color.white;
                 GUI.Box(
-                    position: new Rect(16f, 16f, 360f, 176f),
+                    position: new Rect(16f, 16f, 360f, 224f),
                     text: "Winch mounts: " + boat.name
                 );
                 Legend(
@@ -319,6 +496,15 @@ namespace MoreSailwindSails.Utils
                     position: new Rect(26f, 154f, 340f, 26f),
                     text: "Green does not guarantee allocation."
                 );
+                GUI.Label(
+                    position: new Rect(26f, 178f, 340f, 24f),
+                    text: "Models: " + (showModels ? "on" : "off") + " (" + PreviewShortcut + ")"
+                );
+                if (showModels)
+                    GUI.Label(
+                        position: new Rect(26f, 202f, 340f, 24f),
+                        text: unavailableFallbacks + " fallback models unavailable."
+                    );
             }
             finally
             {
@@ -339,6 +525,8 @@ namespace MoreSailwindSails.Utils
 
         private void Clear()
         {
+            ClearModels();
+            showModels = false;
             boat = null;
             inventory = null;
             traces.Clear();

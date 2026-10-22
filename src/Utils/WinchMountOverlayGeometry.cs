@@ -6,6 +6,30 @@ namespace MoreSailwindSails.Utils
     // Pure grouping and line geometry for the overlay, independently testable without Unity.
     internal static class WinchMountOverlayGeometry
     {
+        // Apply native donor scale in the mounting frame, preserving child geometry and world position.
+        internal static Matrix4x4 PreviewMatrix(
+            Matrix4x4 mount,
+            Vector3 scale,
+            Matrix4x4 meshToControl
+        )
+        {
+            for (int row = 0; row < 4; row++)
+            {
+                mount[row, 0] *= scale.x;
+                mount[row, 1] *= scale.y;
+                mount[row, 2] *= scale.z;
+            }
+            return mount * meshToControl;
+        }
+
+        internal static bool ContainsPosition(List<Vector3> positions, Vector3 position)
+        {
+            foreach (var existing in positions)
+                if ((existing - position).sqrMagnitude <= 0.000001f)
+                    return true;
+            return false;
+        }
+
         internal static WinchMountStatus Classify(
             bool owned,
             bool visible,
