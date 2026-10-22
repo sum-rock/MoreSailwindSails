@@ -35,7 +35,8 @@ namespace MoreSailwindSails.Controls
                 );
                 manager.sheets = new SheetingWinchPlacementResolver(
                     native: manager.native,
-                    ledger: manager.reservations
+                    ledger: manager.reservations,
+                    forceSheetFallbacks: Plugin.ForceSheetFallbacks
                 );
                 manager.halyards = new HalyardWinchPlacementResolver(
                     native: manager.native,

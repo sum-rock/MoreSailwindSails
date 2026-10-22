@@ -13,14 +13,17 @@ namespace MoreSailwindSails.Controls.Placement
     {
         private readonly NativeWinchInventory native;
         private readonly WinchReservations ledger;
+        private readonly bool forceSheetFallbacks;
 
         internal SheetingWinchPlacementResolver(
             NativeWinchInventory native,
-            WinchReservations ledger
+            WinchReservations ledger,
+            bool forceSheetFallbacks
         )
         {
             this.native = native;
             this.ledger = ledger;
+            this.forceSheetFallbacks = forceSheetFallbacks;
         }
 
         private IEnumerable<SheetFallbackDefinition> Fallbacks(float aftBoundaryZ) =>
@@ -38,6 +41,7 @@ namespace MoreSailwindSails.Controls.Placement
         {
             if (
                 current == null
+                || (forceSheetFallbacks && !current.Fallback)
                 || !native.ActiveSupport(mast: forward)
                 || !native.ActiveSupport(mast: requested)
             )
@@ -116,36 +120,39 @@ namespace MoreSailwindSails.Controls.Placement
                 native.ActiveSupport(mast: forward) && native.ActiveSupport(mast: requested);
             if (supportsActive)
             {
-                foreach (var mast in native.StaySources(forward: forward, requested: requested))
+                if (!forceSheetFallbacks)
                 {
-                    var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
-                    var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
-                    foreach (
-                        var indices in NativeSheetPairing.Indices(
-                            port: left,
-                            starboard: right,
-                            usable: native.TemplateUsable,
-                            invalid: index =>
-                                native.Diagnose(
-                                    key: $"pair/{mast.GetInstanceID()}/{index}",
-                                    message: $"Unmatched native sheet pair: boat={native.Boat.name}, source={mast.orderIndex}, index={index}."
-                                )
-                        )
-                    )
+                    foreach (var mast in native.StaySources(forward: forward, requested: requested))
                     {
-                        var candidate = native.Candidate(
-                            id: $"native/{left[indices[0]].GetInstanceID()}/{right[indices[1]].GetInstanceID()}",
-                            context: $"requestedMast={requested.orderIndex}, sourceRig={mast.orderIndex}, index={indices[0]}",
-                            templates: new[] { left[indices[0]], right[indices[1]] }
-                        );
-                        if (candidate == null)
-                            continue;
-                        candidate.SourceMast = mast;
-                        candidate.SourceIndex = indices[0];
-                        WinchPlacementPolicy.AddSupportedRepresentative(
-                            candidates: pairs,
-                            candidate: candidate
-                        );
+                        var left = mast.leftAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
+                        var right = mast.rightAngleWinch ?? Array.Empty<GPButtonRopeWinch>();
+                        foreach (
+                            var indices in NativeSheetPairing.Indices(
+                                port: left,
+                                starboard: right,
+                                usable: native.TemplateUsable,
+                                invalid: index =>
+                                    native.Diagnose(
+                                        key: $"pair/{mast.GetInstanceID()}/{index}",
+                                        message: $"Unmatched native sheet pair: boat={native.Boat.name}, source={mast.orderIndex}, index={index}."
+                                    )
+                            )
+                        )
+                        {
+                            var candidate = native.Candidate(
+                                id: $"native/{left[indices[0]].GetInstanceID()}/{right[indices[1]].GetInstanceID()}",
+                                context: $"requestedMast={requested.orderIndex}, sourceRig={mast.orderIndex}, index={indices[0]}",
+                                templates: new[] { left[indices[0]], right[indices[1]] }
+                            );
+                            if (candidate == null)
+                                continue;
+                            candidate.SourceMast = mast;
+                            candidate.SourceIndex = indices[0];
+                            WinchPlacementPolicy.AddSupportedRepresentative(
+                                candidates: pairs,
+                                candidate: candidate
+                            );
+                        }
                     }
                 }
                 // Append authored pairs moving aft from the fitted sail boundary.

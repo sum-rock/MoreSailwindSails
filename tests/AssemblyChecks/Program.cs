@@ -47,6 +47,7 @@ internal static class Program
         HarmonySignatureChecks.Run(assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
+        Controls.SheetFallbackConfigurationChecks.Run(assembly: assembly);
         Compatibility.OrderTextChecks.Run(assembly: assembly);
         Compatibility.NativeAppearanceChecks.Run(assembly);
         Compatibility.ShipyardExpansionTextureChecks.Run(assembly: assembly);
