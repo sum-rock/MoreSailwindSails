@@ -92,10 +92,11 @@ Stays, but both consumers use the same configured sheet resolver. Native sheet
 placements are neither selected nor retained in forced mode. Halyard selection
 is unchanged.
 
-Donor availability, fitted supports, the fitted-span boundary, occupancy, and
-reservations still apply. If no eligible pair is free, sheets remain hidden and
-placement retries. Forcing fallbacks does not create extra positions. It works
-independently of the overlay and model-preview settings.
+Donor availability, fitted supports, the
+[fitted-span boundary](How-winches-are-placed#fitted-span-and-fallback-eligibility),
+occupancy, and reservations still apply. If no eligible pair is free, sheets
+remain hidden and placement retries. Forcing fallbacks does not create extra
+positions. It works independently of the overlay and model-preview settings.
 
 ## Coordinate frames
 

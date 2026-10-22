@@ -66,10 +66,9 @@ paired with a right control at index `1`, and `midAngleWinch` entries are not
 used for these sheet pairs.
 
 After the native candidates, it tries the boat's authored `SheetFallbacks`. Both
-fallback contact points must be at or aft of the forward base mast in boat-local
-coordinates. Eligible pairs are ordered by their forwardmost contact point,
-progressing aft along **−Z**. Both sides' specified supporting masts must be
-fitted.
+fallback contacts must satisfy the fitted-span boundary below. Eligible pairs
+are ordered by their forwardmost contact point, progressing aft along **−Z**.
+Both sides' specified supporting masts must be fitted.
 
 Each `SheetFallbackPair` specifies one donor on the **same boat** using
 `TemplateMast`, `TemplateRole`, and `TemplateIndex`. Both sides clone that
@@ -85,6 +84,37 @@ or control without a renderer or collider makes that pair unavailable. Mod-owned
 clones are excluded as donors. Other eligible candidates can still be tried. See
 [Fallback winch templates](Fallback-winch-templates#sheet-donors) for the
 configured donor slots and their object names.
+
+### Fitted span and fallback eligibility
+
+The boundary is measured in the `BoatRefs` frame:
+
+```text
+boundaryZ = forwardBaseMastZ - fittedSpan
+port.Contact.z <= boundaryZ AND starboard.Contact.z <= boundaryZ
+```
+
+`fittedSpan` is the absolute Z component of the neutral fitted width vector in
+boat space. The sail rig includes fitting scale and orientation and the mast's
+transform when calculating it. Boat rotation and world scale are removed by
+conversion into boat space. It is a projected width, not the sail edge length or
+a measurement of live Cloth, trim, reefing, or billow. Eligibility compares
+surface contacts, before adding the donor's mounting offset.
+
+For example, a forward base mast at Z = 3 and a fitted span of 5 put the
+boundary at Z = −2. A pair with both contacts at −2 is eligible. A pair with one
+contact at −1.9 is not; a pair at −6 can be tried next if the nearer pair is
+occupied. Native positions retain priority even when they are ahead of this
+boundary.
+
+A recognized custom sail without valid fitted geometry supplies no span, so
+sheet fallbacks are deferred while native candidates remain available. Other
+sail types on Fisherman's Stays supply zero, preserving the mast-only boundary.
+
+Growth can invalidate an existing fallback and trigger a search farther aft.
+Shrinking retains a still-valid placement instead of moving it to a newly
+eligible nearer pair. A changed span clears the sheet retry delay so resizing
+can recover without waiting for the next scheduled retry.
 
 ### Halyard winch
 
@@ -110,9 +140,10 @@ the stay definition's aft attachment section and `guideIndex`, as described in
 ### Occupancy, reservations, and placement changes
 
 Before searching again, the allocator retains an existing placement while its
-source, supports, occupancy, and reservation remain valid. Otherwise it tries
-candidates in the order above, skipping unavailable positions. Repeated
-references to the same mounting position are treated as aliases.
+source, supports, occupancy, reservation, and any sheet fallback span constraint
+remain valid. Otherwise it tries candidates in the order above, skipping
+unavailable positions. Repeated references to the same mounting position are
+treated as aliases.
 
 A native position is occupied if its control has a bound rope, even when hidden,
 or if the control is active with its renderer or collider enabled. The boat's
@@ -152,9 +183,10 @@ See
 
 ## Source
 
-This page describes
+The allocation overview describes
 [revision `d8d9974`](https://github.com/sum-rock/MoreSailwindSails/tree/d8d99742a28657fe7397b669a4160cfd0284094c),
-whose plugin metadata version is **0.3.0**.
+whose plugin metadata version is **0.3.0**. The fitted-span rules follow
+revision `fcdf300`; their geometry and ordering sources are linked below.
 
 - [Diagnostic settings and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Plugin.cs)
 - [Native control discovery](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Discovery/NativeWinchInventory.cs)
@@ -166,7 +198,7 @@ whose plugin metadata version is **0.3.0**.
 - [Sheet placement](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/SheetingWinchPlacementResolver.cs)
 - [Per-pair donor and mounting data](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/SheetFallbackPair.cs)
 - [Sheet surface alignment](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/SheetFallbackSeat.cs)
-- [Sheet fallback ordering](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/SheetFallbackOrder.cs)
+- [Sheet fallback ordering](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/SheetFallbackOrder.cs)
 - [Candidate selection](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/WinchPlacementPolicy.cs)
 - [Position reservations](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/WinchReservations.cs)
 - [Placement retention and retry](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Runtime/WinchGroup.cs)
@@ -177,3 +209,6 @@ whose plugin metadata version is **0.3.0**.
 - [Halyard generator options](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/tools/halyards/cli.py)
   and
   [geometry search](https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/tools/halyards/generate.py)
+- [Neutral span validation](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/SailControlGeometry.cs)
+- [Staysail fitted width](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansStaysail/FishermansStaysailRig.cs)
+- [Flying Sail fitted width](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs)
