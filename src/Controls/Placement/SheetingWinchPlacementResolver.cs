@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Placement
 {
-    // Resolves and validates native sheet pairs and fallbacks aft of the forward physical mast.
+    // Resolves native sheet pairs and validates authored pairs against the fitted aft boundary.
     internal sealed class SheetingWinchPlacementResolver
     {
         private readonly NativeWinchInventory native;
@@ -23,13 +23,18 @@ namespace MoreSailwindSails.Controls.Placement
             this.ledger = ledger;
         }
 
-        private IEnumerable<SheetFallbackDefinition> Fallbacks(Mast forward) =>
-            SheetFallbackOrder.FromMast(
+        private IEnumerable<SheetFallbackDefinition> Fallbacks(float aftBoundaryZ) =>
+            SheetFallbackOrder.FromBoundary(
                 fallbacks: native.Profile?.SheetFallbacks ?? Array.Empty<SheetFallbackDefinition>(),
-                mastZ: native.Boat.transform.InverseTransformPoint(forward.transform.position).z
+                aftBoundaryZ: aftBoundaryZ
             );
 
-        internal bool ValidateCurrent(Mast forward, Mast requested, WinchPlacementCandidate current)
+        internal bool ValidateCurrent(
+            Mast forward,
+            Mast requested,
+            WinchPlacementCandidate current,
+            float aftBoundaryZ
+        )
         {
             if (
                 current == null
@@ -43,7 +48,7 @@ namespace MoreSailwindSails.Controls.Placement
                     fallbacks: native.Profile?.SheetFallbacks
                         ?? Array.Empty<SheetFallbackDefinition>(),
                     id: current.Id,
-                    mastZ: native.Boat.transform.InverseTransformPoint(forward.transform.position).z
+                    aftBoundaryZ: aftBoundaryZ
                 );
                 return category != null
                     && current.Templates?.Length == 2
@@ -102,7 +107,8 @@ namespace MoreSailwindSails.Controls.Placement
             object owner,
             Mast forward,
             Mast requested,
-            WinchCandidate current
+            WinchCandidate current,
+            float aftBoundaryZ
         )
         {
             var pairs = new List<WinchPlacementCandidate>();
@@ -142,9 +148,9 @@ namespace MoreSailwindSails.Controls.Placement
                         );
                     }
                 }
-                // Append authored pairs moving aft from the forward physical mast.
+                // Append authored pairs moving aft from the fitted sail boundary.
                 // The policy skips unavailable pairs and acquires both sides together.
-                foreach (var category in Fallbacks(forward: forward))
+                foreach (var category in Fallbacks(aftBoundaryZ: aftBoundaryZ))
                 {
                     var fallback = Fallback(category: category);
                     if (fallback != null)

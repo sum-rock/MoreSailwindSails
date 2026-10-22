@@ -156,7 +156,10 @@ internal static class StayDependencyChecks
         const float forwardMastZ = 0f;
         const float aftMastZ = -6f;
         var candidates = SheetFallbackOrder
-            .FromMast(fallbacks: new[] { far, forward, crossing, first }, mastZ: forwardMastZ)
+            .FromBoundary(
+                fallbacks: new[] { far, forward, crossing, first },
+                aftBoundaryZ: forwardMastZ
+            )
             .ToArray();
         Check(
             candidates.SequenceEqual(new[] { first, far }),
@@ -164,17 +167,17 @@ internal static class StayDependencyChecks
         );
         Check(
             SheetFallbackOrder
-                .FromMast(fallbacks: candidates, mastZ: aftMastZ)
+                .FromBoundary(fallbacks: candidates, aftBoundaryZ: aftMastZ)
                 .SequenceEqual(new[] { far })
                 && SheetFallbackOrder.FindCurrent(
                     fallbacks: candidates,
                     id: first.FallbackName,
-                    mastZ: forwardMastZ
+                    aftBoundaryZ: forwardMastZ
                 ) == first
                 && SheetFallbackOrder.FindCurrent(
                     fallbacks: candidates,
                     id: first.FallbackName,
-                    mastZ: aftMastZ
+                    aftBoundaryZ: aftMastZ
                 ) == null,
             "The forward mast boundary must allow selecting and retaining the first pair between the masts."
         );
@@ -204,24 +207,27 @@ internal static class StayDependencyChecks
         foreach (float mastZ in new[] { -10f, -8f, -3.001f, -3f, 0f, 1f, float.NaN })
         foreach (string id in fallbacks.Select(item => item.FallbackName).Append("missing"))
             Check(
-                SheetFallbackOrder.FindCurrent(fallbacks: fallbacks, id: id, mastZ: mastZ)
+                SheetFallbackOrder.FindCurrent(fallbacks: fallbacks, id: id, aftBoundaryZ: mastZ)
                     == SheetFallbackOrder
-                        .FromMast(fallbacks: fallbacks, mastZ: mastZ)
+                        .FromBoundary(fallbacks: fallbacks, aftBoundaryZ: mastZ)
                         .FirstOrDefault(item => item.FallbackName == id),
                 "Direct fallback lookup differs from ordered selection: " + id
             );
         Check(
-            SheetFallbackOrder.FindCurrent(fallbacks: fallbacks, id: first.FallbackName, mastZ: -3)
-                == first
+            SheetFallbackOrder.FindCurrent(
+                fallbacks: fallbacks,
+                id: first.FallbackName,
+                aftBoundaryZ: -3
+            ) == first
                 && SheetFallbackOrder.FindCurrent(
                     fallbacks: fallbacks,
                     id: first.FallbackName,
-                    mastZ: -3.001f
+                    aftBoundaryZ: -3.001f
                 ) == null
                 && SheetFallbackOrder.FindCurrent(
                     fallbacks: fallbacks,
                     id: first.FallbackName,
-                    mastZ: 0
+                    aftBoundaryZ: 0
                 ) == first,
             "Fallback retention must include the mast boundary and react immediately to mast movement."
         );
@@ -229,7 +235,7 @@ internal static class StayDependencyChecks
             SheetFallbackOrder.FindCurrent(
                 fallbacks: Array.Empty<SheetFallbackDefinition>(),
                 id: first.FallbackName,
-                mastZ: 0
+                aftBoundaryZ: 0
             ) == null,
             "An empty profile must have no retained fallback."
         );
@@ -245,7 +251,7 @@ internal static class StayDependencyChecks
                 SheetFallbackOrder.FindCurrent(
                     fallbacks: fallbacks,
                     id: first.FallbackName,
-                    mastZ: 0
+                    aftBoundaryZ: SheetFallbackOrder.Boundary(mastZ: 5, fittedSpan: 5)
                 ) != first
             )
                 throw new Exception("Warmed fallback lookup lost its selected pair.");

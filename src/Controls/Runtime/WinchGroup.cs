@@ -2,6 +2,7 @@
 using System;
 using System.Linq;
 using MoreSailwindSails.Controls.Placement;
+using MoreSailwindSails.Sails.FishermansStaysail;
 using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Runtime
@@ -37,6 +38,48 @@ namespace MoreSailwindSails.Controls.Runtime
         }
         private readonly WinchPlacementState sheetState = new WinchPlacementState();
         private readonly WinchPlacementState halyardState = new WinchPlacementState();
+        private GameObject sheetSail;
+        private FishermansStaysailRig sheetRig;
+        private float? fittedSheetSpan;
+
+        internal void ResetSheetSpan()
+        {
+            if (sheetRig)
+                sheetRig.InvalidateSheetSpan();
+            fittedSheetSpan = null;
+            sheetState.RetryAfter = 0f;
+        }
+
+        private float SheetBoundary()
+        {
+            GameObject currentSail = null;
+            if (NativeMount && NativeMount.sails != null)
+                foreach (var sail in NativeMount.sails)
+                    if (sail && sail.transform.parent == NativeMount.transform)
+                    {
+                        currentSail = sail;
+                        break;
+                    }
+            if (sheetSail != currentSail)
+            {
+                sheetSail = currentSail;
+                // Component discovery happens only when the fitted sail changes.
+                sheetRig = currentSail ? currentSail.GetComponent<FishermansStaysailRig>() : null;
+                sheetState.RetryAfter = 0f;
+            }
+            float? span = sheetRig ? sheetRig.FittedSheetSpan : (float?)0f;
+            if (span != fittedSheetSpan)
+            {
+                fittedSheetSpan = span;
+                sheetState.RetryAfter = 0f;
+            }
+            return ForwardBase
+                ? SheetFallbackOrder.Boundary(
+                    mastZ: boat.transform.InverseTransformPoint(ForwardBase.transform.position).z,
+                    fittedSpan: span
+                )
+                : float.NaN;
+        }
 
         internal WinchGroup(
             WinchControls manager,
@@ -73,7 +116,12 @@ namespace MoreSailwindSails.Controls.Runtime
         internal void ReleaseUnused()
         {
             if (!SheetWanted)
+            {
                 Release(state: sheetState, fittings: sheetFittings);
+                sheetSail = null;
+                sheetRig = null;
+                fittedSheetSpan = null;
+            }
             if (!HalyardWanted)
                 Release(state: halyardState, fittings: halyardFittings);
         }
@@ -137,6 +185,8 @@ namespace MoreSailwindSails.Controls.Runtime
 
         private void Refresh(WinchPlacementState state, bool pair, OwnedWinch[] fittings)
         {
+            // Read fitted dimensions before the retry gate so a resize can recover immediately.
+            float aftBoundaryZ = pair ? SheetBoundary() : float.NaN;
             if (state.Current == null && Time.unscaledTime < state.RetryAfter)
                 return;
             try
@@ -150,7 +200,8 @@ namespace MoreSailwindSails.Controls.Runtime
                             ? sheets.ValidateCurrent(
                                 forward: ForwardBase,
                                 requested: HalyardMast,
-                                current: state.Current
+                                current: state.Current,
+                                aftBoundaryZ: aftBoundaryZ
                             )
                             : halyards.ValidateCurrent(
                                 forward: ForwardBase,
@@ -175,7 +226,8 @@ namespace MoreSailwindSails.Controls.Runtime
                         owner: state,
                         forward: ForwardBase,
                         requested: HalyardMast,
-                        current: state.Current
+                        current: state.Current,
+                        aftBoundaryZ: aftBoundaryZ
                     )
                     : halyards.Resolve(
                         owner: state,

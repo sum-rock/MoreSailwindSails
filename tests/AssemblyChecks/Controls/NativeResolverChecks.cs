@@ -16,6 +16,42 @@ internal static class NativeResolverChecks
             | BindingFlags.Instance
             | BindingFlags.Static;
         Type Type(string name) => assembly.GetType("MoreSailwindSails.Controls." + name, true);
+        var sheetResolver = Type("Placement.SheetingWinchPlacementResolver");
+        foreach (string method in new[] { "Resolve", "ValidateCurrent" })
+            Check(
+                sheetResolver
+                    .GetMethod(method, flags)
+                    .GetParameters()
+                    .Any(p => p.Name == "aftBoundaryZ" && p.ParameterType == typeof(float)),
+                "Sheet selection and retention must both receive the fitted boundary."
+            );
+        var rig = assembly.GetType(
+            "MoreSailwindSails.Sails.FishermansStaysail.FishermansStaysailRig",
+            true
+        );
+        Check(
+            CalledMethods(rig.GetMethod("RefreshFrame", flags)).Any(m => m.Name == "SheetSpan")
+                && CalledMethods(rig.GetMethod("OnDisable", flags))
+                    .Any(m => m.Name == "InvalidateSheetSpan")
+                && !CalledMethods(rig.GetMethod("get_FittedSheetSpan", flags))
+                    .Any(m => m.Name is "SheetSpan" or "GetComponent" or "RefreshFrame"),
+            "Fitted span must be cached by the shared rig and invalidated when disabled."
+        );
+        var spanGroup = Type("Runtime.WinchGroup");
+        var boundaryCalls = CalledMethods(spanGroup.GetMethod("SheetBoundary", flags)).ToArray();
+        Check(
+            boundaryCalls.Any(m => m.Name == "get_FittedSheetSpan")
+                && boundaryCalls.Any(m => m.Name == "Boundary")
+                && !boundaryCalls.Any(m => m.Name is "GetComponentsInChildren" or "RefreshFrame"),
+            "Placement must read cached span without traversing sail geometry."
+        );
+        Check(
+            CalledMethods(Type("WinchControls").GetMethod("Configure", flags))
+                .Any(m => m.Name == "ResetSheetSpan")
+                && CalledMethods(spanGroup.GetMethod("ResetSheetSpan", flags))
+                    .Any(m => m.Name == "InvalidateSheetSpan"),
+            "Supporting mast changes must invalidate the fitted span."
+        );
         var native = Type("Discovery.NativeWinchInventory");
         var activeSupport = native.GetMethod("ActiveSupport", flags);
         var supportCalls = CalledMethods(activeSupport).ToArray();
@@ -261,34 +297,26 @@ internal static class NativeResolverChecks
             "Sheet resolver bypasses atomic allocation policy."
         );
         var sheetType = Type("Placement.SheetingWinchPlacementResolver");
-        foreach (string method in new[] { "Fallbacks", "ValidateCurrent" })
-        {
-            var body = Instructions(sheetType.GetMethod(method, flags)).ToArray();
-            Check(
-                body.Count(i => i.Operand is MethodInfo m && m.Name == "get_position") == 1
-                    && Enumerable
-                        .Range(start: 2, count: body.Length - 2)
-                        .Any(i =>
-                            body[i].Operand is MethodInfo m
-                            && m.Name == "get_position"
-                            && body[i - 1].Operand is MethodInfo transform
-                            && transform.Name == "get_transform"
-                            && body[i - 2].Code == OpCodes.Ldarg_1
-                        ),
-                "Sheet fallback selection and retention must measure the forward physical mast: "
-                    + method
-            );
-        }
-        var sheetResolveBody = Instructions(sheets).ToArray();
+        var boundaryBody = Instructions(group.GetMethod("SheetBoundary", flags)).ToArray();
         Check(
-            Enumerable
-                .Range(start: 1, count: sheetResolveBody.Length - 1)
-                .Any(i =>
-                    sheetResolveBody[i].Operand is MethodInfo m
-                    && m.Name == "Fallbacks"
-                    && sheetResolveBody[i - 1].Code == OpCodes.Ldarg_2
+            boundaryBody.Any(i => i.Operand is FieldInfo f && f.Name == "ForwardBase")
+                && boundaryCalls.Any(m => m.Name == "InverseTransformPoint")
+                && CalledMethods(sheetType.GetMethod("Fallbacks", flags))
+                    .Any(m => m.Name == "FromBoundary")
+                && CalledMethods(sheets).Any(m => m.Name == "Fallbacks"),
+            "Fallback selection must use the live forward base position and cached fitted span."
+        );
+        var refreshBody = Instructions(groupRefresh).ToArray();
+        Check(
+            Array.FindIndex(
+                refreshBody,
+                i => i.Operand is MethodInfo m && m.Name == "SheetBoundary"
+            )
+                < Array.FindIndex(
+                    refreshBody,
+                    i => i.Operand is FieldInfo f && f.Name == "RetryAfter"
                 ),
-            "Sheet allocation must pass its forward physical mast to fallback ordering."
+            "Fitted size changes must be read before the retry gate."
         );
         foreach (var method in new[] { sheets, sheetType.GetMethod("ValidateCurrent", flags) })
             Check(
@@ -299,7 +327,7 @@ internal static class NativeResolverChecks
             .ToArray();
         Check(
             sheetValidateCalls.Any(m => m.Name == "FindCurrent")
-                && sheetValidateCalls.Any(m => m.Name == "InverseTransformPoint")
+                && !sheetValidateCalls.Any(m => m.Name == "InverseTransformPoint")
                 && !sheetValidateCalls.Any(m => m.Name is "Fallbacks" or "FirstOrDefault"),
             "Retained sheet fallbacks must look up the selected pair directly using the live mast position."
         );

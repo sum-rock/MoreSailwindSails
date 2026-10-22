@@ -106,12 +106,15 @@ internal static class NativeSeatProfileChecks
             );
         Check(
             SheetFallbackOrder
-                .FromMast(fallbacks: ChronianControls.Definition.SheetFallbacks, mastZ: -2.7997803f)
+                .FromBoundary(
+                    fallbacks: ChronianControls.Definition.SheetFallbacks,
+                    aftBoundaryZ: -2.7997803f
+                )
                 .Count() == 2
                 && SheetFallbackOrder
-                    .FromMast(
+                    .FromBoundary(
                         fallbacks: ChronianControls.Definition.SheetFallbacks,
-                        mastZ: -12.799802f
+                        aftBoundaryZ: -12.799802f
                     )
                     .Single()
                     .Name == "Mizzenmast",
@@ -125,7 +128,7 @@ internal static class NativeSeatProfileChecks
                     (reef.Fallback.Position - reef.Fallback.Contact).magnitude - 0.07854738f
                 ) < 0.000001f
                 && SheetFallbackOrder
-                    .FromMast(fallbacks: caelanor.SheetFallbacks, mastZ: -2.306270f)
+                    .FromBoundary(fallbacks: caelanor.SheetFallbacks, aftBoundaryZ: -2.306270f)
                     .Count() == 1,
             "Caelanor must retain its mainmast reef fallback and its aft-eligible sheet pair."
         );

@@ -79,8 +79,12 @@ namespace MoreSailwindSails.Controls
                 group.Forward != forward
                 || group.ForwardBase != forwardBase
                 || group.HalyardMast != halyard
+                || group.NativeMount != nativeMount
             )
+            {
                 group.Suspend();
+                group.ResetSheetSpan();
+            }
             group.Forward = forward;
             group.ForwardBase = forwardBase;
             group.HalyardMast = halyard;
