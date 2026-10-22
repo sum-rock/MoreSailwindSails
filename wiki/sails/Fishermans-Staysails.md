@@ -93,6 +93,15 @@ The
 drives reefing. Native rope rendering is retained, with rope attachments on
 separate leaf transforms so rope rotation does not rotate the shaping bones.
 
+The stay's [control adapter](Controls#consumer-contract-and-ownership) submits
+the fitted sail's existing rope controllers to the shared allocator. The
+[rig][rig] supplies the neutral fitted width projected along boat-local Z so
+[sheet fallbacks](How-winches-are-placed#fitted-span-and-fallback-eligibility)
+remain aft of the fitted span. Resizing can invalidate a placement; live trim,
+reefing, and billow do not change the span. While fitted geometry is
+unavailable, authored sheet fallbacks are deferred. These control descriptions
+follow revision `fcdf300` (plugin metadata **0.3.0**).
+
 ## Assets and ownership
 
 Editable cuts live in `assets/staysails/fishermans_staysail_mka.blend`,
@@ -151,7 +160,7 @@ animation, bundle mesh, and shared game assets remain intact.
 [prefab]:
   https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailPrefab.cs
 [rig]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailRig.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansStaysail/FishermansStaysailRig.cs
 [fixed-head]:
   https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailFixedHead.cs
 [reefing]:

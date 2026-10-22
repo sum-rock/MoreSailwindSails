@@ -11,13 +11,18 @@ A donor is an existing `GPButtonRopeWinch` referenced by a mast in the boat's
 hierarchy. Fallback definitions do **not** register new boat-object prefabs or
 allocate entries in `PrefabsDirectory`. The mod creates runtime clones of the
 selected donors, parents them beneath placement mounts, and binds them to the
-custom stay's rope controllers. The original donors retain their own bindings.
+consumer's rope controllers. Cloning a donor does not take over its rope
+binding.
 
-The runtime clones are referenced by the custom stay's `Mast` winch arrays and
-tracked by `WinchControls`. An `OwnedWinchMarker` excludes them from native
-donor discovery. Replacing a donor transfers the existing controller binding to
-the replacement clone and destroys the old clone. These ownership rules are
-implemented by [OwnedWinch][owned] and [WinchGroup][group].
+`WinchControls` tracks the clones for both sail families. The stay adapter
+publishes them into its dedicated `Mast` arrays; Flying Sails retain the
+physical mast's native arrays and bind their controllers through their own
+adapter. An `OwnedWinchMarker` excludes them from native donor discovery.
+Replacing a donor transfers the existing controller binding to the replacement
+clone and destroys the old clone. These ownership rules are implemented by
+[OwnedWinch][owned] and [WinchGroup][group]. See the
+[consumer contract](Controls#consumer-contract-and-ownership) for registration,
+Flying Sail native-binding handoff, and cleanup.
 
 The identifiers refer to different things:
 
@@ -74,7 +79,8 @@ if its selected donor no longer matches. See [sheet resolution][sheets].
 
 ## Halyard donors
 
-A halyard fallback belongs to the requested aft **physical base mast**. Its
+A halyard fallback belongs to the requested **physical base mast**: the aft mast
+for a Fisherman's Stay, or the fitted mast for a Flying Sail. Its
 `HalyardFallbackSeat.TemplateIndex` selects
 `requestedMast.reefWinch[TemplateIndex]`. For example, Brig mast **3** and
 Gloriana mast **2** both select `reefWinch[1]` in their respective
@@ -115,38 +121,38 @@ Both placement and the diagnostic overlay use the same authored offset. See
 [installed-control measurement helper][measurements].
 
 [revision]:
-  https://github.com/sum-rock/MoreSailwindSails/tree/d8d99742a28657fe7397b669a4160cfd0284094c
+  https://github.com/sum-rock/MoreSailwindSails/tree/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5
 [owned]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Runtime/OwnedWinch.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Runtime/OwnedWinch.cs
 [group]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Runtime/WinchGroup.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Runtime/WinchGroup.cs
 [registry]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Stays/FishermansStay/FishermansStayRegistry.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Stays/FishermansStay/FishermansStayRegistry.cs
 [pair]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/SheetFallbackPair.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/SheetFallbackPair.cs
 [inventory]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Discovery/NativeWinchInventory.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Discovery/NativeWinchInventory.cs
 [brig]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/Boats/BrigControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/BrigControls.cs
 [kakam]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/Boats/KakamControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/KakamControls.cs
 [gloriana]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/Boats/GlorianaControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/GlorianaControls.cs
 [chronian]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/Boats/ChronianControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/ChronianControls.cs
 [caelanor]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/Boats/CaelanorControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/CaelanorControls.cs
 [shroud]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/Boats/ShroudControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/Boats/ShroudControls.cs
 [catalog]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/BoatControlCatalog.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/BoatControlCatalog.cs
 [sheets]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/SheetingWinchPlacementResolver.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/SheetingWinchPlacementResolver.cs
 [halyards]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Placement/HalyardWinchPlacementResolver.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/HalyardWinchPlacementResolver.cs
 [seat]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/SheetFallbackSeat.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/SheetFallbackSeat.cs
 [halyard-seat]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/src/Controls/Configuration/HalyardFallbackSeat.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/HalyardFallbackSeat.cs
 [measurements]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/d8d99742a28657fe7397b669a4160cfd0284094c/tools/halyards/controls.py
+  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tools/halyards/controls.py
