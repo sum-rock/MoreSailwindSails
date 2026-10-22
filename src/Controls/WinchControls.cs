@@ -213,4 +213,11 @@ namespace MoreSailwindSails.Controls
                 control.Dispose();
         }
     }
+
+    // Supplies sail-specific requirements without coupling placement to a sail family.
+    internal interface ISailControlRig
+    {
+        bool TryGetControlRequest(out SailControlRequest request);
+        void OnControlsChanged(SailControlSet controls);
+    }
 }

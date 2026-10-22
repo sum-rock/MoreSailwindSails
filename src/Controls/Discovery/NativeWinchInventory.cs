@@ -394,3 +394,13 @@ namespace MoreSailwindSails.Controls.Discovery
         }
     }
 }
+
+namespace MoreSailwindSails.Controls
+{
+    // Limits native placement discovery to the consumer's supported rigging sources.
+    internal enum NativeControlSourcePolicy
+    {
+        MatchingStays,
+        FittedMast,
+    }
+}

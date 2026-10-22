@@ -78,20 +78,20 @@
     />
 
     <Compile
-      Include="../../src/Controls/Discovery/WinchDiscoverySchedule.cs"
-      Link="Controls/Discovery/WinchDiscoverySchedule.cs"
+      Include="../../src/Controls/Discovery/Inventory/WinchDiscoverySchedule.cs"
+      Link="Controls/Discovery/Inventory/WinchDiscoverySchedule.cs"
     />
     <Compile
       Include="../../src/Controls/Placement/SheetFallbackOrder.cs"
       Link="Controls/Placement/SheetFallbackOrder.cs"
     />
     <Compile
-      Include="../../src/Controls/Discovery/StayDependencies.cs"
-      Link="Controls/Discovery/StayDependencies.cs"
+      Include="../../src/Controls/Discovery/Inventory/StayDependencies.cs"
+      Link="Controls/Discovery/Inventory/StayDependencies.cs"
     />
     <Compile
-      Include="../../src/Controls/Discovery/NativeSheetPairing.cs"
-      Link="Controls/Discovery/NativeSheetPairing.cs"
+      Include="../../src/Controls/Discovery/Inventory/NativeSheetPairing.cs"
+      Link="Controls/Discovery/Inventory/NativeSheetPairing.cs"
     />
     <Compile
       Include="../../src/Controls/Placement/WinchPlacementPolicy.cs"
@@ -105,10 +105,6 @@
     <Compile
       Include="../../src/Controls/Placement/WinchCandidate.cs"
       Link="Controls/Placement/WinchCandidate.cs"
-    />
-    <Compile
-      Include="../../src/Controls/Placement/WinchResolution.cs"
-      Link="Controls/Placement/WinchResolution.cs"
     />
     <None Update="FishermansStay/NativeWinchSeats.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Controls/HalyardMounts.txt" CopyToOutputDirectory="PreserveNewest" />

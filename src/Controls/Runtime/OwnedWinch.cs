@@ -176,4 +176,7 @@ namespace MoreSailwindSails.Controls.Runtime
             manager.Remove(control: this);
         }
     }
+
+    // Marks owned clones so native discovery and diagnostics do not treat them as donor controls.
+    internal sealed class OwnedWinchMarker : MonoBehaviour { }
 }

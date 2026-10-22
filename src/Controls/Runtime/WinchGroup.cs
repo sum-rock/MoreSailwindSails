@@ -363,4 +363,45 @@ namespace MoreSailwindSails.Controls.Runtime
         private string Context(bool pair) =>
             $"boat={boat.name}#{boat.GetInstanceID()}, owner={Owner.name}#{Owner.GetInstanceID()}, role={(pair ? "sheets" : "halyard")}, forward={(Forward ? Forward.orderIndex : -1)}, requestedMast={(HalyardMast ? HalyardMast.orderIndex : -1)}";
     }
+
+    // Tracks one sheet pair or halyard placement, retry timing and diagnostic state.
+    internal sealed class WinchPlacementState
+    {
+        internal WinchPlacementCandidate Current;
+        internal float RetryAfter;
+        internal bool Released = true;
+        internal bool Logged,
+            Warned,
+            Failed;
+    }
+}
+
+namespace MoreSailwindSails.Controls
+{
+    // Describes the live supports, source policy and existing rope controllers of a consumer.
+    internal struct SailControlRequest
+    {
+        internal GameObject Owner;
+        internal BoatRefs Boat;
+
+        // NativeMount is a dedicated mount used only for native rebind notifications.
+        internal Mast Forward,
+            Halyard,
+            NativeMount,
+            SourceMast;
+        internal Mast[] Supports;
+        internal NativeControlSourcePolicy SourcePolicy;
+        internal float? FittedSheetSpan;
+        internal RopeController Left,
+            Right,
+            Reef;
+    }
+
+    // Publishes owned controls to consumers when clones are created, replaced or released.
+    internal struct SailControlSet
+    {
+        internal GPButtonRopeWinch Left,
+            Right,
+            Reef;
+    }
 }
