@@ -161,6 +161,11 @@ definitions** in its output. Review those definitions before adding them to boat
 control configuration. [How winches are placed](How-winches-are-placed) explains
 how the runtime allocator uses authored fallbacks.
 
+Use [surface capture and model previews](Winch-placement-diagnostics) when
+authoring measured positions or inspecting the resulting mounting frame.
+Captured positions can supplement generator output; the runtime configuration
+determines which definitions are used.
+
 ## Local installation
 
 ```sh

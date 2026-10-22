@@ -10,7 +10,7 @@ control.
 | Native sheet pairs, halyards, fallback ordering, and reservations    | [How winches are placed](How-winches-are-placed)                                            |
 | Donor mast/array indexes, selected models, and mounting measurements | [Fallback winch templates](Fallback-winch-templates)                                        |
 | Runtime clones and prefab registration                               | [Template identity and ownership](Fallback-winch-templates#template-identity-and-ownership) |
-| Overlay, surface capture, and halyard generation                     | [Inspecting placement](How-winches-are-placed#inspecting-placement)                         |
+| Overlay, model previews, surface capture, and forced fallbacks       | [Winch placement diagnostics](Winch-placement-diagnostics)                                  |
 
 [Fisherman's Stays](Fishermans-Stay) own cloned sheet and halyard controls.
 Their allocator retains valid placements, tries compatible native positions

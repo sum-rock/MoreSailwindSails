@@ -127,95 +127,28 @@ search does not generate a new position on an arbitrary deck or rail surface.
 
 ## Inspecting placement
 
-The diagnostic overlay shows which mounting positions are occupied, whether
-their supports are fitted, and where fallback positions are defined. Position
-capture and the automatic halyard generator supply coordinates for authoring
-fallbacks. These tools expose placement data without changing the allocator's
-selection rules.
+See [Winch placement diagnostics](Winch-placement-diagnostics) for overlay
+settings, native-scale model previews, surface capture, and the startup-only
+option to force authored sheet fallbacks.
 
 ### Viewing winch mounting points
 
-With MoreSailwindSails installed, set this entry in
-`BepInEx/config/com.august.moresailwindsails.cfg`:
-
-```ini
-[Diagnostics]
-EnableWinchMountOverlay = true
-```
-
-Close menus, aim at a boat surface within **10 metres**, and press **F8**. Press
-F8 again to hide the overlay. `ToggleWinchMountOverlay` changes the shortcut;
-setting it to `None` disables that shortcut.
-
-| Color  | Meaning                                |
-| ------ | -------------------------------------- |
-| Green  | Unused position on fitted supports     |
-| Red    | Occupied, including hidden bound ropes |
-| Cyan   | Unused position on unfitted supports   |
-| Purple | Defined fallback placement             |
-
-Green describes occupancy and support. A sail still needs a compatible template,
-source mast pair, and, for sheets, a complete pair of positions.
-
-Purple wireframe boxes mark every defined sheet and halyard fallback position on
-the selected boat, including both sides of sheet pairs. Each box is 0.3 metres
-across in boat-local coordinates, centered on the control position including its
-placement offset, and moves with the boat. Boxes appear regardless of occupancy,
-fitted supports, or template availability. The overlay lists their count
-separately from winch locations. A purple box identifies a definition; it does
-not indicate whether that position can currently be allocated.
+See
+[viewing winch mounting points](Winch-placement-diagnostics#viewing-winch-mounting-points).
 
 ### Coordinate frames
 
-| Value                              | Frame                                    |
-| ---------------------------------- | ---------------------------------------- |
-| Stay `ForePoint` / `AftPoint`      | Local to the respective physical mast    |
-| Authored fallback control position | Local to the `BoatRefs` root             |
-| Native control `localPosition`     | Local to that control's immediate parent |
-| Position captured by F9            | Local to the `BoatRefs` root             |
-
-For a normal scene transform, convert a world position with
-`boat.transform.InverseTransformPoint(position: worldPoint)`. Convert a
-mast-local endpoint to world space with
-`mast.transform.TransformPoint(position: localPoint)`. Include parent rotation
-and scale; copying a native control's `localPosition` into a boat-local field
-can place it on the wrong side of the boat.
-
-Sailwind also uses a separate walking-collision model. The capture tool maps
-hits from that model through the visible boat model before returning boat-local
-coordinates. It transforms surface normals with the inverse transpose so scaled
-transforms are handled correctly.
+See [coordinate frames](Winch-placement-diagnostics#coordinate-frames).
 
 ### Capturing a proposed position
 
-Aim at a solid boat surface within 10 metres during normal play and press
-**F9**. `CaptureWinchPosition` changes this shortcut. The overlay does not need
-to be enabled.
-
-Entries beginning with `Winch position capture #` in `BepInEx/LogOutput.log`
-give the boat, boat-local position and surface normal, hit model, hierarchy
-path, collider identity, and distance. Capturing a point does not move or
-reserve a control. It supplies a measurement for an authored fallback; that
-fallback's rotation and supporting parts are defined separately in the boat's
-control configuration.
+See
+[capturing a proposed position](Winch-placement-diagnostics#capturing-a-proposed-position).
 
 ### Generating halyard fallback positions
 
-The `mss` command can automatically search installed boat geometry for clear
-halyard fallback positions near native winch height. For example, from the
-repository root:
-
-```sh
-./mss generate-fallback-halyards brig --mast 5
-```
-
-The command emits candidate `HalyardFallbackDefinition` entries for review and
-incorporation into the boat's control configuration. It reads installed assets
-without modifying them or automatically editing the configuration. Once the
-definitions are incorporated into a built plugin, the overlay shows their
-positions as purple boxes. See
-[Fallback halyard generation](MSS-command#fallback-halyard-generation) for
-supported boats, search options, output files, and handling unresolved masts.
+See
+[generating halyard fallback positions](Winch-placement-diagnostics#generating-halyard-fallback-positions).
 
 ## Source
 
