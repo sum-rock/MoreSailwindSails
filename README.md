@@ -19,17 +19,16 @@ MoreSailwindSails adds two families of sails to Sailwind:
 See the [changelog](#changelog).
 
 <p align="center">
-  <a href="references/junk-fishermans-sail.png"><img src="references/junk-fishermans-sail.png" width="32%" alt="Junk with a Fisherman's Staysail set between its masts, viewed from above"></a>
-  <a href="references/brig-flying-sail-and-fishermans-staysail.png"><img src="references/brig-flying-sail-and-fishermans-staysail.png" width="32%" alt="Brig with a Flying Sail and Fisherman's Staysail at sunset"></a>
-  <a href="references/shroud-fishermans-sails.png"><img src="references/shroud-fishermans-sails.png" width="32%" alt="Fisherman's sails fitted to Shroud, viewed from alongside near shore"></a>
+  <a href="images/junk-fishermans-sail.png"><img src="images/junk-fishermans-sail.png" width="32%" alt="Junk with a Fisherman's Staysail set between its masts, viewed from above"></a>
+  <a href="images/chronian-fishermans-staysail.png"><img src="images/chronian-fishermans-staysail.png" width="32%" alt="Chronian with a Fisherman's Staysail"></a>
+  <a href="images/shroud-fishermans-sails.png"><img src="images/shroud-fishermans-sails.png" width="32%" alt="Fisherman's sails fitted to Shroud, viewed from alongside near shore"></a>
   <br>
-  <a href="references/baghala-fishermans-sails.png"><img src="references/baghala-fishermans-sails.png" width="32%" alt="Baghala with Fisherman's sails set between its masts at sea"></a>
-  <a href="references/sailinfo-staysail-halyard-label.png"><img src="references/sailinfo-staysail-halyard-label.png" width="32%" alt="SailInfo hover label identifying a Fisherman's Staysail halyard"></a>
-  <a href="references/fishermans-staysail-at-sea.png"><img src="references/fishermans-staysail-at-sea.png" width="32%" alt="Fisherman's Staysail between two masts, viewed from astern at sea"></a>
+  <a href="images/caelanor-fishermans-staysail.png"><img src="images/caelanor-fishermans-staysail.png" width="32%" alt="Caelanor with a Fisherman's Staysail set between its masts at sea"></a>
+  <a href="images/sailinfo-staysail-halyard-label.png"><img src="images/sailinfo-staysail-halyard-label.png" width="32%" alt="SailInfo hover label identifying a Fisherman's Staysail halyard"></a>
+  <a href="images/fishermans-staysail-at-sea.png"><img src="images/fishermans-staysail-at-sea.png" width="32%" alt="Fisherman's Staysail between two masts, viewed from astern at sea"></a>
 </p>
 
-Select a screenshot to view it at full size. These show earlier versions;
-current sails use plain cloth with your chosen color.
+Select a screenshot to view it at full size.
 
 ### What's included
 
