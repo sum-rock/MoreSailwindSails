@@ -13,8 +13,7 @@ MoreSailwindSails adds two families of sails to Sailwind:
 
 ### Current versions
 
-**Latest release:** 0.3.0\
-**In preparation:** 0.3.1
+**Latest release:** 0.3.1
 
 See the [changelog](#changelog).
 
