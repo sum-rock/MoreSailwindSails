@@ -9,7 +9,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Configuration.Boats
             supports: new[]
             {
                 new MastSupportDefinition(
-                    sheetControlSource: 14,
                     foreSections: new[] { 17, 2, 1 },
                     aftSections: new[] { 18, 6, 5 }
                 ),

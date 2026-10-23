@@ -8,11 +8,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Configuration.Boats
             boat: BoatConfiguration.Boats.Dhow.Definition,
             supports: new[]
             {
-                new MastSupportDefinition(
-                    sheetControlSource: 54,
-                    foreSections: new[] { 6, 7 },
-                    aftSections: new[] { 51 }
-                ),
+                new MastSupportDefinition(foreSections: new[] { 6, 7 }, aftSections: new[] { 51 }),
             }
         );
     }

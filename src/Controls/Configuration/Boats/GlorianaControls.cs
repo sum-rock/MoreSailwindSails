@@ -1,4 +1,4 @@
-// Owns Gloriana's authored shared winch sources and fallback placements.
+// Owns Gloriana's authored fallback placements.
 using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration.Boats
@@ -7,37 +7,59 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
     {
         internal static readonly BoatControlDefinition Definition = new BoatControlDefinition(
             boat: BoatConfiguration.Boats.Gloriana.Definition,
-            sheetCategories: new[]
+            sheetFallbacks: new[]
             {
-                new SheetWinchCategory(
-                    name: "Foremast",
-                    physicalMasts: new[] { 1 },
-                    sources: new[] { 1, 5 },
-                    fallback: null
-                ),
-                new SheetWinchCategory(
+                new SheetFallbackDefinition(
                     name: "Mainmast",
-                    physicalMasts: new[] { 2 },
-                    sources: new[] { 2, 6 },
-                    fallback: null
+                    fallback: new SheetFallbackPair(
+                        // OldChronian 0.6.0: sheet_mainmast1_L; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 2,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.34202027f, 0.93969257f, 0f),
+                        offset: 0.0916384f,
+                        // F9 #5/#6 trim captures, 2026-10-17: average |X|, Y/Z and mirrored normals.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-1.8593095f, 6.2631075f, -12.393245f),
+                            normal: new Vector3(-0.032162f, 0.982311f, 0.1844725f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(1.8593095f, 6.2631075f, -12.393245f),
+                            normal: new Vector3(0.032162f, 0.982311f, 0.1844725f)
+                        )
+                    )
                 ),
-                new SheetWinchCategory(
-                    name: "Mizzenmast",
-                    physicalMasts: new[] { 3 },
-                    sources: new[] { 3, 4 },
-                    fallback: null
+                new SheetFallbackDefinition(
+                    name: "MainmastForward",
+                    fallback: new SheetFallbackPair(
+                        // OldChronian 0.6.0: sheet_mainmast1_L; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 2,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.34202027f, 0.93969257f, 0f),
+                        offset: 0.0916384f,
+                        // F9 #7/#8 trim captures, 2026-10-17: average |X|, Y/Z and mirrored normals.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-3.1751935f, 3.5531495f, -0.929988f),
+                            normal: new Vector3(0.2764265f, 0.957037f, 0.087572f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(3.1751935f, 3.5531495f, -0.929988f),
+                            normal: new Vector3(-0.2764265f, 0.957037f, 0.087572f)
+                        )
+                    )
                 ),
             },
-            halyardGroups: new[]
+            halyardFallbacks: new HalyardFallbackDefinition[]
             {
-                new HalyardWinchGroup(mast: 1, sources: new[] { 1, 5 }),
-                new HalyardWinchGroup(
+                new HalyardFallbackDefinition(
                     mast: 2,
-                    sources: new[] { 2 },
                     fallback: new HalyardFallbackSeat(
-                        // F9 capture #2, MAST_MAIN walking surface, 2026-10-04.
-                        contact: new Vector3(-0.005373f, 1.887422f, 0.791344f),
-                        normal: new Vector3(-0.098015f, 0.003737f, 0.995178f),
+                        // F9 capture #3, FIFE_MAIN walking surface, 2026-10-17.
+                        contact: new Vector3(0.613389f, 1.827591f, 0.040833f),
+                        normal: new Vector3(0.773011f, 0f, -0.634393f),
                         // halyard_mainmast2 local +Z in the installed boat frame.
                         sourceNormal: new Vector3(0f, 0.98480785f, -0.17364828f),
                         // Installed mesh rear bound -0.13091201, native scale 0.7.
@@ -45,9 +67,8 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                         templateIndex: 1
                     )
                 ),
-                new HalyardWinchGroup(
+                new HalyardFallbackDefinition(
                     mast: 3,
-                    sources: new[] { 3, 4, 6 },
                     fallback: new HalyardFallbackSeat(
                         // F9 capture #1, FIFE_MIZEN walking surface, 2026-10-05.
                         contact: new Vector3(0.801387f, 4.769459f, -9.351812f),
@@ -59,7 +80,6 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                         templateIndex: 0
                     )
                 ),
-                new HalyardWinchGroup(mast: 4, sources: new[] { 4, 6 }),
             }
         );
     }

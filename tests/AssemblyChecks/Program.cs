@@ -47,6 +47,7 @@ internal static class Program
         HarmonySignatureChecks.Run(assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
+        Controls.SheetFallbackConfigurationChecks.Run(assembly: assembly);
         Compatibility.OrderTextChecks.Run(assembly: assembly);
         Compatibility.NativeAppearanceChecks.Run(assembly);
         Compatibility.ShipyardExpansionTextureChecks.Run(assembly: assembly);
@@ -54,8 +55,9 @@ internal static class Program
         FlyingSailChecks.Run(assembly);
         StayChecks.Run(assembly);
         FishermansStay.CollarChecks.Run(assembly);
-        FishermansStay.WinchChecks.Run(assembly);
+        Controls.Runtime.WinchChecks.Run(assembly);
         Controls.NativeResolverChecks.Run(assembly);
+        Controls.SailControlInterfaceChecks.Run(assembly);
         Utils.WinchDiagnosticChecks.Run(assembly);
         FishermansStaysail.RegistrationChecks.Run(assembly);
         FishermansStaysail.MkA.PatchChecks.Run(assembly);

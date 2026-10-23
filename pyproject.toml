@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mss-tools"
+version = "0.1.0"
+description = "MoreSailwindSails asset authoring and installed-boat inspection tools"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.1,<9",
+    "UnityPy>=1.23,<2",
+    "numpy>=2,<3",
+    "TypeTreeGeneratorAPI>=0.0.1",
+]
+
+[project.scripts]
+mss = "tools.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8,<10"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tools", "tools.*"]
+namespaces = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests/PythonChecks"]

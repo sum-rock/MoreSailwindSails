@@ -38,13 +38,13 @@ internal static class ProfileChecks
         foreach (var boat in BoatControlCatalog.All)
         {
             CheckCopies(boat);
-            foreach (var group in boat.HalyardGroups)
+            foreach (var group in boat.HalyardFallbacks)
             {
                 CheckCopies(group);
                 if (group.Fallback != null)
                     CheckCopies(group.Fallback);
             }
-            foreach (var category in boat.SheetCategories)
+            foreach (var category in boat.SheetFallbacks)
             {
                 CheckCopies(category);
                 if (category.Fallback != null)
@@ -117,13 +117,7 @@ internal static class ProfileChecks
                 if (count != (hasMain && hasMizzen ? 1 : 0))
                     throw new Exception("Small boat stay requires its exact physical mast pair.");
             }
-            if (
-                variants.Any(v => v.Fore >= 55 || v.Aft >= 55)
-                || variants.Any(v =>
-                    BoatControlCatalog.Find(boatName: boat.BoatName).SheetCategory(mast: v.Fore)
-                    == null
-                )
-            )
+            if (variants.Any(v => v.Fore >= 55 || v.Aft >= 55))
                 throw new Exception("Small boat support included a Bermuda rig or lost controls.");
         }
 
@@ -159,10 +153,6 @@ internal static class ProfileChecks
         if (
             !ReferenceEquals(BoatCatalog.Find(boatName: "BOAT GLORIANA (182)(Clone)"), gloriana)
             || !gloriana.Sections(section: 4).SequenceEqual(new[] { 4, 3 })
-            || GlorianaControls.Definition.SheetCategory(mast: 4)
-                != GlorianaControls.Definition.SheetCategory(mast: 3)
-            || !GlorianaControls.Definition.HalyardSources(mast: 2).SequenceEqual(new[] { 2 })
-            || !GlorianaControls.Definition.HalyardSources(mast: 3).SequenceEqual(new[] { 3, 4, 6 })
         )
             throw new Exception("Gloriana lost its connected mizzen or mast-specific controls.");
         // Native stays supply assets only: either custom group remains available
@@ -206,25 +196,26 @@ internal static class ProfileChecks
         parents[0] = 0;
         if (!profile.Sections(0).SequenceEqual(new[] { 0 }))
             throw new Exception("Caller mutation corrupted validated mast ancestry.");
-        var sample = BrigControls.Definition.SheetCategories[0];
+        var sample = ShroudControls.Definition.SheetFallbacks[0];
         Reject<ArgumentException>(() =>
             new BoatControlDefinition(
                 boat: Brig.Definition,
-                sheetCategories: new[] { sample, sample }
+                sheetFallbacks: new[] { sample, sample }
             )
         );
-        BoatControlDefinition HalyardProfile(params HalyardWinchGroup[] groups) =>
-            new BoatControlDefinition(boat: Cog.Definition, halyardGroups: groups);
-        var halyard = new HalyardWinchGroup(mast: 57, sources: new[] { 57, 58 });
+        BoatControlDefinition HalyardProfile(params HalyardFallbackDefinition[] groups) =>
+            new BoatControlDefinition(boat: Cog.Definition, halyardFallbacks: groups);
+        var seat = GlorianaControls.Definition.HalyardFallbacks[0].Fallback;
+        var halyard = new HalyardFallbackDefinition(mast: 57, fallback: seat);
         Reject<ArgumentException>(() => HalyardProfile(halyard, halyard));
         Reject<ArgumentException>(() =>
-            HalyardProfile(new HalyardWinchGroup(mast: 127, sources: new[] { 127 }))
+            HalyardProfile(new HalyardFallbackDefinition(mast: 127, fallback: seat))
         );
-        Reject<ArgumentException>(() => new HalyardWinchGroup(mast: 57, sources: null));
-        Reject<ArgumentException>(() => new HalyardWinchGroup(mast: 57, sources: new[] { 58, 58 }));
-        Reject<ArgumentException>(() => new HalyardWinchGroup(mast: 57, sources: new[] { 128 }));
+        Reject<ArgumentException>(() => new HalyardFallbackDefinition(mast: 57, fallback: null));
+        Reject<ArgumentException>(() => new HalyardFallbackDefinition(mast: -1, fallback: seat));
+        Reject<ArgumentException>(() => new HalyardFallbackDefinition(mast: 128, fallback: seat));
         Console.WriteLine(
-            "PASS: immutable boat profiles and halyard groups, ordered mast ancestry, missing entries, duplicate groups/categories and invalid-source/cyclic-parent rejection."
+            "PASS: immutable boat profiles and halyard groups, ordered mast ancestry, missing entries, duplicate groups/categories and invalid-fallback/cyclic-parent rejection."
         );
     }
 

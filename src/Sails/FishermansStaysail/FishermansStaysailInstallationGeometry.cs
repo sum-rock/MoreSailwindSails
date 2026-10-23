@@ -1,4 +1,6 @@
+// Defines staysail fitting limits, collision strips and shared-luff mast compatibility.
 using System;
+using MoreSailwindSails.BoatConfiguration;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansStaysail
@@ -7,6 +9,18 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
     {
         internal const float HeadClearance = 0.15f;
         internal const float AftClearance = 0.15f;
+
+        // Square sails on any section of the luff's physical mast can coexist.
+        // Unknown sections retain native collision behavior instead of guessing ancestry.
+        internal static bool SharesLuffMast(
+            BoatDefinition boat,
+            int forwardSection,
+            int squareSection
+        ) =>
+            boat != null
+            && boat.MastParents.ContainsKey(forwardSection)
+            && boat.MastParents.ContainsKey(squareSection)
+            && boat.Base(section: forwardSection) == boat.Base(section: squareSection);
 
         internal static float HeadSlope(Vector3 stay, Vector3 mastAxis)
         {

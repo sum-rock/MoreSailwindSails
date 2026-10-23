@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using MoreSailwindSails.BoatConfiguration;
-using MoreSailwindSails.Controls;
+// Binds staysail geometry and controls to the registered stay's endpoints and prerequisites.
 using MoreSailwindSails.Stays.FishermansStay;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -17,26 +13,15 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             internal BoatRefs Boat;
             internal Mast Mount,
                 Fore,
-                Aft,
-                AftBase,
-                SheetControlSource;
+                Aft;
             internal FishermansStay Stay;
-            internal Mast[] ForeSections,
-                AftSections;
             internal Transform AftGuide;
-            internal bool Active =>
-                Mount
-                && Mount.gameObject.activeInHierarchy
-                && Stay.Available
-                && AftGuide
-                && AftGuide.gameObject.activeInHierarchy
-                && ForeSections.Concat(AftSections).All(m => m && m.gameObject.activeInHierarchy);
+            internal bool Active => Mount && Mount.gameObject.activeInHierarchy && Stay.Available;
         }
 
         internal MountPair Pair { get; private set; }
         private Sail sail;
         private GameObject controlsRoot;
-        private FishermanWinchControls.OwnedWinch[] controls;
         private Transform mastGuide,
             upperGuide;
         private bool bindingDirty;
@@ -64,30 +49,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 return false;
             var refs = stay.References;
             var boat = mount.GetComponentInParent<BoatRefs>();
-            var profile = BoatCatalog.Find(boat.name);
-            int baseId = profile.Base(refs.Aft.orderIndex);
-            var foreSections = profile
-                .Sections(refs.Fore.orderIndex)
-                .Select(id => boat.masts[id])
-                .ToArray();
-            var aftSections = profile
-                .Sections(refs.Aft.orderIndex)
-                .Select(id => boat.masts[id])
-                .ToArray();
-            var aftBase = boat.masts[baseId];
-            if (
-                foreSections.Concat(aftSections).Any(m => !m || !m.gameObject.activeInHierarchy)
-                || !aftBase
-                || !aftBase.gameObject.activeInHierarchy
-                || !refs.Guide
-                || !refs.Guide.gameObject.activeInHierarchy
-                || !FishermanWinchControls.BootstrapReady(
-                    boat: boat,
-                    forward: refs.Fore,
-                    halyard: aftBase
-                )
-            )
-                return false;
             pair = new MountPair
             {
                 Boat = boat,
@@ -95,10 +56,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 Stay = stay,
                 Fore = refs.Fore,
                 Aft = refs.Aft,
-                AftBase = aftBase,
-                ForeSections = foreSections,
-                AftSections = aftSections,
-                SheetControlSource = refs.Donor,
                 AftGuide = refs.Guide,
             };
             return true;
@@ -121,10 +78,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             bool changed =
                 Pair == null
                 || Pair.Mount != resolved.Mount
+                || Pair.Fore != resolved.Fore
                 || Pair.Aft != resolved.Aft
-                || Pair.AftGuide != resolved.AftGuide
-                || Pair.AftBase != resolved.AftBase
-                || Pair.SheetControlSource != resolved.SheetControlSource;
+                || Pair.AftGuide != resolved.AftGuide;
             controlsDirty |= changed;
             Pair = resolved;
             bindingDirty = false;
@@ -224,7 +180,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 return;
             if (!controlsRoot)
             {
-                controlsRoot = new GameObject("FishermansStaysail independent controls");
+                controlsRoot = new GameObject("FishermansStaysail rope guides");
                 controlsRoot.SetActive(false);
                 controlsRoot.transform.SetParent(Pair.Boat.transform, false);
                 mastGuide = new GameObject("FishermansStaysail halyard guide").transform;
@@ -233,29 +189,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 upperGuide.SetParent(controlsRoot.transform, false);
                 controlsRoot.SetActive(true);
             }
-            FishermanWinchControls.Reconcile(
-                ref controls,
-                Pair.Boat,
-                sail.gameObject,
-                controlsRoot.transform,
-                Pair.Fore,
-                new[] { Pair.AftBase, Pair.SheetControlSource, Pair.SheetControlSource },
-                new[]
-                {
-                    "FishermansStaysail Halyard",
-                    "FishermansStaysail Port sheet",
-                    "FishermansStaysail Starboard sheet",
-                }
-            );
             controlsDirty = false;
             var connections = sail.GetComponent<SailConnections>();
-            controls[0].Bind(connections.reefController);
-            FishermanWinchControls.BindSheets(
-                controls[1],
-                connections.angleControllerLeft,
-                controls[2],
-                connections.angleControllerRight
-            );
             connections.colChecker.RegisterBoatWalkCol(mast.walkColMast);
             // Old saves can restore the wider donor range; keep the checker,
             // shipyard description and native sail limits in agreement.
@@ -295,21 +230,24 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         internal bool DependsOn(BoatPartOption option)
         {
-            if (Pair == null)
+            if (Pair == null || !option)
                 return false;
-            return new[] { Pair.Mount }
-                .Concat(Pair.ForeSections)
-                .Concat(Pair.AftSections)
-                .Any(m =>
-                    m && (m.GetComponent<BoatPartOption>() == option || option.childMast == m)
-                );
+            if (Pair.Mount && (Pair.Stay.Option == option || option.childMast == Pair.Mount))
+                return true;
+            foreach (var required in Pair.Stay.References.Required)
+                if (
+                    required
+                    && (
+                        required == option
+                        || (option.childMast && required.GetComponent<Mast>() == option.childMast)
+                    )
+                )
+                    return true;
+            return false;
         }
 
         private void OnDestroy()
         {
-            if (controls != null)
-                foreach (var control in controls)
-                    control.Dispose();
             if (controlsRoot)
                 Object.Destroy(controlsRoot);
         }

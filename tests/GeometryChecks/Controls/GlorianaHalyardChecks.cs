@@ -3,6 +3,7 @@ using System.Linq;
 using MoreSailwindSails.Controls;
 using MoreSailwindSails.Controls.Configuration;
 using MoreSailwindSails.Controls.Configuration.Boats;
+using MoreSailwindSails.Controls.Placement;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
@@ -14,15 +15,13 @@ internal static class GlorianaHalyardChecks
     {
         CheckGroup(
             mast: 2,
-            sources: new[] { 2 },
-            contact: new Vector3(-0.005373f, 1.887422f, 0.791344f),
-            normal: new Vector3(-0.098015f, 0.003737f, 0.995178f),
+            contact: new Vector3(0.613389f, 1.827591f, 0.040833f),
+            normal: new Vector3(0.773011f, 0f, -0.634393f),
             sourceNormal: new Vector3(0f, 0.98480785f, -0.17364828f),
             templateIndex: 1
         );
         CheckGroup(
             mast: 3,
-            sources: new[] { 3, 4, 6 },
             contact: new Vector3(0.801387f, 4.769459f, -9.351812f),
             normal: Vector3.right,
             sourceNormal: new Vector3(-0.17364817f, 0.96984630f, 0.17101012f),
@@ -32,19 +31,16 @@ internal static class GlorianaHalyardChecks
 
     private static void CheckGroup(
         int mast,
-        int[] sources,
         Vector3 contact,
         Vector3 normal,
         Vector3 sourceNormal,
         int templateIndex
     )
     {
-        var group = GlorianaControls.Definition.HalyardGroups.Single(g => g.Mast == mast);
+        var group = GlorianaControls.Definition.HalyardFallbacks.Single(g => g.Mast == mast);
         var definition = group.Fallback;
         Check(
-            group.Sources.SequenceEqual(sources)
-                && definition.Valid
-                && definition.TemplateIndex == templateIndex,
+            definition.Valid && definition.TemplateIndex == templateIndex,
             "Gloriana fallback changed native sources or template."
         );
         Check(
@@ -65,7 +61,7 @@ internal static class GlorianaHalyardChecks
             "Coil mounting depth changed."
         );
         Check(
-            GlorianaControls.Definition.HalyardGroups.Count(g => g.Fallback != null) == 2,
+            GlorianaControls.Definition.HalyardFallbacks.Count(g => g.Fallback != null) == 2,
             "Gloriana manual halyard fallback leaked to another mast."
         );
         foreach (

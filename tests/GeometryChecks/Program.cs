@@ -12,11 +12,12 @@ internal static class Program
         ProfileChecks.Run();
         NativeAvailabilityChecks.Run();
         StayChecks.Run();
-        CollarChecks.Run();
+        AuthoredMeshChecks.Run();
         Utils.ProfilingChecks.Run();
         Utils.WinchCaptureChecks.Run();
         Utils.WinchMountOverlayChecks.Run();
         Controls.NativeSeatProfileChecks.Run();
+        Controls.SheetSpanChecks.Run();
         Controls.HalyardProfileChecks.Run();
         Controls.KakamWinchChecks.Run();
         Controls.NativeSeatAllocationChecks.Run();

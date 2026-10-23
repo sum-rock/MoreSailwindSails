@@ -20,7 +20,11 @@ internal static class WinchDiagnosticChecks
         foreach (
             var type in assembly.GetTypes().Where(t => t.Namespace == "MoreSailwindSails.Utils")
         )
-        foreach (var method in type.GetMethods(flags))
+        foreach (
+            var method in type.GetMethods(flags)
+                .Cast<MethodBase>()
+                .Concat(type.GetConstructors(flags))
+        )
         {
             foreach (var instruction in Instructions(method))
                 if (instruction.Code == OpCodes.Stfld || instruction.Code == OpCodes.Stsfld)
@@ -58,16 +62,73 @@ internal static class WinchDiagnosticChecks
                     "Diagnostic mutates a native rendering/physics source: " + method.Name
                 );
                 Check(
-                    owner != "MoreSailwindSails.Controls.WinchReservations",
+                    owner != "MoreSailwindSails.Controls.Placement.WinchReservations",
                     "Diagnostic participates in placement reservations: " + method.Name
                 );
             }
         }
         var trace = assembly.GetType("MoreSailwindSails.Utils.WinchMountTrace", throwOnError: true);
+        var overlay = assembly.GetType(
+            "MoreSailwindSails.Utils.WinchMountOverlay",
+            throwOnError: true
+        );
+        var boxes = overlay.GetMethod("CacheFallbackBoxes", flags);
+        Check(
+            CalledMethods(boxes)
+                .Count(m => m.DeclaringType.Name == "SheetFallbackSeat" && m.Name == "Position")
+                == 2
+                && Instructions(boxes)
+                    .Count(i =>
+                        i.Operand is FieldInfo f
+                        && f.DeclaringType.Name == "SheetFallbackPair"
+                        && f.Name == "Offset"
+                    ) == 2
+                && !CalledMethods(boxes)
+                    .Any(m =>
+                        m.Name == "Template" || m.DeclaringType.Name == "NativeWinchInventory"
+                    ),
+            "Both sheet overlay boxes must use the pair's offset even when its donor is unavailable."
+        );
         Check(
             CalledMethods(trace.GetMethod("Status", flags))
-                .Any(m => m.DeclaringType.Name == "NativeWinchSeats" && m.Name == "Occupied"),
+                .Any(m => m.DeclaringType.Name == "NativeWinchInventory" && m.Name == "Occupied"),
             "Diagnostic must use the native occupancy predicate, including hidden bound ropes."
+        );
+        var preview = assembly.GetType(
+            "MoreSailwindSails.Utils.WinchModelPreview",
+            throwOnError: true
+        );
+        var mesh = assembly.GetType("MoreSailwindSails.Utils.WinchPreviewMesh", throwOnError: true);
+        var draw = CalledMethods(mesh.GetMethod("Draw", flags)).Single(m => m.Name == "DrawMesh");
+        Check(
+            draw.DeclaringType.FullName == "UnityEngine.Graphics"
+                && draw.GetParameters().Any(p => p.ParameterType.FullName == "UnityEngine.Camera"),
+            "Model previews must use the installed camera-scoped mesh drawing API."
+        );
+        var collection = CalledMethods(preview.GetMethod("BelongsTo", flags)).ToArray();
+        Check(
+            collection.Any(m =>
+                m.IsGenericMethod && m.GetGenericArguments().Any(t => t.Name == "RopeController")
+            )
+                && collection.Any(m =>
+                    m.IsGenericMethod
+                    && m.GetGenericArguments().Any(t => t.Name == "GPButtonRopeWinch")
+                ),
+            "Preview geometry must exclude attached ropes and nested winches."
+        );
+        Check(
+            CalledMethods(overlay.GetMethod("Template", flags))
+                .Any(m =>
+                    m.IsGenericMethod
+                    && m.GetGenericArguments().Any(t => t.Name == "OwnedWinchMarker")
+                ),
+            "Fallback preview donors must exclude mod-owned controls."
+        );
+        Check(
+            CalledMethods(overlay.GetMethod("Clear", flags)).Any(m => m.Name == "ClearModels")
+                && CalledMethods(overlay.GetMethod("ClearModels", flags))
+                    .Any(m => m.DeclaringType == preview && m.Name == "Dispose"),
+            "Clearing diagnostics must release preview resources."
         );
         Console.WriteLine(
             "PASS (structural): diagnostics do not activate/clone/bind native objects, write native rendering/physics state, or reserve seats; overlay uses native occupancy. Live rendering and lifecycle remain in-game checks."

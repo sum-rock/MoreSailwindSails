@@ -1,5 +1,8 @@
 using System;
+using System.Linq;
+using MoreSailwindSails.BoatConfiguration.Boats;
 using MoreSailwindSails.Sails.FishermansStaysail;
+using MoreSailwindSails.Stays.FishermansStay.Configuration;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail;
@@ -8,6 +11,7 @@ internal static class CollisionChecks
 {
     internal static void Run()
     {
+        CheckLuffMastCompatibility();
         var marks = new (string Name, Func<float, float, FishermansStaysailMeshData> Create)[]
         {
             ("Mk.A", BehaviorCases.CreateA),
@@ -96,6 +100,82 @@ internal static class CollisionChecks
             throw new Exception("A clipped sliver must not be expanded beyond the mast clearance.");
         Console.WriteLine(
             "PASS (executed): all three cuts retain collision strips inside both edges and mast clearance; shallow/clipped strips are disabled."
+        );
+    }
+
+    private static void CheckLuffMastCompatibility()
+    {
+        int variants = 0;
+        foreach (var profile in FishermansStayCatalog.All)
+        foreach (var stay in profile.Stays.SelectMany(group => group.Variants))
+        {
+            variants++;
+            foreach (int forwardSection in profile.Boat.Sections(section: stay.Fore))
+                if (
+                    !FishermansStaysailInstallationGeometry.SharesLuffMast(
+                        boat: profile.Boat,
+                        forwardSection: stay.Fore,
+                        squareSection: forwardSection
+                    )
+                )
+                    throw new Exception(
+                        "A square sail on the forward mast must coexist with the staysail: "
+                            + stay.Label
+                    );
+            foreach (int aftSection in profile.Boat.Sections(section: stay.Aft))
+                if (
+                    FishermansStaysailInstallationGeometry.SharesLuffMast(
+                        boat: profile.Boat,
+                        forwardSection: stay.Fore,
+                        squareSection: aftSection
+                    )
+                )
+                    throw new Exception(
+                        "The aft mast must retain native sail collision checks: " + stay.Label
+                    );
+            if (
+                FishermansStaysailInstallationGeometry.SharesLuffMast(
+                    boat: profile.Boat,
+                    forwardSection: stay.Fore,
+                    squareSection: stay.MountIndex
+                )
+            )
+                throw new Exception("A stay slot is not the luff's physical mast.");
+        }
+
+        // Brig's fore topmast 57 belongs to base 2; main topmast 58 belongs to 4.
+        foreach (var pair in new[] { (2, 57), (57, 2), (57, 57) })
+            if (
+                !FishermansStaysailInstallationGeometry.SharesLuffMast(
+                    boat: Brig.Definition,
+                    forwardSection: pair.Item1,
+                    squareSection: pair.Item2
+                )
+            )
+                throw new Exception(
+                    "Base/topmast compatibility must work in both ancestry directions."
+                );
+        foreach (var pair in new[] { (2, 58), (57, 4), (2, -1), (-1, 2), (999, 999) })
+            if (
+                FishermansStaysailInstallationGeometry.SharesLuffMast(
+                    boat: Brig.Definition,
+                    forwardSection: pair.Item1,
+                    squareSection: pair.Item2
+                )
+            )
+                throw new Exception(
+                    "Different or unknown mast sections must keep collision checks."
+                );
+        if (
+            FishermansStaysailInstallationGeometry.SharesLuffMast(
+                boat: null,
+                forwardSection: 2,
+                squareSection: 2
+            )
+        )
+            throw new Exception("An unknown boat must keep collision checks.");
+        Console.WriteLine(
+            $"PASS (executed): shared-luff square-sail compatibility across {variants} stays, base/topmast ancestry, and aft/unknown-mast exclusions."
         );
     }
 }

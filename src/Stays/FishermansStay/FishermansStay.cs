@@ -1,10 +1,9 @@
+// Owns a stay's controls and scene objects while borrowing the registry's meshes.
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using MoreSailwindSails.BoatConfiguration;
-using MoreSailwindSails.BoatConfiguration.Boats;
 using MoreSailwindSails.Controls;
-using MoreSailwindSails.Controls.Configuration;
+using MoreSailwindSails.Controls.Runtime;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
@@ -40,23 +39,13 @@ namespace MoreSailwindSails.Stays.FishermansStay
             }
         }
         private Mast source => references.Donor;
-        private Transform visual,
-            walkVisual;
-        private float visualMin,
-            visualMax,
-            walkMin,
-            walkMax;
-        private FishermansStayAttachmentVisual attachmentVisual,
-            attachmentWalk;
-        private FishermansStaySparSurface foreSurface,
-            aftSurface;
-        private readonly List<Mesh> ownedMeshes = new List<Mesh>();
+        private FishermansStayVisual visual;
+        private FishermansStayControls controlRig;
         private bool warned;
         private bool fits;
         private readonly List<Tuple<Transform, Transform>> anchors =
             new List<Tuple<Transform, Transform>>();
-        private readonly List<FishermanWinchControls.OwnedWinch> controls =
-            new List<FishermanWinchControls.OwnedWinch>();
+        private readonly List<OwnedWinch> controls = new List<OwnedWinch>();
 
         internal FishermansStay(BoatRefs boat, FishermansStayReferences[] configurations)
         {
@@ -67,7 +56,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 ?? configurations[0];
         }
 
-        internal void Create()
+        internal void Create(Mesh ropeMesh, Mesh collarMesh)
         {
             var definition = references.Definition;
             // Native hinges use the mount's boat-local position as their anchor.
@@ -89,13 +78,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                 .Where(c => c)
                 .ToArray();
             Mount.startingSailColor = source.startingSailColor;
-            FishermanWinchControls.Configure(
-                boat,
-                Mount.gameObject,
-                references.Fore,
-                references.Aft,
-                Mount
-            );
+            WinchControls.Configure(boat, Mount.gameObject, references.Fore, references.Aft, Mount);
             Mount.leftAngleWinch = CloneWinches(source, WinchRole.Left, "Port sheet");
             Mount.rightAngleWinch = CloneWinches(source, WinchRole.Right, "Starboard sheet");
             // Audited stay donors use paired sheets; centre controls are not pair candidates.
@@ -118,42 +101,24 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     $"Incomplete controls for Fisherman's Stay mount {definition.MountIndex} ({definition.Label}): missing {string.Join(", ", missing)}; sheet mapping={source.orderIndex}, halyard mapping={references.Aft.orderIndex}."
                 );
             }
+            controlRig = new FishermansStayControls(stay: this, boat: boat);
+            WinchControls.Register(boat: boat, owner: Mount.gameObject, consumer: controlRig);
             Mount.midRopeAtt = CloneAnchors(source.midRopeAtt, "Sheet attachment");
             Mount.mastReefAtt = CloneAnchors(new[] { references.Guide }, "Halyard guide");
             Mount.mastReefAttExtension = CloneAnchors(
                 new[] { references.Guide },
                 "Halyard upper guide"
             );
-            visual = CopyGeometry(source.transform, root.transform, true);
-            GeometryRange(visual, out visualMin, out visualMax);
-            WalkObject = NewInactive(root.name + " Walk", boat.walkCol);
-            walkVisual = CopyGeometry(source.walkColMast, WalkObject.transform);
-            GeometryRange(walkVisual, out walkMin, out walkMax);
+            // Native sail fitting needs a walking frame, not stay collision surfaces.
+            WalkObject = NewInactive(name: root.name + " Walk", parent: boat.walkCol);
             Mount.walkColMast = WalkObject.transform;
-            var profile = BoatCatalog.Find(boat.name);
-            if (profile == Sanbuq.Definition || profile == LargeDhow.Definition)
-            {
-                foreSurface = FishermansStayAttachmentVisual.Surface(
-                    mast: references.Fore,
-                    profile: profile
-                );
-                aftSurface = FishermansStayAttachmentVisual.Surface(
-                    mast: references.Aft,
-                    profile: profile
-                );
-                attachmentVisual = new FishermansStayAttachmentVisual(
-                    geometry: visual,
-                    combined: profile == LargeDhow.Definition,
-                    collarTemplate: source.transform,
-                    owned: ownedMeshes
-                );
-                attachmentWalk = new FishermansStayAttachmentVisual(
-                    geometry: walkVisual,
-                    combined: profile == LargeDhow.Definition,
-                    collarTemplate: source.transform,
-                    owned: ownedMeshes
-                );
-            }
+            visual = new FishermansStayVisual(
+                owner: root.transform,
+                ropeMaterial: source.GetComponent<MeshRenderer>().sharedMaterial,
+                visualLayer: source.gameObject.layer,
+                ropeMesh: ropeMesh,
+                collarMesh: collarMesh
+            );
             var original = source.GetComponent<BoatPartOption>();
             Option = root.AddComponent<BoatPartOption>();
             Option.optionName = DisplayName + " (" + definition.Label + ")";
@@ -195,7 +160,7 @@ namespace MoreSailwindSails.Stays.FishermansStay
                     var next = fitted[0];
                     if (next != references)
                     {
-                        FishermanWinchControls.Configure(
+                        WinchControls.Configure(
                             boat: boat,
                             owner: Mount.gameObject,
                             forward: next.Fore,
@@ -211,18 +176,6 @@ namespace MoreSailwindSails.Stays.FishermansStay
                         for (int i = 0; i < anchors.Count; i++)
                             if (anchors[i].Item1 == references.Guide)
                                 anchors[i] = Tuple.Create(next.Guide, anchors[i].Item2);
-                        if (attachmentVisual != null)
-                        {
-                            var profile = BoatCatalog.Find(boatName: boat.name);
-                            foreSurface = FishermansStayAttachmentVisual.Surface(
-                                mast: next.Fore,
-                                profile: profile
-                            );
-                            aftSurface = FishermansStayAttachmentVisual.Surface(
-                                mast: next.Aft,
-                                profile: profile
-                            );
-                        }
                         references = next;
                     }
                 }
@@ -250,49 +203,19 @@ namespace MoreSailwindSails.Stays.FishermansStay
             var forward = (aft - fore) / span;
             var rotation = Quaternion.LookRotation(
                 forward,
-                FishermansStayGeometry.FrameUp(source.transform.up, forward)
+                FishermansStayGeometry.FrameUp(up: boat.transform.up, forward: forward)
             );
             bool moved = Mount.transform.position != aft || Mount.transform.rotation != rotation;
             Mount.transform.SetPositionAndRotation(aft, rotation);
             Mount.transform.localScale = Vector3.one;
             Mount.mastHeight = span;
-            if (attachmentVisual == null)
-                FitGeometry(visual, visualMin, visualMax, span);
-            // Convert through the donor's matching visual/walking frames; the
-            // walking boat has its own origin and rotation.
-            WalkObject.transform.SetPositionAndRotation(
-                source.walkColMast.TransformPoint(source.transform.InverseTransformPoint(aft)),
-                source.walkColMast.rotation
-                    * Quaternion.Inverse(source.transform.rotation)
-                    * rotation
-            );
-            WalkObject.transform.localScale = Vector3.one;
-            if (attachmentWalk == null)
-                FitGeometry(walkVisual, walkMin, walkMax, span);
-            else
-            {
-                var toVisual = Mount.transform.worldToLocalMatrix;
-                var toWalk =
-                    WalkObject.transform.worldToLocalMatrix
-                    * source.walkColMast.localToWorldMatrix
-                    * source.transform.worldToLocalMatrix;
-                attachmentVisual.Place(
-                    foreToOwner: toVisual * references.Fore.transform.localToWorldMatrix,
-                    aftToOwner: toVisual * references.Aft.transform.localToWorldMatrix,
-                    foreSurface: foreSurface,
-                    aftSurface: aftSurface,
-                    forePoint: definition.ForePoint,
-                    aftPoint: definition.AftPoint
-                );
-                attachmentWalk.Place(
-                    foreToOwner: toWalk * references.Fore.transform.localToWorldMatrix,
-                    aftToOwner: toWalk * references.Aft.transform.localToWorldMatrix,
-                    foreSurface: foreSurface,
-                    aftSurface: aftSurface,
-                    forePoint: definition.ForePoint,
-                    aftPoint: definition.AftPoint
-                );
-            }
+            // The sail checker's walking frame mirrors the boat model, whose import frame
+            // can differ from the rigidbody root (including a 90-degree rotation).
+            var toWalk = boat.boatModel.worldToLocalMatrix * Mount.transform.localToWorldMatrix;
+            WalkObject.transform.localPosition = toWalk.MultiplyPoint3x4(Vector3.zero);
+            WalkObject.transform.localRotation = toWalk.rotation;
+            WalkObject.transform.localScale = toWalk.lossyScale;
+            visual.Place(references: references, span: span);
             foreach (var pair in anchors)
                 pair.Item2.SetPositionAndRotation(
                     pair.Item1 == references.Guide ? HalyardPoint : pair.Item1.position,
@@ -303,49 +226,10 @@ namespace MoreSailwindSails.Stays.FishermansStay
             fits = true;
         }
 
-        private static void FitGeometry(Transform geometry, float min, float max, float span)
-        {
-            FishermansStayGeometry.FitAxis(min, max, span, out float scale, out float offset);
-            geometry.localScale = new Vector3(1, 1, scale);
-            geometry.localPosition = new Vector3(0, 0, offset);
-        }
-
-        private static void GeometryRange(Transform root, out float min, out float max)
-        {
-            min = float.PositiveInfinity;
-            max = float.NegativeInfinity;
-            var meshes = root.GetComponentsInChildren<MeshFilter>(true)
-                .Select(f => Tuple.Create(f.transform, f.sharedMesh))
-                .Concat(
-                    root.GetComponentsInChildren<MeshCollider>(true)
-                        .Select(c => Tuple.Create(c.transform, c.sharedMesh))
-                );
-            foreach (var item in meshes)
-            {
-                if (!item.Item2)
-                    continue;
-                var bounds = item.Item2.bounds;
-                // The walking representation may contain only MeshColliders.
-                // Evaluate both representations in their own unscaled frames.
-                for (int x = -1; x <= 1; x += 2)
-                for (int y = -1; y <= 1; y += 2)
-                for (int z = -1; z <= 1; z += 2)
-                {
-                    var corner =
-                        bounds.center + Vector3.Scale(bounds.extents, new Vector3(x, y, z));
-                    float along = root.InverseTransformPoint(item.Item1.TransformPoint(corner)).z;
-                    min = Math.Min(min, along);
-                    max = Math.Max(max, along);
-                }
-            }
-            if (float.IsInfinity(min) || float.IsInfinity(max) || max - min < 0.25f)
-                throw new InvalidOperationException(
-                    "The donor has no usable static stay geometry."
-                );
-        }
-
         internal void Destroy()
         {
+            if (Mount && controlRig != null)
+                WinchControls.Unregister(boat: boat, owner: Mount.gameObject, consumer: controlRig);
             foreach (var control in controls)
                 control.Dispose();
             controls.Clear();
@@ -356,15 +240,11 @@ namespace MoreSailwindSails.Stays.FishermansStay
             }
             if (WalkObject)
                 Object.Destroy(WalkObject);
-            foreach (var mesh in ownedMeshes)
-                if (mesh)
-                    Object.Destroy(mesh);
-            ownedMeshes.Clear();
         }
 
         private GPButtonRopeWinch[] CloneWinches(Mast donor, WinchRole role, string label)
         {
-            var control = FishermanWinchControls.Create(
+            var control = WinchControls.Create(
                 boat,
                 Mount.gameObject,
                 Mount.transform,
@@ -385,97 +265,6 @@ namespace MoreSailwindSails.Stays.FishermansStay
             clone.SetPositionAndRotation(sources[0].position, sources[0].rotation);
             anchors.Add(Tuple.Create(sources[0], clone));
             return new[] { clone };
-        }
-
-        // Copy static geometry only. Instantiating a fitted Mast would also copy
-        // live sails, script state, and references to the original winches.
-        private static Transform CopyGeometry(
-            Transform source,
-            Transform parent,
-            bool mastVisual = false
-        )
-        {
-            var root = new GameObject("FishermansStay geometry").transform;
-            root.SetParent(parent, false);
-            var nodes = new Dictionary<Transform, Transform> { [source] = root };
-            foreach (var old in source.GetComponentsInChildren<Transform>(true))
-            {
-                if (
-                    old != source
-                    && (
-                        old.GetComponentInParent<Sail>()
-                        || old.GetComponentInParent<GPButtonRopeWinch>()
-                    )
-                )
-                    continue;
-                if (!nodes.TryGetValue(old, out var node))
-                {
-                    if (!nodes.TryGetValue(old.parent, out var parentNode))
-                        continue;
-                    node = new GameObject(old.name).transform;
-                    node.SetParent(parentNode, false);
-                    node.localPosition = old.localPosition;
-                    node.localRotation = old.localRotation;
-                    node.localScale = old.localScale;
-                    node.gameObject.SetActive(old.gameObject.activeSelf);
-                    nodes.Add(old, node);
-                }
-                node.gameObject.layer = old.gameObject.layer;
-                var filter = old.GetComponent<MeshFilter>();
-                var renderer = old.GetComponent<MeshRenderer>();
-                if (filter && renderer)
-                {
-                    node.gameObject.AddComponent<MeshFilter>().sharedMesh = filter.sharedMesh;
-                    var copy = node.gameObject.AddComponent<MeshRenderer>();
-                    copy.sharedMaterials = renderer.sharedMaterials;
-                    copy.shadowCastingMode = renderer.shadowCastingMode;
-                    copy.receiveShadows = renderer.receiveShadows;
-                }
-                foreach (var collider in old.GetComponents<Collider>())
-                {
-                    Collider copy;
-                    if (collider is CapsuleCollider capsule)
-                    {
-                        var c = node.gameObject.AddComponent<CapsuleCollider>();
-                        c.center = capsule.center;
-                        c.radius = capsule.radius;
-                        c.height = capsule.height;
-                        c.direction = capsule.direction;
-                        copy = c;
-                    }
-                    else if (collider is BoxCollider box)
-                    {
-                        var c = node.gameObject.AddComponent<BoxCollider>();
-                        c.center = box.center;
-                        c.size = box.size;
-                        copy = c;
-                    }
-                    else if (collider is MeshCollider mesh)
-                    {
-                        var c = node.gameObject.AddComponent<MeshCollider>();
-                        c.sharedMesh = mesh.sharedMesh;
-                        c.convex = mesh.convex;
-                        copy = c;
-                    }
-                    else if (collider is SphereCollider sphere)
-                    {
-                        var c = node.gameObject.AddComponent<SphereCollider>();
-                        c.center = sphere.center;
-                        c.radius = sphere.radius;
-                        copy = c;
-                    }
-                    else
-                        throw new InvalidOperationException(
-                            $"Unsupported stay collider: {collider.GetType().Name}."
-                        );
-                    copy.sharedMaterial = collider.sharedMaterial;
-                    // Mast.Awake normally makes the source's root collider a
-                    // trigger. Our visual is a child of the new mount instead.
-                    copy.isTrigger = collider.isTrigger || (mastVisual && old == source);
-                    copy.enabled = collider.enabled;
-                }
-            }
-            return root;
         }
 
         internal static GameObject NewInactive(string name, Transform parent)

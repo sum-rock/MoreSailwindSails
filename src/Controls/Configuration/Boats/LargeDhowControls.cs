@@ -1,97 +1,162 @@
-// Owns LargeDhow's authored shared winch sources and fallback placements.
+// Owns LargeDhow's mirrored sheet pairs and generated per-mast halyard fallbacks.
+using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration.Boats
 {
+    // Supplies boat-local sheet pairs and halyard seats using native winch templates.
     internal static class LargeDhowControls
     {
         internal static readonly BoatControlDefinition Definition = new BoatControlDefinition(
             boat: BoatConfiguration.Boats.LargeDhow.Definition,
-            sheetCategories: SheetCategories(),
-            halyardGroups: HalyardGroups()
-        );
-
-        // Installed rig identities and support audit: Controls/HalyardMounts.txt.
-        private static HalyardWinchGroup[] HalyardGroups() =>
-            new[]
+            sheetFallbacks: new[]
             {
-                // Foremast 1; stay reef seat parented to mast_fore_0.
-                new HalyardWinchGroup(mast: 0, sources: new[] { 0, 10 }),
-                // Foremast 2; stay reef seat parented to mast_fore_1__raked_.
-                new HalyardWinchGroup(mast: 1, sources: new[] { 1, 11 }),
-                // Mainmast 1 and topmast; stay seats parented to mast_main_0.
-                new HalyardWinchGroup(
+                new SheetFallbackDefinition(
+                    name: "Forward",
+                    fallback: new SheetFallbackPair(
+                        // Sailwind 0.39.2: rope_winch_mainmast_left; inspected 2026-10-21.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 2,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.02611743f, 0.99965459f, 0.00292804f),
+                        offset: 0.0656615883f,
+                        // F9 #5/#6, 2026-10-21; average |X|, Y/Z and reflected normals.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.883722f, 2.3646805f, 4.1063835f),
+                            normal: new Vector3(0f, 0.999836f, -0.018138f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.883722f, 2.3646805f, 4.1063835f),
+                            normal: new Vector3(0f, 0.999836f, -0.018138f)
+                        )
+                    )
+                ),
+                new SheetFallbackDefinition(
+                    name: "Midships",
+                    fallback: new SheetFallbackPair(
+                        // Sailwind 0.39.2: rope_winch_mainmast_left; inspected 2026-10-21.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 2,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.02611743f, 0.99965459f, 0.00292804f),
+                        offset: 0.0656615883f,
+                        // F9 #1/#2, 2026-10-21; average |X|, Y/Z and reflected normals.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.801323f, 3.398578f, -4.322167f),
+                            normal: new Vector3(1f, 0f, 0f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.801323f, 3.398578f, -4.322167f),
+                            normal: new Vector3(-1f, 0f, 0f)
+                        )
+                    )
+                ),
+                new SheetFallbackDefinition(
+                    name: "Stern",
+                    fallback: new SheetFallbackPair(
+                        // Sailwind 0.39.2: rope_winch_mainmast_left; inspected 2026-10-21.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 2,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.02611743f, 0.99965459f, 0.00292804f),
+                        offset: 0.0656615883f,
+                        // F9 #4/#3, 2026-10-21; average |X|, Y/Z and reflected normals.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.341618f, 3.614473f, -12.769225f),
+                            normal: new Vector3(0.80062f, 0.0833285f, 0.4772535f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.341618f, 3.614473f, -12.769225f),
+                            normal: new Vector3(-0.80062f, 0.0833285f, 0.4772535f)
+                        )
+                    )
+                ),
+            },
+            halyardFallbacks: new[]
+            {
+                // Generated by mss generate-fallback-halyards baghala.
+                // Sailwind_Data/level24 sha256=dc76290ed188bf4f017489428c2b610dbe0f98628debe9ce7e5253ff0d8e0974
+                // BepInEx/plugins/ShipyardExpansion/shipyard_expansion.assets sha256=6894f7ca439b489c82a1b2f3d0c0c7f5821b9d08342b736e3c525dde0e64dbab
+                // LargeDhow mast 0; template level24:177686; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 0,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.210124969f, 5.09331799f, 13.2914867f),
+                        normal: new Vector3(-0.83142817f, 0.010194174f, -0.555538774f),
+                        sourceNormal: new Vector3(-0.747496188f, 2.02869501e-06f, -0.664266109f),
+                        offset: 0.076634407f,
+                        templateIndex: 0
+                    )
+                ),
+                // LargeDhow mast 1; template level24:177711; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 1,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.235268369f, 4.84983158f, 13.5401306f),
+                        normal: new Vector3(-0.981473684f, -0.0233128984f, 0.190173358f),
+                        sourceNormal: new Vector3(-0.747496665f, 0.115348093f, -0.65417397f),
+                        offset: 0.0776344389f,
+                        templateIndex: 0
+                    )
+                ),
+                // LargeDhow mast 2; template level24:174987; clearance 0.01 m
+                new HalyardFallbackDefinition(
                     mast: 2,
-                    sources: new[] { 2, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25 }
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.265378296f, 4.09293032f, 2.79479146f),
+                        normal: new Vector3(-0.831423879f, 0.0101678325f, -0.555545628f),
+                        sourceNormal: new Vector3(-0.747495592f, 9.4162047e-08f, -0.664266765f),
+                        offset: 0.0842978805f,
+                        templateIndex: 0
+                    )
                 ),
-                new HalyardWinchGroup(
-                    mast: 3,
-                    sources: new[] { 3, 12, 13, 14, 15, 20, 21, 22, 23, 24, 25 }
-                ),
-                // Mainmast 2 and topmast; stay seats parented to mast_main_1.
-                new HalyardWinchGroup(
+                // LargeDhow mast 4; template level24:177083; clearance 0.01 m
+                new HalyardFallbackDefinition(
                     mast: 4,
-                    sources: new[] { 4, 16, 17, 18, 19, 26, 27, 28, 29, 30, 31 }
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.265376329f, 4.09293032f, 5.76140356f),
+                        normal: new Vector3(-0.83142674f, 0.0101678055f, -0.555541337f),
+                        sourceNormal: new Vector3(-0.747495592f, 9.4162047e-08f, -0.664266765f),
+                        offset: 0.084297955f,
+                        templateIndex: 0
+                    )
                 ),
-                new HalyardWinchGroup(
-                    mast: 5,
-                    sources: new[] { 5, 16, 17, 18, 19, 26, 27, 28, 29, 30, 31 }
+                // LargeDhow mast 6; template level24:176922; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 6,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.264004678f, 4.76981258f, -7.70243549f),
+                        normal: new Vector3(-0.980751812f, 0.00570647651f, 0.195175052f),
+                        sourceNormal: new Vector3(-0.747496843f, 1.01405806e-06f, -0.664265394f),
+                        offset: 0.0766344294f,
+                        templateIndex: 0
+                    )
                 ),
-                // Mizzenmast 1; stay seat parented to mast_mizzen_0.
-                new HalyardWinchGroup(mast: 6, sources: new[] { 6, 32, 33, 34, 35 }),
-                // Mizzenmast 2; stay seat parented to mast_mizzen_1__raked.
-                new HalyardWinchGroup(mast: 7, sources: new[] { 7, 36, 37, 38, 39 }),
-                // Mizzenmast 3; stay seat parented to mast_mizzen_2.
-                new HalyardWinchGroup(mast: 8, sources: new[] { 8, 40, 41, 42, 43 }),
-            };
-
-        // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
-        private static SheetWinchCategory[] SheetCategories() =>
-            new[]
-            {
-                new SheetWinchCategory(
-                    name: "Foremast",
-                    physicalMasts: new[] { 0, 1 },
-                    sources: new[] { 0, 1, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 10, 11 },
-                    fallback: null
+                // LargeDhow mast 7; template level24:177078; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 7,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.219898894f, 4.32363176f, -7.96154022f),
+                        normal: new Vector3(-0.831332028f, 0.0650455728f, 0.551956594f),
+                        sourceNormal: new Vector3(-0.747494996f, -0.0709641054f, -0.660466015f),
+                        offset: 0.0766345933f,
+                        templateIndex: 0
+                    )
                 ),
-                new SheetWinchCategory(
-                    name: "Mainmast",
-                    physicalMasts: new[] { 2, 4 },
-                    sources: new[]
-                    {
-                        2,
-                        4,
-                        3,
-                        5,
-                        32,
-                        33,
-                        34,
-                        35,
-                        36,
-                        37,
-                        38,
-                        39,
-                        40,
-                        41,
-                        42,
-                        43,
-                        12,
-                        13,
-                        14,
-                        15,
-                        16,
-                        17,
-                        18,
-                        19,
-                    },
-                    fallback: null
+                // LargeDhow mast 8; template level24:177838; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 8,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.266007453f, 4.74780273f, -4.42927122f),
+                        normal: new Vector3(-0.980751216f, 0.00570647232f, -0.195177957f),
+                        sourceNormal: new Vector3(-0.747496128f, -1.13145927e-06f, -0.664266109f),
+                        offset: 0.0766344666f,
+                        templateIndex: 0
+                    )
                 ),
-                new SheetWinchCategory(
-                    name: "Mizzenmast",
-                    physicalMasts: new[] { 6, 7, 8 },
-                    sources: new[] { 6, 7, 8 },
-                    fallback: null
-                ),
-            };
+            }
+        );
     }
 }

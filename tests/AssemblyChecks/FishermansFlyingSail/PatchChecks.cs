@@ -172,7 +172,7 @@ internal static class PatchChecks
             "PASS (IL): fixed luff tie callbacks only draw/hide endpoints; no cloth, hinge or skin-orientation mutation. Unity rope rendering remains a runtime check."
         );
 
-        Shared.ControlRestorationChecks.Run(
+        Shared.NativeControlBindingChecks.Run(
             assembly,
             "MoreSailwindSails.Sails.FishermansFlyingSail.Patches.FishermansFlyingSailControlsPatch",
             "Flying Sail"

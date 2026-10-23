@@ -53,6 +53,49 @@ internal static class PatchChecks
             )
         )
             throw new Exception("Mk.A must resolve exact registered stays.");
+        if (
+            resolve.Any(m => m.DeclaringType.Namespace == "MoreSailwindSails.BoatConfiguration")
+            || !resolve.Any(m =>
+                m.DeclaringType.Name == "FishermansStay" && m.Name == "get_Available"
+            )
+            || !CalledMethods(Method("FishermansStaysailRigging+MountPair", "get_Active"))
+                .Any(m => m.DeclaringType.Name == "FishermansStay" && m.Name == "get_Available")
+        )
+            throw new Exception(
+                "Staysail binding must use stay availability without ancestry lookup."
+            );
+        var dependsOn = Method("FishermansStaysailRigging", "DependsOn");
+        var dependencyFields = Instructions(dependsOn)
+            .Select(i => i.Operand)
+            .OfType<FieldInfo>()
+            .ToArray();
+        if (
+            !dependencyFields.Any(f =>
+                f.DeclaringType.Name == "FishermansStayReferences" && f.Name == "Required"
+            )
+            || !dependencyFields.Any(f =>
+                f.DeclaringType.Name == "FishermansStay" && f.Name == "Option"
+            )
+            || !dependencyFields.Any(f =>
+                f.DeclaringType.Name == "BoatPartOption" && f.Name == "childMast"
+            )
+        )
+            throw new Exception(
+                "Staysail dependencies must retain the stay, prerequisites and child-mast aliases."
+            );
+        foreach (string patch in new[] { "SupportRemoval", "SupportPreview" })
+        {
+            var patchType = Type("Patches.FishermansStaysail" + patch + "Patch");
+            var methods = patchType
+                .GetMethods(all | BindingFlags.DeclaredOnly)
+                .Concat(
+                    patchType
+                        .GetNestedTypes(all)
+                        .SelectMany(t => t.GetMethods(all | BindingFlags.DeclaredOnly))
+                );
+            if (!methods.SelectMany(CalledMethods).Any(m => m == dependsOn))
+                throw new Exception("Staysail support guard lost dependency checking: " + patch);
+        }
         foreach (string patch in new[] { "InstallError", "Fit" })
             if (
                 !CalledMethods(Patch(patch))
@@ -70,7 +113,7 @@ internal static class PatchChecks
             throw new Exception("Native installation bypasses the custom staysail fit check.");
         if (assembly.GetType(family + "Patches.FishermansStaysailInstallGuardPatch") != null)
             throw new Exception("The redundant staysail installation guard returned.");
-        Shared.ControlRestorationChecks.Run(
+        Shared.NativeControlBindingChecks.Run(
             assembly,
             family + "Patches.FishermansStaysailControlsPatch",
             "Staysail family (Mk.A/Mk.B/Mk.C)"
@@ -202,7 +245,7 @@ internal static class PatchChecks
                 "Aft halyard route must refresh its controls and use the aft mast axis."
             );
         Console.WriteLine(
-            "PASS: Mk.A prefab identity, stay membership, fit guards, animation sampling, native bundle, control finalizer and fixed-mesh lifecycle."
+            "PASS: Mk.A prefab identity, stay membership, fit guards, animation sampling, native bundle, native control binding and fixed-mesh lifecycle."
         );
     }
 }

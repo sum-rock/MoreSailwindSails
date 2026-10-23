@@ -1,4 +1,4 @@
-// Owns one boat's ordered Flying Sail support pairs and donor selection.
+// Owns one boat's ordered Flying Sail support pairs.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,11 +18,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Configuration
         )
         {
             var supportsCopy = (supports ?? Array.Empty<MastSupportDefinition>()).ToArray();
-            if (
-                supportsCopy.Select(s => s.SheetControlSource).Distinct().Count()
-                != supportsCopy.Length
-            )
-                throw new ArgumentException("Duplicate mast-pair control source.");
             Boat = boat;
             Supports = Array.AsReadOnly(supportsCopy);
         }

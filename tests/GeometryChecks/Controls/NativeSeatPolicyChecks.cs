@@ -6,6 +6,8 @@ using System.Linq;
 using MoreSailwindSails.Controls;
 using MoreSailwindSails.Controls.Configuration;
 using MoreSailwindSails.Controls.Configuration.Boats;
+using MoreSailwindSails.Controls.Discovery;
+using MoreSailwindSails.Controls.Placement;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;
@@ -29,40 +31,6 @@ internal static class NativeSeatPolicyChecks
             !NativeSheetPairing.Indices(left, null, o => o != null, _ => { }).Any(),
             "Missing right array produced a partial pair."
         );
-        var laterLeft = new object();
-        var laterRight = new object();
-        object[] Bootstrap(object[] manual = null) =>
-            WinchBootstrapPolicy.Sheets(
-                sources: new[] { 0, 1 },
-                port: id => id == 0 ? left : new[] { laterLeft },
-                starboard: id => id == 0 ? null : new[] { laterRight },
-                usable: o => o != null,
-                fallback: () => manual
-            );
-        Check(
-            Bootstrap().SequenceEqual(new[] { laterLeft, laterRight }),
-            "Missing original donor blocked a complete later template pair."
-        );
-        var manualPair = new[] { new object(), new object() };
-        object[] FallbackBootstrap(object[] manual) =>
-            WinchBootstrapPolicy.Sheets<object>(
-                sources: new[] { 0 },
-                port: _ => left,
-                starboard: _ => null,
-                usable: o => o != null,
-                fallback: () => manual
-            );
-        Check(
-            FallbackBootstrap(manualPair).SequenceEqual(manualPair),
-            "Fallback templates cannot bootstrap."
-        );
-        Check(
-            FallbackBootstrap(null) == null
-                && FallbackBootstrap(new[] { new object(), null }) == null,
-            "Unavailable templates produced partial controls."
-        );
-        CogHalyard(mast: 8);
-        CogHalyard(mast: 57);
         GlorianaHalyardChecks.Run();
         var ledger = new WinchReservations();
         var owner = new object();
@@ -221,135 +189,37 @@ internal static class NativeSeatPolicyChecks
             "Another sail reused the same fallback seats."
         );
         var invalidSeat = new SheetFallbackSeat(
-            new Vector3(float.NaN, 0, 0),
-            Vector3.up,
-            Vector3.up,
-            0,
-            1,
-            WinchRole.Left,
-            0
+            contact: new Vector3(float.NaN, 0, 0),
+            normal: Vector3.up
         );
         Check(
-            new SheetFallbackPair(invalidSeat, null).InvalidSide == "port",
+            new SheetFallbackPair(
+                templateMast: 5,
+                templateRole: WinchRole.Left,
+                templateIndex: 0,
+                sourceNormal: Vector3.up,
+                offset: 0.044704f,
+                port: invalidSeat,
+                starboard: null
+            ).InvalidSide == "port",
             "Invalid vector accepted."
         );
-        var origin = new SheetFallbackSeat(
-            Vector3.zero,
-            Vector3.up,
-            Vector3.up,
-            0,
-            1,
-            WinchRole.Left,
-            0
-        );
+        var origin = new SheetFallbackSeat(contact: Vector3.zero, normal: Vector3.up);
         Check(
-            origin.Valid && new SheetFallbackPair(origin, null).InvalidSide == "starboard",
+            origin.Valid
+                && new SheetFallbackPair(
+                    templateMast: 5,
+                    templateRole: WinchRole.Left,
+                    templateIndex: 0,
+                    sourceNormal: Vector3.up,
+                    offset: 0.044704f,
+                    port: origin,
+                    starboard: null
+                ).InvalidSide == "starboard",
             "Origin or half-defined fallback mishandled."
         );
         Console.WriteLine(
             "PASS: native-first pairs, stable fallback, native reclaim, support loss, missing-data recovery and asymmetric poses."
-        );
-    }
-
-    // Exercise the Cog's authored order through the production reservation policy.
-    private static void CogHalyard(int mast)
-    {
-        var ledger = new WinchReservations();
-        var owner = new object();
-        var reefSeats = File.ReadAllLines(
-                Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
-            )
-            .Where(line => line.StartsWith("seat|Cog|"))
-            .Select(line => line.Split('|'))
-            .Where(row => row[4] == "reefWinch")
-            .ToLookup(row => int.Parse(row[3]));
-        var sources = CogControls
-            .Definition.HalyardSources(mast: mast)
-            .SelectMany(source => reefSeats[source])
-            .Select(row => new WinchCandidate
-            {
-                Id = "halyard/" + row[6],
-                Supported = true,
-                Vacant = true,
-                Seats = new[]
-                {
-                    new WinchSeat(
-                        identity: row[6],
-                        aliases: null,
-                        // Recorded local poses distinguish these seats and agree for shared references.
-                        position: new Vector3(
-                            x: float.Parse(
-                                s: row[8].Split(',')[0],
-                                provider: CultureInfo.InvariantCulture
-                            ),
-                            y: float.Parse(
-                                s: row[8].Split(',')[1],
-                                provider: CultureInfo.InvariantCulture
-                            ),
-                            z: float.Parse(
-                                s: row[8].Split(',')[2],
-                                provider: CultureInfo.InvariantCulture
-                            )
-                        ),
-                        rotation: Quaternion.identity
-                    ),
-                },
-            })
-            .ToArray();
-        var representatives = new List<WinchCandidate>();
-        foreach (var source in sources)
-            WinchPlacementPolicy.AddSupportedRepresentative(
-                candidates: representatives,
-                candidate: source
-            );
-        var candidates = representatives.ToArray();
-        Check(
-            candidates.Length == 2,
-            "Cog must have one primary and one distinct additional seat."
-        );
-        WinchResolution Resolve(WinchCandidate current = null) =>
-            WinchPlacementPolicy.Resolve(
-                ledger: ledger,
-                owner: owner,
-                current: current,
-                native: candidates
-            );
-        Check(Resolve().Candidate == candidates[0], "Cog did not prefer its own mast seat.");
-        candidates[0].Vacant = false;
-        Check(
-            Resolve(current: candidates[0]).Candidate == candidates[1] && ledger.Count == 1,
-            "Occupied Cog mizzen seat did not yield to its authored additional seat."
-        );
-        foreach (var source in sources.Skip(1))
-            Check(
-                !ledger.TryAcquireSeats(owner: new object(), seats: source.Seats),
-                "Another source rig allowed a duplicate claim on the Cog's shared midstay seat."
-            );
-        candidates[0].Vacant = true;
-        Check(
-            Resolve(current: candidates[1]).Candidate == candidates[1],
-            "Cog's valid additional seat moved when the primary seat became free."
-        );
-        candidates[0].Vacant = false;
-        candidates[1].Vacant = false;
-        Check(
-            Resolve(current: candidates[1]).Candidate == null && ledger.Count == 0,
-            "Native reclaim retained the additional halyard seat."
-        );
-        candidates[1].Vacant = true;
-        candidates[1].Supported = false;
-        Check(Resolve().Candidate == null, "Unmounted additional halyard seat was allocated.");
-        candidates[1].Supported = true;
-        var other = new object();
-        Check(
-            ledger.TryAcquireSeats(owner: other, seats: candidates[1].Seats)
-                && Resolve().Reserved == 1,
-            "Cog additional halyard ignored another owner's reservation."
-        );
-        ledger.Release(owner: other);
-        Check(Resolve().Candidate == candidates[1], "Cog did not recover a freed additional seat.");
-        Console.WriteLine(
-            $"PASS: Cog mast {mast} halyard source priority, shared-seat deduplication, stable additional seat, native reclaim, support loss, reservations and retry recovery."
         );
     }
 

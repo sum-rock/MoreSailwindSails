@@ -54,10 +54,7 @@ internal static class CaelanorChecks
         );
         foreach (var (top, middle, lower) in new[] { (17, 2, 1), (18, 6, 5), (19, 4, 3) })
             Check(
-                boat.Boat.Sections(section: top).SequenceEqual(new[] { top, middle, lower })
-                    && CaelanorControls
-                        .Definition.HalyardSources(mast: top)
-                        .SequenceEqual(new[] { top }),
+                boat.Boat.Sections(section: top).SequenceEqual(new[] { top, middle, lower }),
                 "Caelanor mast ancestry or independent T'gallant reef sources changed."
             );
         foreach (

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using MoreSailwindSails.Utils;
 using UnityEngine;
@@ -10,6 +11,7 @@ internal static class WinchMountOverlayChecks
 {
     internal static void Run()
     {
+        CheckModelPlacement();
         var hiddenBound = WinchMountOverlayGeometry.Classify(
             owned: false,
             visible: false,
@@ -171,7 +173,84 @@ internal static class WinchMountOverlayChecks
             Require(different == 1, "Box edges must connect adjacent corners, not diagonals.");
         }
         Console.WriteLine(
-            "PASS: winch overlay occupancy precedence, hidden clone exclusion, coincident grouping, moving supports, mesh edges and bounds fallback. Camera rendering remains an in-game check."
+            "PASS: winch overlay model scale/placement, duplicate suppression, occupancy precedence, hidden clone exclusion, coincident grouping, moving supports, mesh edges and bounds fallback. Camera rendering remains an in-game check."
+        );
+    }
+
+    private static void CheckModelPlacement()
+    {
+        // Mount rotated 90 degrees about Y and translated; explicit matrices avoid native TRS.
+        var mount = new Matrix4x4
+        {
+            m02 = 1f,
+            m03 = 10f,
+            m11 = 1f,
+            m13 = 20f,
+            m20 = -1f,
+            m23 = 30f,
+            m33 = 1f,
+        };
+        var child = Matrix4x4.identity;
+        child.m03 = 1f;
+        child.m13 = 2f;
+        child.m23 = 3f;
+        var placed = WinchMountOverlayGeometry.PreviewMatrix(
+            mount: mount,
+            scale: new Vector3(2f, 3f, 4f),
+            meshToControl: child
+        );
+        Require(
+            (
+                placed.MultiplyPoint3x4(new Vector3(2f, 1f, -1f)) - new Vector3(18f, 29f, 24f)
+            ).sqrMagnitude < 0.000001f,
+            "Fallback model must retain child offsets, native nonuniform scale and mounting rotation."
+        );
+        var root = WinchMountOverlayGeometry.PreviewMatrix(
+            mount: mount,
+            scale: new Vector3(2f, 3f, 4f),
+            meshToControl: Matrix4x4.identity
+        );
+        Require(
+            (root.MultiplyPoint3x4(Vector3.zero) - new Vector3(10f, 20f, 30f)).sqrMagnitude
+                < 0.000001f,
+            "Donor scale must not scale the fallback's world position."
+        );
+        mount.m03 += 7f;
+        var moved = WinchMountOverlayGeometry.PreviewMatrix(
+            mount: mount,
+            scale: new Vector3(2f, 3f, 4f),
+            meshToControl: child
+        );
+        Require(
+            (
+                moved.MultiplyPoint3x4(Vector3.zero)
+                - placed.MultiplyPoint3x4(Vector3.zero)
+                - new Vector3(7f, 0f, 0f)
+            ).sqrMagnitude < 0.000001f,
+            "Preview must follow boat movement without scaling its displacement."
+        );
+        var visible = new List<Vector3> { new Vector3(1f, 2f, 3f) };
+        Require(
+            WinchMountOverlayGeometry.ContainsPosition(
+                positions: visible,
+                position: new Vector3(1.0005f, 2f, 3f)
+            ),
+            "A visible real winch or earlier preview must suppress a coincident model."
+        );
+        Require(
+            !WinchMountOverlayGeometry.ContainsPosition(
+                positions: visible,
+                position: new Vector3(1.002f, 2f, 3f)
+            ),
+            "Distinct preview positions must not be suppressed."
+        );
+        visible.Clear();
+        Require(
+            !WinchMountOverlayGeometry.ContainsPosition(
+                positions: visible,
+                position: new Vector3(1f, 2f, 3f)
+            ),
+            "Hiding a real winch must allow its preview on the next frame."
         );
     }
 

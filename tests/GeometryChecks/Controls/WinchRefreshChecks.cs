@@ -1,5 +1,7 @@
 using System;
 using MoreSailwindSails.Controls;
+using MoreSailwindSails.Controls.Discovery;
+using MoreSailwindSails.Controls.Placement;
 using UnityEngine;
 
 namespace MoreSailwindSails.Tests.GeometryChecks.Controls;

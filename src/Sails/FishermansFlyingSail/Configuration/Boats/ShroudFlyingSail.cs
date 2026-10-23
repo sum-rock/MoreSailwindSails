@@ -12,11 +12,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Configuration.Boats
         private static MastSupportDefinition[] Supports() =>
             new[]
             {
-                new MastSupportDefinition(
-                    sheetControlSource: 25,
-                    foreSections: new[] { 7 },
-                    aftSections: new[] { 9 }
-                ),
+                new MastSupportDefinition(foreSections: new[] { 7 }, aftSections: new[] { 9 }),
             };
     }
 }

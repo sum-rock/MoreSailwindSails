@@ -8,16 +8,8 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail.Configuration.Boats
             boat: BoatConfiguration.Boats.Gloriana.Definition,
             supports: new[]
             {
-                new MastSupportDefinition(
-                    sheetControlSource: 5,
-                    foreSections: new[] { 1 },
-                    aftSections: new[] { 2 }
-                ),
-                new MastSupportDefinition(
-                    sheetControlSource: 6,
-                    foreSections: new[] { 2 },
-                    aftSections: new[] { 4, 3 }
-                ),
+                new MastSupportDefinition(foreSections: new[] { 1 }, aftSections: new[] { 2 }),
+                new MastSupportDefinition(foreSections: new[] { 2 }, aftSections: new[] { 4, 3 }),
             }
         );
     }

@@ -3,3 +3,11 @@ obj/
 result
 result-*
 __pycache__/
+.venv/
+.pytest_cache/
+*.egg-info/
+build/
+
+# Blender backup saves; keep the authored .blend files.
+*.blend[0-9]*
+*.blend.*

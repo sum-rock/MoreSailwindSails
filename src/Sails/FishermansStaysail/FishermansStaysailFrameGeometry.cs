@@ -1,3 +1,4 @@
+// Supplies neutral fitting geometry and mast-relative transformations for staysails.
 using System;
 using UnityEngine;
 

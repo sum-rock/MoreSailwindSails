@@ -1,122 +1,152 @@
-// Owns Brig's authored shared winch sources and fallback placements.
+// Owns Brig's generated reef seats and hull/stern sheet fallback pairs.
+using UnityEngine;
 
 namespace MoreSailwindSails.Controls.Configuration.Boats
 {
+    // Supplies boat-local sheet pairs and per-mast halyard fallback placements.
     internal static class BrigControls
     {
         internal static readonly BoatControlDefinition Definition = new BoatControlDefinition(
             boat: BoatConfiguration.Boats.Brig.Definition,
-            sheetCategories: SheetCategories(),
-            halyardGroups: HalyardGroups()
-        );
-
-        // Installed rig identities and support audit: Controls/HalyardMounts.txt.
-        private static HalyardWinchGroup[] HalyardGroups() =>
-            new[]
+            sheetFallbacks: new[]
             {
-                // Foremast 1; F0 jib seats and matching topmast stays.
-                new HalyardWinchGroup(mast: 3, sources: new[] { 3, 8, 9, 10, 11, 68, 72, 75, 77 }),
-                new HalyardWinchGroup(
-                    mast: 55,
-                    sources: new[] { 55, 8, 9, 10, 11, 68, 72, 75, 77 }
-                ),
-                // Foremast 2; F1 jib seats; excludes unregistered duplicate 74.
-                new HalyardWinchGroup(mast: 2, sources: new[] { 2, 12, 13, 26, 69, 76, 78 }),
-                new HalyardWinchGroup(mast: 57, sources: new[] { 57, 12, 13, 26, 69, 76, 78 }),
-                // Mainmast 1; B0 stays and matching topmast stays.
-                new HalyardWinchGroup(mast: 5, sources: new[] { 5, 14, 15, 17, 18, 61, 63 }),
-                new HalyardWinchGroup(mast: 56, sources: new[] { 56, 14, 15, 17, 18, 61, 63 }),
-                // Mainmast 2; B1 stays; registered 70 has B1 reef seats.
-                new HalyardWinchGroup(
-                    mast: 4,
-                    sources: new[] { 4, 16, 19, 20, 25, 51, 52, 62, 64, 70, 71, 73 }
-                ),
-                new HalyardWinchGroup(
-                    mast: 58,
-                    sources: new[] { 58, 16, 19, 20, 25, 51, 52, 62, 64, 70, 71, 73 }
-                ),
-                // Mizzenmast 1; mizzen0 jib and topmast stay seats.
-                new HalyardWinchGroup(mast: 7, sources: new[] { 7, 21, 22, 65 }),
-                new HalyardWinchGroup(mast: 59, sources: new[] { 59, 21, 22, 65 }),
-                // Mizzenmast 2; mizzen1 jib and topmast stay seats.
-                new HalyardWinchGroup(mast: 6, sources: new[] { 6, 23, 24, 66 }),
-                new HalyardWinchGroup(mast: 60, sources: new[] { 60, 23, 24, 66 }),
-                // Raked foremast 1; F2 jib seat.
-                new HalyardWinchGroup(mast: 67, sources: new[] { 67, 80 }),
-                // Raked foremast 2; F3 jib seats.
-                new HalyardWinchGroup(mast: 79, sources: new[] { 79, 81 }),
-            };
-
-        // Audited native/SE option groups and paired references: NativeWinchSeats.txt.
-        private static SheetWinchCategory[] SheetCategories() =>
-            new[]
-            {
-                new SheetWinchCategory(
-                    name: "Foremast",
-                    physicalMasts: new[] { 3, 2, 67, 79, 82 },
-                    sources: new[]
-                    {
-                        3,
-                        2,
-                        55,
-                        57,
-                        67,
-                        79,
-                        82,
-                        14,
-                        15,
-                        25,
-                        16,
-                        17,
-                        18,
-                        19,
-                        20,
-                        61,
-                        62,
-                        63,
-                        64,
-                        8,
-                        9,
-                        10,
-                        11,
-                        12,
-                        13,
-                        26,
-                        68,
-                        69,
-                        70,
-                        71,
-                        72,
-                        74,
-                        75,
-                        76,
-                        77,
-                        78,
-                        80,
-                        81,
-                        85,
-                        86,
-                    },
-                    fallback: null
-                ),
-                new SheetWinchCategory(
+                new SheetFallbackDefinition(
                     name: "Mainmast",
-                    physicalMasts: new[] { 5, 4, 83 },
-                    sources: new[] { 5, 4, 56, 58, 83, 21, 22, 23, 24, 65, 66, 51, 52, 73 },
-                    fallback: null
+                    fallback: new SheetFallbackPair(
+                        // Sailwind 0.39.2: rope_winch_mastB_angle_left; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 5,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(-0.00412714f, 0.96962647f, 0.24455566f),
+                        offset: 0.0766848f,
+                        // F9 #3/#4 hull captures: average |X|, Y/Z; mirror at boat X=0.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-3.203389f, 2.9924165f, -2.802583f),
+                            normal: new Vector3(0.997649f, -0.068499f, 0.002198f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(3.203389f, 2.9924165f, -2.802583f),
+                            normal: new Vector3(-0.997649f, -0.068499f, 0.002198f)
+                        )
+                    )
                 ),
-                new SheetWinchCategory(
+                new SheetFallbackDefinition(
                     name: "Mizzenmast",
-                    physicalMasts: new[] { 7, 6, 84 },
-                    sources: new[] { 7, 6, 59, 60, 84 },
-                    fallback: null
+                    fallback: new SheetFallbackPair(
+                        // Sailwind 0.39.2: rope_winch_mizzen_angle_left; inspected 2026-10-20.
+                        // Boat-local +Z normal and rendered rear depth at native scale.
+                        templateMast: 7,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(-0.00333571f, 0.99976479f, 0.02143006f),
+                        offset: 0.0766848f,
+                        // F9 #5/#6 stern trim captures: average |X|, Y/Z; mirror at X=0.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.662798f, 5.4580005f, -12.127725f),
+                            normal: new Vector3(0f, 0.987032f, 0.160525f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.662798f, 5.4580005f, -12.127725f),
+                            normal: new Vector3(0f, 0.987032f, 0.160525f)
+                        )
+                    )
                 ),
-                new SheetWinchCategory(
-                    name: "Bowsprit",
-                    physicalMasts: new[] { 53, 54 },
-                    sources: new[] { 53, 54 },
-                    fallback: null
+            },
+            halyardFallbacks: new[]
+            {
+                // Generated by mss generate-fallback-halyards brig.
+                // Sailwind_Data/level24 sha256=dc76290ed188bf4f017489428c2b610dbe0f98628debe9ce7e5253ff0d8e0974
+                // BepInEx/plugins/ShipyardExpansion/shipyard_expansion.assets sha256=6894f7ca439b489c82a1b2f3d0c0c7f5821b9d08342b736e3c525dde0e64dbab
+                // Brig mast 2; template level24:176692; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 2,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.0527597964f, 5.20200014f, 11.03967f),
+                        normal: new Vector3(-0.353941053f, 0.0137377176f, 0.935166836f),
+                        sourceNormal: new Vector3(-0.866055548f, -0.00400672993f, -0.499931693f),
+                        offset: 0.0958560035f,
+                        templateIndex: 0
+                    )
                 ),
-            };
+                // Brig mast 3; template level24:176918; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 3,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.0271770619f, 5.57700014f, 6.88159323f),
+                        normal: new Vector3(0f, 0.0138028767f, 0.999904752f),
+                        sourceNormal: new Vector3(-0.866025805f, 0f, -0.499999255f),
+                        offset: 0.0958560035f,
+                        templateIndex: 1
+                    )
+                ),
+                // Brig mast 4; template level24:175569; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 4,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-1.70272202e-07f, 3.921f, -1.02686179f),
+                        normal: new Vector3(0f, 0.0108888904f, -0.999940693f),
+                        sourceNormal: new Vector3(-1f, -2.9502803e-07f, 5.47908826e-07f),
+                        offset: 0.0958560035f,
+                        templateIndex: 0
+                    )
+                ),
+                // Brig mast 5; template level24:174803; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 5,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.0277502667f, 5.79900026f, -5.18685341f),
+                        normal: new Vector3(0f, 0.0108890226f, 0.999940693f),
+                        sourceNormal: new Vector3(-1f, -2.9502803e-07f, 5.47908826e-07f),
+                        offset: 0.0958560035f,
+                        templateIndex: 0
+                    )
+                ),
+                // Brig mast 6; template level24:175242; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 6,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(0.0237034261f, 6.69899988f, -8.21621609f),
+                        normal: new Vector3(0f, 0.0108888904f, -0.999940693f),
+                        sourceNormal: new Vector3(-1f, -2.9502803e-07f, 5.47908826e-07f),
+                        offset: 0.089270398f,
+                        templateIndex: 0
+                    )
+                ),
+                // Brig mast 7; template level24:175957; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 7,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(0.00312486873f, 6.71899986f, -10.6782503f),
+                        normal: new Vector3(0f, 0f, -1f),
+                        sourceNormal: new Vector3(-1f, -2.9502803e-07f, 5.47908826e-07f),
+                        offset: 0.089270398f,
+                        templateIndex: 0
+                    )
+                ),
+                // Brig mast 67; template CAB-027b2b1c061051d0fa7aa2e47cc92195:-2850918248510650447; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 67,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(0.0201113392f, 4.26833582f, 11.5502138f),
+                        normal: new Vector3(-1.21498151e-05f, -0.331767589f, 0.943361163f),
+                        sourceNormal: new Vector3(-0.0134710232f, 0.302075714f, -0.953188777f),
+                        offset: 0.0958560035f,
+                        templateIndex: 0
+                    )
+                ),
+                // Brig mast 79; template CAB-027b2b1c061051d0fa7aa2e47cc92195:-8903012052567052722; clearance 0.01 m
+                new HalyardFallbackDefinition(
+                    mast: 79,
+                    fallback: new HalyardFallbackSeat(
+                        contact: new Vector3(-0.0292292908f, 3.84065437f, 8.5656147f),
+                        normal: new Vector3(3.74432489e-07f, -0.329017133f, 0.944323957f),
+                        sourceNormal: new Vector3(-0.0134710232f, 0.302075714f, -0.953188777f),
+                        offset: 0.0958560035f,
+                        templateIndex: 0
+                    )
+                ),
+            }
+        );
     }
 }
