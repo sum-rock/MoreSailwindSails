@@ -15,18 +15,17 @@ from tools.maintenance import build, install, logs, release
 def checkout(tmp_path, monkeypatch):
     root = tmp_path / "checkout"
     (root / "src").mkdir(parents=True)
-    (root / "docs").mkdir()
     (root / "src/Plugin.cs").write_text(
         'public const string PluginVersion = "0.3.0";\n'
     )
     (root / "src/MoreSailwindSails.csproj").write_text(
         "<Project><PropertyGroup><Version>0.3.0</Version></PropertyGroup></Project>"
     )
-    (root / "docs/RELEASE_NOTES.md").write_text("Release notes\n")
+    (root / "RELEASE_NOTES.md").write_text("Release notes\n")
     monkeypatch.setattr(settings, "ROOT", root)
     monkeypatch.setattr(settings, "PLUGIN_SOURCE", root / "src/Plugin.cs")
     monkeypatch.setattr(settings, "PROJECT_FILE", root / "src/MoreSailwindSails.csproj")
-    monkeypatch.setattr(settings, "RELEASE_NOTES", root / "docs/RELEASE_NOTES.md")
+    monkeypatch.setattr(settings, "RELEASE_NOTES", root / "RELEASE_NOTES.md")
     monkeypatch.setattr(
         settings,
         "RELEASE_DLL",
