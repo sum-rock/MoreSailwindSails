@@ -14,7 +14,7 @@ MoreSailwindSails adds two families of sails to Sailwind:
 ### Current versions
 
 **Latest release:** 0.3.0\
-**Development:** 0.4.0
+**In preparation:** 0.3.1
 
 See the [changelog](#changelog).
 
@@ -57,8 +57,9 @@ On the Dhow, one stay option covers both supported mainmast heights. Caelanor's
 stay uses the aft mainmast position, not the Midmast alternative. Chronian's
 main-to-mizzen Fisherman's Stay cannot be fitted alongside its Mizzen Royalstay.
 
-**Leopard and Gallus are not supported.** Experimental spritsails are not
-included in this version. Future Leopard compatibility is tracked in
+**Leopard and Gallus are not supported.** Gallus has only one mast, while
+Fisherman's sails require two. Experimental spritsails are not included in this
+version. Future Leopard compatibility is tracked in
 [issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
 
 ## Usage
@@ -76,7 +77,8 @@ included in this version. Future Leopard compatibility is tracked in
 
 **Mk.A, Mk.B and Mk.C fit only on Fisherman's Stays.** Each stay carries one
 sail; these stays can also carry vanilla staysails. Supported three-masted boats
-offer additional mast pairs.
+offer additional mast pairs. Staysails can coexist with square sails on their
+forward physical mast, including its topmast sections.
 
 All three cuts start with the same width. Mk.C's forward edge (the luff) is 50%
 longer than Mk.A/B's and needs more room on the forward mast. Resize using the
@@ -99,13 +101,14 @@ aft supporting pulley when sizing and positioning it.
 ### Colors and controls
 
 Both sail families start with plain white cloth and can be recolored at the
-shipyard. With Shipyard Expansion 0.12.1 (and newer), texture cycling is
+shipyard. With the supported Shipyard Expansion texture integration, cycling is
 restricted to plain cloth; older saved patterned selections are changed to plain
 cloth when loaded.
 
-Controls use available mounting points on the boat. Some boats also have extra
-positions for when the usual points are occupied. If no suitable position is
-free, the affected controls stay hidden until a position becomes available.
+Both sail families use free native mounting points first, then authored fallback
+positions. Sheet fallbacks must lie aft of the fitted sail's span; enlarging a
+sail can move its sheet controls farther aft. If no suitable position is free,
+the affected controls stay hidden until one becomes available.
 
 SailInfo is optional. When installed, its hover labels identify Fisherman's
 Flying Sails and Staysails; staysails also report their sheet angle.
@@ -121,7 +124,7 @@ game, or save files from using this mod. Back up your saves before installing.
 
 **Optional mods:**
 
-- **Shipyard Expansion 0.12.1** for additional rigging and shipyard controls.
+- **Shipyard Expansion 0.12^** for additional rigging and shipyard controls.
   Starting with 0.3.0, it is no longer required to load MoreSailwindSails, but
   some boat fittings still need its parts (see
   [supported boats](#supported-boats)).
@@ -137,15 +140,16 @@ game, or save files from using this mod. Back up your saves before installing.
 4. When updating, replace the old DLL and remove any duplicate copies.
 5. Launch the game and visit a shipyard.
 
-### Updating from 0.2.2
+### Updating
 
 Back up your save before updating. Keep Shipyard Expansion installed for saves
 that already use it: making it optional does not make its saved rigging safe to
 remove. The same applies to mods that provide your boat.
 
-Existing Fisherman's sail and stay selections are retained. If existing sails
-show odd textures and patterns when you upgrade, they will be able to be fixed
-(for free) when you visit a shipyard.
+Existing Fisherman's sail and stay selections retain their saved identifiers.
+When updating from 0.3.0, winch positions may change under the new allocation
+rules. Older patterned sails use plain cloth through the supported Shipyard
+Expansion texture integration.
 
 ### If something is missing
 
@@ -154,7 +158,8 @@ show odd textures and patterns when you upgrade, they will be able to be fixed
   a supported mast behind it.
 - **A stay or mast cannot be removed:** remove its fitted sail first.
 - **Missing winches:** other sails may occupy the available control positions.
-  Check for competing sails on the same masts.
+  Check for competing sails on the same masts. Large sails may also leave no
+  eligible sheet fallback position aft of their fitted span.
 
 For a bug report, include the boat, fitted masts, mod versions, steps to
 reproduce, a screenshot if useful, and `BepInEx/LogOutput.log`. Submit it
@@ -168,6 +173,25 @@ Before uninstalling, remove all sails and rigging added by MoreSailwindSails
 sails before removing the stays or masts that support them.
 
 ## Changelog
+
+### 0.3.1
+
+- **Improved winch placement** for Staysails and Flying Sails, with shared
+  position reservations and native controls preferred over fallbacks.
+- **Added and refined sheet and halyard fallbacks**, including base-game boat
+  halyards and revised Brig, Chronian, Gloriana and Caelanor placements.
+  Controls use boat-specific models and measured mounting positions.
+- **Sheet fallbacks now account for sail size**, moving farther aft when needed
+  as sails grow and retaining valid positions when sails shrink.
+- **Staysails can now coexist with square sails on their forward mast** without
+  the shipyard rejecting the combination.
+- **Rebuilt Fisherman's Stay visuals** with 4 cm rope and metal collars fitted
+  to mast surfaces, without inherited donor collision geometry.
+- Reduced winch discovery work, temporary allocations and duplicate stay meshes.
+- Added purple fallback markers, native-scale control previews and a
+  `ForceSheetFallbacks` diagnostic setting.
+- Consolidated developer and maintainer tools under **`mss`** and moved
+  technical documentation to the local wiki.
 
 ### 0.3.0
 
@@ -213,7 +237,7 @@ Experimental spritsails developed between releases are not included in 0.3.0.
 - Fixed missing **Flying Sail corner knots**.
 - Added an optional **winch mounting-point overlay** to help inspect occupied
   and available locations. It is disabled by default; see the
-  [diagnostic instructions](wiki/How-winches-are-placed.md#viewing-winch-mounting-points).
+  [diagnostic instructions](wiki/controls/Winch-placement-diagnostics.md#viewing-winch-mounting-points).
 - Removed **Leopard support** pending further compatibility work.
 
 ### 0.2.0
@@ -225,4 +249,4 @@ Experimental spritsails developed between releases are not included in 0.3.0.
 - Support for new Baghala and a fix for custom sail sound initialization.
 
 For building the mod, technical details and testing notes, see the
-[Developer Guide](wiki/developer-guide/Developer-Guide.md).
+[Developer Guide](wiki/developer-guide/Building-and-contributing.md).

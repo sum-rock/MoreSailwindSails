@@ -1,16 +1,16 @@
-- **Shipyard Expansion is now optional (but recommended).** Supported base-game
-  rigs can use Fisherman's sails and stays without it. The native shipyard gains
-  page arrows for longer rigging lists; fittings that need missing mod parts
-  stay unavailable.
-- Added **Kakam and Dhow** support and **Gloriana, Chronian and Caelanor**
-  support from OldChronian. Dhow uses one stay option for both supported
-  mainmast heights.
-- Added extra halyard mounting positions on **Sanbuq, Gloriana and Kakam**, and
-  placed Kakam's sheet controls near the stern.
-- **Flying Sail ropes now follow the game's 3D rope setting**, matching the
-  rounded appearance of native ropes when enabled.
-- Reworked all four sail meshes and their texture mapping. Sails use plain cloth
-  with normal recoloring; SE texture selection is restricted to plain cloth to
-  prevent mismatched sail patterns, including on older saved sails.
-- Removed forced uniform scaling and the mod's rotation/flip restrictions on
-  staysails, leaving those options to the installed shipyard controls.
+- **Improved winch placement** for Staysails and Flying Sails, with shared
+  position reservations and native controls preferred over fallbacks.
+- **Added and refined sheet and halyard fallbacks**, including base-game boat
+  halyards and revised Brig, Chronian, Gloriana and Caelanor placements.
+  Controls use boat-specific models and measured mounting positions.
+- **Sheet fallbacks now account for sail size**, moving farther aft when needed
+  as sails grow and retaining valid positions when sails shrink.
+- **Staysails can now coexist with square sails on their forward mast** without
+  the shipyard rejecting the combination.
+- **Rebuilt Fisherman's Stay visuals** with 4 cm rope and metal collars fitted
+  to mast surfaces, without inherited donor collision geometry.
+- Reduced winch discovery work, temporary allocations and duplicate stay meshes.
+- Added purple fallback markers, native-scale control previews and a
+  `ForceSheetFallbacks` diagnostic setting.
+- Consolidated developer and maintainer tools under **`mss`** and moved
+  technical documentation to the local wiki.
