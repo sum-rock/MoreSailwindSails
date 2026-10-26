@@ -7,6 +7,8 @@ internal static class Program
 {
     private static void Main(string[] args)
     {
+        LooseFootedSpritsail.BakedAssetChecks.Run();
+        LooseFootedSpritsail.FittingChecks.Run();
         Visuals.RoutedRopeChecks.Run();
         RigChecks.Run();
         ProfileChecks.Run();
