@@ -167,3 +167,72 @@ def test_halyard_search_defaults_and_overrides(
     assert len(calls) == 1
     assert calls[0]["clearance"] == clearance
     assert calls[0]["height_range"] == height_range
+
+
+@pytest.mark.parametrize("options", [[], ["--cut", "a"]])
+def test_spritsail_default_and_explicit_cut(monkeypatch, tmp_path, options):
+    calls = []
+    monkeypatch.setattr(runner, "run", lambda **kw: calls.append(kw))
+    output = tmp_path / "spritsail.cs"
+    result = CliRunner().invoke(
+        main,
+        [
+            "assets",
+            "--blender",
+            "custom blender",
+            "bake",
+            "loose_foot_spritsail",
+            *options,
+            "--check",
+            "--output",
+            str(output),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert calls == [
+        dict(
+            blender="custom blender",
+            action="bake",
+            asset="loose_foot_spritsail",
+            cut="A",
+            output=output,
+            check=True,
+        )
+    ]
+
+
+def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path):
+    from tools.assets.loose_foot_spritsail_authoring import CUTS, SpritsailCut
+
+    definition = SpritsailCut(
+        asset_path=tmp_path / "mkB.blend",
+        source_path=tmp_path / "mkB.cs",
+        class_name="MkB",
+    )
+    monkeypatch.setitem(CUTS, "B", definition)
+    calls = []
+    monkeypatch.setattr(runner.shutil, "which", lambda _: "/blender")
+    monkeypatch.setattr(runner.subprocess, "run", lambda args, **kw: calls.append(args))
+    runner.run(
+        blender="blender",
+        action="bake",
+        asset="loose_foot_spritsail",
+        cut="B",
+        output=None,
+        check=True,
+    )
+    args = calls[0]
+    assert str(definition.asset_path) in args
+    assert args[-3:] == ["--cut", "B", "--check"]
+    assert any(a.endswith("bake_loose_foot_spritsail.py") for a in args)
+
+
+def test_spritsail_rejects_unauthored_cuts():
+    from tools.assets.loose_foot_spritsail_authoring import get_cut
+
+    result = CliRunner().invoke(
+        main, ["assets", "bake", "loose_foot_spritsail", "--cut", "B"]
+    )
+    assert result.exit_code == 2
+    with pytest.raises(ValueError, match="Unsupported loose footed spritsail cut"):
+        get_cut("B")

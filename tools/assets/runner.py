@@ -17,12 +17,18 @@ def run(
         )
     command = [executable, "--background", "--factory-startup", "--disable-autoexec"]
     if action == "bake":
-        source = {
-            "flying_sail": ROOT / "assets/flying_sail/fishermans_flying_sail.blend",
-            "staysail": ROOT
-            / f"assets/staysails/fishermans_staysail_mk{cut.lower()}.blend",
-            "stay": ROOT / "assets/stays/stay.blend",
-        }[asset]
+        from tools.assets.loose_foot_spritsail_authoring import get_cut
+
+        source = (
+            get_cut(cut).asset_path
+            if asset == "loose_foot_spritsail"
+            else {
+                "flying_sail": ROOT / "assets/flying_sail/fishermans_flying_sail.blend",
+                "staysail": ROOT
+                / f"assets/staysails/fishermans_staysail_mk{cut.lower()}.blend",
+                "stay": ROOT / "assets/stays/stay.blend",
+            }[asset]
+        )
         command.append(str(source))
     command.extend(
         [
@@ -33,7 +39,7 @@ def run(
             "--",
         ]
     )
-    if asset == "staysail":
+    if asset in ("staysail", "loose_foot_spritsail"):
         command.extend(["--cut", cut])
     if output is not None:
         command.extend(["--output", str(output.resolve())])
