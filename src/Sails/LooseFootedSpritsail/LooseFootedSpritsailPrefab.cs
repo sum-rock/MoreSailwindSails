@@ -1,4 +1,4 @@
-// Builds cut-specific neutral spritsail prefabs from native components and owned baked meshes.
+// Builds cut-specific spritsails with native sheet controllers and owned baked meshes.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -100,10 +100,24 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 sail.squareSail = false;
                 sail.junkType = false;
                 sail.installHeight = fullGaff.installHeight;
-                sail.sailAmplifier = 0;
+                sail.upwindEfficiency = fullGaff.upwindEfficiency;
                 sail.currentUnroll = 1;
                 var rig = clone.AddComponent<LooseFootedSpritsailRig>();
                 rig.Sail = sail;
+                var rigging = clone.AddComponent<LooseFootedSpritsailRigging>();
+                rigging.Rig = rig;
+                var connections = sail.GetComponent<SailConnections>();
+                rigging.Left = connections.angleControllerLeft as RopeControllerSailAngleJib;
+                rigging.Right = connections.angleControllerRight as RopeControllerSailAngleJib;
+                rigging.AngleMaster = clone.GetComponent<JibAngleMaster>();
+                if (!rigging.Left || !rigging.Right || !rigging.AngleMaster)
+                    throw new InvalidOperationException(
+                        "Expected paired native jib sheet controllers."
+                    );
+                rigging.AngleMaster.sailHinge = clone.GetComponent<HingeJoint>();
+                rigging.AngleMaster.enabled = false;
+                rigging.Left.gameObject.SetActive(value: false);
+                rigging.Right.gameObject.SetActive(value: false);
                 rig.BaseScale = scale;
                 rig.BaseLuff = fullGaff.installHeight;
                 rig.BaseArea = Area(data: data) * scale * scale;
@@ -113,6 +127,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 rig.ScaleRoot.localRotation = Quaternion.identity;
                 rig.ScaleRoot.localScale = Vector3.one;
                 StripDonor(sail: sail);
+                var body = clone.GetComponent<Rigidbody>();
+                var gaffBody = fullGaff.GetComponent<Rigidbody>();
+                body.mass = gaffBody.mass;
+                body.angularDrag = gaffBody.angularDrag;
+                sail.windcenter = NewNode(name: "Spritsail wind center", parent: sail.transform);
                 var clothMaterial = assets.Own(
                     material: new Material(
                         donor.cloth.GetComponent<SkinnedMeshRenderer>().sharedMaterial
@@ -178,6 +197,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     parent: rig.ClothBone
                 );
                 rig.SheetLineAttachment.localPosition = data.SheetLineAttachment;
+                ConfigureSheet(controller: rigging.Left, rigging: rigging);
+                ConfigureSheet(controller: rigging.Right, rigging: rigging);
                 var colorReference = NewNode(
                     name: "Furled color reference",
                     parent: sail.transform
@@ -193,7 +214,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     Array.Resize(array: ref directory.sails, newSize: definition.PrefabIndex + 1);
                 directory.sails[definition.PrefabIndex] = clone;
                 Plugin.Log.LogInfo(
-                    $"Registered {definition.DisplayName}: index={definition.PrefabIndex}, base luff={sail.installHeight:F2}m, neutral fitting prototype."
+                    $"Registered {definition.DisplayName}: index={definition.PrefabIndex}, base luff={sail.installHeight:F2}m, paired sheets and native propulsion."
                 );
                 return clone;
             }
@@ -240,16 +261,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 sound.enabled = false;
             var reef = sail.GetComponent<ReefEffectAnimUniversal>();
             reef.enabled = false;
-            var angle = sail.GetComponent<JibAngleMaster>();
-            if (angle)
-                Object.DestroyImmediate(obj: angle);
             var connections = sail.GetComponent<SailConnections>();
             foreach (
                 var controller in new[]
                 {
                     connections.reefController,
-                    connections.angleControllerLeft,
-                    connections.angleControllerRight,
                     connections.angleControllerMid,
                 }
             )
@@ -282,6 +298,27 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var body = sail.GetComponent<Rigidbody>();
             body.useGravity = false;
             body.isKinematic = true;
+        }
+
+        private static void ConfigureSheet(
+            RopeControllerSailAngleJib controller,
+            LooseFootedSpritsailRigging rigging
+        )
+        {
+            controller.jibAngleMaster = rigging.AngleMaster;
+            controller.currentLength = 1;
+            controller.enabled = true;
+            var rope = controller.GetComponent<RopeEffect>();
+            // RopeEffect rotates its endpoint to draw slack. Give each sheet its own
+            // endpoint at the clew so neither changes the other's rope frame.
+            rope.attachment = NewNode(
+                name: controller.side + " clew tie",
+                parent: rigging.Rig.SheetLineAttachment
+            );
+            rope.sheet = false;
+            rope.jibSheet = true;
+            rope.enabled = true;
+            rope.currentRopeLength = rope.totalRopeLength = 1;
         }
 
         private static Transform NewNode(string name, Transform parent)

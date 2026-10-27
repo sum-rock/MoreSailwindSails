@@ -9,6 +9,7 @@ internal static class Program
     {
         LooseFootedSpritsail.BakedAssetChecks.Run();
         LooseFootedSpritsail.FittingChecks.Run();
+        LooseFootedSpritsail.SailingChecks.Run();
         Visuals.RoutedRopeChecks.Run();
         RigChecks.Run();
         ProfileChecks.Run();

@@ -1,4 +1,4 @@
-// Integrates spritsail registration, universal fitting and the neutral prototype with native Sailwind.
+// Integrates spritsail fitting, paired sheets and native sailing physics with Sailwind.
 using HarmonyLib;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkA;
 using UnityEngine;
@@ -166,19 +166,100 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
     }
 
     [HarmonyPatch(typeof(Sail), "Update")]
-    internal static class SpritsailNeutralUpdatePatch
+    internal static class SpritsailUpdatePatch
     {
         [HarmonyPrefix]
-        private static bool Prefix(Sail __instance) =>
-            !__instance.GetComponent<LooseFootedSpritsailRig>();
+        private static bool Prefix(Sail __instance)
+        {
+            var rig = __instance.GetComponent<LooseFootedSpritsailRig>();
+            return !rig || rig.PrepareSailing();
+        }
     }
 
     [HarmonyPatch(typeof(Sail), "FixedUpdate")]
-    internal static class SpritsailNeutralPhysicsPatch
+    internal static class SpritsailPhysicsPatch
     {
         [HarmonyPrefix]
-        private static bool Prefix(Sail __instance) =>
+        private static bool Prefix(Sail __instance)
+        {
+            var rig = __instance.GetComponent<LooseFootedSpritsailRig>();
+            if (!rig)
+                return true;
+            if (!rig.PrepareSailing())
+                return false;
+            // FixedUpdate may precede Update after placement recovery or loading.
+            // Recompute native force before applying it, never reuse a stale trim.
+            LooseFootedSpritsailPhysics.Refresh(sail: __instance);
+            return true;
+        }
+    }
+
+    [HarmonyPatch(typeof(Sail), "UpdateWindForceOnSail")]
+    internal static class SpritsailWindFramePatch
+    {
+        [HarmonyPrefix]
+        private static void Prefix(Sail __instance) =>
+            __instance.GetComponent<LooseFootedSpritsailRig>()?.RefreshAerodynamics();
+    }
+
+    [HarmonyPatch(typeof(Sail), "GetSailForceDirection")]
+    internal static class SpritsailForceDirectionPatch
+    {
+        [HarmonyPrefix]
+        private static bool Prefix(Sail __instance, ref Vector3 __result)
+        {
+            if (!__instance.GetComponent<LooseFootedSpritsailRig>())
+                return true;
+            __result = LooseFootedSpritsailSailingGeometry.ForceDirection(
+                wind: __instance.apparentWind,
+                normal: __instance.windcenter.up
+            );
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(Sail), "GetRealSailPower")]
+    internal static class SpritsailPowerPatch
+    {
+        [HarmonyPostfix]
+        private static void Postfix(Sail __instance, ref float __result)
+        {
+            if (__instance.GetComponent<LooseFootedSpritsailRig>())
+                __result *= LooseFootedSpritsailSailingGeometry.PowerMultiplier;
+        }
+    }
+
+    [HarmonyPatch(typeof(JibAngleMaster), "ResetHingeRestingRot")]
+    internal static class SpritsailHingeResetPatch
+    {
+        // Mast schedules this native reset after attachment. The rig has already set
+        // its own neutral pivot; toggling it again would retire freshly placed sheets.
+        [HarmonyPrefix]
+        private static bool Prefix(JibAngleMaster __instance) =>
             !__instance.GetComponent<LooseFootedSpritsailRig>();
+    }
+
+    [HarmonyPatch(typeof(JibAngleMaster), "Update")]
+    internal static class SpritsailSheetLimitsPatch
+    {
+        [HarmonyPostfix]
+        private static void Postfix(JibAngleMaster __instance)
+        {
+            var rig = __instance.GetComponent<LooseFootedSpritsailRig>();
+            if (!rig || rig.Sail.minAngle >= rig.Sail.maxAngle)
+                return;
+            // Native jib sway extends its limits. Spritsail hardware must remain
+            // inside the clearance angles established by the shipyard sweep.
+            var hinge = __instance.sailHinge;
+            var limits = hinge.limits;
+            limits.min = Mathf.Clamp(
+                value: limits.min,
+                min: rig.Sail.minAngle,
+                max: rig.Sail.maxAngle
+            );
+            limits.max = Mathf.Clamp(value: limits.max, min: limits.min, max: rig.Sail.maxAngle);
+            hinge.limits = limits;
+        }
     }
 
     [HarmonyPatch(typeof(ShipyardSailInstaller), "MoveHeldSail")]

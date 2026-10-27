@@ -64,8 +64,11 @@ internal static class IntegrationChecks
                 "SpritsailScalePatch",
                 "SpritsailAreaPatch",
                 "SpritsailClothRefreshPatch",
-                "SpritsailNeutralUpdatePatch",
-                "SpritsailNeutralPhysicsPatch",
+                "SpritsailUpdatePatch",
+                "SpritsailPhysicsPatch",
+                "SpritsailForceDirectionPatch",
+                "SpritsailWindFramePatch",
+                "SpritsailHingeResetPatch",
                 "SpritsailMovementPatch",
             }
         )
@@ -99,13 +102,8 @@ internal static class IntegrationChecks
         )
         foreach (var method in type.GetMethods(bindingAttr: All | BindingFlags.DeclaredOnly))
         foreach (var call in CalledMethods(method: method))
-            if (
-                call.DeclaringType?.Namespace?.Contains(value: "BoatConfiguration") == true
-                || call.DeclaringType?.Name == "WinchControls"
-            )
-                throw new Exception(
-                    "The fitting prototype must not whitelist boats or allocate controls."
-                );
+            if (call.DeclaringType?.Namespace?.Contains(value: "BoatConfiguration") == true)
+                throw new Exception("Spritsail fitting must not whitelist boats.");
 
         var strip = prefab.GetMethod(name: "StripDonor", bindingAttr: All);
         var cleared = Instructions(method: strip)
@@ -186,7 +184,8 @@ internal static class IntegrationChecks
         )
             throw new Exception("Native saved sail sizing no longer uses LoadScale.");
         Console.WriteLine(
-            "PASS (structural): spritsail registration, universal mast compatibility, scoped neutral behavior, unbound controls, asset cleanup, plain textures and native save sizing."
+            "PASS (structural): spritsail registration, universal mast compatibility, scoped sailing patches, native binding isolation, asset cleanup, plain textures and native save sizing."
         );
+        SailingIntegrationChecks.Run(assembly: assembly);
     }
 }

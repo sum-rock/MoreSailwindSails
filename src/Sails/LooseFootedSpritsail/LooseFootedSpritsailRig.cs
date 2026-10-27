@@ -1,4 +1,5 @@
-// Keeps the neutral fitting prototype attached to any native or modded mast without sail controls.
+// Fits the sail in a neutral mast frame while allowing the native hinge to drive sailing motion.
+using MoreSailwindSails.Controls;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.LooseFootedSpritsail
@@ -52,8 +53,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal float BaseArea;
         internal LooseFootedSpritsailAssetData Data;
         private Rigidbody body;
+        private HingeJoint hinge;
+        private LooseFootedSpritsailRigging rigging;
         private Transform lastParent;
         private Mast mast;
+        private Rigidbody mastBody;
         private Collider mastCollider;
         private MeshCollider mastSurface;
         private Vector3[] mastVertices;
@@ -66,10 +70,21 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private float lastWidth;
         private float lastRadius;
         private float lastInstallHeight;
+        private Vector3 neutralPosition;
+        private Matrix4x4 neutralWorld;
+        private Matrix4x4 neutralPlate;
+        private bool fitted;
+        private int fittedFrame;
+
+        internal Mast Mast => mast;
+        internal BoatRefs Boat { get; private set; }
+        internal float? FittedSheetSpan { get; private set; }
 
         private void Awake()
         {
             body = GetComponent<Rigidbody>();
+            hinge = GetComponent<HingeJoint>();
+            rigging = GetComponent<LooseFootedSpritsailRigging>();
             checker = Sail.GetComponent<SailConnections>().colChecker;
             clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
             Data = LooseFootedSpritsailPrefab.CreateAsset(prefabIndex: Sail.prefabIndex);
@@ -81,9 +96,91 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Refresh();
         }
 
-        private void FixedUpdate() => Refresh();
+        private void LateUpdate()
+        {
+            Refresh();
+            UpdatePlate();
+        }
 
-        private void LateUpdate() => Refresh();
+        internal bool PrepareSailing()
+        {
+            Refresh();
+            rigging.Refresh();
+            Sail.currentUnroll = 1;
+            bool ready =
+                isActiveAndEnabled
+                && fitted
+                && Time.frameCount > fittedFrame
+                && mast
+                && mast.gameObject.activeInHierarchy
+                && Sail.IsInstalled()
+                && Sail.shipRigidbody
+                && Sail.shipRigidbody == mast.shipRigidbody
+                && GameState.playing
+                && !GameState.currentShipyard
+                && !GameState.shipyardUpdatingOrder
+                && !checker.checking
+                && rigging.SheetsReady
+                && LooseFootedSpritsailFittingGeometry.Finite(value: Sail.minAngle)
+                && LooseFootedSpritsailFittingGeometry.Finite(value: Sail.maxAngle)
+                && Sail.minAngle < Sail.maxAngle
+                && RefreshAerodynamics();
+            if (!ready)
+            {
+                ResetToNeutral();
+                LooseFootedSpritsailPhysics.Clear(sail: Sail);
+                return false;
+            }
+            body.isKinematic = false;
+            return true;
+        }
+
+        internal bool RefreshAerodynamics()
+        {
+            if (
+                !fitted
+                || !LooseFootedSpritsailSailingGeometry.TryWindFrame(
+                    throat: ClothBone.TransformPoint(position: Data.Sail.Vertices[Data.Throat]),
+                    tack: ClothBone.TransformPoint(position: Data.Sail.Vertices[Data.Tack]),
+                    peak: ClothBone.TransformPoint(position: Data.Sail.Vertices[Data.Peak]),
+                    clew: ClothBone.TransformPoint(position: Data.Sail.Vertices[Data.Clew]),
+                    out var wind
+                )
+            )
+                return false;
+            Sail.windcenter.SetPositionAndRotation(
+                position: wind.Center,
+                rotation: Quaternion.LookRotation(forward: wind.Axis, upwards: wind.Normal)
+            );
+            return true;
+        }
+
+        private void ResetToNeutral()
+        {
+            if (!body.isKinematic)
+            {
+                body.velocity = Vector3.zero;
+                body.angularVelocity = Vector3.zero;
+                body.isKinematic = true;
+            }
+            if (mast)
+            {
+                transform.localPosition = neutralPosition;
+                transform.localRotation = Quaternion.identity;
+                UpdatePlate();
+            }
+        }
+
+        private void UpdatePlate()
+        {
+            if (!fitted || !mast)
+                return;
+            var world = neutralWorld * neutralPlate;
+            RotationPlate.SetPositionAndRotation(
+                position: world.MultiplyPoint3x4(point: Vector3.zero),
+                rotation: world.rotation
+            );
+        }
 
         internal void Refresh()
         {
@@ -93,6 +190,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             {
                 lastParent = transform.parent;
                 mast = lastParent ? lastParent.GetComponent<Mast>() : null;
+                mastBody = mast ? mast.shipRigidbody : null;
+                Boat = mast ? mast.GetComponentInParent<BoatRefs>() : null;
+                fitted = false;
+                FittedSheetSpan = null;
                 var mesh = mast ? mast.GetComponent<MeshFilter>()?.sharedMesh : null;
                 mastVertices = mesh && mesh.isReadable ? mesh.vertices : null;
                 mastTriangles = mesh && mesh.isReadable ? mesh.triangles : null;
@@ -114,19 +215,30 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             }
             if (!mast || Data == null)
                 return;
-            // This milestone is deliberately a neutral, non-propulsive fitting. Native
-            // attach/load can temporarily make the body dynamic before toggling OnEnable.
-            body.isKinematic = true;
-            transform.localRotation = Quaternion.identity;
+            if (mast.shipRigidbody != mastBody)
+            {
+                mastBody = mast.shipRigidbody;
+                Boat = mast.GetComponentInParent<BoatRefs>();
+                dirty = true;
+            }
+            if (hinge.connectedBody != Sail.shipRigidbody)
+                dirty = true;
             float installHeight = Sail.GetCurrentInstallHeight();
             if (installHeight != lastInstallHeight)
                 dirty = true;
             lastInstallHeight = installHeight;
-            transform.localPosition = new Vector3(x: 0, y: 0, z: installHeight - mast.mastHeight);
+            var nextPosition = new Vector3(x: 0, y: 0, z: installHeight - mast.mastHeight);
+            if (nextPosition != neutralPosition)
+                dirty = true;
+            neutralPosition = nextPosition;
+            neutralWorld =
+                mast.transform.localToWorldMatrix * Matrix4x4.Translate(vector: neutralPosition);
             MeasureMast(out var center, out var axis, out float radius);
-            var boat = mast.shipRigidbody ? mast.shipRigidbody.transform : mast.transform.parent;
+            var boat = Boat ? Boat.transform : mast.transform.parent;
             var aft = boat
-                ? transform.InverseTransformDirection(direction: -boat.forward)
+                ? Quaternion.Inverse(
+                    rotation: RelativeMatrix(node: mast.transform, parent: boat).rotation
+                ) * Vector3.back
                 : Vector3.up;
             aft = Vector3.ProjectOnPlane(vector: aft, planeNormal: axis);
             if (aft.sqrMagnitude < 1e-6f)
@@ -166,6 +278,24 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 && Mathf.Abs(f: radius - lastRadius) < 0.00001f
             )
                 return;
+            // A fitting change establishes a new hinge rest pose. Normal refreshes never
+            // write the sail body's transform, so wind and sheets retain their live angle.
+            ResetToNeutral();
+            hinge.autoConfigureConnectedAnchor = false;
+            hinge.anchor = center;
+            hinge.axis = axis;
+            hinge.useLimits = true;
+            hinge.useSpring = hinge.useMotor = false;
+            hinge.connectedBody = Sail.shipRigidbody;
+            var pivot = neutralWorld.MultiplyPoint3x4(point: center);
+            hinge.connectedAnchor = Sail.shipRigidbody
+                ? Sail.shipRigidbody.transform.InverseTransformPoint(position: pivot)
+                : pivot;
+            body.centerOfMass = center;
+            body.inertiaTensor = Vector3.one * body.mass;
+            body.inertiaTensorRotation = Quaternion.identity;
+            rigging.AngleMaster.UpdateInitialAngle();
+            fittedFrame = Time.frameCount;
             lastRadius = radius;
             if (mastVertices != null || mastSurface)
             {
@@ -184,8 +314,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                         ? LooseFootedSpritsailFittingGeometry.MastRadius(
                             vertices: mastVertices,
                             triangles: mastTriangles,
-                            matrix: transform.worldToLocalMatrix
-                                * mast.transform.localToWorldMatrix,
+                            matrix: Matrix4x4.Translate(vector: -neutralPosition),
                             center: collarCenter,
                             axis: axis
                         )
@@ -207,6 +336,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Apply(node: Sprit, pose: pose.Sprit);
             Apply(node: SnotterAssembly, pose: pose.SnotterAssembly);
             Apply(node: RotationPlate, pose: pose.RotationPlate);
+            neutralPlate =
+                Matrix4x4.TRS(pos: center, q: rotation, s: Vector3.one) * pose.RotationPlate;
             RefreshCollision(pose: pose);
             var bounds = new Bounds(center: Vector3.zero, size: Vector3.zero);
             foreach (int index in new[] { Data.Tack, Data.Throat, Data.Peak, Data.Clew })
@@ -218,9 +349,22 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             bounds.Expand(amount: 0.1f);
             clothRenderer.localBounds = bounds;
             Sail.sailArea = BaseArea * height * width;
+            var throat = pose.Sail.MultiplyPoint3x4(point: Data.Sail.Vertices[Data.Throat]);
+            var peak = pose.Sail.MultiplyPoint3x4(point: Data.Sail.Vertices[Data.Peak]);
+            var clew = pose.Sail.MultiplyPoint3x4(point: Data.Sail.Vertices[Data.Clew]);
+            var widthVector =
+                rotation * new Vector3(x: 0, y: 0, z: Mathf.Min(a: peak.z, b: clew.z) - throat.z);
+            FittedSheetSpan = Boat
+                ? SailControlGeometry.SheetSpan(
+                    neutralWidthInBoat: RelativeMatrix(node: mast.transform, parent: Boat.transform)
+                        .MultiplyVector(vector: widthVector)
+                )
+                : null;
             lastHeight = height;
             lastWidth = width;
             dirty = false;
+            fitted = true;
+            UpdatePlate();
         }
 
         // MeshCollider raycasts work even when an imported mesh has Read/Write disabled.
@@ -229,7 +373,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var toWalk =
                 mastSurface.transform.localToWorldMatrix
                 * mast.transform.worldToLocalMatrix
-                * transform.localToWorldMatrix;
+                * neutralWorld;
             var fromWalk = toWalk.inverse;
             float measured = 0;
             for (int i = 0; i < 32; i++)
@@ -267,7 +411,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             if (mastCollider)
             {
                 var matrix =
-                    transform.worldToLocalMatrix * mastCollider.transform.localToWorldMatrix;
+                    Matrix4x4.Translate(vector: -neutralPosition)
+                    * RelativeMatrix(node: mastCollider.transform, parent: mast.transform);
                 var capsule = mastCollider as CapsuleCollider;
                 var box = mastCollider as BoxCollider;
                 if (capsule)
@@ -320,6 +465,25 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             node.localPosition = pose.MultiplyPoint3x4(point: Vector3.zero);
             node.localRotation = pose.rotation;
             node.localScale = pose.lossyScale;
+        }
+
+        // Compose local transforms instead of cancelling world matrices. At sea, floating
+        // point drift in that cancellation would repeatedly refit and stop a moving hinge.
+        private static Matrix4x4 RelativeMatrix(Transform node, Transform parent)
+        {
+            var matrix = Matrix4x4.identity;
+            var current = node;
+            while (current && current != parent)
+            {
+                matrix =
+                    Matrix4x4.TRS(
+                        pos: current.localPosition,
+                        q: current.localRotation,
+                        s: current.localScale
+                    ) * matrix;
+                current = current.parent;
+            }
+            return current == parent ? matrix : parent.worldToLocalMatrix * node.localToWorldMatrix;
         }
 
         private void RefreshCollision(LooseFootedSpritsailPose pose)
@@ -384,15 +548,22 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var root = target.transform;
             var walk = mast.walkColMast;
             var axis = Frame.localRotation * Vector3.up;
+            var travel = LooseFootedSpritsailSailingGeometry.PivotRotation(
+                center: Frame.localPosition,
+                axis: axis,
+                degrees: angle
+            );
+            var position = neutralPosition + travel.MultiplyPoint3x4(point: Vector3.zero);
+            var rotation = travel.rotation;
             if (walk && root.parent == walk)
             {
-                root.position = walk.TransformPoint(position: transform.localPosition);
-                root.rotation = walk.rotation * Quaternion.AngleAxis(angle: angle, axis: axis);
+                root.position = walk.TransformPoint(position: position);
+                root.rotation = walk.rotation * rotation;
             }
             else
             {
-                root.position = transform.position;
-                root.rotation = transform.rotation * Quaternion.AngleAxis(angle: angle, axis: axis);
+                root.position = mast.transform.TransformPoint(position: position);
+                root.rotation = mast.transform.rotation * rotation;
             }
             root.localScale = Vector3.one;
         }
