@@ -7,7 +7,35 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
     internal static class LooseFootedSpritsailFittingGeometry
     {
         internal const float Clearance = 0.01f;
+        internal const float CollarClearance = 0.001f;
         internal const int CollisionStrips = 16;
+
+        // Measure the visible shaft where the collar sits, including tapered mast sections.
+        internal static float MastRadius(
+            Vector3[] vertices,
+            int[] triangles,
+            Matrix4x4 matrix,
+            Vector3 center,
+            Vector3 axis
+        )
+        {
+            float radius = 0;
+            for (int i = 0; i < triangles.Length; i += 3)
+            for (int edge = 0; edge < 3; edge++)
+            {
+                var a = matrix.MultiplyPoint3x4(point: vertices[triangles[i + edge]]) - center;
+                var b =
+                    matrix.MultiplyPoint3x4(point: vertices[triangles[i + (edge + 1) % 3]])
+                    - center;
+                float da = Vector3.Dot(lhs: a, rhs: axis);
+                float db = Vector3.Dot(lhs: b, rhs: axis);
+                if ((da > 0 && db > 0) || (da < 0 && db < 0))
+                    continue;
+                var point = da == db ? a : Vector3.Lerp(a: a, b: b, t: da / (da - db));
+                radius = Math.Max(radius, point.magnitude);
+            }
+            return radius;
+        }
 
         internal static float BaseScale(LooseFootedSpritsailAssetData data, float fullGaffHeight)
         {
@@ -71,7 +99,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var snotterOrigin = data.SnotterAssembly.RestTransform.MultiplyPoint3x4(
                 point: Vector3.zero
             );
-            float hardwareScale = (mastRadius + Clearance) / CollarRadius(data: data);
+            float hardwareScale = (mastRadius + CollarClearance) / CollarRadius(data: data);
             var hardware =
                 LooseFootedSpritsailTransform.TRS(
                     pos: new Vector3(x: 0, y: (snotterOrigin.y - throat.y) * clothScale.y, z: 0),

@@ -55,6 +55,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private Transform lastParent;
         private Mast mast;
         private Collider mastCollider;
+        private MeshCollider mastSurface;
+        private Vector3[] mastVertices;
+        private int[] mastTriangles;
         private SkinnedMeshRenderer clothRenderer;
         private ShipyardSailColChecker checker;
         private bool dirty = true;
@@ -62,6 +65,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private float lastHeight;
         private float lastWidth;
         private float lastRadius;
+        private float lastInstallHeight;
 
         private void Awake()
         {
@@ -89,6 +93,14 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             {
                 lastParent = transform.parent;
                 mast = lastParent ? lastParent.GetComponent<Mast>() : null;
+                var mesh = mast ? mast.GetComponent<MeshFilter>()?.sharedMesh : null;
+                mastVertices = mesh && mesh.isReadable ? mesh.vertices : null;
+                mastTriangles = mesh && mesh.isReadable ? mesh.triangles : null;
+                mastSurface =
+                    mast && mast.walkColMast ? mast.walkColMast.GetComponent<MeshCollider>() : null;
+                // The walking copy must use the same mesh-local coordinates as the visual mast.
+                if (mastSurface && mastSurface.sharedMesh != mesh)
+                    mastSurface = null;
                 mastCollider = mast ? mast.GetComponent<Collider>() : null;
                 if (mast && !mastCollider && mast.mastCols != null)
                     foreach (var capsule in mast.mastCols)
@@ -106,11 +118,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             // attach/load can temporarily make the body dynamic before toggling OnEnable.
             body.isKinematic = true;
             transform.localRotation = Quaternion.identity;
-            transform.localPosition = new Vector3(
-                x: 0,
-                y: 0,
-                z: Sail.GetCurrentInstallHeight() - mast.mastHeight
-            );
+            float installHeight = Sail.GetCurrentInstallHeight();
+            if (installHeight != lastInstallHeight)
+                dirty = true;
+            lastInstallHeight = installHeight;
+            transform.localPosition = new Vector3(x: 0, y: 0, z: installHeight - mast.mastHeight);
             MeasureMast(out var center, out var axis, out float radius);
             var boat = mast.shipRigidbody ? mast.shipRigidbody.transform : mast.transform.parent;
             var aft = boat
@@ -154,6 +166,36 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 && Mathf.Abs(f: radius - lastRadius) < 0.00001f
             )
                 return;
+            lastRadius = radius;
+            if (mastVertices != null || mastSurface)
+            {
+                float collarHeight =
+                    (
+                        Data.SnotterAssembly.RestTransform.m13
+                        - LooseFootedSpritsailFittingGeometry
+                            .Corner(data: Data, index: Data.Throat)
+                            .y
+                    )
+                    * BaseScale
+                    * height;
+                var collarCenter = center + axis * collarHeight;
+                float visibleRadius =
+                    mastVertices != null
+                        ? LooseFootedSpritsailFittingGeometry.MastRadius(
+                            vertices: mastVertices,
+                            triangles: mastTriangles,
+                            matrix: transform.worldToLocalMatrix
+                                * mast.transform.localToWorldMatrix,
+                            center: collarCenter,
+                            axis: axis
+                        )
+                        : MeasureWalkingSurface(center: collarCenter, radius: radius);
+                if (
+                    LooseFootedSpritsailFittingGeometry.Finite(value: visibleRadius)
+                    && visibleRadius > 0
+                )
+                    radius = visibleRadius;
+            }
             var pose = LooseFootedSpritsailFittingGeometry.Pose(
                 data: Data,
                 baseScale: BaseScale,
@@ -178,8 +220,43 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Sail.sailArea = BaseArea * height * width;
             lastHeight = height;
             lastWidth = width;
-            lastRadius = radius;
             dirty = false;
+        }
+
+        // MeshCollider raycasts work even when an imported mesh has Read/Write disabled.
+        private float MeasureWalkingSurface(Vector3 center, float radius)
+        {
+            var toWalk =
+                mastSurface.transform.localToWorldMatrix
+                * mast.transform.worldToLocalMatrix
+                * transform.localToWorldMatrix;
+            var fromWalk = toWalk.inverse;
+            float measured = 0;
+            for (int i = 0; i < 32; i++)
+            {
+                float angle = i * Mathf.PI / 16;
+                var direction =
+                    Frame.localRotation
+                    * new Vector3(x: Mathf.Cos(f: angle), y: 0, z: Mathf.Sin(f: angle));
+                var ray = Utils.WinchCaptureGeometry.TransformRay(
+                    transform: toWalk,
+                    ray: new Ray(origin: center + direction * radius * 2, direction: -direction),
+                    out float distanceScale
+                );
+                if (
+                    !mastSurface.Raycast(
+                        ray: ray,
+                        hitInfo: out var hit,
+                        maxDistance: radius * 2 * distanceScale
+                    )
+                )
+                    return 0;
+                measured = Mathf.Max(
+                    a: measured,
+                    b: (fromWalk.MultiplyPoint3x4(point: hit.point) - center).magnitude
+                );
+            }
+            return measured;
         }
 
         private void MeasureMast(out Vector3 center, out Vector3 axis, out float radius)

@@ -9,6 +9,7 @@ internal static class FittingChecks
 {
     internal static void Run()
     {
+        CheckMastRadius();
         var data = LooseFootedSpritsailMkABakedAsset.Create();
         float scale = LooseFootedSpritsailFittingGeometry.BaseScale(
             data: data,
@@ -63,7 +64,7 @@ internal static class FittingChecks
                     (float)Math.Sqrt(fitted.x * fitted.x + fitted.z * fitted.z)
                 );
             }
-            Near(actual: inner, expected: radius + LooseFootedSpritsailFittingGeometry.Clearance);
+            Near(actual: inner, expected: radius + 0.001f);
             // The rod/snotter hinge retains its position relative to the fitted collar.
             var hingeInCollar = LooseFootedSpritsailTransform.InversePoint(
                 matrix: pose.SnotterAssembly,
@@ -134,6 +135,47 @@ internal static class FittingChecks
         Near(actual: LooseFootedSpritsailFittingGeometry.ClampScale(value: 7), expected: 3);
         Console.WriteLine(
             "PASS: 125 spritsail radius/height/width fittings, rigid collar/rod, circular spar, peak alignment, clearance strips and transformed frames."
+        );
+    }
+
+    private static void CheckMastRadius()
+    {
+        // A tapered square shaft: the fitting must follow the section, not its full bounds.
+        var vertices = new Vector3[8];
+        var triangles = new int[24];
+        for (int i = 0; i < 4; i++)
+        {
+            float x = i < 2 ? 1 : -1;
+            float z = i == 0 || i == 3 ? 1 : -1;
+            vertices[i] = new Vector3(x: x, y: 0, z: z);
+            vertices[i + 4] = new Vector3(x: x / 2, y: 10, z: z / 2);
+            int next = (i + 1) % 4;
+            Array.Copy(
+                sourceArray: new[] { i, next, i + 4, next, next + 4, i + 4 },
+                sourceIndex: 0,
+                destinationArray: triangles,
+                destinationIndex: i * 6,
+                length: 6
+            );
+        }
+        var matrix = LooseFootedSpritsailTransform.TRS(
+            pos: new Vector3(x: 3, y: 4, z: 5),
+            q: new Quaternion(x: 0.5f, y: 0.5f, z: 0.5f, w: 0.5f),
+            s: new Vector3(x: 2, y: 3, z: 2)
+        );
+        foreach (float height in new[] { 0f, 2f, 5f, 10f, 11f })
+            Near(
+                actual: LooseFootedSpritsailFittingGeometry.MastRadius(
+                    vertices: vertices,
+                    triangles: triangles,
+                    matrix: matrix,
+                    center: matrix.MultiplyPoint3x4(point: new Vector3(x: 0, y: height, z: 0)),
+                    axis: matrix.MultiplyVector(vector: Vector3.up).normalized
+                ),
+                expected: height > 10 ? 0 : 2 * (1 - height / 20) * (float)Math.Sqrt(2)
+            );
+        Console.WriteLine(
+            "PASS: visible mast radius follows taper, transformed frames and missing sections."
         );
     }
 

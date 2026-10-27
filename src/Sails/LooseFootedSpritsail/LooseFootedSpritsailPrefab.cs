@@ -66,6 +66,20 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 // Activate the asset owner before making its template container inactive.
                 // Unity only sends OnDestroy to components that have been active.
                 assets = container.AddComponent<LooseFootedSpritsailAssets>();
+                // Sanbuq capture: structure/mast_1 uses dhow_medium_paint. Keep the
+                // plate's authored UV islands inside clean mast wood, above the painted band.
+                var plateWood = assets.Own(
+                    material: new Material(
+                        Resources
+                            .FindObjectsOfTypeAll<Material>()
+                            .First(m => m.name == "dhow_medium_paint")
+                    )
+                    {
+                        name = "Spritsail rotation plate wood",
+                        mainTextureScale = new Vector2(x: 0.004f, y: 0.04f),
+                        mainTextureOffset = new Vector2(x: 0.945f, y: 0.12f),
+                    }
+                );
                 container.SetActive(value: false);
                 container.transform.SetParent(
                     parent: directory.transform,
@@ -154,7 +168,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     assets: assets,
                     node: rig.RotationPlate,
                     data: data.RotationPlate,
-                    wood: wood,
+                    wood: plateWood,
                     metal: metal
                 );
                 rig.ReefLineAttachment = NewNode(name: "ReefLineAttachment", parent: rig.Sprit);
