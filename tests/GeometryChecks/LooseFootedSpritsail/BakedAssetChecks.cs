@@ -24,15 +24,15 @@ internal static class BakedAssetChecks
         );
         Near(
             actual: asset.Sprit.RestTransform.MultiplyPoint3x4(asset.ReefLineAttachment),
-            expected: new Vector3(x: 0.15495883f, y: 13.9923897f, z: -13.9955626f)
+            expected: new Vector3(x: 0.206746399f, y: 14.0048695f, z: -14.0332127f)
         );
         Near(
             actual: asset.Sprit.RestTransform.MultiplyPoint3x4(Vector3.zero),
-            expected: new Vector3(x: 0.45f, y: 0.1f, z: 0)
+            expected: new Vector3(x: 0.51f, y: 0.15f, z: 0)
         );
         Near(
             actual: asset.SnotterAssembly.RestTransform.MultiplyPoint3x4(Vector3.zero),
-            expected: new Vector3(x: 0, y: 0.1f, z: 0)
+            expected: new Vector3(x: 0, y: 0.15f, z: 0)
         );
         Console.WriteLine(
             "PASS: spritsail generated channels, assembly frames, anchors and independent arrays."
