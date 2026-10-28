@@ -1,4 +1,4 @@
-// Owns paired sheets independently of native mast arrays, including retries and cleanup.
+// Owns native sheets and reef controls outside mast arrays, with independent halyard retries.
 using System;
 using HarmonyLib;
 using MoreSailwindSails.Controls;
@@ -23,6 +23,14 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         [SerializeField]
         internal JibAngleMaster AngleMaster;
+
+        [SerializeField]
+        internal RopeControllerSailReef Reef;
+        private OwnedWinch reefWinch;
+        private Transform reefGuide;
+        private float reefRetryAfter;
+        private bool reefWarned;
+        private LooseFootedSpritsailRopes ropes;
         private readonly Mast[] supports = new Mast[1];
         private BoatRefs boat;
         private Mast mast;
@@ -41,9 +49,13 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         {
             leftRope = Left.GetComponent<RopeEffect>();
             rightRope = Right.GetComponent<RopeEffect>();
+            ropes = new LooseFootedSpritsailRopes(
+                rig: Rig,
+                source: Reef.GetComponent<RopeEffect>()
+            );
         }
 
-        private void OnEnable() => retryAfter = 0;
+        private void OnEnable() => retryAfter = reefRetryAfter = 0;
 
         internal void Refresh()
         {
@@ -54,7 +66,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 ReleaseControls();
                 mast = nextMast;
                 boat = nextBoat;
-                retryAfter = 0;
+                retryAfter = reefRetryAfter = 0;
             }
             if (!TryGetControlRequest(out _))
             {
@@ -82,6 +94,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     warned = true;
                 }
             }
+            RefreshReef();
             leftRope.ReceiveSailArea(area: Rig.Sail.sailArea);
             rightRope.ReceiveSailArea(area: Rig.Sail.sailArea);
             SetSheetsActive(
@@ -89,6 +102,84 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     && Placed(control: rightWinch, controller: Right)
             );
         }
+
+        private void RefreshReef()
+        {
+            if (Time.unscaledTime >= reefRetryAfter)
+            {
+                reefRetryAfter = Time.unscaledTime + 1;
+                reefGuide = FindGuide();
+                if (reefGuide)
+                {
+                    try
+                    {
+                        EnsureControl(control: ref reefWinch, role: WinchRole.Reef);
+                        WinchControls.Register(boat: boat, owner: gameObject, consumer: this);
+                        reefWarned = false;
+                    }
+                    catch (Exception exception)
+                    {
+                        // Keep the sheets and their claims alive when only this role is missing.
+                        if (!reefWarned)
+                            Plugin.Log.LogWarning(
+                                $"Spritsail halyard unavailable: {exception.Message}"
+                            );
+                        reefWarned = true;
+                    }
+                }
+            }
+            bool active =
+                reefGuide
+                && reefGuide.gameObject.activeInHierarchy
+                && Placed(control: reefWinch, controller: Reef);
+            Reef.gameObject.SetActive(value: active);
+        }
+
+        private Transform FindGuide()
+        {
+            var guides = mast.mastReefAtt;
+            int order = Rig.Sail.mastOrder;
+            if (
+                guides != null
+                && order >= 0
+                && order < guides.Length
+                && EligibleGuide(guide: guides[order])
+            )
+                return guides[order];
+            Transform closest = null;
+            float distance = float.PositiveInfinity;
+            foreach (var candidates in new[] { mast.mastReefAtt, mast.mastReefAttExtension })
+            {
+                if (candidates == null)
+                    continue;
+                foreach (var candidate in candidates)
+                {
+                    if (!EligibleGuide(guide: candidate))
+                        continue;
+                    float next = (candidate.position - Rig.Frame.position).sqrMagnitude;
+                    if (next < distance)
+                    {
+                        closest = candidate;
+                        distance = next;
+                    }
+                }
+            }
+            return closest;
+        }
+
+        private bool EligibleGuide(Transform guide)
+        {
+            if (!guide || !guide.gameObject.activeInHierarchy || Rig.ClothGeometry == null)
+                return false;
+            var point = Rig.Frame.InverseTransformPoint(position: guide.position);
+            return Rig.ClothGeometry.CanRoute(guide: point);
+        }
+
+        internal void Draw() =>
+            ropes.Draw(
+                winch: Reef.gameObject.activeInHierarchy && reefGuide ? Reef.transform : null,
+                guide: reefGuide
+            );
 
         private static bool Placed(OwnedWinch control, RopeController controller) =>
             control != null
@@ -148,6 +239,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 FittedSheetSpan = Rig.FittedSheetSpan,
                 Left = Left,
                 Right = Right,
+                Reef = reefGuide && reefGuide.gameObject.activeInHierarchy ? Reef : null,
             };
             return true;
         }
@@ -172,11 +264,16 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private void ReleaseControls()
         {
             SetSheetsActive(active: false);
+            if (Reef)
+                Reef.gameObject.SetActive(value: false);
+            ropes?.Hide();
+            reefGuide = null;
             if (boat)
                 WinchControls.Unregister(boat: boat, owner: gameObject, consumer: this);
             leftWinch?.Retire();
             rightWinch?.Retire();
-            leftWinch = rightWinch = null;
+            reefWinch?.Retire();
+            leftWinch = rightWinch = reefWinch = null;
         }
 
         private void OnDisable() => ReleaseControls();
@@ -190,6 +287,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 Destroy(obj: Left.gameObject);
             if (Right)
                 Destroy(obj: Right.gameObject);
+            if (Reef)
+                Destroy(obj: Reef.gameObject);
         }
     }
 }

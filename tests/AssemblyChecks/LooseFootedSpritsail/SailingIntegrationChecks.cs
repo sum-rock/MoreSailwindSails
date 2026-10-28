@@ -38,15 +38,16 @@ internal static class SailingIntegrationChecks
                 && requestFields.Contains("Right")
                 && requestFields.Contains("SourceMast")
                 && requestFields.Contains("FittedSheetSpan")
-                && !requestFields.Contains("Reef"),
-            "Spritsails must request paired sheets without a halyard."
+                && requestFields.Contains("Reef"),
+            "Spritsails must request paired sheets and an independent halyard."
         );
         Check(
             Calls(type: rig, method: "PrepareSailing", called: "get_SheetsReady")
                 && Calls(type: rig, method: "PrepareSailing", called: "IsInstalled")
                 && Calls(type: rig, method: "PrepareSailing", called: "Clear")
-                && Calls(type: rig, method: "PrepareSailing", called: "ResetToNeutral"),
-            "Unavailable sheets and previews must suppress native physics and clear stale force."
+                && Calls(type: rig, method: "PrepareSailing", called: "UpdateBodyMotion")
+                && !Calls(type: rig, method: "PrepareSailing", called: "ResetToNeutral"),
+            "Unavailable sheets and previews must clear force without parking a body joined to the boat."
         );
         Check(
             Instructions(method: rig.GetMethod(name: "PrepareSailing", bindingAttr: All))
@@ -135,6 +136,7 @@ internal static class SailingIntegrationChecks
             "Native sheets must terminate at the custom clew and reference the installed hinge master."
         );
         CheckNativeForceBindings(physics: physics);
+        ReefingIntegrationChecks.Run(assembly: assembly);
         Check(
             Calls(type: rig, method: "MeasureMast", called: "RelativeMatrix")
                 && !Calls(type: rig, method: "MeasureMast", called: "get_worldToLocalMatrix"),

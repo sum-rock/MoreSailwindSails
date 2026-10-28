@@ -64,6 +64,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private int[] mastTriangles;
         private SkinnedMeshRenderer clothRenderer;
         private ShipyardSailColChecker checker;
+        private LooseFootedSpritsailCloth clothMotion;
+        internal LooseFootedSpritsailClothGeometry ClothGeometry => clothMotion?.Geometry;
         private bool dirty = true;
         private bool warnedRadius;
         private float lastHeight;
@@ -88,6 +90,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             checker = Sail.GetComponent<SailConnections>().colChecker;
             clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
             Data = LooseFootedSpritsailPrefab.CreateAsset(prefabIndex: Sail.prefabIndex);
+            clothMotion = new LooseFootedSpritsailCloth(rig: this, renderer: clothRenderer);
         }
 
         private void OnEnable()
@@ -99,14 +102,25 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private void LateUpdate()
         {
             Refresh();
+            rigging.Refresh();
+            clothMotion.Refresh();
+            clothMotion.UpdateBounds();
+            rigging.Draw();
             UpdatePlate();
         }
 
         internal bool PrepareSailing()
         {
             Refresh();
+            UpdateBodyMotion();
             rigging.Refresh();
-            Sail.currentUnroll = 1;
+            clothMotion.Refresh();
+            // A closed sail must stop wind torque as well as propulsion, without resetting azimuth.
+            if (Sail.IsInstalled() && Sail.currentUnroll <= 0.001f)
+            {
+                LooseFootedSpritsailPhysics.Clear(sail: Sail);
+                return false;
+            }
             bool ready =
                 isActiveAndEnabled
                 && fitted
@@ -127,11 +141,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 && RefreshAerodynamics();
             if (!ready)
             {
-                ResetToNeutral();
                 LooseFootedSpritsailPhysics.Clear(sail: Sail);
                 return false;
             }
-            body.isKinematic = false;
             return true;
         }
 
@@ -140,10 +152,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             if (
                 !fitted
                 || !LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                    throat: ClothBone.TransformPoint(position: Data.Sail.Vertices[Data.Throat]),
-                    tack: ClothBone.TransformPoint(position: Data.Sail.Vertices[Data.Tack]),
-                    peak: ClothBone.TransformPoint(position: Data.Sail.Vertices[Data.Peak]),
-                    clew: ClothBone.TransformPoint(position: Data.Sail.Vertices[Data.Clew]),
+                    throat: Frame.TransformPoint(position: clothMotion.Geometry.Throat),
+                    tack: Frame.TransformPoint(position: clothMotion.Geometry.Tack),
+                    peak: Frame.TransformPoint(position: clothMotion.Geometry.Peak),
+                    clew: Frame.TransformPoint(position: clothMotion.Geometry.Clew),
                     out var wind
                 )
             )
@@ -155,14 +167,24 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return true;
         }
 
+        private void UpdateBodyMotion()
+        {
+            var ship = hinge.connectedBody;
+            // A kinematic sail joined to a dynamic boat anchors the boat to the sail.
+            // Match the connected body's mode regardless of deployment, controls or loading.
+            bool kinematic = !ship || ship.isKinematic;
+            if (body.isKinematic == kinematic)
+                return;
+            body.isKinematic = kinematic;
+            if (kinematic)
+                return;
+            // Rejoin moving boats without introducing a stationary mass at the mast.
+            body.velocity = ship.GetPointVelocity(worldPoint: body.worldCenterOfMass);
+            body.angularVelocity = ship.angularVelocity;
+        }
+
         private void ResetToNeutral()
         {
-            if (!body.isKinematic)
-            {
-                body.velocity = Vector3.zero;
-                body.angularVelocity = Vector3.zero;
-                body.isKinematic = true;
-            }
             if (mast)
             {
                 transform.localPosition = neutralPosition;
@@ -294,6 +316,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             body.centerOfMass = center;
             body.inertiaTensor = Vector3.one * body.mass;
             body.inertiaTensorRotation = Quaternion.identity;
+            UpdateBodyMotion();
             rigging.AngleMaster.UpdateInitialAngle();
             fittedFrame = Time.frameCount;
             lastRadius = radius;
@@ -338,16 +361,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Apply(node: RotationPlate, pose: pose.RotationPlate);
             neutralPlate =
                 Matrix4x4.TRS(pos: center, q: rotation, s: Vector3.one) * pose.RotationPlate;
-            RefreshCollision(pose: pose);
-            var bounds = new Bounds(center: Vector3.zero, size: Vector3.zero);
-            foreach (int index in new[] { Data.Tack, Data.Throat, Data.Peak, Data.Clew })
-                bounds.Encapsulate(
-                    point: cloth.InverseTransformPoint(
-                        position: ClothBone.TransformPoint(position: Data.Sail.Vertices[index])
-                    )
-                );
-            bounds.Expand(amount: 0.1f);
-            clothRenderer.localBounds = bounds;
+            clothMotion.Fit(rest: pose);
+            RefreshCollision();
             Sail.sailArea = BaseArea * height * width;
             var throat = pose.Sail.MultiplyPoint3x4(point: Data.Sail.Vertices[Data.Throat]);
             var peak = pose.Sail.MultiplyPoint3x4(point: Data.Sail.Vertices[Data.Peak]);
@@ -364,6 +379,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             lastWidth = width;
             dirty = false;
             fitted = true;
+            clothMotion.Refresh();
+            clothMotion.UpdateBounds();
             UpdatePlate();
         }
 
@@ -486,34 +503,19 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return current == parent ? matrix : parent.worldToLocalMatrix * node.localToWorldMatrix;
         }
 
-        private void RefreshCollision(LooseFootedSpritsailPose pose)
+        private void RefreshCollision()
         {
-            for (int i = 0; i < LooseFootedSpritsailFittingGeometry.CollisionStrips; i++)
+            var clearance = clothMotion.Geometry.Clearance();
+            for (int i = 0; i < CollisionBoxes.Length; i++)
             {
                 var box = CollisionBoxes[i];
-                box.enabled = LooseFootedSpritsailFittingGeometry.CollisionStrip(
-                    data: Data,
-                    pose: pose,
-                    column: i,
-                    out var center,
-                    out var size
-                );
-                box.transform.localPosition = Frame.localPosition + Frame.localRotation * center;
+                box.enabled = true;
+                box.transform.localPosition =
+                    Frame.localPosition + Frame.localRotation * clearance[i].center;
                 box.transform.localRotation = Frame.localRotation;
                 box.center = Vector3.zero;
-                box.size = size;
+                box.size = clearance[i].size;
             }
-            var spar = CollisionBoxes[CollisionBoxes.Length - 1];
-            var centerSpar = (Data.Sprit.BoundsMin + Data.Sprit.BoundsMax) / 2;
-            spar.transform.localPosition =
-                Frame.localPosition
-                + Frame.localRotation * pose.Sprit.MultiplyPoint3x4(point: centerSpar);
-            spar.transform.localRotation = Frame.localRotation * pose.Sprit.rotation;
-            spar.size = Vector3.Scale(
-                a: Data.Sprit.BoundsMax - Data.Sprit.BoundsMin,
-                b: pose.Sprit.lossyScale
-            );
-            spar.center = Vector3.zero;
         }
 
         internal void ChangeScale(float height, float width)
@@ -570,6 +572,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         private void OnDestroy()
         {
+            clothMotion?.Release();
             if (checker && !checker.transform.IsChildOf(parent: transform))
                 Destroy(obj: checker.gameObject);
             if (

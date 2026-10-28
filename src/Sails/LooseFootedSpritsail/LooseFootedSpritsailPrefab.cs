@@ -101,23 +101,29 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 sail.junkType = false;
                 sail.installHeight = fullGaff.installHeight;
                 sail.upwindEfficiency = fullGaff.upwindEfficiency;
-                sail.currentUnroll = 1;
+                sail.currentUnroll = 0;
                 var rig = clone.AddComponent<LooseFootedSpritsailRig>();
                 rig.Sail = sail;
                 var rigging = clone.AddComponent<LooseFootedSpritsailRigging>();
                 rigging.Rig = rig;
                 var connections = sail.GetComponent<SailConnections>();
+                rigging.Reef = connections.reefController as RopeControllerSailReef;
                 rigging.Left = connections.angleControllerLeft as RopeControllerSailAngleJib;
                 rigging.Right = connections.angleControllerRight as RopeControllerSailAngleJib;
                 rigging.AngleMaster = clone.GetComponent<JibAngleMaster>();
-                if (!rigging.Left || !rigging.Right || !rigging.AngleMaster)
+                if (!rigging.Left || !rigging.Right || !rigging.Reef || !rigging.AngleMaster)
                     throw new InvalidOperationException(
-                        "Expected paired native jib sheet controllers."
+                        "Expected native jib sheet and reef controllers."
                     );
                 rigging.AngleMaster.sailHinge = clone.GetComponent<HingeJoint>();
                 rigging.AngleMaster.enabled = false;
                 rigging.Left.gameObject.SetActive(value: false);
                 rigging.Right.gameObject.SetActive(value: false);
+                rigging.Reef.gameObject.SetActive(value: false);
+                rigging.Reef.sail = sail;
+                rigging.Reef.reverseReefing = false;
+                rigging.Reef.enabled = true;
+                rigging.Reef.GetComponent<RopeEffect>().enabled = false;
                 rig.BaseScale = scale;
                 rig.BaseLuff = fullGaff.installHeight;
                 rig.BaseArea = Area(data: data) * scale * scale;
@@ -214,7 +220,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     Array.Resize(array: ref directory.sails, newSize: definition.PrefabIndex + 1);
                 directory.sails[definition.PrefabIndex] = clone;
                 Plugin.Log.LogInfo(
-                    $"Registered {definition.DisplayName}: index={definition.PrefabIndex}, base luff={sail.installHeight:F2}m, paired sheets and native propulsion."
+                    $"Registered {definition.DisplayName}: index={definition.PrefabIndex}, base luff={sail.installHeight:F2}m, native sheets, brailing and propulsion."
                 );
                 return clone;
             }
@@ -262,15 +268,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var reef = sail.GetComponent<ReefEffectAnimUniversal>();
             reef.enabled = false;
             var connections = sail.GetComponent<SailConnections>();
-            foreach (
-                var controller in new[]
-                {
-                    connections.reefController,
-                    connections.angleControllerMid,
-                }
-            )
-                if (controller)
-                    Object.DestroyImmediate(obj: controller.gameObject);
+            if (connections.angleControllerMid)
+                Object.DestroyImmediate(obj: connections.angleControllerMid.gameObject);
             foreach (
                 var attachment in new[]
                 {
