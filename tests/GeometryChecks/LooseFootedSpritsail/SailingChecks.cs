@@ -139,6 +139,7 @@ internal static class SailingChecks
                 );
             }
         }
+        ClothChecks.Run();
         CheckCentroid();
         Check(
             !LooseFootedSpritsailSailingGeometry.TryWindFrame(
