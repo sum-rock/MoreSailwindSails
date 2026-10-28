@@ -45,6 +45,7 @@ internal static class Program
         PluginMetadataChecks.Run(assembly: assembly);
         Visuals.RoutedRopeChecks.Run(assembly: assembly);
         HarmonySignatureChecks.Run(assembly);
+        LooseFootedSpritsail.IntegrationChecks.Run(assembly: assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
         Controls.SheetFallbackConfigurationChecks.Run(assembly: assembly);

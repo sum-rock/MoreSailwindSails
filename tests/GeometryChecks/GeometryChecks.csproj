@@ -7,6 +7,14 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailSailingGeometry.cs;../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailClothGeometry.cs"
+      Link="LooseFootedSpritsail/%(Filename)%(Extension)"
+    />
+    <Compile
+      Include="../../src/Sails/LooseFootedSpritsail/**/*BakedAsset.g.cs;../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailAssetData.cs;../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailFittingGeometry.cs;../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailTransform.cs"
+      Link="LooseFootedSpritsail/%(RecursiveDir)%(Filename)%(Extension)"
+    />
+    <Compile
       Include="../../src/Controls/SailControlGeometry.cs"
       Link="Controls/SailControlGeometry.cs"
     />
