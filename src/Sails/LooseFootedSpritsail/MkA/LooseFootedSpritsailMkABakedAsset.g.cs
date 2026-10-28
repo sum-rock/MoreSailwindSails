@@ -9858,6 +9858,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                         },
                     },
                 },
+                CollarInnerRadius = 0.303631538f,
                 ReefLineAttachment = new Vector3(0.0249999184f, 0.215809852f, -19.7213898f),
                 SheetLineAttachment = new Vector3(0f, 0f, -14f),
                 Tack = 3,

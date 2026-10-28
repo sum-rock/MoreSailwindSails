@@ -10,6 +10,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal LooseFootedSpritsailMeshPart SnotterAssembly;
         internal LooseFootedSpritsailMeshPart RotationPlate;
 
+        // Authored inner radius about the mast axis, measured from the snotter without its rod.
+        internal float CollarInnerRadius;
+
         // Attachment positions are relative to their corresponding mesh part's origin.
         internal Vector3 ReefLineAttachment;
         internal Vector3 SheetLineAttachment;

@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 import hashlib
+import math
 from pathlib import Path
 import runpy
 import sys
@@ -22,6 +23,15 @@ source = bake()
 assert source == bake(), "Non-deterministic bake"
 assert source == CUTS["A"].source_path.read_text(), "Stale checked-in bake"
 data = collect()
+collar = bpy.data.objects["Snotter"]
+evaluated = collar.evaluated_get(bpy.context.evaluated_depsgraph_get())
+mesh = evaluated.to_mesh()
+try:
+    points = [collar.matrix_world @ v.co for v in mesh.vertices]
+    radius = min(math.hypot(p.x, p.y) for p in points)
+    assert abs(data["CollarInnerRadius"] - radius) < 1e-6
+finally:
+    evaluated.to_mesh_clear()
 assert len(data["Sail"]["Vertices"]) == 320
 assert len(data["Sail"]["SubmeshTriangles"][0]) == 285 * 6
 assert set(tool["PARTS"]) == {"Sail", "Sprit", "SnotterAssembly", "RotationPlate"}
@@ -153,11 +163,14 @@ with edit_object("Mast") as obj:
     assert bake() == source, "Reference mast affected the export"
 
 with edit_object("SpritMountRod") as obj:
-    obj.location.y += 0.1
+    obj.location.x = 0
     bpy.context.view_layer.update()
     changed = collect()
     assert changed["SnotterAssembly"]["Vertices"] != assembly["Vertices"]
     assert changed["SnotterAssembly"]["RestTransform"] == assembly["RestTransform"]
+    assert changed["CollarInnerRadius"] == data["CollarInnerRadius"], (
+        "Mounting rod changed the collar fit"
+    )
 
 with edit_object("Snotter") as obj:
     obj.modifiers[0].thickness *= 1.5

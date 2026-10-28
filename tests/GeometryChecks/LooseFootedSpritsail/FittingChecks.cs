@@ -55,15 +55,9 @@ internal static class FittingChecks
                 actual: LooseFootedSpritsailTransform.Scale(matrix: pose.SnotterAssembly).x,
                 expected: LooseFootedSpritsailTransform.Scale(matrix: pose.SnotterAssembly).z
             );
-            float inner = float.PositiveInfinity;
-            foreach (var p in data.SnotterAssembly.Vertices)
-            {
-                var fitted = pose.SnotterAssembly.MultiplyPoint3x4(point: p);
-                inner = Math.Min(
-                    inner,
-                    (float)Math.Sqrt(fitted.x * fitted.x + fitted.z * fitted.z)
-                );
-            }
+            // Measured from the authored collar alone; the rod reaches closer to the axis.
+            float inner =
+                0.303631538f * LooseFootedSpritsailTransform.Scale(matrix: pose.SnotterAssembly).x;
             Near(actual: inner, expected: radius + 0.001f);
             // The rod/snotter hinge retains its position relative to the fitted collar.
             var hingeInCollar = LooseFootedSpritsailTransform.InversePoint(

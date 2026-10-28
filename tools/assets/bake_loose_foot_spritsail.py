@@ -324,6 +324,14 @@ def collect():
     sail = object_named("Sail", "MESH")
     corners = cloth_grid(sail)
     data = {name: extract_part(name, sources) for name, sources in PARTS.items()}
+    # The mounting rod may extend inside the collar radius; it must not drive mast fitting.
+    collar = extract_part("Snotter", ("Snotter",))
+    points = [collar["RestTransform"] @ Vector(v) for v in collar["Vertices"]]
+    data["CollarInnerRadius"] = min(math.hypot(p.x, p.z) for p in points)
+    require(
+        math.isfinite(data["CollarInnerRadius"]) and data["CollarInnerRadius"] > 0,
+        "Snotter: missing measurable inner radius",
+    )
     data.update(corners)
     data["ReefLineAttachment"] = attachment("ReefLineAttachment", "Sprit")
     data["SheetLineAttachment"] = attachment("SheetLineAttachment", "Sail")
@@ -417,6 +425,9 @@ def bake(cut="A"):
     ]
     for name in PARTS:
         lines.extend(part_lines(name, data[name]))
+    lines.append(
+        f"                CollarInnerRadius = {number(data['CollarInnerRadius'])},"
+    )
     for name in ("ReefLineAttachment", "SheetLineAttachment"):
         lines.append(f"                {name} = {vector(data[name])},")
     for name in ("Tack", "Throat", "Peak", "Clew", "SheetVertex"):

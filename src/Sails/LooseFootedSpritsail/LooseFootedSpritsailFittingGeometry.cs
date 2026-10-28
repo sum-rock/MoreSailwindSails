@@ -53,12 +53,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         internal static float CollarRadius(LooseFootedSpritsailAssetData data)
         {
-            float radius = float.PositiveInfinity;
-            foreach (var vertex in data.SnotterAssembly.Vertices)
-            {
-                var p = data.SnotterAssembly.RestTransform.MultiplyPoint3x4(point: vertex);
-                radius = Math.Min(radius, (float)Math.Sqrt(p.x * p.x + p.z * p.z));
-            }
+            float radius = data.CollarInnerRadius;
             if (!Finite(radius) || radius <= 0)
                 throw new ArgumentException("The snotter requires a measurable inner radius.");
             return radius;
