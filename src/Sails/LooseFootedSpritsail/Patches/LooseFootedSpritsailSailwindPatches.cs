@@ -148,6 +148,99 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         }
     }
 
+    // Applies the native gaff/square height exception without changing the menu category.
+    [HarmonyPatch(typeof(ShipyardSailInstaller), "CheckSailOverlap")]
+    internal static class SpritsailOverlapPatch
+    {
+        [HarmonyPostfix]
+        private static void Postfix(Mast mast, Sail sailToCheck, ref bool __result)
+        {
+            if (!__result)
+                return;
+            bool hasSharedSquare = false;
+            foreach (var item in mast.sails)
+                if (item && SharesSquareMast(first: sailToCheck, second: item.GetComponent<Sail>()))
+                    hasSharedSquare = true;
+            if (!hasSharedSquare)
+                return;
+
+            // Recheck every remaining pair: a permitted square must not hide
+            // an overlapping second spritsail or another incompatible sail.
+            foreach (var item in mast.sails)
+            {
+                var other = item.GetComponent<Sail>();
+                if (other == sailToCheck || SharesSquareMast(first: sailToCheck, second: other))
+                    continue;
+                if (
+                    (
+                        sailToCheck.category == SailCategory.gaff
+                        && other.category == SailCategory.square
+                    )
+                    || (
+                        sailToCheck.category == SailCategory.square
+                        && other.category == SailCategory.gaff
+                    )
+                )
+                    continue;
+                float top = sailToCheck.GetCurrentInstallHeight();
+                float otherTop = other.GetCurrentInstallHeight();
+                if (
+                    Mathf.Max(
+                        a: top - sailToCheck.GetScaledHeight(),
+                        b: otherTop - other.GetScaledHeight()
+                    ) <= Mathf.Min(a: top, b: otherTop)
+                )
+                    return;
+            }
+            __result = false;
+        }
+
+        internal static bool SharesSquareMast(Sail first, Sail second)
+        {
+            if (!first || !second || first == second)
+                return false;
+            bool pair =
+                (
+                    first.category == SailCategory.square
+                    && second.GetComponent<LooseFootedSpritsailRig>()
+                )
+                || (
+                    second.category == SailCategory.square
+                    && first.GetComponent<LooseFootedSpritsailRig>()
+                );
+            if (
+                !pair
+                || !first.transform.parent
+                || first.transform.parent != second.transform.parent
+            )
+                return false;
+            return first.transform.parent.GetComponent<Mast>();
+        }
+    }
+
+    // The shared-mast exception must apply to both checkers, including child contacts.
+    [HarmonyPatch(typeof(ShipyardSailColChecker), "OnTriggerEnter")]
+    internal static class SpritsailSquareCollisionPatch
+    {
+        private static readonly AccessTools.FieldRef<ShipyardSailColChecker, Sail> CheckerSail =
+            AccessTools.FieldRefAccess<ShipyardSailColChecker, Sail>(fieldName: "sail");
+
+        [HarmonyPrefix]
+        private static bool Prefix(Sail ___sail, Collider other)
+        {
+            if (!___sail || !other)
+                return true;
+            if (!other.CompareTag("SailColChecker") && !other.CompareTag("SailColCheckerSub"))
+                return true;
+            var checker = other.GetComponentInParent<ShipyardSailColChecker>();
+            return !checker
+                || !SpritsailOverlapPatch.SharesSquareMast(
+                    first: ___sail,
+                    second: CheckerSail(checker)
+                );
+        }
+    }
+
     [HarmonyPatch(typeof(Sail), "ChangeSailColor")]
     internal static class SpritsailColorPatch
     {

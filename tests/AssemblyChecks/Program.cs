@@ -46,6 +46,7 @@ internal static class Program
         Visuals.RoutedRopeChecks.Run(assembly: assembly);
         HarmonySignatureChecks.Run(assembly);
         LooseFootedSpritsail.IntegrationChecks.Run(assembly: assembly);
+        LooseFootedSpritsail.CollisionIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
         Controls.SheetFallbackConfigurationChecks.Run(assembly: assembly);

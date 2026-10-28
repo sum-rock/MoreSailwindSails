@@ -1,4 +1,4 @@
-// Exercises reversible billow/brailing, rigid hardware and swept installation clearance.
+// Exercises reversible billow/brailing, rigid hardware and neutral installation clearance.
 using System;
 using System.Linq;
 using MoreSailwindSails.Sails.LooseFootedSpritsail;
@@ -34,7 +34,7 @@ internal static class ClothChecks
             float foot = (clew - tack).magnitude;
             float leech = (peak - clew).magnitude;
             var tie = LooseFootedSpritsailTransform.InversePoint(matrix: rest.Sprit, point: peak);
-            var clearance = cloth.Clearance();
+            CheckClearance(data: data, rest: rest, cloth: cloth);
             var leechIndices = Enumerable
                 .Range(start: 0, count: data.Sail.Vertices.Length)
                 .Where(i =>
@@ -95,12 +95,6 @@ internal static class ClothChecks
                     Check(
                         point.z <= throat.z + 0.0001f,
                         $"Brailed cloth crosses the mast plane at size {height}/{width}, set {deployment}: {point}."
-                    );
-                    Check(
-                        clearance
-                            .Take(clearance.Length - 1)
-                            .Any(b => Inside(bounds: b, point: point)),
-                        "Cloth escaped installation clearance."
                     );
                 }
                 foreach (var triangles in data.Sail.SubmeshTriangles)
@@ -164,26 +158,6 @@ internal static class ClothChecks
                     );
                 }
             }
-            // Check between clearance samples as well as at their endpoints.
-            for (int step = 0; step <= 129; step++)
-            {
-                cloth.Pose(deployment: step / 129f, load: 1);
-                foreach (var point in cloth.Vertices)
-                    Check(
-                        clearance
-                            .Take(clearance.Length - 1)
-                            .Any(b => Inside(bounds: b, point: point)),
-                        "Intermediate cloth pose escaped clearance."
-                    );
-                foreach (var point in data.Sprit.Vertices)
-                    Check(
-                        Inside(
-                            bounds: clearance[clearance.Length - 1],
-                            point: cloth.Sprit.MultiplyPoint3x4(point: point)
-                        ),
-                        "Raised sprit escaped clearance."
-                    );
-            }
             cloth.Pose(deployment: 0, load: 0);
             Near(
                 actual: cloth.Tack,
@@ -232,8 +206,77 @@ internal static class ClothChecks
             );
         Check(smoothed < -0.99f, "Billow does not settle after tacking.");
         Console.WriteLine(
-            "PASS: spritsail billow and brailing across independent sizes, deployments, winds and rakes; rigid sprit, cloth budgets, reversibility and swept clearance."
+            "PASS: spritsail billow and brailing across independent sizes, deployments, winds and rakes; rigid sprit, cloth budgets, reversibility and neutral clearance."
         );
+    }
+
+    private static void CheckClearance(
+        LooseFootedSpritsailAssetData data,
+        LooseFootedSpritsailPose rest,
+        LooseFootedSpritsailClothGeometry cloth
+    )
+    {
+        var clearance = cloth.Clearance();
+        var panels = clearance.Take(clearance.Length - 1).ToArray();
+        foreach (var point in data.Sail.Vertices)
+            Check(
+                panels.Any(b => Inside(box: b, point: rest.Sail.MultiplyPoint3x4(point: point))),
+                "Neutral cloth escaped installation clearance."
+            );
+        var spar = clearance[clearance.Length - 1];
+        foreach (var point in data.Sprit.Vertices)
+            Check(
+                Inside(box: spar, point: rest.Sprit.MultiplyPoint3x4(point: point)),
+                "Deployed sprit escaped its oriented clearance box."
+            );
+        foreach (var panel in panels)
+        {
+            Check(panel.Size.x <= 0.021f, "Billow must not inflate neutral cloth clearance.");
+            Check(
+                panel.Center.z + panel.Size.z / 2 <= cloth.Throat.z + 0.0001f,
+                "Cloth clearance crosses the mounting mast plane."
+            );
+        }
+        cloth.Pose(deployment: 0.5f, load: 1);
+        var saved = (Vector3[])cloth.Vertices.Clone();
+        var again = cloth.Clearance();
+        for (int i = 0; i < clearance.Length; i++)
+        {
+            Near(
+                actual: again[i].Center,
+                expected: clearance[i].Center,
+                message: "Reefing changed installation clearance."
+            );
+            Near(
+                actual: again[i].Size,
+                expected: clearance[i].Size,
+                message: "Billow changed installation clearance."
+            );
+        }
+        for (int i = 0; i < saved.Length; i++)
+            Near(
+                actual: cloth.Vertices[i],
+                expected: saved[i],
+                message: "Computing clearance changed the animated cloth."
+            );
+        Check(
+            cloth.Vertices.Any(p => !panels.Any(b => Inside(box: b, point: p))),
+            "Installation panels still encompass the reefing and billow envelope."
+        );
+        cloth.Pose(deployment: 1, load: 0);
+    }
+
+    private static bool Inside(LooseFootedSpritsailClearance box, Vector3 point)
+    {
+        var local = LooseFootedSpritsailTransform.InversePoint(
+            matrix: LooseFootedSpritsailTransform.TRS(
+                pos: box.Center,
+                q: box.Rotation,
+                s: Vector3.one
+            ),
+            point: point
+        );
+        return Inside(bounds: new Bounds(center: Vector3.zero, size: box.Size), point: local);
     }
 
     private static void CheckBillow(

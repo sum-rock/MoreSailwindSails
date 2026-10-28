@@ -242,65 +242,63 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return true;
         }
 
-        internal Bounds[] Clearance()
+        internal LooseFootedSpritsailClearance[] Clearance()
         {
-            const int steps = 64;
             int strips = LooseFootedSpritsailFittingGeometry.CollisionStrips;
             var bounds = new Bounds[strips + 1];
             var initialized = new bool[bounds.Length];
-            // Sweep deployment under both wind directions and calm conditions, accumulating
-            // cloth strips plus one spar box. Calm matters because the clew reaches farther aft.
-            for (int step = 0; step <= steps; step++)
-                foreach (float wind in new[] { -1f, 0f, 1f })
-                {
-                    Pose(deployment: step / (float)steps, load: wind);
-                    for (int i = 0; i < Vertices.Length; i++)
-                    {
-                        // Overlap adjacent authored columns so every triangle is covered.
-                        int column = (int)Math.Round(coordinates[i].x * (strips - 1));
-                        Include(
-                            bounds: bounds,
-                            initialized: initialized,
-                            index: column,
-                            point: Vertices[i]
-                        );
-                        if (column > 0)
-                            Include(
-                                bounds: bounds,
-                                initialized: initialized,
-                                index: column - 1,
-                                point: Vertices[i]
-                            );
-                    }
-                    foreach (var point in data.Sprit.Vertices)
-                        Include(
-                            bounds: bounds,
-                            initialized: initialized,
-                            index: strips,
-                            point: Sprit.MultiplyPoint3x4(point: point)
-                        );
-                }
-            // Pad the sweep between samples, including billow/fold extrema between grid vertices.
-            // The angular sweep margin scales with spar reach; the cloth margin scales
-            // with billow depth and strip spacing. Bounds.Expand takes total size growth,
-            // so twice the padding adds that margin on each side of the box.
-            float travel = (peak - Pivot).magnitude * (float)Math.PI / steps;
-            float padding = travel + footLength * BillowDepth / (strips - 1) + 0.02f;
+            // Shipyard fitting uses the deployed neutral sail, like native gaffs.
+            // Billow and reefing envelopes create false obstructions at zero trim.
+            for (int i = 0; i < data.Sail.Vertices.Length; i++)
+            {
+                var point = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[i]);
+                int column = (int)Math.Round(coordinates[i].x * (strips - 1));
+                Include(bounds: bounds, initialized: initialized, index: column, point: point);
+                if (column > 0)
+                    Include(
+                        bounds: bounds,
+                        initialized: initialized,
+                        index: column - 1,
+                        point: point
+                    );
+            }
+            // Bound the sprit in its own axes instead of filling the triangle
+            // between the diagonal spar and the mast with an axis-aligned box.
+            var scale = LooseFootedSpritsailTransform.Scale(matrix: rest.Sprit);
+            foreach (var point in data.Sprit.Vertices)
+                Include(
+                    bounds: bounds,
+                    initialized: initialized,
+                    index: strips,
+                    point: Vector3.Scale(a: point, b: scale)
+                );
+            var result = new LooseFootedSpritsailClearance[bounds.Length];
             for (int i = 0; i < bounds.Length; i++)
             {
-                bounds[i].Expand(amount: 2 * padding);
-                if (i < strips)
+                bounds[i].Expand(amount: 0.02f);
+                var rotation =
+                    i == strips
+                        ? LooseFootedSpritsailTransform.Rotation(matrix: rest.Sprit)
+                        : Quaternion.identity;
+                var center = bounds[i].center;
+                if (i == strips)
+                    center = Pivot + rotation * center;
+                else
                 {
-                    // Cloth stays aft of the luff plane; padding must not invent an
-                    // obstruction inside the mast. The spar has its own unrestricted box.
+                    // Do not pad the luff forward into its mounting mast.
                     var maximum = bounds[i].max;
                     maximum.z = Math.Min(maximum.z, throat.z);
                     bounds[i].SetMinMax(min: bounds[i].min, max: maximum);
+                    center = bounds[i].center;
                 }
+                result[i] = new LooseFootedSpritsailClearance
+                {
+                    Center = center,
+                    Size = bounds[i].size,
+                    Rotation = rotation,
+                };
             }
-            // Sampling overwrites the working vertices; restore the neutral fitted pose.
-            Pose(deployment: 1, load: 0);
-            return bounds;
+            return result;
         }
 
         private static void Include(Bounds[] bounds, bool[] initialized, int index, Vector3 point)
@@ -313,5 +311,12 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             else
                 bounds[index].Encapsulate(point: point);
         }
+    }
+
+    internal struct LooseFootedSpritsailClearance
+    {
+        internal Vector3 Center;
+        internal Vector3 Size;
+        internal Quaternion Rotation;
     }
 }

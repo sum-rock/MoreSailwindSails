@@ -511,10 +511,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 var box = CollisionBoxes[i];
                 box.enabled = true;
                 box.transform.localPosition =
-                    Frame.localPosition + Frame.localRotation * clearance[i].center;
-                box.transform.localRotation = Frame.localRotation;
+                    Frame.localPosition + Frame.localRotation * clearance[i].Center;
+                box.transform.localRotation = Frame.localRotation * clearance[i].Rotation;
                 box.center = Vector3.zero;
-                box.size = clearance[i].size;
+                box.size = clearance[i].Size;
             }
         }
 
