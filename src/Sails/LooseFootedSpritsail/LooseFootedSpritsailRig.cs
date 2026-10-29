@@ -1,11 +1,12 @@
 // Fits the sail in a neutral mast frame while allowing the native hinge to drive sailing motion.
 using MoreSailwindSails.Controls;
+using MoreSailwindSails.Utils.Profiling;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     [DefaultExecutionOrder(100)]
-    internal sealed class LooseFootedSpritsailRig : MonoBehaviour
+    internal sealed class LooseFootedSpritsailRig : MonoBehaviour, INativeSailControlRig
     {
         [SerializeField]
         internal Sail Sail;
@@ -81,6 +82,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal Mast Mast => mast;
         internal BoatRefs Boat { get; private set; }
         internal float? FittedSheetSpan { get; private set; }
+        internal bool SailingReady { get; private set; }
 
         private void Awake()
         {
@@ -93,58 +95,86 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             clothMotion = new LooseFootedSpritsailCloth(rig: this, renderer: clothRenderer);
         }
 
+        void INativeSailControlRig.AttachControls()
+        {
+            Refresh();
+            if (rigging)
+                rigging.Refresh();
+        }
+
         private void OnEnable()
         {
+            SailingReady = false;
             dirty = true;
             Refresh();
         }
 
+        private void OnDisable() => SailingReady = false;
+
         private void LateUpdate()
         {
-            Refresh();
-            rigging.Refresh();
-            clothMotion.Refresh();
-            clothMotion.UpdateBounds();
-            rigging.Draw();
-            UpdatePlate();
+            using (
+                var profile = PerformanceProfile.Measure(
+                    target: ProfileTarget.Rig,
+                    family: ProfileFamily.Spritsail
+                )
+            )
+            {
+                Refresh();
+                rigging.Refresh();
+                clothMotion.Refresh();
+                clothMotion.Render();
+                rigging.Draw();
+                UpdatePlate();
+            }
         }
 
         internal bool PrepareSailing()
         {
-            Refresh();
-            UpdateBodyMotion();
-            rigging.Refresh();
-            clothMotion.Refresh();
-            // A closed sail must stop wind torque as well as propulsion, without resetting azimuth.
-            if (Sail.IsInstalled() && Sail.currentUnroll <= 0.001f)
+            using (
+                var profile = PerformanceProfile.Measure(
+                    target: ProfileTarget.Rig,
+                    family: ProfileFamily.Spritsail
+                )
+            )
             {
-                LooseFootedSpritsailPhysics.Clear(sail: Sail);
-                return false;
+                SailingReady = false;
+                Refresh();
+                UpdateBodyMotion();
+                rigging.Refresh();
+                clothMotion.Refresh();
+                // A closed sail must stop wind torque as well as propulsion, without resetting azimuth.
+                if (Sail.IsInstalled() && Sail.currentUnroll <= 0.001f)
+                {
+                    LooseFootedSpritsailPhysics.Clear(sail: Sail);
+                    return false;
+                }
+                bool ready =
+                    isActiveAndEnabled
+                    && fitted
+                    && Time.frameCount > fittedFrame
+                    && mast
+                    && mast.gameObject.activeInHierarchy
+                    && Sail.IsInstalled()
+                    && Sail.shipRigidbody
+                    && Sail.shipRigidbody == mast.shipRigidbody
+                    && GameState.playing
+                    && !GameState.currentShipyard
+                    && !GameState.shipyardUpdatingOrder
+                    && !checker.checking
+                    && rigging.SheetsReady
+                    && LooseFootedSpritsailFittingGeometry.Finite(value: Sail.minAngle)
+                    && LooseFootedSpritsailFittingGeometry.Finite(value: Sail.maxAngle)
+                    && Sail.minAngle < Sail.maxAngle
+                    && RefreshAerodynamics();
+                if (!ready)
+                {
+                    LooseFootedSpritsailPhysics.Clear(sail: Sail);
+                    return false;
+                }
+                SailingReady = true;
+                return true;
             }
-            bool ready =
-                isActiveAndEnabled
-                && fitted
-                && Time.frameCount > fittedFrame
-                && mast
-                && mast.gameObject.activeInHierarchy
-                && Sail.IsInstalled()
-                && Sail.shipRigidbody
-                && Sail.shipRigidbody == mast.shipRigidbody
-                && GameState.playing
-                && !GameState.currentShipyard
-                && !GameState.shipyardUpdatingOrder
-                && !checker.checking
-                && rigging.SheetsReady
-                && LooseFootedSpritsailFittingGeometry.Finite(value: Sail.minAngle)
-                && LooseFootedSpritsailFittingGeometry.Finite(value: Sail.maxAngle)
-                && Sail.minAngle < Sail.maxAngle
-                && RefreshAerodynamics();
-            if (!ready)
-            {
-                LooseFootedSpritsailPhysics.Clear(sail: Sail);
-                return false;
-            }
-            return true;
         }
 
         internal bool RefreshAerodynamics()
@@ -380,7 +410,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             dirty = false;
             fitted = true;
             clothMotion.Refresh();
-            clothMotion.UpdateBounds();
             UpdatePlate();
         }
 

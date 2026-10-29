@@ -11,6 +11,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private readonly LooseFootedSpritsailAssetData data;
         private readonly LooseFootedSpritsailPose rest;
         private readonly Vector2[] coordinates;
+        private readonly Vector4[] flutterWeights;
         private readonly Vector3 throat,
             tack,
             peak,
@@ -38,6 +39,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             this.rest = rest;
             Vertices = new Vector3[data.Sail.Vertices.Length];
             coordinates = new Vector2[Vertices.Length];
+            flutterWeights = new Vector4[Vertices.Length];
             // Work in the fitted assembly frame: +Y runs up the mast, -Z runs aft
             // across the sail, and X measures billow out of its neutral plane.
             throat = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Throat]);
@@ -77,8 +79,26 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     x: u,
                     y: Mathf.Clamp01(value: (vertex.y - bottom) / (top - bottom))
                 );
+                flutterWeights[i] = LooseFootedSpritsailFlutter.Weights(
+                    u: u,
+                    v: coordinates[i].y,
+                    footLength: footLength
+                );
             }
             Pose(deployment: 1, load: 0);
+        }
+
+        // Read a visual position without modifying corners, edge budgets or aerodynamic inputs.
+        internal Vector3 VisualVertex(int index, Vector4 flutter)
+        {
+            var point = Vertices[index];
+            var weights = flutterWeights[index];
+            point.x +=
+                weights.x * flutter.x
+                + weights.y * flutter.y
+                + weights.z * flutter.z
+                + weights.w * flutter.w;
+            return point;
         }
 
         internal void Pose(float deployment, float load)

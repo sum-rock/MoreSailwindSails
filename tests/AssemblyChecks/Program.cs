@@ -54,6 +54,7 @@ internal static class Program
         Compatibility.NativeAppearanceChecks.Run(assembly);
         Compatibility.ShipyardExpansionTextureChecks.Run(assembly: assembly);
         Compatibility.SailInfoNamesChecks.Run(assembly: assembly, gameDir: gameDir);
+        Controls.NativeSailControlChecks.Run(assembly: assembly, gameDir: gameDir);
         FlyingSailChecks.Run(assembly);
         StayChecks.Run(assembly);
         FishermansStay.CollarChecks.Run(assembly);
