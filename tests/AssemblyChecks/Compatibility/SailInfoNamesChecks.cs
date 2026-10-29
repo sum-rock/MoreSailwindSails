@@ -111,6 +111,7 @@ internal static class SailInfoNamesChecks
             {
                 "FishermansFlyingSail.FishermansFlyingSailRig",
                 "FishermansStaysail.FishermansStaysailRig",
+                "LooseFootedSpritsail.LooseFootedSpritsailRig",
             }
         )
             if (
@@ -146,10 +147,17 @@ internal static class SailInfoNamesChecks
             .ToArray();
         if (
             !labels.SequenceEqual(
-                second: new[] { "Fisherman's Flying Sail", "Fisherman's Staysail" }
+                second: new[]
+                {
+                    "Fisherman's Flying Sail",
+                    "Fisherman's Staysail",
+                    "Loose Footed Spritsail",
+                }
             )
         )
-            throw new Exception("Fisherman SailInfo labels must retain their family names.");
+            throw new Exception(
+                "Custom SailInfo labels must retain family names without cut suffixes."
+            );
 
         var startup = assembly
             .GetType(name: "MoreSailwindSails.Plugin", throwOnError: true)
