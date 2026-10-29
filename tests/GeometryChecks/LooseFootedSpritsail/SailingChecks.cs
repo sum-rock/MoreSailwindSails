@@ -140,6 +140,7 @@ internal static class SailingChecks
             }
         }
         ClothChecks.Run();
+        FlutterChecks.Run();
         CheckCentroid();
         Check(
             !LooseFootedSpritsailSailingGeometry.TryWindFrame(

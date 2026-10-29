@@ -133,11 +133,40 @@ internal static class ReefingIntegrationChecks
             "Dynamic cloth meshes must be owned and released per instance."
         );
         Check(
-            Calls(type: cloth, method: "Refresh", name: "RecalculateNormals")
-                && Calls(type: cloth, method: "Refresh", name: "RecalculateBounds")
+            Calls(type: cloth, method: "Render", name: "RecalculateNormals")
+                && Calls(type: cloth, method: "Render", name: "RecalculateBounds")
                 && Calls(type: cloth, method: "UpdateBounds", name: "set_localBounds"),
             "Posed cloth needs updated normals and skinned bounds."
         );
+        Check(
+            !Calls(type: cloth, method: "Refresh", name: "set_vertices")
+                && !Calls(type: cloth, method: "Refresh", name: "Render")
+                && !Calls(type: rig, method: "PrepareSailing", name: "Render")
+                && !Calls(type: rig, method: "Refresh", name: "Render")
+                && Calls(type: rig, method: "LateUpdate", name: "Render")
+                && Calls(type: cloth, method: "Render", name: "get_frameCount"),
+            "Physics preparation must not upload cloth; visuals belong to a guarded LateUpdate."
+        );
+        Check(
+            Calls(type: cloth, method: "Render", name: "GetCapturedWindFraction")
+                && Calls(type: cloth, method: "Render", name: "GetCurrentShadowMult")
+                && Calls(type: cloth, method: "Render", name: "get_SailingReady")
+                && Calls(type: cloth, method: "Render", name: "VisualVertex")
+                && !Calls(type: cloth, method: "Refresh", name: "VisualVertex"),
+            "Flutter must use native wind capture after sailing admission and affect only rendered vertices."
+        );
+        var sail = rig.GetField(name: "Sail", bindingAttr: All).FieldType;
+        foreach (string method in new[] { "GetCapturedWindFraction", "GetCurrentShadowMult" })
+            Check(
+                sail.GetMethod(
+                    name: method,
+                    bindingAttr: All,
+                    binder: null,
+                    types: Type.EmptyTypes,
+                    modifiers: null
+                )?.ReturnType == typeof(float),
+                "Installed flutter wind contract changed: " + method
+            );
         Check(
             Calls(type: rig, method: "OnDestroy", name: "Release"),
             "Destroying a rig must release its cloth mesh."
