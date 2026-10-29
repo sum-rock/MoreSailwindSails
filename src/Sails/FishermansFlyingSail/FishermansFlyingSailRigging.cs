@@ -85,42 +85,6 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
             // Controllers bind through the request. Physical mast arrays retain native controls.
         }
 
-        internal void ReleaseNativeBindings(Mast mast)
-        {
-            connections = sail.GetComponent<SailConnections>();
-            sailRig = sail.GetComponent<FishermansFlyingSailRig>();
-            var boat = mast.GetComponentInParent<BoatRefs>();
-            ReleaseNative(controls: mast.leftAngleWinch, boat: boat);
-            ReleaseNative(controls: mast.rightAngleWinch, boat: boat);
-            ReleaseNative(controls: mast.reefWinch, boat: boat);
-        }
-
-        private void ReleaseNative(GPButtonRopeWinch[] controls, BoatRefs boat)
-        {
-            if (controls == null || !connections)
-                return;
-            foreach (var control in controls)
-                if (
-                    control
-                    && control.rope
-                    && (
-                        control.rope == connections.angleControllerLeft
-                        || control.rope == connections.angleControllerRight
-                        || control.rope == connections.reefController
-                    )
-                )
-                {
-                    // Missing placements must not leave controllers beneath inactive rigging.
-                    if (boat)
-                        control.rope.transform.SetParent(
-                            parent: boat.transform,
-                            worldPositionStays: true
-                        );
-                    control.rope = null;
-                    control.ShowWinch(false);
-                }
-        }
-
         private float controlRetryAfter;
         private bool controlWarning;
 
