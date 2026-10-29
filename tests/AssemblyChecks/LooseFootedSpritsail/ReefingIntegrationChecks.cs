@@ -23,7 +23,7 @@ internal static class ReefingIntegrationChecks
         var rigging = Family(name: "LooseFootedSpritsailRigging");
         var cloth = Family(name: "LooseFootedSpritsailCloth");
         var prefab = Family(name: "LooseFootedSpritsailPrefab");
-        var reef = rigging.GetField(name: "Reef", bindingAttr: All).FieldType;
+        var reef = rigging.GetProperty(name: "Reef", bindingAttr: All).PropertyType;
         Check(
             reef.Name == "RopeControllerSailReef" && reef.Assembly != assembly,
             "Spritsails must retain the installed native reef controller."

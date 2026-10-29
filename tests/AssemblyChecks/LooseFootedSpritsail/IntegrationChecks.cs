@@ -115,9 +115,6 @@ internal static class IntegrationChecks
         foreach (
             string field in new[]
             {
-                "reefController",
-                "angleControllerLeft",
-                "angleControllerRight",
                 "angleControllerMid",
                 "midRopeAttachment",
                 "mastReefAttachment",
@@ -126,6 +123,16 @@ internal static class IntegrationChecks
         )
             if (!cleared.Contains(value: field))
                 throw new Exception("Donor binding retained: " + field);
+        foreach (
+            string field in new[]
+            {
+                "reefController",
+                "angleControllerLeft",
+                "angleControllerRight",
+            }
+        )
+            if (cleared.Contains(value: field))
+                throw new Exception("Native controller reference cleared: " + field);
         if (
             Instructions(method: strip)
                 .Any(i =>
@@ -184,7 +191,7 @@ internal static class IntegrationChecks
         )
             throw new Exception("Native saved sail sizing no longer uses LoadScale.");
         Console.WriteLine(
-            "PASS (structural): spritsail registration, universal mast compatibility, scoped sailing patches, native binding isolation, asset cleanup, plain textures and native save sizing."
+            "PASS (structural): spritsail registration, universal mast compatibility, scoped sailing patches, native controller retention, asset cleanup, plain textures and native save sizing."
         );
         SailingIntegrationChecks.Run(assembly: assembly);
     }

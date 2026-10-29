@@ -107,9 +107,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 var rigging = clone.AddComponent<LooseFootedSpritsailRigging>();
                 rigging.Rig = rig;
                 var connections = sail.GetComponent<SailConnections>();
-                rigging.Reef = connections.reefController as RopeControllerSailReef;
-                rigging.Left = connections.angleControllerLeft as RopeControllerSailAngleJib;
-                rigging.Right = connections.angleControllerRight as RopeControllerSailAngleJib;
+                rigging.Connections = connections;
                 rigging.AngleMaster = clone.GetComponent<JibAngleMaster>();
                 if (!rigging.Left || !rigging.Right || !rigging.Reef || !rigging.AngleMaster)
                     throw new InvalidOperationException(
@@ -280,11 +278,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             )
                 if (attachment)
                     Object.DestroyImmediate(obj: attachment.gameObject);
-            connections.reefController =
-                connections.angleControllerLeft =
-                connections.angleControllerRight =
-                connections.angleControllerMid =
-                    null;
+            // Keep native controller identities for mast binding, save/load and SailInfo.
+            connections.angleControllerMid = null;
             connections.midRopeAttachment =
                 connections.mastReefAttachment =
                 connections.mastReefAttExtension =

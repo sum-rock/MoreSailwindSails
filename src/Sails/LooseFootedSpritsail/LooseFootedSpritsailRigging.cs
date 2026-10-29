@@ -1,4 +1,4 @@
-// Owns native sheets and reef controls outside mast arrays, with independent halyard retries.
+// Adapts native sail connections to shared winch placement, with independent halyard retries.
 using System;
 using HarmonyLib;
 using MoreSailwindSails.Controls;
@@ -16,16 +16,18 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal LooseFootedSpritsailRig Rig;
 
         [SerializeField]
-        internal RopeControllerSailAngleJib Left;
+        internal SailConnections Connections;
 
-        [SerializeField]
-        internal RopeControllerSailAngleJib Right;
+        internal RopeControllerSailAngleJib Left =>
+            Connections?.angleControllerLeft as RopeControllerSailAngleJib;
+        internal RopeControllerSailAngleJib Right =>
+            Connections?.angleControllerRight as RopeControllerSailAngleJib;
+        internal RopeControllerSailReef Reef =>
+            Connections?.reefController as RopeControllerSailReef;
 
         [SerializeField]
         internal JibAngleMaster AngleMaster;
 
-        [SerializeField]
-        internal RopeControllerSailReef Reef;
         private OwnedWinch reefWinch;
         private Transform reefGuide;
         private float reefRetryAfter;

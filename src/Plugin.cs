@@ -65,6 +65,7 @@ namespace MoreSailwindSails
             harmony.PatchAll(typeof(Plugin).Assembly);
             Sails.FishermansStaysail.Patches.FishermansStaysailSailInfoPatch.Install(harmony);
             Compatibility.Patches.SailInfoNamesPatch.Install(harmony: harmony);
+            Compatibility.Patches.SailInfoWinchColorsPatch.Install(harmony: harmony);
             Logger.LogInfo($"{PluginName} {PluginVersion} loaded!");
         }
 

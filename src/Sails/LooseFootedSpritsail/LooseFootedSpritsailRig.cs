@@ -6,7 +6,7 @@ using UnityEngine;
 namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     [DefaultExecutionOrder(100)]
-    internal sealed class LooseFootedSpritsailRig : MonoBehaviour
+    internal sealed class LooseFootedSpritsailRig : MonoBehaviour, INativeSailControlRig
     {
         [SerializeField]
         internal Sail Sail;
@@ -93,6 +93,13 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
             Data = LooseFootedSpritsailPrefab.CreateAsset(prefabIndex: Sail.prefabIndex);
             clothMotion = new LooseFootedSpritsailCloth(rig: this, renderer: clothRenderer);
+        }
+
+        void INativeSailControlRig.AttachControls()
+        {
+            Refresh();
+            if (rigging)
+                rigging.Refresh();
         }
 
         private void OnEnable()
