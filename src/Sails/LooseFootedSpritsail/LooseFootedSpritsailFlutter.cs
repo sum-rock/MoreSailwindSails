@@ -6,6 +6,14 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     internal static class LooseFootedSpritsailFlutter
     {
+        internal static bool CanAnimate(
+            bool sailing,
+            bool preview,
+            bool loading,
+            bool updatingOrder,
+            bool sunk
+        ) => (sailing || preview) && !loading && !updatingOrder && !sunk;
+
         internal static float Strength(float capturedWind, float windSpeed, float shadow)
         {
             if (!Finite(value: capturedWind) || !Finite(value: windSpeed) || !Finite(value: shadow))

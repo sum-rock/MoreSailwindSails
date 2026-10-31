@@ -9,6 +9,54 @@ internal static class FlutterChecks
 {
     internal static void Run()
     {
+        foreach (bool sailing in new[] { false, true })
+        foreach (bool preview in new[] { false, true })
+        {
+            Check(
+                LooseFootedSpritsailFlutter.CanAnimate(
+                    sailing: sailing,
+                    preview: preview,
+                    loading: false,
+                    updatingOrder: false,
+                    sunk: false
+                ) == (sailing || preview),
+                "Shipyard animation must not require sailing admission."
+            );
+            for (int guard = 0; guard < 3; guard++)
+                Check(
+                    !LooseFootedSpritsailFlutter.CanAnimate(
+                        sailing: sailing,
+                        preview: preview,
+                        loading: guard == 0,
+                        updatingOrder: guard == 1,
+                        sunk: guard == 2
+                    ),
+                    "Loading, order updates and sinking must suppress flutter in both modes."
+                );
+        }
+        foreach (float speed in new[] { -16f, -8f, -4f, -0.5f, 0f, 0.5f, 4f, 8f, 16f })
+        {
+            float load = LooseFootedSpritsailClothGeometry.WindLoad(
+                wind: Vector3.right * speed,
+                normal: Vector3.right
+            );
+            Near(actual: load, expected: Math.Abs(speed) < 0.6f ? 0 : Math.Clamp(speed / 8, -1, 1));
+            Near(
+                actual: LooseFootedSpritsailClothGeometry.WindLoad(
+                    wind: Vector3.forward * speed,
+                    normal: Vector3.right
+                ),
+                expected: 0
+            );
+            Near(
+                actual: LooseFootedSpritsailClothGeometry.SmoothLoad(
+                    current: 0.25f,
+                    target: load,
+                    deltaTime: 0
+                ),
+                expected: 0.25f
+            );
+        }
         Near(actual: Strength(capture: 0, speed: 8), expected: 1);
         Near(actual: Strength(capture: 0.15f, speed: 8), expected: 1);
         Near(actual: Strength(capture: 0.25f, speed: 8), expected: 0.5f);

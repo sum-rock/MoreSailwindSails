@@ -225,7 +225,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 || !mast
                 || !mast.gameObject.activeInHierarchy
                 || Rig.Mast != mast
-                || !Rig.Sail.IsInstalled()
             )
                 return false;
             supports[0] = mast;

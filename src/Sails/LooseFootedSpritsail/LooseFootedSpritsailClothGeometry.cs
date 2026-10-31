@@ -227,6 +227,12 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return center + radial.normalized * radius;
         }
 
+        internal static float WindLoad(Vector3 wind, Vector3 normal)
+        {
+            float pressure = Vector3.Dot(lhs: wind, rhs: normal);
+            return Math.Abs(pressure) < 0.6f ? 0 : Math.Max(-1, Math.Min(1, pressure / 8));
+        }
+
         // Exponential easing has a 1/3-second time constant. Cap the time step at 0.1 s
         // so a long frame cannot abruptly flip the billow when the wind changes sides.
         internal static float SmoothLoad(float current, float target, float deltaTime) =>

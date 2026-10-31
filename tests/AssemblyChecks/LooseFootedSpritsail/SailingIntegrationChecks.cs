@@ -27,6 +27,12 @@ internal static class SailingIntegrationChecks
             "Spritsail sheets must use shared reservations."
         );
         var request = rigging.GetMethod(name: "TryGetControlRequest", bindingAttr: All);
+        Check(
+            !CalledMethods(method: request).Any(m => m.Name == "IsInstalled")
+                && CalledMethods(method: request).Any(m => m.Name == "get_isActiveAndEnabled")
+                && CalledMethods(method: request).Any(m => m.Name == "get_activeInHierarchy"),
+            "Active mast-bound previews must be eligible for shared controls before installation."
+        );
         var requestFields = Instructions(method: request)
             .Where(i => i.Code == OpCodes.Stfld)
             .Select(i => i.Operand)
