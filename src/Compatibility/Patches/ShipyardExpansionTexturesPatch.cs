@@ -1,10 +1,11 @@
-// Restricts SE material updates on Fisherman sails to its blank white texture.
+// Restricts SE material updates on custom cloth sails to its blank white texture.
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using HarmonyLib;
 using MoreSailwindSails.Sails.FishermansFlyingSail;
 using MoreSailwindSails.Sails.FishermansStaysail;
+using MoreSailwindSails.Sails.LooseFootedSpritsail;
 using UnityEngine;
 
 namespace MoreSailwindSails.Compatibility.Patches
@@ -77,6 +78,7 @@ namespace MoreSailwindSails.Compatibility.Patches
                 if (
                     !__instance.GetComponent<FishermansFlyingSailRig>()
                     && !__instance.GetComponent<FishermansStaysailRig>()
+                    && !__instance.GetComponent<LooseFootedSpritsailRig>()
                 )
                     return;
                 var type = __instance.GetType();

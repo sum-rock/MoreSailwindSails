@@ -174,7 +174,7 @@ internal static class PatchChecks
 
         Shared.NativeControlBindingChecks.Run(
             assembly,
-            "MoreSailwindSails.Sails.FishermansFlyingSail.Patches.FishermansFlyingSailControlsPatch",
+            "MoreSailwindSails.Controls.Patches.NativeSailControlsPatch",
             "Flying Sail"
         );
     }
