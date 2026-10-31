@@ -126,7 +126,7 @@ internal static class ReefingIntegrationChecks
             "Deployment must not reduce area a second time."
         );
 
-        var constructor = cloth.GetConstructors(bindingAttr: All).Single();
+        var constructor = cloth.GetConstructors(bindingAttr: All).Single(c => !c.IsStatic);
         Check(
             CalledMethods(method: constructor).Any(m => m.Name == "Instantiate")
                 && Calls(type: cloth, method: "Release", name: "Destroy"),
@@ -156,6 +156,37 @@ internal static class ReefingIntegrationChecks
             "Flutter must use native wind capture after sailing admission and affect only rendered vertices."
         );
         var sail = rig.GetField(name: "Sail", bindingAttr: All).FieldType;
+        var vector = sail.GetField(name: "apparentWind", bindingAttr: All).FieldType;
+        Check(
+            sail.GetMethod(
+                name: "GetWindAngle",
+                bindingAttr: All,
+                binder: null,
+                types: new[] { vector },
+                modifiers: null
+            )?.ReturnType == typeof(float),
+            "Preview capture requires the installed native wind-angle calculation."
+        );
+        Check(
+            Calls(type: cloth, method: "Refresh", name: "WindLoad")
+                && Calls(type: cloth, method: "Render", name: "RefreshAerodynamics")
+                && Calls(type: cloth, method: "Render", name: "CanAnimate"),
+            "Preview cloth must sample wind and refresh its posed wind frame independently of propulsion."
+        );
+        var physics = Family(name: "LooseFootedSpritsailPhysics");
+        foreach (var method in cloth.GetMethods(bindingAttr: All | BindingFlags.DeclaredOnly))
+            Check(
+                !CalledMethods(method: method)
+                    .Any(m => m.DeclaringType == physics || m.Name == "UpdateWindForceOnSail")
+                    && !Instructions(method: method)
+                        .Any(i =>
+                            i.Code == OpCodes.Stfld
+                            && i.Operand is FieldInfo f
+                            && f.DeclaringType == sail
+                            && f.Name == "apparentWind"
+                        ),
+                "Visual preview wind must not repopulate native propulsion caches."
+            );
         foreach (string method in new[] { "GetCapturedWindFraction", "GetCurrentShadowMult" })
             Check(
                 sail.GetMethod(

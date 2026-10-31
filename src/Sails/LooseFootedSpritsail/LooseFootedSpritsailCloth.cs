@@ -1,4 +1,5 @@
 // Prepares the physical pose separately from the once-per-frame visual cloth upload.
+using HarmonyLib;
 using MoreSailwindSails.Utils.Profiling;
 using UnityEngine;
 
@@ -6,6 +7,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     internal sealed class LooseFootedSpritsailCloth
     {
+        private static readonly System.Func<Sail, Vector3, float> windAngle =
+            AccessTools.MethodDelegate<System.Func<Sail, Vector3, float>>(
+                AccessTools.Method(type: typeof(Sail), name: "GetWindAngle")
+            );
         private readonly LooseFootedSpritsailRig rig;
         private readonly SkinnedMeshRenderer renderer;
         private readonly Mesh mesh;
@@ -20,6 +25,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private Vector4 lastFlutter;
         private bool visualDirty = true;
         private float load;
+        private Vector3 apparentWind;
         private float lastSet = -1,
             lastLoad = float.NaN;
         internal LooseFootedSpritsailClothGeometry Geometry { get; private set; }
@@ -63,14 +69,13 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 if (windFrame != Time.frameCount)
                 {
                     windFrame = Time.frameCount;
-                    var wind =
+                    apparentWind =
                         Wind.currentWind
                         - (rig.Sail.shipRigidbody ? rig.Sail.shipRigidbody.velocity : Vector3.zero);
-                    float pressure = Vector3.Dot(lhs: wind, rhs: -rig.Frame.right);
-                    float target =
-                        preview || Mathf.Abs(f: pressure) < 0.6f
-                            ? 0
-                            : Mathf.Clamp(value: pressure / 8, min: -1, max: 1);
+                    float target = LooseFootedSpritsailClothGeometry.WindLoad(
+                        wind: apparentWind,
+                        normal: -rig.Frame.right
+                    );
                     load = LooseFootedSpritsailClothGeometry.SmoothLoad(
                         current: load,
                         target: target,
@@ -107,19 +112,29 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 renderFrame = Time.frameCount;
                 if (Time.deltaTime <= 0 && !visualDirty)
                     return;
-                bool active =
-                    rig.SailingReady
-                    && GameState.playing
-                    && !GameState.currentlyLoading
-                    && !GameState.currentShipyard
-                    && !GameState.shipyardUpdatingOrder
-                    && !(rig.Sail.damage && rig.Sail.damage.sunk);
+                bool preview = GameState.currentShipyard && rig.Mast && rig.Boat;
+                bool active = LooseFootedSpritsailFlutter.CanAnimate(
+                    sailing: rig.SailingReady && GameState.playing,
+                    preview: preview,
+                    loading: GameState.currentlyLoading,
+                    updatingOrder: GameState.shipyardUpdatingOrder,
+                    sunk: rig.Sail.damage && rig.Sail.damage.sunk
+                );
                 if (active)
                 {
+                    float shadow = rig.Sail.GetCurrentShadowMult();
+                    // Preview physics clears the native wind caches. Read the native angle
+                    // from our posed sail and visual wind without calculating propulsion.
+                    if (preview)
+                        rig.RefreshAerodynamics();
                     float target = LooseFootedSpritsailFlutter.Strength(
-                        capturedWind: rig.Sail.GetCapturedWindFraction(),
-                        windSpeed: rig.Sail.apparentWind.magnitude,
-                        shadow: rig.Sail.GetCurrentShadowMult()
+                        capturedWind: preview
+                            ? windAngle(rig.Sail, apparentWind) / 90 * shadow
+                            : rig.Sail.GetCapturedWindFraction(),
+                        windSpeed: preview
+                            ? apparentWind.magnitude
+                            : rig.Sail.apparentWind.magnitude,
+                        shadow: shadow
                     );
                     flutterStrength = LooseFootedSpritsailFlutter.SmoothStrength(
                         current: flutterStrength,
