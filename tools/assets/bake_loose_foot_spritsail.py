@@ -20,7 +20,8 @@ PARTS = {
     "SnotterAssembly": ("Snotter", "SpritMountRod"),
     "RotationPlate": ("RotationPlate",),
 }
-MATERIALS = ("Cloth", "Metal", "DarkWood")
+MATERIALS = ("Cloth", "Metal", "DarkWood", "Black")
+STRUCK_PARTS = ("Sprit.struck", "Sail.struck", "Tie.01", "Tie.02", "Tie.03", "Tie.04")
 
 
 def require(condition, message):
@@ -56,12 +57,15 @@ def object_named(name, kind):
         require(
             all(
                 name != "Sail"
-                and m.type in ("SOLIDIFY", "DECIMATE")
+                and (
+                    m.type in ("SOLIDIFY", "DECIMATE")
+                    or (name in STRUCK_PARTS and m.type == "SMOOTH")
+                )
                 and m.show_viewport
                 and m.show_render
                 for m in obj.modifiers
             ),
-            f"{name}: only enabled hardware Solidify/Decimate modifiers are supported",
+            f"{name}: expected enabled Solidify/Decimate modifiers or struck Smooth",
         )
     return obj
 
@@ -195,7 +199,7 @@ def extract_part(name, sources):
                     all(v.link_faces for v in topology.verts),
                     f"{obj.name}: loose vertex",
                 )
-                if not cloth:
+                if not cloth and obj.name != "Sail.struck":
                     require(
                         all(e.is_manifold and e.is_contiguous for e in topology.edges),
                         f"{obj.name}: hardware must be closed with consistent winding",
@@ -244,7 +248,7 @@ def extract_part(name, sources):
                     )
                     material = obj.material_slots[slot].material.name
                     require(
-                        material in MATERIALS[1:],
+                        material in MATERIALS,
                         f"{obj.name}: unsupported material {material}",
                     )
                 triangles = by_material.setdefault(material, [])
@@ -279,8 +283,11 @@ def extract_part(name, sources):
                 require(
                     cross.length > 1e-10, f"{obj.name}: degenerate evaluated triangle"
                 )
+                # Folded smooth surfaces can have corner normals beyond a triangle's
+                # hemisphere. Topology and nondegeneracy are checked independently.
                 require(
-                    all(cross.dot(Vector(normals[i])) > 0 for i in triangles[-3:]),
+                    name == "Struck"
+                    or all(cross.dot(Vector(normals[i])) > 0 for i in triangles[-3:]),
                     f"{obj.name}: normals disagree with winding",
                 )
         finally:
@@ -300,12 +307,13 @@ def extract_part(name, sources):
 
 def attachment(name, parent):
     obj = object_named(name, "EMPTY")
-    require(
-        obj.parent == bpy.data.objects[parent], f"{name}: must be parented to {parent}"
-    )
     # matrix_local / location alone lose the Keep Transform parent-inverse offset.
     return tuple(
-        CONVERSION @ (obj.parent.matrix_world.inverted() @ obj.matrix_world.translation)
+        CONVERSION
+        @ (
+            bpy.data.objects[parent].matrix_world.inverted()
+            @ obj.matrix_world.translation
+        )
     )
 
 
@@ -324,6 +332,23 @@ def collect():
     sail = object_named("Sail", "MESH")
     corners = cloth_grid(sail)
     data = {name: extract_part(name, sources) for name, sources in PARTS.items()}
+    data["Struck"] = extract_part("Struck", STRUCK_PARTS)
+    alignment = (
+        object_named("Mast", "MESH").matrix_world
+        @ object_named("Mast.struck", "MESH").matrix_world.inverted()
+    )
+    data["Struck"]["RestTransform"] = (
+        CONVERSION @ alignment @ CONVERSION @ data["Struck"]["RestTransform"]
+    )
+    for field in ("ReefLineAttachment", "SheetLineAttachment"):
+        obj = object_named(field + ".struck", "EMPTY")
+        data["Struck" + field] = tuple(
+            CONVERSION
+            @ (
+                bpy.data.objects["Sprit.struck"].matrix_world.inverted()
+                @ obj.matrix_world.translation
+            )
+        )
     # The mounting rod may extend inside the collar radius; it must not drive mast fitting.
     collar = extract_part("Snotter", ("Snotter",))
     points = [collar["RestTransform"] @ Vector(v) for v in collar["Vertices"]]
@@ -423,12 +448,17 @@ def bake(cut="A"):
         "            new LooseFootedSpritsailAssetData",
         "            {",
     ]
-    for name in PARTS:
+    for name in (*PARTS, "Struck"):
         lines.extend(part_lines(name, data[name]))
     lines.append(
         f"                CollarInnerRadius = {number(data['CollarInnerRadius'])},"
     )
-    for name in ("ReefLineAttachment", "SheetLineAttachment"):
+    for name in (
+        "ReefLineAttachment",
+        "SheetLineAttachment",
+        "StruckReefLineAttachment",
+        "StruckSheetLineAttachment",
+    ):
         lines.append(f"                {name} = {vector(data[name])},")
     for name in ("Tack", "Throat", "Peak", "Clew", "SheetVertex"):
         lines.append(f"                {name} = {data[name]},")

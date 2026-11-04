@@ -157,10 +157,56 @@ reject("SheetLineAttachment", lambda o: setattr(o, "parent", bpy.data.objects["S
 reject("ReefLineAttachment", lambda o: setattr(o, "name", "Missing"))
 reject("SheetLineAttachment", lambda o: setattr(o.location, "z", o.location.z + 1))
 
-with edit_object("Mast") as obj:
-    obj.location = (33, 88, -19)
-    obj.scale = (0, 0, 0)
-    assert bake() == source, "Reference mast affected the export"
+# Preserve evaluated corner normals rather than flattening the authored smooth shading.
+struck = data["Struck"]
+exported = {
+    (tuple(round(v, 5) for v in p), tuple(round(v, 5) for v in n))
+    for p, n in zip(struck["Vertices"], struck["Normals"])
+}
+root = bpy.data.objects["Sprit.struck"]
+depsgraph = bpy.context.evaluated_depsgraph_get()
+for name in tool["STRUCK_PARTS"]:
+    obj = bpy.data.objects[name]
+    relative = (
+        conversion
+        if obj == root
+        else conversion @ root.matrix_world.inverted() @ obj.matrix_world
+    )
+    normal_matrix = relative.to_3x3().inverted().transposed()
+    evaluated = obj.evaluated_get(depsgraph)
+    mesh = evaluated.to_mesh()
+    try:
+        for loop in mesh.loops:
+            point = relative @ mesh.vertices[loop.vertex_index].co
+            normal = (
+                normal_matrix @ mesh.corner_normals[loop.index].vector
+            ).normalized()
+            assert (
+                tuple(round(v, 5) for v in point),
+                tuple(round(v, 5) for v in normal),
+            ) in exported
+    finally:
+        evaluated.to_mesh_clear()
+
+assert data["Struck"]["Materials"] == ["Cloth", "Metal", "DarkWood", "Black"]
+alignment = (
+    bpy.data.objects["Mast"].matrix_world
+    @ bpy.data.objects["Mast.struck"].matrix_world.inverted()
+)
+for field in ("ReefLineAttachment", "SheetLineAttachment"):
+    actual = data["Struck"]["RestTransform"] @ Vector(data["Struck" + field])
+    expected = (
+        conversion
+        @ alignment
+        @ bpy.data.objects[field + ".struck"].matrix_world.translation
+    )
+    assert (actual - expected).length < 3e-6
+for name in (
+    *tool["STRUCK_PARTS"],
+    "ReefLineAttachment.struck",
+    "SheetLineAttachment.struck",
+):
+    reject(name, lambda o: setattr(o, "name", "Missing"))
 
 with edit_object("SpritMountRod") as obj:
     obj.location.x = 0

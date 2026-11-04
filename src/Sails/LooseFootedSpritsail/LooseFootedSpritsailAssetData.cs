@@ -6,6 +6,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
     internal sealed class LooseFootedSpritsailAssetData
     {
         internal LooseFootedSpritsailMeshPart Sail;
+        internal LooseFootedSpritsailMeshPart Struck;
+        internal Vector3 StruckReefLineAttachment;
+        internal Vector3 StruckSheetLineAttachment;
         internal LooseFootedSpritsailMeshPart Sprit;
         internal LooseFootedSpritsailMeshPart SnotterAssembly;
         internal LooseFootedSpritsailMeshPart RotationPlate;
@@ -45,5 +48,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         Cloth,
         Metal,
         DarkWood,
+        Black,
     }
 }
