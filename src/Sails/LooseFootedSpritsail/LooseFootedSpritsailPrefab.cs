@@ -194,6 +194,31 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     wood: plateWood,
                     metal: metal
                 );
+                rig.Struck = NewNode(name: "Struck sail and sprit", parent: rig.Frame);
+                var black = assets.Own(material: new Material(clothMaterial));
+                black.name = "Spritsail black ties";
+                black.color = Color.black;
+                black.mainTexture = Texture2D.whiteTexture;
+                rig.Struck.gameObject.AddComponent<MeshFilter>().sharedMesh = CreateMesh(
+                    assets: assets,
+                    name: "Struck spritsail",
+                    data: data.Struck
+                );
+                rig.StruckRenderer = rig.Struck.gameObject.AddComponent<MeshRenderer>();
+                rig.StruckRenderer.sharedMaterials = data
+                    .Struck.Materials.Select(m =>
+                        m == LooseFootedSpritsailMaterial.Cloth ? clothMaterial
+                        : m == LooseFootedSpritsailMaterial.Metal ? metal
+                        : m == LooseFootedSpritsailMaterial.Black ? black
+                        : wood
+                    )
+                    .ToArray();
+                rig.StruckClothMaterialIndex = Array.IndexOf(
+                    array: data.Struck.Materials,
+                    value: LooseFootedSpritsailMaterial.Cloth
+                );
+                rig.StruckRenderer.enabled = false;
+                rig.SpritRenderer = rig.Sprit.GetComponent<MeshRenderer>();
                 rig.ReefLineAttachment = NewNode(name: "ReefLineAttachment", parent: rig.Sprit);
                 rig.ReefLineAttachment.localPosition = data.ReefLineAttachment;
                 rig.SheetLineAttachment = NewNode(

@@ -32,6 +32,14 @@ internal static class FittingChecks
                 width: width,
                 mastRadius: radius
             );
+            Near(
+                actual: pose.Struck.MultiplyPoint3x4(point: Vector3.zero),
+                expected: pose.Sprit.MultiplyPoint3x4(point: Vector3.zero)
+            );
+            Near(
+                actual: LooseFootedSpritsailTransform.Scale(matrix: pose.Struck),
+                expected: LooseFootedSpritsailTransform.Scale(matrix: pose.Sprit)
+            );
             var throat = pose.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Throat]);
             var tack = pose.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Tack]);
             var peak = pose.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Peak]);

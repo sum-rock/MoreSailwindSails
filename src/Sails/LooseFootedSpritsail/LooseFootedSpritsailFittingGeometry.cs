@@ -131,6 +131,13 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return new LooseFootedSpritsailPose
             {
                 Sail = cloth * data.Sail.RestTransform,
+                // Keep the bundled spar seated on the same fitted hinge. Its local axes
+                // and relative cloth/tie placement come directly from the struck asset.
+                Struck = LooseFootedSpritsailTransform.TRS(
+                    pos: hinge,
+                    q: LooseFootedSpritsailTransform.Rotation(matrix: data.Struck.RestTransform),
+                    s: sparScale
+                ),
                 Sprit = LooseFootedSpritsailTransform.TRS(
                     pos: hinge,
                     q: sparRotation,
@@ -183,6 +190,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
     internal struct LooseFootedSpritsailPose
     {
         internal Matrix4x4 Sail;
+        internal Matrix4x4 Struck;
         internal Matrix4x4 Sprit;
         internal Matrix4x4 SnotterAssembly;
         internal Matrix4x4 RotationPlate;

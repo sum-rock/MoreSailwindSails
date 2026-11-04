@@ -64,6 +64,23 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             {
                 if (Geometry == null)
                     return;
+                bool struck = rig.IsStruck;
+                renderer.enabled = !struck;
+                rig.SpritRenderer.enabled = !struck;
+                rig.StruckRenderer.enabled = struck;
+                if (struck)
+                {
+                    Geometry.Pose(deployment: 0, load: 0);
+                    rig.ReefLineAttachment.position = rig.Struck.TransformPoint(
+                        position: rig.Data.StruckReefLineAttachment
+                    );
+                    rig.SheetLineAttachment.position = rig.Struck.TransformPoint(
+                        position: rig.Data.StruckSheetLineAttachment
+                    );
+                    lastSet = -1;
+                    return;
+                }
+                rig.ReefLineAttachment.localPosition = rig.Data.ReefLineAttachment;
                 bool preview = !rig.Sail.IsInstalled();
                 float set = preview ? 1 : Mathf.Clamp01(value: rig.Sail.currentUnroll);
                 if (windFrame != Time.frameCount)
@@ -107,7 +124,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 )
             )
             {
-                if (Geometry == null || renderFrame == Time.frameCount)
+                if (Geometry == null || rig.IsStruck || renderFrame == Time.frameCount)
                     return;
                 renderFrame = Time.frameCount;
                 if (Time.deltaTime <= 0 && !visualDirty)
