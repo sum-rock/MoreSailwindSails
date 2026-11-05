@@ -45,6 +45,8 @@ internal static class Program
         PluginMetadataChecks.Run(assembly: assembly);
         Visuals.RoutedRopeChecks.Run(assembly: assembly);
         HarmonySignatureChecks.Run(assembly);
+        LooseFootedSpritsail.IntegrationChecks.Run(assembly: assembly);
+        LooseFootedSpritsail.CollisionIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
         Controls.SheetFallbackConfigurationChecks.Run(assembly: assembly);
@@ -52,6 +54,7 @@ internal static class Program
         Compatibility.NativeAppearanceChecks.Run(assembly);
         Compatibility.ShipyardExpansionTextureChecks.Run(assembly: assembly);
         Compatibility.SailInfoNamesChecks.Run(assembly: assembly, gameDir: gameDir);
+        Controls.NativeSailControlChecks.Run(assembly: assembly, gameDir: gameDir);
         FlyingSailChecks.Run(assembly);
         StayChecks.Run(assembly);
         FishermansStay.CollarChecks.Run(assembly);

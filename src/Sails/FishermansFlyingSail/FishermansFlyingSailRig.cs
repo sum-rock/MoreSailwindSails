@@ -1,4 +1,5 @@
 using System;
+using MoreSailwindSails.Controls;
 using MoreSailwindSails.Utils.Profiling;
 using UnityEngine;
 
@@ -22,7 +23,7 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
 
     // Serialized fields are intentionally copied into each installed prefab instance.
     [DefaultExecutionOrder(100)]
-    internal sealed class FishermansFlyingSailRig : MonoBehaviour
+    internal sealed class FishermansFlyingSailRig : MonoBehaviour, INativeSailControlRig
     {
         public Sail Sail;
         public Transform[] Bones;
@@ -63,6 +64,9 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
         private Vector3 lastScale;
         private Vector3 lastFramePosition;
         private Quaternion lastFrameRotation;
+
+        void INativeSailControlRig.AttachControls() =>
+            FishermansFlyingSailRigging.For(sail: Sail).AttachControls();
 
         private void OnEnable() => bindingDirty = true;
 

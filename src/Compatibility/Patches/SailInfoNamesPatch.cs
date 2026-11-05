@@ -3,6 +3,7 @@ using System.Reflection;
 using HarmonyLib;
 using MoreSailwindSails.Sails.FishermansFlyingSail;
 using MoreSailwindSails.Sails.FishermansStaysail;
+using MoreSailwindSails.Sails.LooseFootedSpritsail;
 
 namespace MoreSailwindSails.Compatibility.Patches
 {
@@ -36,7 +37,7 @@ namespace MoreSailwindSails.Compatibility.Patches
             if (target == null)
             {
                 Plugin.Log.LogWarning(
-                    "SailInfo's naming API changed; Fisherman's sail name integration skipped."
+                    "SailInfo's naming API changed; custom sail name integration skipped."
                 );
                 return;
             }
@@ -54,11 +55,13 @@ namespace MoreSailwindSails.Compatibility.Patches
             if (!___sailComponent || string.IsNullOrEmpty(value: ___sailComponent.sailName))
                 return true;
             // WinchHUD gates names with SailInfo's setting and adds the halyard suffix.
-            // Bypass positional-name caching to keep Fisherman labels grouped.
+            // Bypass positional-name caching to keep custom labels grouped by family.
             if (___sailComponent.GetComponent<FishermansFlyingSailRig>())
                 __result = FishermansFlyingSailPrefab.DisplayName;
             else if (___sailComponent.GetComponent<FishermansStaysailRig>())
                 __result = "Fisherman's Staysail";
+            else if (___sailComponent.GetComponent<LooseFootedSpritsailRig>())
+                __result = "Loose Footed Spritsail";
             else
                 return true;
             return false;

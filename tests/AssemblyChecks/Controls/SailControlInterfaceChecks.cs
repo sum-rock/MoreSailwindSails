@@ -94,14 +94,14 @@ internal static class SailControlInterfaceChecks
                     ),
                 "Shared runtime or Flying Sails overwrite physical mast ownership."
             );
-        var patch = Find("Sails.FishermansFlyingSail.Patches.FishermansFlyingSailControlsPatch");
+        var patch = Find("Controls.Patches.NativeSailControlsPatch");
         var handoff = CalledMethods(patch.GetMethod("Postfix", flags)).ToArray();
         Check(
             Array.FindIndex(handoff, m => m.Name == "ReleaseNativeBindings")
                 < Array.FindIndex(handoff, m => m.Name == "AttachControls"),
             "Native bindings must be released before the consumer registers."
         );
-        var release = flying.GetMethod("ReleaseNative", flags);
+        var release = Find("Controls.NativeSailControls").GetMethod("ReleaseNative", flags);
         var releaseCalls = CalledMethods(release).ToArray();
         Check(
             releaseCalls.Count(m => m.Name == "op_Equality") == 3
