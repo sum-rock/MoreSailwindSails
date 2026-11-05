@@ -20,6 +20,7 @@ PARTS = {
     "SnotterAssembly": ("Snotter", "SpritMountRod"),
     "RotationPlate": ("RotationPlate",),
 }
+REEF_FRAMES = (0, 60, 120, 180, 240)
 MATERIALS = ("Cloth", "Metal", "DarkWood", "Black")
 STRUCK_PARTS = ("Sprit.struck", "Sail.struck", "Tie.01", "Tie.02", "Tie.03", "Tie.04")
 
@@ -39,8 +40,9 @@ def object_named(name, kind):
     ancestor = obj
     while ancestor is not None:
         require(
-            not ancestor.constraints and not ancestor.animation_data,
-            f"{name}: constraints and animation are unsupported",
+            not ancestor.constraints
+            and (not ancestor.animation_data or ancestor.name in ("Sail", "Sprit")),
+            f"{name}: constraints or animation outside Sail/Sprit are unsupported",
         )
         ancestor = ancestor.parent
     require(
@@ -56,16 +58,20 @@ def object_named(name, kind):
         )
         require(
             all(
-                name != "Sail"
-                and (
-                    m.type in ("SOLIDIFY", "DECIMATE")
-                    or (name in STRUCK_PARTS and m.type == "SMOOTH")
+                (
+                    name == "Sail"
+                    and m.type in ("HOOK", "CLOTH")
+                    or name != "Sail"
+                    and (
+                        m.type in ("SOLIDIFY", "DECIMATE")
+                        or (name in STRUCK_PARTS and m.type == "SMOOTH")
+                    )
                 )
                 and m.show_viewport
                 and m.show_render
                 for m in obj.modifiers
             ),
-            f"{name}: expected enabled Solidify/Decimate modifiers or struck Smooth",
+            f"{name}: expected enabled cloth Hook/Cloth, hardware Solidify/Decimate or struck Smooth",
         )
     return obj
 
@@ -328,6 +334,7 @@ def collect():
         bpy.context.scene.unit_settings.scale_length == 1,
         "author at one metre per Blender unit",
     )
+    bpy.context.scene.frame_set(0)
     bpy.context.view_layer.update()
     sail = object_named("Sail", "MESH")
     corners = cloth_grid(sail)
@@ -369,7 +376,56 @@ def collect():
         "SheetLineAttachment: must coincide with the clew vertex",
     )
     data["SheetVertex"] = corners["Clew"]
+    data["ReefPoses"] = reef_poses(sail)
+    bpy.context.scene.frame_set(0)
     return data
+
+
+def reef_poses(sail):
+    """Evaluate simulation in order; store only the five agreed poses in rest-local space."""
+    scene = bpy.context.scene
+    inverse = sail.matrix_world.inverted()
+    sprit = bpy.data.objects["Sprit"]
+    rest = CONVERSION @ sprit.matrix_world @ CONVERSION
+    rest_rotation = rest.to_quaternion()
+    pivot = sprit.matrix_world.translation.copy()
+    scale = sprit.matrix_world.to_scale()
+    topology = [tuple(p.vertices) for p in sail.data.polygons]
+    poses = []
+    for frame in range(REEF_FRAMES[-1] + 1):
+        scene.frame_set(frame)
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        evaluated = sail.evaluated_get(depsgraph)
+        mesh = evaluated.to_mesh()
+        try:
+            require(
+                len(mesh.vertices) == len(sail.data.vertices)
+                and [tuple(p.vertices) for p in mesh.polygons] == topology,
+                f"Sail: topology changed at frame {frame}",
+            )
+            points = [
+                tuple(CONVERSION @ inverse @ evaluated.matrix_world @ v.co)
+                for v in mesh.vertices
+            ]
+            require(
+                all(finite(p) for p in points),
+                f"Sail: non-finite pose at frame {frame}",
+            )
+            matrix = sprit.evaluated_get(depsgraph).matrix_world
+            require(
+                all(finite(row) for row in matrix)
+                and (matrix.translation - pivot).length < 1e-5
+                and (matrix.to_scale() - scale).length < 1e-5,
+                f"Sprit: animation must rotate about a fixed hinge at frame {frame}",
+            )
+            if frame in REEF_FRAMES:
+                rotation = (
+                    CONVERSION @ matrix @ CONVERSION
+                ).to_quaternion() @ rest_rotation.inverted()
+                poses.append((points, (rotation.x, rotation.y, rotation.z, rotation.w)))
+        finally:
+            evaluated.to_mesh_clear()
+    return poses
 
 
 def number(value):
@@ -448,6 +504,27 @@ def bake(cut="A"):
         "            new LooseFootedSpritsailAssetData",
         "            {",
     ]
+    lines.extend(
+        (
+            "                ReefPoses = new LooseFootedSpritsailReefPose[]",
+            "                {",
+        )
+    )
+    for points, rotation in data["ReefPoses"]:
+        lines.extend(
+            (
+                "                    new LooseFootedSpritsailReefPose",
+                "                    {",
+                f"                        SpritRotation = {vector(rotation, 'Quaternion')},",
+                "                        Vertices = new Vector3[]",
+                "                        {",
+            )
+        )
+        lines.extend(
+            f"                            {vector(point)}," for point in points
+        )
+        lines.extend(("                        },", "                    },"))
+    lines.append("                },")
     for name in (*PARTS, "Struck"):
         lines.extend(part_lines(name, data[name]))
     lines.append(

@@ -23,6 +23,26 @@ source = bake()
 assert source == bake(), "Non-deterministic bake"
 assert source == CUTS["A"].source_path.read_text(), "Stale checked-in bake"
 data = collect()
+assert tool["REEF_FRAMES"] == (0, 60, 120, 180, 240)
+assert len(data["ReefPoses"]) == 5
+sail = bpy.data.objects["Sail"]
+inverse = sail.matrix_world.inverted()
+for frame in range(241):
+    bpy.context.scene.frame_set(frame)
+    evaluated = sail.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    mesh = evaluated.to_mesh()
+    try:
+        if frame in tool["REEF_FRAMES"]:
+            points, rotation = data["ReefPoses"][frame // 60]
+            assert len(points) == len(mesh.vertices) == 320
+            assert abs(sum(n * n for n in rotation) - 1) < 1e-5
+            for actual, vertex in zip(points, mesh.vertices):
+                expected = conversion @ inverse @ evaluated.matrix_world @ vertex.co
+                assert (Vector(actual) - expected).length < 1e-6
+    finally:
+        evaluated.to_mesh_clear()
+assert data["ReefPoses"][0][0] != data["ReefPoses"][-1][0]
+bpy.context.scene.frame_set(0)
 collar = bpy.data.objects["Snotter"]
 evaluated = collar.evaluated_get(bpy.context.evaluated_depsgraph_get())
 mesh = evaluated.to_mesh()
@@ -156,6 +176,31 @@ reject("Sprit", lambda o: setattr(o.data.polygons[0], "material_index", 99))
 reject("SheetLineAttachment", lambda o: setattr(o, "parent", bpy.data.objects["Sprit"]))
 reject("ReefLineAttachment", lambda o: setattr(o, "name", "Missing"))
 reject("SheetLineAttachment", lambda o: setattr(o.location, "z", o.location.z + 1))
+
+# A translated animated spar cannot be replayed as a rigid hinge rotation.
+sprit = bpy.data.objects["Sprit"]
+original_location = sprit.location.copy()
+original_action = sprit.animation_data.action
+test_action = original_action.copy()
+sprit.animation_data.action = test_action
+try:
+    bpy.context.scene.frame_set(0)
+    sprit.keyframe_insert(data_path="location", index=0, frame=0)
+    bpy.context.scene.frame_set(60)
+    sprit.location.x += 1
+    sprit.keyframe_insert(data_path="location", index=0, frame=60)
+    try:
+        collect()
+    except ValueError as error:
+        assert "Sprit: animation must rotate about a fixed hinge" in str(error)
+    else:
+        raise AssertionError("Accepted an animated moving sprit hinge")
+finally:
+    sprit.animation_data.action = original_action
+    bpy.data.actions.remove(test_action)
+    sprit.location = original_location
+    bpy.context.scene.frame_set(0)
+assert bake() == source, "Animation fixture leaked"
 
 # Preserve evaluated corner normals rather than flattening the authored smooth shading.
 struck = data["Struck"]
