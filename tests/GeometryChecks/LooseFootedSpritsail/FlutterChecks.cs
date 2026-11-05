@@ -179,8 +179,274 @@ internal static class FlutterChecks
                     );
             }
         }
+        CheckGathered();
+        CheckMirroredFolds();
         Console.WriteLine(
             "PASS: spritsail flutter gating, smoothing, pause, phase, size bounds and visual-only attachments across sizes, deployments and tacks."
+        );
+    }
+
+    private static void CheckMirroredFolds()
+    {
+        var data = LooseFootedSpritsailMkABakedAsset.Create();
+        var rest = LooseFootedSpritsailFittingGeometry.Pose(
+            data: data,
+            baseScale: 1,
+            height: 1.3f,
+            width: 0.7f,
+            mastRadius: 0.3f
+        );
+        var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: rest);
+        bool mirrored = false;
+        foreach (float deployment in new[] { 0.002f, 0.125f, 0.25f, 0.5f, 0.75f, 1f })
+        {
+            cloth.Pose(deployment: deployment, load: 0);
+            var saved = (Vector3[])cloth.Vertices.Clone();
+            for (int i = 0; i < saved.Length; i++)
+            {
+                var starboard = cloth.VisualVertex(index: i, flutter: Vector4.zero, foldSide: 1);
+                var port = cloth.VisualVertex(index: i, flutter: Vector4.zero, foldSide: -1);
+                var source = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[i]);
+                var tack = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Tack]);
+                var clew = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Clew]);
+                var throat = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Throat]);
+                var peak = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Peak]);
+                float u = Math.Clamp((source.z - tack.z) / (clew.z - tack.z), 0, 1);
+                float bottom = tack.y + (clew.y - tack.y) * u;
+                float top = throat.y + (peak.y - throat.y) * u;
+                float v = Math.Clamp((source.y - bottom) / (top - bottom), 0, 1);
+                float surface = Vector3
+                    .Lerp(
+                        a: Vector3.Lerp(a: saved[data.Tack], b: saved[data.Throat], t: v),
+                        b: Vector3.Lerp(a: saved[data.Clew], b: saved[data.Peak], t: v),
+                        t: u
+                    )
+                    .x;
+                Check(starboard == saved[i], "Starboard must retain the authored pose.");
+                Near(actual: port.x + starboard.x, expected: surface * 2);
+                Near(actual: port.y, expected: starboard.y);
+                Near(actual: port.z, expected: starboard.z);
+                Check(cloth.Vertices[i] == saved[i], "Mirroring changed physical geometry.");
+                mirrored |= Math.Abs(port.x - starboard.x) > 0.001f;
+            }
+            foreach (
+                int corner in new[]
+                {
+                    data.Tack,
+                    data.Throat,
+                    data.Peak,
+                    data.Clew,
+                    data.SheetVertex,
+                }
+            )
+                Check(
+                    cloth.VisualVertex(index: corner, flutter: Vector4.zero, foldSide: -1)
+                        == saved[corner],
+                    "Port mirroring moved an attachment."
+                );
+        }
+        Check(mirrored, "Port tack never mirrored the authored folds.");
+        float side = 1;
+        float portPressure = LooseFootedSpritsailClothGeometry.WindLoad(
+            wind: Vector3.right * 8,
+            normal: -Vector3.right
+        );
+        for (int frame = 0; frame < 400; frame++)
+        {
+            float next = LooseFootedSpritsailFlutter.FoldSide(
+                current: side,
+                pressure: portPressure,
+                deltaTime: 1f / 60
+            );
+            Check(next <= side && side - next < 0.1f, "Tack transition snapped or reversed.");
+            side = next;
+        }
+        Check(side == -1, "Port airflow must select the mirrored pose.");
+        Near(
+            actual: LooseFootedSpritsailFlutter.FoldSide(current: side, pressure: 0, deltaTime: 1),
+            expected: side
+        );
+        Near(
+            actual: LooseFootedSpritsailFlutter.FoldSide(current: side, pressure: 1, deltaTime: 0),
+            expected: side
+        );
+        for (int frame = 0; frame < 400; frame++)
+            side = LooseFootedSpritsailFlutter.FoldSide(
+                current: side,
+                pressure: 1,
+                deltaTime: 1f / 60
+            );
+        Check(side == 1, "Starboard tack must recover the authored pose.");
+        Console.WriteLine(
+            "PASS: port fold mirroring, fixed attachments, physical isolation, smooth tack reversal and calm/pause retention."
+        );
+    }
+
+    private static void CheckGathered()
+    {
+        var data = LooseFootedSpritsailMkABakedAsset.Create();
+        foreach (float size in new[] { 0.2f, 1f, 3f })
+        {
+            var rest = LooseFootedSpritsailFittingGeometry.Pose(
+                data: data,
+                baseScale: 1,
+                height: size,
+                width: size,
+                mastRadius: 0.3f
+            );
+            var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: rest);
+            float limit = Math.Min((cloth.Clew - cloth.Tack).magnitude * 0.03f, 0.25f);
+            foreach (float deployment in new[] { 0.002f, 0.25f, 0.5f, 0.75f, 1f })
+            {
+                cloth.Pose(deployment: deployment, load: 0);
+                float strength = LooseFootedSpritsailFlutter.GatheredStrength(
+                    pressure: 1,
+                    shadow: 1,
+                    deployment: deployment
+                );
+                var wave = LooseFootedSpritsailFlutter.GatheredWaves(
+                    time: 1,
+                    phase: 0,
+                    strength: strength
+                );
+                var later = LooseFootedSpritsailFlutter.GatheredWaves(
+                    time: 2,
+                    phase: 0,
+                    strength: strength
+                );
+                var other = LooseFootedSpritsailFlutter.GatheredWaves(
+                    time: 1,
+                    phase: 1,
+                    strength: strength
+                );
+                bool moves = false,
+                    differs = false;
+                for (int i = 0; i < cloth.Vertices.Length; i++)
+                {
+                    var physical = cloth.Vertices[i];
+                    var visual = cloth.VisualVertex(
+                        index: i,
+                        flutter: Vector4.zero,
+                        gathered: wave
+                    );
+                    Check(
+                        Math.Abs(visual.x - physical.x) <= limit + 0.00001f,
+                        "Gathered billow exceeded cap."
+                    );
+                    Near(actual: visual.y, expected: physical.y);
+                    Near(actual: visual.z, expected: physical.z);
+                    var reverse = cloth.VisualVertex(
+                        index: i,
+                        flutter: Vector4.zero,
+                        gathered: -wave
+                    );
+                    Near(actual: visual.x - physical.x, expected: physical.x - reverse.x);
+                    Check(cloth.Vertices[i] == physical, "Gathered motion changed physics.");
+                    moves |=
+                        Math.Abs(
+                            visual.x
+                                - cloth
+                                    .VisualVertex(index: i, flutter: Vector4.zero, gathered: later)
+                                    .x
+                        ) > 0.00001f;
+                    differs |=
+                        Math.Abs(
+                            visual.x
+                                - cloth
+                                    .VisualVertex(index: i, flutter: Vector4.zero, gathered: other)
+                                    .x
+                        ) > 0.00001f;
+                }
+                Check(moves == (deployment < 1), "Gathered folds must move until fully deployed.");
+                Check(differs == (deployment < 1), "Gathered sails need independent phases.");
+                foreach (
+                    int corner in new[]
+                    {
+                        data.Tack,
+                        data.Throat,
+                        data.Peak,
+                        data.Clew,
+                        data.SheetVertex,
+                    }
+                )
+                    Check(
+                        cloth.VisualVertex(index: corner, flutter: Vector4.zero, gathered: wave)
+                            == cloth.Vertices[corner],
+                        "Gathered billow moved an attachment."
+                    );
+            }
+            // Warm the exact managed visual loop before checking steady-state allocation.
+            float checksum = 0;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                long before = GC.GetAllocatedBytesForCurrentThread();
+                for (int frame = 0; frame < 100; frame++)
+                {
+                    var wave = LooseFootedSpritsailFlutter.GatheredWaves(
+                        time: frame / 60.0,
+                        phase: 1,
+                        strength: 1
+                    );
+                    for (int i = 0; i < cloth.Vertices.Length; i++)
+                        checksum += cloth
+                            .VisualVertex(index: i, flutter: Vector4.zero, gathered: wave)
+                            .x;
+                }
+                long allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+                if (pass == 1)
+                    Check(allocated == 0, "Gathered visual loop allocates after fitting.");
+            }
+            Check(float.IsFinite(checksum), "Invalid gathered allocation-test result.");
+        }
+        Near(
+            actual: LooseFootedSpritsailFlutter.GatheredStrength(
+                pressure: 0,
+                shadow: 1,
+                deployment: 0.1f
+            ),
+            expected: 0
+        );
+        Near(
+            actual: LooseFootedSpritsailFlutter.GatheredStrength(
+                pressure: 1,
+                shadow: 0,
+                deployment: 0.1f
+            ),
+            expected: 0
+        );
+        float settling = 1;
+        for (int i = 0; i < 400; i++)
+            settling = LooseFootedSpritsailFlutter.SmoothStrength(
+                current: settling,
+                target: 0,
+                deltaTime: 1f / 60
+            );
+        Near(actual: settling, expected: 0);
+        Check(settling == 0, "Calm gathered cloth must settle to exact rest.");
+        Near(
+            actual: LooseFootedSpritsailFlutter.SmoothStrength(
+                current: 0.4f,
+                target: -1,
+                deltaTime: 0
+            ),
+            expected: 0.4f
+        );
+        float previous = 1;
+        for (int i = 0; i <= 100; i++)
+        {
+            float strength = LooseFootedSpritsailFlutter.GatheredStrength(
+                pressure: 1,
+                shadow: 1,
+                deployment: i / 100f
+            );
+            Check(
+                strength <= previous && previous - strength < 0.016f,
+                "Gathered transition is discontinuous."
+            );
+            previous = strength;
+        }
+        Console.WriteLine(
+            "PASS: gathered billow limits, wind reversal, attachments, phase, calm settling, transitions and zero managed visual-loop allocations."
         );
     }
 

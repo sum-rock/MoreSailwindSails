@@ -5,7 +5,12 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     internal sealed class LooseFootedSpritsailAssetData
     {
+        // Five rest-local cloth poses at Blender frames 0, 60, 120, 180 and 240.
+        internal LooseFootedSpritsailReefPose[] ReefPoses;
         internal LooseFootedSpritsailMeshPart Sail;
+        internal LooseFootedSpritsailMeshPart Struck;
+        internal Vector3 StruckReefLineAttachment;
+        internal Vector3 StruckSheetLineAttachment;
         internal LooseFootedSpritsailMeshPart Sprit;
         internal LooseFootedSpritsailMeshPart SnotterAssembly;
         internal LooseFootedSpritsailMeshPart RotationPlate;
@@ -23,6 +28,12 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal int Peak;
         internal int Clew;
         internal int SheetVertex;
+    }
+
+    internal struct LooseFootedSpritsailReefPose
+    {
+        internal Vector3[] Vertices;
+        internal Quaternion SpritRotation;
     }
 
     internal struct LooseFootedSpritsailMeshPart
@@ -45,5 +56,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         Cloth,
         Metal,
         DarkWood,
+        Black,
     }
 }

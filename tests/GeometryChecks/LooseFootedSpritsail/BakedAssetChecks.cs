@@ -11,6 +11,15 @@ internal static class BakedAssetChecks
     {
         var asset = LooseFootedSpritsailMkABakedAsset.Create();
         var other = LooseFootedSpritsailMkABakedAsset.Create();
+        Check(part: asset.Struck, other: other.Struck, folded: true);
+        if (asset.Struck.Materials.Length != 4)
+            throw new Exception(
+                "Struck cloth, wood, metal and black ties require separate materials."
+            );
+        Near(
+            actual: asset.Struck.RestTransform.MultiplyPoint3x4(Vector3.zero),
+            expected: asset.Sprit.RestTransform.MultiplyPoint3x4(Vector3.zero)
+        );
         Check(part: asset.Sail, other: other.Sail);
         Check(part: asset.Sprit, other: other.Sprit);
         Check(part: asset.SnotterAssembly, other: other.SnotterAssembly);
@@ -39,7 +48,11 @@ internal static class BakedAssetChecks
         );
     }
 
-    private static void Check(LooseFootedSpritsailMeshPart part, LooseFootedSpritsailMeshPart other)
+    private static void Check(
+        LooseFootedSpritsailMeshPart part,
+        LooseFootedSpritsailMeshPart other,
+        bool folded = false
+    )
     {
         if (
             part.Vertices.Length == 0
@@ -75,7 +88,10 @@ internal static class BakedAssetChecks
                 if (cross.sqrMagnitude <= 1e-20f)
                     throw new Exception("Degenerate generated spritsail triangle.");
                 for (int corner = 0; corner < 3; corner++)
-                    if (Vector3.Dot(lhs: cross, rhs: part.Normals[triangles[i + corner]]) <= 0)
+                    if (
+                        !folded
+                        && Vector3.Dot(lhs: cross, rhs: part.Normals[triangles[i + corner]]) <= 0
+                    )
                         throw new Exception("Generated spritsail winding disagrees with normals.");
             }
         }

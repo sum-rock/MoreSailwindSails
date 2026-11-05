@@ -30,6 +30,19 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal Transform RotationPlate;
 
         [SerializeField]
+        internal Transform Struck;
+
+        [SerializeField]
+        internal MeshRenderer StruckRenderer;
+
+        [SerializeField]
+        internal MeshRenderer SpritRenderer;
+
+        [SerializeField]
+        internal int StruckClothMaterialIndex;
+        internal bool IsStruck => Sail.IsInstalled() && Sail.currentUnroll <= 0.001f;
+
+        [SerializeField]
         internal Transform ReefLineAttachment;
 
         [SerializeField]
@@ -387,6 +400,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             );
             Apply(node: ClothBone, pose: pose.Sail);
             Apply(node: Sprit, pose: pose.Sprit);
+            Apply(node: Struck, pose: pose.Struck);
             Apply(node: SnotterAssembly, pose: pose.SnotterAssembly);
             Apply(node: RotationPlate, pose: pose.RotationPlate);
             neutralPlate =
@@ -569,6 +583,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             if (previous && previous != material && previous != TemplateMaterial)
                 Destroy(obj: previous);
             ColorReference.sharedMaterial = material;
+            var materials = StruckRenderer.sharedMaterials;
+            // Save loading recolors inactive clones before Awake initializes Data.
+            materials[StruckClothMaterialIndex] = material;
+            StruckRenderer.sharedMaterials = materials;
         }
 
         internal void PositionCollisionChecker(ShipyardSailColChecker target, float angle)

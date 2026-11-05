@@ -29,6 +29,38 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 new Vector4(x: pos.x, y: pos.y, z: pos.z, w: 1)
             );
 
+        // Managed shortest-arc slerp, also usable by the geometry checks outside Unity.
+        internal static Quaternion InterpolateRotation(Quaternion a, Quaternion b, float t)
+        {
+            float dot = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+            if (dot < 0)
+            {
+                b = new Quaternion(x: -b.x, y: -b.y, z: -b.z, w: -b.w);
+                dot = -dot;
+            }
+            double first = 1 - t,
+                second = t;
+            if (dot < 0.9995f)
+            {
+                double angle = Math.Acos(Math.Min(1, dot));
+                first = Math.Sin((1 - t) * angle) / Math.Sin(angle);
+                second = Math.Sin(t * angle) / Math.Sin(angle);
+            }
+            var q = new Quaternion(
+                x: (float)(a.x * first + b.x * second),
+                y: (float)(a.y * first + b.y * second),
+                z: (float)(a.z * first + b.z * second),
+                w: (float)(a.w * first + b.w * second)
+            );
+            float length = (float)Math.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+            return new Quaternion(
+                x: q.x / length,
+                y: q.y / length,
+                z: q.z / length,
+                w: q.w / length
+            );
+        }
+
         internal static Vector3 InversePoint(Matrix4x4 matrix, Vector3 point)
         {
             var a = new Vector3(x: matrix.m00, y: matrix.m10, z: matrix.m20);

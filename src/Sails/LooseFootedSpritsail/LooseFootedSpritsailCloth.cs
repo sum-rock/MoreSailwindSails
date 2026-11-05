@@ -22,6 +22,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private readonly float phase;
         private double flutterTime;
         private float flutterStrength;
+        private float gatheredStrength;
+        private Vector3 lastGathered;
+        private float foldSide = 1;
+        private float lastFoldSide = 1;
+        private float foldTarget = 1;
         private Vector4 lastFlutter;
         private bool visualDirty = true;
         private float load;
@@ -64,6 +69,23 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             {
                 if (Geometry == null)
                     return;
+                bool struck = rig.IsStruck;
+                renderer.enabled = !struck;
+                rig.SpritRenderer.enabled = !struck;
+                rig.StruckRenderer.enabled = struck;
+                if (struck)
+                {
+                    Geometry.Pose(deployment: 0, load: 0);
+                    rig.ReefLineAttachment.position = rig.Struck.TransformPoint(
+                        position: rig.Data.StruckReefLineAttachment
+                    );
+                    rig.SheetLineAttachment.position = rig.Struck.TransformPoint(
+                        position: rig.Data.StruckSheetLineAttachment
+                    );
+                    lastSet = -1;
+                    return;
+                }
+                rig.ReefLineAttachment.localPosition = rig.Data.ReefLineAttachment;
                 bool preview = !rig.Sail.IsInstalled();
                 float set = preview ? 1 : Mathf.Clamp01(value: rig.Sail.currentUnroll);
                 if (windFrame != Time.frameCount)
@@ -107,7 +129,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 )
             )
             {
-                if (Geometry == null || renderFrame == Time.frameCount)
+                if (Geometry == null || rig.IsStruck || renderFrame == Time.frameCount)
                     return;
                 renderFrame = Time.frameCount;
                 if (Time.deltaTime <= 0 && !visualDirty)
@@ -123,6 +145,17 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 if (active)
                 {
                     float shadow = rig.Sail.GetCurrentShadowMult();
+                    float pressure = LooseFootedSpritsailClothGeometry.WindLoad(
+                        wind: apparentWind,
+                        normal: -rig.Frame.right
+                    );
+                    if (pressure != 0)
+                        foldTarget = pressure < 0 ? -1 : 1;
+                    foldSide = LooseFootedSpritsailFlutter.FoldSide(
+                        current: foldSide,
+                        pressure: foldTarget,
+                        deltaTime: Time.deltaTime
+                    );
                     // Preview physics clears the native wind caches. Read the native angle
                     // from our posed sail and visual wind without calculating propulsion.
                     if (preview)
@@ -141,17 +174,38 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                         target: target,
                         deltaTime: Time.deltaTime
                     );
+                    gatheredStrength = LooseFootedSpritsailFlutter.SmoothStrength(
+                        current: gatheredStrength,
+                        target: LooseFootedSpritsailFlutter.GatheredStrength(
+                            pressure: LooseFootedSpritsailClothGeometry.WindLoad(
+                                wind: apparentWind,
+                                normal: -rig.Frame.right
+                            ),
+                            shadow: shadow,
+                            deployment: lastSet
+                        ),
+                        deltaTime: Time.deltaTime
+                    );
                     flutterTime += Time.deltaTime;
                 }
                 else
-                    flutterStrength = 0;
+                    flutterStrength = gatheredStrength = 0;
                 var flutter = LooseFootedSpritsailFlutter.Waves(
                     time: flutterTime,
                     phase: phase,
                     strength: flutterStrength * lastSet
                 );
+                var gathered = LooseFootedSpritsailFlutter.GatheredWaves(
+                    time: flutterTime,
+                    phase: phase,
+                    strength: gatheredStrength
+                );
                 if (
                     !visualDirty
+                    && foldSide == lastFoldSide
+                    && gathered.x == lastGathered.x
+                    && gathered.y == lastGathered.y
+                    && gathered.z == lastGathered.z
                     && flutter.x == lastFlutter.x
                     && flutter.y == lastFlutter.y
                     && flutter.z == lastFlutter.z
@@ -160,12 +214,19 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     return;
                 visualDirty = false;
                 lastFlutter = flutter;
+                lastGathered = gathered;
+                lastFoldSide = foldSide;
                 var frameToRenderer =
                     renderer.transform.worldToLocalMatrix * rig.Frame.localToWorldMatrix;
                 var bounds = new Bounds();
                 for (int i = 0; i < localVertices.Length; i++)
                 {
-                    var point = Geometry.VisualVertex(index: i, flutter: flutter);
+                    var point = Geometry.VisualVertex(
+                        index: i,
+                        flutter: flutter,
+                        gathered: gathered,
+                        foldSide: foldSide
+                    );
                     localVertices[i] = inverseRestCloth.MultiplyPoint3x4(point: point);
                     var renderedPoint = frameToRenderer.MultiplyPoint3x4(point: point);
                     if (i == 0)

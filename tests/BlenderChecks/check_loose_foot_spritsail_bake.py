@@ -23,6 +23,26 @@ source = bake()
 assert source == bake(), "Non-deterministic bake"
 assert source == CUTS["A"].source_path.read_text(), "Stale checked-in bake"
 data = collect()
+assert tool["REEF_FRAMES"] == (0, 60, 120, 180, 240)
+assert len(data["ReefPoses"]) == 5
+sail = bpy.data.objects["Sail"]
+inverse = sail.matrix_world.inverted()
+for frame in range(241):
+    bpy.context.scene.frame_set(frame)
+    evaluated = sail.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    mesh = evaluated.to_mesh()
+    try:
+        if frame in tool["REEF_FRAMES"]:
+            points, rotation = data["ReefPoses"][frame // 60]
+            assert len(points) == len(mesh.vertices) == 320
+            assert abs(sum(n * n for n in rotation) - 1) < 1e-5
+            for actual, vertex in zip(points, mesh.vertices):
+                expected = conversion @ inverse @ evaluated.matrix_world @ vertex.co
+                assert (Vector(actual) - expected).length < 1e-6
+    finally:
+        evaluated.to_mesh_clear()
+assert data["ReefPoses"][0][0] != data["ReefPoses"][-1][0]
+bpy.context.scene.frame_set(0)
 collar = bpy.data.objects["Snotter"]
 evaluated = collar.evaluated_get(bpy.context.evaluated_depsgraph_get())
 mesh = evaluated.to_mesh()
@@ -157,10 +177,81 @@ reject("SheetLineAttachment", lambda o: setattr(o, "parent", bpy.data.objects["S
 reject("ReefLineAttachment", lambda o: setattr(o, "name", "Missing"))
 reject("SheetLineAttachment", lambda o: setattr(o.location, "z", o.location.z + 1))
 
-with edit_object("Mast") as obj:
-    obj.location = (33, 88, -19)
-    obj.scale = (0, 0, 0)
-    assert bake() == source, "Reference mast affected the export"
+# A translated animated spar cannot be replayed as a rigid hinge rotation.
+sprit = bpy.data.objects["Sprit"]
+original_location = sprit.location.copy()
+original_action = sprit.animation_data.action
+test_action = original_action.copy()
+sprit.animation_data.action = test_action
+try:
+    bpy.context.scene.frame_set(0)
+    sprit.keyframe_insert(data_path="location", index=0, frame=0)
+    bpy.context.scene.frame_set(60)
+    sprit.location.x += 1
+    sprit.keyframe_insert(data_path="location", index=0, frame=60)
+    try:
+        collect()
+    except ValueError as error:
+        assert "Sprit: animation must rotate about a fixed hinge" in str(error)
+    else:
+        raise AssertionError("Accepted an animated moving sprit hinge")
+finally:
+    sprit.animation_data.action = original_action
+    bpy.data.actions.remove(test_action)
+    sprit.location = original_location
+    bpy.context.scene.frame_set(0)
+assert bake() == source, "Animation fixture leaked"
+
+# Preserve evaluated corner normals rather than flattening the authored smooth shading.
+struck = data["Struck"]
+exported = {
+    (tuple(round(v, 5) for v in p), tuple(round(v, 5) for v in n))
+    for p, n in zip(struck["Vertices"], struck["Normals"])
+}
+root = bpy.data.objects["Sprit.struck"]
+depsgraph = bpy.context.evaluated_depsgraph_get()
+for name in tool["STRUCK_PARTS"]:
+    obj = bpy.data.objects[name]
+    relative = (
+        conversion
+        if obj == root
+        else conversion @ root.matrix_world.inverted() @ obj.matrix_world
+    )
+    normal_matrix = relative.to_3x3().inverted().transposed()
+    evaluated = obj.evaluated_get(depsgraph)
+    mesh = evaluated.to_mesh()
+    try:
+        for loop in mesh.loops:
+            point = relative @ mesh.vertices[loop.vertex_index].co
+            normal = (
+                normal_matrix @ mesh.corner_normals[loop.index].vector
+            ).normalized()
+            assert (
+                tuple(round(v, 5) for v in point),
+                tuple(round(v, 5) for v in normal),
+            ) in exported
+    finally:
+        evaluated.to_mesh_clear()
+
+assert data["Struck"]["Materials"] == ["Cloth", "Metal", "DarkWood", "Black"]
+alignment = (
+    bpy.data.objects["Mast"].matrix_world
+    @ bpy.data.objects["Mast.struck"].matrix_world.inverted()
+)
+for field in ("ReefLineAttachment", "SheetLineAttachment"):
+    actual = data["Struck"]["RestTransform"] @ Vector(data["Struck" + field])
+    expected = (
+        conversion
+        @ alignment
+        @ bpy.data.objects[field + ".struck"].matrix_world.translation
+    )
+    assert (actual - expected).length < 3e-6
+for name in (
+    *tool["STRUCK_PARTS"],
+    "ReefLineAttachment.struck",
+    "SheetLineAttachment.struck",
+):
+    reject(name, lambda o: setattr(o, "name", "Missing"))
 
 with edit_object("SpritMountRod") as obj:
     obj.location.x = 0

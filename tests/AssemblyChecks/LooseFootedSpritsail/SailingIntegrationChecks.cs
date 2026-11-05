@@ -17,6 +17,39 @@ internal static class SailingIntegrationChecks
         Type Find(string name) =>
             assembly.GetType(name: "MoreSailwindSails." + name, throwOnError: true);
         Type Family(string name) => Find(name: "Sails.LooseFootedSpritsail." + name);
+        var fractionPatch = Family(name: "Patches.SpritsailCapturedForcePatch");
+        var finiteFraction = fractionPatch.GetMethod(name: "FiniteFraction", bindingAttr: All);
+        foreach (bool spritsail in new[] { false, true })
+        foreach (
+            float value in new[]
+            {
+                float.NaN,
+                float.PositiveInfinity,
+                float.NegativeInfinity,
+                0f,
+                0.5f,
+                1f,
+            }
+        )
+        {
+            float actual = (float)
+                finiteFraction.Invoke(obj: null, parameters: new object[] { spritsail, value });
+            float expected =
+                spritsail && (float.IsNaN(value) || float.IsInfinity(value)) ? 0 : value;
+            Check(
+                actual.Equals(expected),
+                "Force fractions must sanitize only undefined spritsail readings."
+            );
+        }
+        var fractionTarget = Family(name: "LooseFootedSpritsailRig")
+            .GetField(name: "Sail", bindingAttr: All)
+            .FieldType.GetMethod(name: "GetCapturedForceFraction", bindingAttr: All);
+        Check(
+            fractionTarget != null
+                && fractionTarget.ReturnType == typeof(float)
+                && fractionTarget.GetParameters().Length == 0,
+            "Installed captured-force query must retain its patchable signature."
+        );
         var rig = Family(name: "LooseFootedSpritsailRig");
         var rigging = Family(name: "LooseFootedSpritsailRigging");
         var physics = Family(name: "LooseFootedSpritsailPhysics");

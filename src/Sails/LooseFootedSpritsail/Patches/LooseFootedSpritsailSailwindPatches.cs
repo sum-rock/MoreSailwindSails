@@ -311,6 +311,22 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         }
     }
 
+    [HarmonyPatch(typeof(Sail), "GetCapturedForceFraction")]
+    internal static class SpritsailCapturedForcePatch
+    {
+        // Clearing a closed sail's force caches makes the native fraction 0/0.
+        // Keep propulsion at zero while exposing a finite reading to HUD consumers.
+        [HarmonyPostfix]
+        private static void Postfix(Sail __instance, ref float __result) =>
+            __result = FiniteFraction(
+                spritsail: __instance.GetComponent<LooseFootedSpritsailRig>(),
+                fraction: __result
+            );
+
+        internal static float FiniteFraction(bool spritsail, float fraction) =>
+            spritsail && (float.IsNaN(fraction) || float.IsInfinity(fraction)) ? 0 : fraction;
+    }
+
     [HarmonyPatch(typeof(Sail), "GetRealSailPower")]
     internal static class SpritsailPowerPatch
     {

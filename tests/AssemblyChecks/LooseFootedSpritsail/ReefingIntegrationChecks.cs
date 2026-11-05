@@ -22,7 +22,57 @@ internal static class ReefingIntegrationChecks
         var rig = Family(name: "LooseFootedSpritsailRig");
         var rigging = Family(name: "LooseFootedSpritsailRigging");
         var cloth = Family(name: "LooseFootedSpritsailCloth");
+        var geometry = Family(name: "LooseFootedSpritsailClothGeometry");
+        Check(
+            Instructions(method: cloth.GetMethod(name: "Refresh", bindingAttr: All))
+                .Any(i => i.Operand is FieldInfo f && f.Name == "currentUnroll")
+                && Calls(type: cloth, method: "Refresh", name: "Pose")
+                && Instructions(method: geometry.GetMethod(name: "Sample", bindingAttr: All))
+                    .Any(i => i.Operand is FieldInfo f && f.Name == "ReefPoses"),
+            "Native deployment must drive the authored cloth poses."
+        );
         var prefab = Family(name: "LooseFootedSpritsailPrefab");
+        Check(
+            Calls(type: cloth, method: "Refresh", name: "get_IsStruck")
+                && Calls(type: cloth, method: "Render", name: "get_IsStruck"),
+            "Struck visuals must switch in refresh and skip deployed mesh uploads."
+        );
+        var refreshFields = Instructions(method: cloth.GetMethod(name: "Refresh", bindingAttr: All))
+            .Where(i => i.Operand is FieldInfo)
+            .Select(i => ((FieldInfo)i.Operand).Name)
+            .ToArray();
+        Check(
+            refreshFields.Contains("StruckReefLineAttachment")
+                && refreshFields.Contains("StruckSheetLineAttachment"),
+            "Struck rope endpoints must use both authored attachments."
+        );
+        Check(
+            Instructions(method: rig.GetMethod(name: "SyncColor", bindingAttr: All))
+                .Any(i => i.Operand is FieldInfo f && f.Name == "StruckRenderer"),
+            "Recoloring must update the struck cloth material."
+        );
+        foreach (
+            var name in new[]
+            {
+                "Struck",
+                "StruckRenderer",
+                "SpritRenderer",
+                "ReefLineAttachment",
+                "StruckClothMaterialIndex",
+            }
+        )
+            Check(
+                rig.GetField(name: name, bindingAttr: All)
+                    .CustomAttributes.Any(a =>
+                        a.AttributeType.FullName == "UnityEngine.SerializeField"
+                    ),
+                $"Prefab clones must retain {name} before Awake."
+            );
+        Check(
+            !Instructions(method: rig.GetMethod(name: "SyncColor", bindingAttr: All))
+                .Any(i => i.Operand is FieldInfo f && f.Name == "Data"),
+            "Save loading must recolor inactive clones without Awake-initialized asset data."
+        );
         var reef = rigging.GetProperty(name: "Reef", bindingAttr: All).PropertyType;
         Check(
             reef.Name == "RopeControllerSailReef" && reef.Assembly != assembly,

@@ -67,6 +67,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 return;
             for (int i = 0; i < ties.Length; i++)
             {
+                if (rig.IsStruck)
+                {
+                    ties[i].SetVisible(visible: false);
+                    continue;
+                }
                 var corner =
                     i == 0 ? geometry.Throat
                     : i == 1 ? geometry.SnotterTie

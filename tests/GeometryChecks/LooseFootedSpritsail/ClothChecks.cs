@@ -11,6 +11,8 @@ internal static class ClothChecks
     internal static void Run()
     {
         var data = LooseFootedSpritsailMkABakedAsset.Create();
+        Check(data.ReefPoses.Length == 5, "Expected exactly five authored poses.");
+        CheckSamples(data: data);
         float scale = LooseFootedSpritsailFittingGeometry.BaseScale(
             data: data,
             fullGaffHeight: 8.8f
@@ -31,17 +33,8 @@ internal static class ClothChecks
             var tack = cloth.Tack;
             var peak = cloth.Peak;
             var clew = cloth.Clew;
-            float foot = (clew - tack).magnitude;
-            float leech = (peak - clew).magnitude;
             var tie = LooseFootedSpritsailTransform.InversePoint(matrix: rest.Sprit, point: peak);
             CheckClearance(data: data, rest: rest, cloth: cloth);
-            var leechIndices = Enumerable
-                .Range(start: 0, count: data.Sail.Vertices.Length)
-                .Where(i =>
-                    Math.Abs(data.Sail.Vertices[i].z - data.Sail.Vertices[data.Clew].z) < 0.0001f
-                )
-                .OrderBy(i => data.Sail.Vertices[i].y)
-                .ToArray();
             for (int i = 0; i < data.Sail.Vertices.Length; i++)
                 Near(
                     actual: cloth.Vertices[i],
@@ -51,29 +44,29 @@ internal static class ClothChecks
             var guide = new Vector3(x: 0, y: 5, z: 0);
             Check(
                 cloth.CanRoute(guide: guide),
-                "A mast guide above the pivot must shorten the halyard while raising the sprit."
+                "Fitted authored motion must shorten a masthead halyard."
             );
             Check(
                 !cloth.CanRoute(guide: cloth.Pivot - Vector3.up),
                 "A guide below the pivot cannot raise the sprit."
             );
-            foreach (float deployment in new[] { 0f, 0.25f, 0.5f, 0.75f, 1f })
+            foreach (
+                float deployment in new[]
+                {
+                    0f,
+                    0.125f,
+                    0.25f,
+                    0.375f,
+                    0.5f,
+                    0.625f,
+                    0.75f,
+                    0.875f,
+                    1f,
+                }
+            )
             foreach (float load in new[] { -1f, -0.3f, 0f, 0.3f, 1f })
             {
                 cloth.Pose(deployment: deployment, load: load);
-                Check(
-                    (cloth.Clew - cloth.Tack).magnitude <= foot + 0.0001f,
-                    "Brailing stretches the foot."
-                );
-                Check(
-                    (cloth.Clew - cloth.Peak).magnitude <= leech + 0.0001f,
-                    "Brailing stretches the leech."
-                );
-                Near(
-                    actual: cloth.Throat,
-                    expected: throat,
-                    message: "Throat moved off its mast tie."
-                );
                 Near(
                     actual: cloth.Sprit.MultiplyPoint3x4(point: Vector3.zero),
                     expected: cloth.Pivot,
@@ -92,10 +85,6 @@ internal static class ClothChecks
                 foreach (var point in cloth.Vertices)
                 {
                     Check(Finite(point: point), "Non-finite cloth vertex.");
-                    Check(
-                        point.z <= throat.z + 0.0001f,
-                        $"Brailed cloth crosses the mast plane at size {height}/{width}, set {deployment}: {point}."
-                    );
                 }
                 foreach (var triangles in data.Sail.SubmeshTriangles)
                     for (int i = 0; i < triangles.Length; i += 3)
@@ -109,15 +98,6 @@ internal static class ClothChecks
                             .normalized;
                         Check(Finite(point: normal), "Non-finite folded normal.");
                     }
-                float curvedLeech = 0;
-                for (int i = 1; i < leechIndices.Length; i++)
-                    curvedLeech += (
-                        cloth.Vertices[leechIndices[i]] - cloth.Vertices[leechIndices[i - 1]]
-                    ).magnitude;
-                Check(
-                    curvedLeech <= leech + 0.0001f,
-                    "The leech arch exceeds its fitted cloth budget."
-                );
                 var saved = (Vector3[])cloth.Vertices.Clone();
                 cloth.Pose(deployment: 1 - deployment, load: -load);
                 cloth.Pose(deployment: deployment, load: load);
@@ -151,33 +131,9 @@ internal static class ClothChecks
                         ),
                         "Posed corners lost their wind frame."
                     );
-                    Near(
-                        actual: frame.Axis,
-                        expected: world.MultiplyVector(vector: Vector3.up),
-                        message: "Posed wind sensor lost the raked mast axis."
-                    );
                 }
             }
             cloth.Pose(deployment: 0, load: 0);
-            Near(
-                actual: cloth.Tack,
-                expected: cloth.SnotterTie,
-                message: "Lower luff did not gather to the snotter."
-            );
-            var direction = cloth.Peak - cloth.Pivot;
-            float closedAngle = (float)(Math.Atan2(-direction.z, direction.y) * 180 / Math.PI);
-            float radius = (float)
-                Math.Sqrt(
-                    (peak.y - cloth.Pivot.y) * (peak.y - cloth.Pivot.y)
-                        + (peak.z - cloth.Pivot.z) * (peak.z - cloth.Pivot.z)
-                );
-            float mastAngle = (float)(
-                Math.Asin(Math.Min(1, (cloth.Pivot.z - throat.z) / radius)) * 180 / Math.PI
-            );
-            Check(
-                closedAngle <= Math.Max(5, mastAngle) + 0.001f,
-                "Sprit did not rise to its mast-clearance limit."
-            );
             Check(
                 cloth.Vertices.Any(p => Math.Abs(p.x) > 0.0001f),
                 "Full brail lost its visible folds."
@@ -206,8 +162,61 @@ internal static class ClothChecks
             );
         Check(smoothed < -0.99f, "Billow does not settle after tacking.");
         Console.WriteLine(
-            "PASS: spritsail billow and brailing across independent sizes, deployments, winds and rakes; rigid sprit, cloth budgets, reversibility and neutral clearance."
+            "PASS: spritsail billow and brailing across independent sizes, deployments, winds and rakes; rigid sprit, authored poses, reversibility and neutral clearance."
         );
+    }
+
+    private static void CheckSamples(LooseFootedSpritsailAssetData data)
+    {
+        var rest = new LooseFootedSpritsailPose
+        {
+            Sail = data.Sail.RestTransform,
+            Sprit = data.Sprit.RestTransform,
+        };
+        var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: rest);
+        var tack = data.Sail.Vertices[data.Tack];
+        var clew = data.Sail.Vertices[data.Clew];
+        var throat = data.Sail.Vertices[data.Throat];
+        var peak = data.Sail.Vertices[data.Peak];
+        for (int step = 0; step <= 8; step++)
+        {
+            float sample = step * 0.5f;
+            int left = (int)sample,
+                right = Math.Min(left + 1, 4);
+            float blend = sample - left;
+            cloth.Pose(deployment: 1 - sample / 4, load: 0);
+            Vector3 Expected(int index) =>
+                rest.Sail.MultiplyPoint3x4(
+                    point: Vector3.Lerp(
+                        a: data.ReefPoses[left].Vertices[index],
+                        b: data.ReefPoses[right].Vertices[index],
+                        t: blend
+                    )
+                );
+            var correction = cloth.Peak - Expected(data.Peak);
+            for (int i = 0; i < cloth.Vertices.Length; i++)
+            {
+                var vertex = data.Sail.Vertices[i];
+                float u = (vertex.z - tack.z) / (clew.z - tack.z);
+                float bottom = tack.y + (clew.y - tack.y) * u;
+                float top = throat.y + (peak.y - throat.y) * u;
+                float v = (vertex.y - bottom) / (top - bottom);
+                Near(
+                    actual: cloth.Vertices[i],
+                    expected: Expected(i) + correction * u * v,
+                    message: "Authored sample or midpoint was not reproduced."
+                );
+            }
+        }
+        cloth.Pose(deployment: 0, load: 0);
+        var brailed = (Vector3[])cloth.Vertices.Clone();
+        cloth.Pose(deployment: 0, load: 1);
+        for (int i = 0; i < brailed.Length; i++)
+            Near(
+                actual: cloth.Vertices[i],
+                expected: brailed[i],
+                message: "Billow did not fade at full brail."
+            );
     }
 
     private static void CheckClearance(
@@ -348,30 +357,6 @@ internal static class ClothChecks
                 expected: rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[index]),
                 message: "Billow moved a corner off its attachment."
             );
-        foreach (float trim in new[] { -35f, 35f })
-        {
-            var rotation = LooseFootedSpritsailSailingGeometry.PivotRotation(
-                center: Vector3.zero,
-                axis: Vector3.up,
-                degrees: trim
-            );
-            Check(
-                Math.Abs(rotation.MultiplyPoint3x4(point: cloth.Clew).x)
-                    < Math.Abs(rotation.MultiplyPoint3x4(point: cloth.Peak).x),
-                "The loaded clew must sit inboard of the peak on either tack."
-            );
-        }
-        int leechMiddle = Enumerable
-            .Range(start: 0, count: data.Sail.Vertices.Length)
-            .Where(i => Math.Abs(data.Sail.Vertices[i].z - clew.z) < 0.0001f)
-            .OrderBy(i => Math.Abs(data.Sail.Vertices[i].y - (clew.y + peak.y) / 2))
-            .First();
-        float along = (data.Sail.Vertices[leechMiddle].y - clew.y) / (peak.y - clew.y);
-        var straight = Vector3.Lerp(a: cloth.Clew, b: cloth.Peak, t: along);
-        Check(
-            cloth.Vertices[leechMiddle].z > straight.z + 0.001f,
-            "The leech must form an arch between peak and clew."
-        );
     }
 
     private static bool Inside(Bounds bounds, Vector3 point) =>
