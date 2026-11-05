@@ -24,6 +24,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private float flutterStrength;
         private float gatheredStrength;
         private Vector3 lastGathered;
+        private float foldSide = 1;
+        private float lastFoldSide = 1;
+        private float foldTarget = 1;
         private Vector4 lastFlutter;
         private bool visualDirty = true;
         private float load;
@@ -142,6 +145,17 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 if (active)
                 {
                     float shadow = rig.Sail.GetCurrentShadowMult();
+                    float pressure = LooseFootedSpritsailClothGeometry.WindLoad(
+                        wind: apparentWind,
+                        normal: -rig.Frame.right
+                    );
+                    if (pressure != 0)
+                        foldTarget = pressure < 0 ? -1 : 1;
+                    foldSide = LooseFootedSpritsailFlutter.FoldSide(
+                        current: foldSide,
+                        pressure: foldTarget,
+                        deltaTime: Time.deltaTime
+                    );
                     // Preview physics clears the native wind caches. Read the native angle
                     // from our posed sail and visual wind without calculating propulsion.
                     if (preview)
@@ -188,6 +202,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 );
                 if (
                     !visualDirty
+                    && foldSide == lastFoldSide
                     && gathered.x == lastGathered.x
                     && gathered.y == lastGathered.y
                     && gathered.z == lastGathered.z
@@ -200,6 +215,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 visualDirty = false;
                 lastFlutter = flutter;
                 lastGathered = gathered;
+                lastFoldSide = foldSide;
                 var frameToRenderer =
                     renderer.transform.worldToLocalMatrix * rig.Frame.localToWorldMatrix;
                 var bounds = new Bounds();
@@ -208,7 +224,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     var point = Geometry.VisualVertex(
                         index: i,
                         flutter: flutter,
-                        gathered: gathered
+                        gathered: gathered,
+                        foldSide: foldSide
                     );
                     localVertices[i] = inverseRestCloth.MultiplyPoint3x4(point: point);
                     var renderedPoint = frameToRenderer.MultiplyPoint3x4(point: point);

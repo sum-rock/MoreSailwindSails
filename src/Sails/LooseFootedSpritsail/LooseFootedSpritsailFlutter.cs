@@ -60,6 +60,17 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             );
         }
 
+        // Positive local X airflow comes from port; WindLoad uses the -X normal.
+        // Its existing deadband supplies zero near head-to-wind: retain the last tack.
+        internal static float FoldSide(float current, float pressure, float deltaTime)
+        {
+            float target =
+                pressure < 0 ? -1
+                : pressure > 0 ? 1
+                : current;
+            return SmoothStrength(current: current, target: target, deltaTime: deltaTime);
+        }
+
         // Broad, slow folds use cached spatial coefficients and three scalar wave terms.
         internal static Vector3 GatheredWeights(float u, float v, float footLength)
         {

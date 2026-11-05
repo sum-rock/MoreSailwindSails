@@ -180,8 +180,105 @@ internal static class FlutterChecks
             }
         }
         CheckGathered();
+        CheckMirroredFolds();
         Console.WriteLine(
             "PASS: spritsail flutter gating, smoothing, pause, phase, size bounds and visual-only attachments across sizes, deployments and tacks."
+        );
+    }
+
+    private static void CheckMirroredFolds()
+    {
+        var data = LooseFootedSpritsailMkABakedAsset.Create();
+        var rest = LooseFootedSpritsailFittingGeometry.Pose(
+            data: data,
+            baseScale: 1,
+            height: 1.3f,
+            width: 0.7f,
+            mastRadius: 0.3f
+        );
+        var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: rest);
+        bool mirrored = false;
+        foreach (float deployment in new[] { 0.002f, 0.125f, 0.25f, 0.5f, 0.75f, 1f })
+        {
+            cloth.Pose(deployment: deployment, load: 0);
+            var saved = (Vector3[])cloth.Vertices.Clone();
+            for (int i = 0; i < saved.Length; i++)
+            {
+                var starboard = cloth.VisualVertex(index: i, flutter: Vector4.zero, foldSide: 1);
+                var port = cloth.VisualVertex(index: i, flutter: Vector4.zero, foldSide: -1);
+                var source = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[i]);
+                var tack = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Tack]);
+                var clew = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Clew]);
+                var throat = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Throat]);
+                var peak = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Peak]);
+                float u = Math.Clamp((source.z - tack.z) / (clew.z - tack.z), 0, 1);
+                float bottom = tack.y + (clew.y - tack.y) * u;
+                float top = throat.y + (peak.y - throat.y) * u;
+                float v = Math.Clamp((source.y - bottom) / (top - bottom), 0, 1);
+                float surface = Vector3
+                    .Lerp(
+                        a: Vector3.Lerp(a: saved[data.Tack], b: saved[data.Throat], t: v),
+                        b: Vector3.Lerp(a: saved[data.Clew], b: saved[data.Peak], t: v),
+                        t: u
+                    )
+                    .x;
+                Check(starboard == saved[i], "Starboard must retain the authored pose.");
+                Near(actual: port.x + starboard.x, expected: surface * 2);
+                Near(actual: port.y, expected: starboard.y);
+                Near(actual: port.z, expected: starboard.z);
+                Check(cloth.Vertices[i] == saved[i], "Mirroring changed physical geometry.");
+                mirrored |= Math.Abs(port.x - starboard.x) > 0.001f;
+            }
+            foreach (
+                int corner in new[]
+                {
+                    data.Tack,
+                    data.Throat,
+                    data.Peak,
+                    data.Clew,
+                    data.SheetVertex,
+                }
+            )
+                Check(
+                    cloth.VisualVertex(index: corner, flutter: Vector4.zero, foldSide: -1)
+                        == saved[corner],
+                    "Port mirroring moved an attachment."
+                );
+        }
+        Check(mirrored, "Port tack never mirrored the authored folds.");
+        float side = 1;
+        float portPressure = LooseFootedSpritsailClothGeometry.WindLoad(
+            wind: Vector3.right * 8,
+            normal: -Vector3.right
+        );
+        for (int frame = 0; frame < 400; frame++)
+        {
+            float next = LooseFootedSpritsailFlutter.FoldSide(
+                current: side,
+                pressure: portPressure,
+                deltaTime: 1f / 60
+            );
+            Check(next <= side && side - next < 0.1f, "Tack transition snapped or reversed.");
+            side = next;
+        }
+        Check(side == -1, "Port airflow must select the mirrored pose.");
+        Near(
+            actual: LooseFootedSpritsailFlutter.FoldSide(current: side, pressure: 0, deltaTime: 1),
+            expected: side
+        );
+        Near(
+            actual: LooseFootedSpritsailFlutter.FoldSide(current: side, pressure: 1, deltaTime: 0),
+            expected: side
+        );
+        for (int frame = 0; frame < 400; frame++)
+            side = LooseFootedSpritsailFlutter.FoldSide(
+                current: side,
+                pressure: 1,
+                deltaTime: 1f / 60
+            );
+        Check(side == 1, "Starboard tack must recover the authored pose.");
+        Console.WriteLine(
+            "PASS: port fold mirroring, fixed attachments, physical isolation, smooth tack reversal and calm/pause retention."
         );
     }
 

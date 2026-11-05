@@ -13,6 +13,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private readonly Vector2[] coordinates;
         private readonly Vector4[] flutterWeights;
         private readonly Vector3[] gatheredWeights;
+        private readonly float[] authoredDepth;
         private readonly Vector3 throat,
             tack,
             peak,
@@ -40,6 +41,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             coordinates = new Vector2[Vertices.Length];
             flutterWeights = new Vector4[Vertices.Length];
             gatheredWeights = new Vector3[Vertices.Length];
+            authoredDepth = new float[Vertices.Length];
             // Work in the fitted assembly frame: +Y runs up the mast, -Z runs aft
             // across the sail, and X measures billow out of its neutral plane.
             throat = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Throat]);
@@ -89,9 +91,17 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         }
 
         // Read a visual position without modifying corners, edge budgets or aerodynamic inputs.
-        internal Vector3 VisualVertex(int index, Vector4 flutter, Vector3 gathered = default)
+        internal Vector3 VisualVertex(
+            int index,
+            Vector4 flutter,
+            Vector3 gathered = default,
+            float foldSide = 1
+        )
         {
             var point = Vertices[index];
+            // Mirror only authored depth relative to the attachment surface. Hardware,
+            // physical geometry and wind-directed procedural movement stay unchanged.
+            point.x += authoredDepth[index] * (foldSide - 1);
             var weights = flutterWeights[index];
             point.x +=
                 weights.x * flutter.x
@@ -112,6 +122,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var posedPeak = Sprit.MultiplyPoint3x4(point: peakTie);
             var correction =
                 posedPeak - Sample(index: data.Peak, left: left, right: right, blend: blend);
+            var sampledTack = Sample(index: data.Tack, left: left, right: right, blend: blend);
+            var sampledThroat = Sample(index: data.Throat, left: left, right: right, blend: blend);
+            var sampledClew = Sample(index: data.Clew, left: left, right: right, blend: blend);
             for (int i = 0; i < Vertices.Length; i++)
             {
                 float u = coordinates[i].x;
@@ -119,6 +132,14 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 // Retarget the authored cloth to the fitted rigid spar, without moving the luff.
                 var point =
                     Sample(index: i, left: left, right: right, blend: blend) + correction * u * v;
+                float attachmentDepth = Vector3
+                    .Lerp(
+                        a: Vector3.Lerp(a: sampledTack, b: sampledThroat, t: v),
+                        b: Vector3.Lerp(a: sampledClew, b: posedPeak, t: v),
+                        t: u
+                    )
+                    .x;
+                authoredDepth[i] = point.x - attachmentDepth;
                 float across = 4 * u * (1 - u);
                 float vertical = 4 * v * (1 - v);
                 float envelope = across * (1 + 0.6f * (1 - u)) * (0.55f + 0.45f * vertical);
@@ -129,6 +150,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 Vertices[i] = point;
             }
             Vertices[data.Peak] = posedPeak;
+            authoredDepth[data.Tack] =
+                authoredDepth[data.Throat] =
+                authoredDepth[data.Peak] =
+                authoredDepth[data.Clew] =
+                    0;
         }
 
         private void Samples(float deployment, out int left, out int right, out float blend)
