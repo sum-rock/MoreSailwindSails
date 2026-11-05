@@ -17,10 +17,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             peak,
             clew,
             peakTie;
-        private readonly float rotation,
-            footLength,
-            leechLength,
-            snotterFraction;
+        private readonly float footLength,
+            rotationScale;
         internal readonly Vector3[] Vertices;
         internal Matrix4x4 Sprit { get; private set; }
         internal Vector3 Pivot { get; }
@@ -50,22 +48,17 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             // Store the peak in sprit-local coordinates so it follows the wooden spar
             // exactly as the spar rotates, including the authored gap from its physical tip.
             peakTie = LooseFootedSpritsailTransform.InversePoint(matrix: rest.Sprit, point: peak);
-            var direction = peak - Pivot;
-            // Rotation about the mounting rod (X) sweeps the peak through a Y/Z circle.
-            // atan2 measures its current angle away from vertical; radius is that circle's radius.
-            float angle = (float)(Math.Atan2(-direction.z, direction.y) * 180 / Math.PI);
-            float radius = (float)Math.Sqrt(direction.y * direction.y + direction.z * direction.z);
-            // Small cuts on thick masts must stop before their peak crosses the luff plane.
-            // At that limit, sin(angle) = horizontal mast clearance / sweep radius.
-            // Keep at least five degrees from vertical, and never lower an already steeper spar.
-            float mastAngle = (float)(
-                Math.Asin(Math.Min(1, Math.Max(0, (Pivot.z - throat.z) / radius))) * 180 / Math.PI
-            );
-            rotation = Math.Max(0, angle - Math.Max(5, mastAngle));
             footLength = (clew - tack).magnitude;
-            leechLength = (peak - clew).magnitude;
-            // The snotter divides the luff into a fixed upper span and a gathering lower span.
-            snotterFraction = Mathf.Clamp01(value: (Pivot.y - tack.y) / (throat.y - tack.y));
+            // Tall/narrow fittings start closer to the mast than the authored cut.
+            // Scale the authored sweep down only when needed to keep the spar aft of it.
+            var direction = peak - Pivot;
+            double angle = Math.Atan2(-direction.z, direction.y);
+            double radius = Math.Sqrt(direction.y * direction.y + direction.z * direction.z);
+            double mastAngle = Math.Asin(Math.Min(1, Math.Max(0, (Pivot.z - throat.z) / radius)));
+            double available = Math.Max(0, angle - Math.Max(5 * Math.PI / 180, mastAngle));
+            var finalRotation = data.ReefPoses[data.ReefPoses.Length - 1].SpritRotation;
+            double authored = 2 * Math.Acos(Math.Min(1, Math.Abs(finalRotation.w)));
+            rotationScale = authored < 1e-6 ? 1 : (float)Math.Min(1, available / authored);
             // These are cloth-shaping coordinates, not texture UVs: u goes from luff
             // to leech, and v goes from foot to head at that u. Interpolating each row's
             // top and bottom accounts for the trapezoid's sloping head.
@@ -103,129 +96,48 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         internal void Pose(float deployment, float load)
         {
-            // Deployment is one when fully set and zero when brailed. Keep the wind's
-            // sign for billow direction, but use its magnitude for symmetric inward gathering.
             float set = Mathf.Clamp01(value: deployment);
-            float gathered = 1 - set;
             float pressure = Math.Max(-1, Math.Min(1, load));
-            float shaping = Math.Abs(pressure) * set;
+            Samples(deployment: set, out int left, out int right, out float blend);
             Sprit = SpritPose(deployment: set);
             var posedPeak = Sprit.MultiplyPoint3x4(point: peakTie);
-            var posedTack = Vector3.Lerp(a: tack, b: SnotterTie, t: gathered);
-            // Gather toward the snotter while retaining a three-centimetre clew gap;
-            // ConstrainClew below corrects this desired position to respect edge lengths.
-            var desiredClew = Vector3.Lerp(
-                a: clew,
-                b: SnotterTie + new Vector3(x: 0, y: 0, z: -0.03f),
-                t: gathered
-            );
-            // Shorten the foot's reach toward the mast, bringing the clew inboard on
-            // either tack while the peak remains tied to the rigid sprit.
-            desiredClew.z += (tack.z - clew.z) * 0.1f * shaping;
-            desiredClew.z = Math.Min(desiredClew.z, posedTack.z - 0.03f);
-            float leechBow = Math.Min(footLength, leechLength) * 0.02f * shaping;
-            // Reserve cloth for the quadratic leech arc. Its control polygon is no
-            // longer than sqrt(chord² + 16 * bow²), so this also bounds the curve.
-            // A midpoint bow of b requires a quadratic control-point offset of 2b.
-            // Solving that length bound for the chord leaves room for the curved edge.
-            float leechBudget = (float)
-                Math.Sqrt(leechLength * leechLength - 16 * leechBow * leechBow);
-            var posedClew = ConstrainClew(
-                desired: desiredClew,
-                tack: posedTack,
-                peak: posedPeak,
-                foot: footLength,
-                leech: leechBudget
-            );
+            var correction =
+                posedPeak - Sample(index: data.Peak, left: left, right: right, blend: blend);
             for (int i = 0; i < Vertices.Length; i++)
             {
                 float u = coordinates[i].x;
                 float v = coordinates[i].y;
-                // Keep the upper luff tied to the mast while the bottom gathers to the snotter.
-                // Remap v separately on either side of the snotter so both spans meet
-                // at the same fixed tie even as the lower span becomes shorter.
-                var luff =
-                    v < snotterFraction && snotterFraction > 0
-                        ? Vector3.Lerp(a: posedTack, b: SnotterTie, t: v / snotterFraction)
-                        : Vector3.Lerp(
-                            a: SnotterTie,
-                            b: throat,
-                            t: (v - snotterFraction) / (1 - snotterFraction)
-                        );
-                var leech = Vector3.Lerp(a: posedClew, b: posedPeak, t: v);
-                // 4*v*(1-v) is zero at both corners and one halfway up the leech.
-                // Adding it in +Z bows the edge mastward without moving its endpoints.
-                leech.z += 4 * v * (1 - v) * leechBow;
-                var point = Vector3.Lerp(a: luff, b: leech, t: u);
-                // These parabolas taper deformation to zero at each pair of opposite edges.
+                // Retarget the authored cloth to the fitted rigid spar, without moving the luff.
+                var point =
+                    Sample(index: i, left: left, right: right, blend: blend) + correction * u * v;
                 float across = 4 * u * (1 - u);
                 float vertical = 4 * v * (1 - v);
-                // The head and loose foot bow between their corner ties rather than
-                // pinning whole rows flat. Blend their softer arcs into the deeper belly.
-                // Build the belly sooner behind the luff, then taper toward the leech.
-                // The 0.6 gain adds fullness near the mast; the 0.55 baseline keeps
-                // the head and foot bowed even where the vertical parabola is zero.
-                float billowEnvelope = across * (1 + 0.6f * (1 - u)) * (0.55f + 0.45f * vertical);
-                float chord = (leech - luff).magnitude;
-                point.x -= BillowDepth * chord * pressure * set * billowEnvelope;
-                // Folds vanish on every supported edge and leave a visible, reversible bundle.
-                // Cap their amplitude at 8 cm (or 2.5% of a small sail's foot). The sine
-                // gives four cycles across and two up the cloth, growing as it gathers.
-                point.x +=
-                    Math.Min(0.08f, footLength * 0.025f)
-                    * gathered
-                    * across
-                    * vertical
-                    * (float)Math.Sin(u * Math.PI * 8 + v * Math.PI * 4);
+                float envelope = across * (1 + 0.6f * (1 - u)) * (0.55f + 0.45f * vertical);
+                float chord = (
+                    Vector3.Lerp(a: clew, b: peak, t: v) - Vector3.Lerp(a: tack, b: throat, t: v)
+                ).magnitude;
+                point.x -= BillowDepth * chord * pressure * set * envelope;
                 Vertices[i] = point;
             }
-            // Enforce the exact attachment positions after interpolating and deforming the surface.
-            Vertices[data.Throat] = throat;
-            Vertices[data.Tack] = posedTack;
             Vertices[data.Peak] = posedPeak;
-            Vertices[data.Clew] = posedClew;
         }
 
-        // Closest point inside both length-budget balls; slack is allowed when gathering.
-        private static Vector3 ConstrainClew(
-            Vector3 desired,
-            Vector3 tack,
-            Vector3 peak,
-            float foot,
-            float leech
-        )
+        private void Samples(float deployment, out int left, out int right, out float blend)
         {
-            // Each edge length defines a solid sphere of allowed clew positions:
-            // one around the tack for the foot, and one around the peak for the leech.
-            var fromTack = desired - tack;
-            var fromPeak = desired - peak;
-            if (fromTack.magnitude <= foot && fromPeak.magnitude <= leech)
-                return desired;
-            // Try the nearest point inside each sphere independently. If it is also
-            // inside the other sphere, only one length constraint needs to be active.
-            var onFoot = tack + Vector3.ClampMagnitude(vector: fromTack, maxLength: foot);
-            if ((onFoot - peak).magnitude <= leech)
-                return onFoot;
-            var onLeech = peak + Vector3.ClampMagnitude(vector: fromPeak, maxLength: leech);
-            if ((onLeech - tack).magnitude <= foot)
-                return onLeech;
-            // Both constraints are active, so the clew lies on the spheres' intersection
-            // circle. Subtracting their squared-distance equations gives the circle's
-            // distance along the tack-to-peak axis; Pythagoras then gives its radius.
-            var between = peak - tack;
-            float distance = between.magnitude;
-            var axis = between / distance;
-            float along = (foot * foot - leech * leech + distance * distance) / (2 * distance);
-            var center = tack + axis * along;
-            float radius = (float)Math.Sqrt(Math.Max(0, foot * foot - along * along));
-            // Remove the desired point's axial component to project it into the circle's
-            // plane, then extend to the rim. An axial request needs a perpendicular fallback.
-            var radial = desired - center;
-            radial -= axis * Vector3.Dot(lhs: radial, rhs: axis);
-            if (radial.sqrMagnitude < 1e-10f)
-                radial = Vector3.Cross(lhs: axis, rhs: Vector3.right);
-            return center + radial.normalized * radius;
+            float sample = (1 - Mathf.Clamp01(value: deployment)) * (data.ReefPoses.Length - 1);
+            left = (int)sample;
+            right = Math.Min(left + 1, data.ReefPoses.Length - 1);
+            blend = sample - left;
         }
+
+        private Vector3 Sample(int index, int left, int right, float blend) =>
+            rest.Sail.MultiplyPoint3x4(
+                point: Vector3.Lerp(
+                    a: data.ReefPoses[left].Vertices[index],
+                    b: data.ReefPoses[right].Vertices[index],
+                    t: blend
+                )
+            );
 
         internal static float WindLoad(Vector3 wind, Vector3 normal)
         {
@@ -242,12 +154,24 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         // Premultiply the fitted pose by a rotation around its mounting pivot. This
         // changes the spar's angle without changing its fitted length or thickness.
-        internal Matrix4x4 SpritPose(float deployment) =>
-            LooseFootedSpritsailSailingGeometry.PivotRotation(
-                center: Pivot,
-                axis: Vector3.right,
-                degrees: rotation * (1 - Mathf.Clamp01(value: deployment))
-            ) * rest.Sprit;
+        internal Matrix4x4 SpritPose(float deployment)
+        {
+            Samples(deployment: deployment, out int left, out int right, out float blend);
+            var rotation = LooseFootedSpritsailTransform.InterpolateRotation(
+                a: data.ReefPoses[left].SpritRotation,
+                b: data.ReefPoses[right].SpritRotation,
+                t: blend
+            );
+            rotation = LooseFootedSpritsailTransform.InterpolateRotation(
+                a: Quaternion.identity,
+                b: rotation,
+                t: rotationScale
+            );
+            return Matrix4x4.Translate(vector: Pivot)
+                * LooseFootedSpritsailTransform.TRS(pos: Vector3.zero, q: rotation, s: Vector3.one)
+                * Matrix4x4.Translate(vector: -Pivot)
+                * rest.Sprit;
+        }
 
         internal bool CanRoute(Vector3 guide)
         {

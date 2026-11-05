@@ -22,6 +22,15 @@ internal static class ReefingIntegrationChecks
         var rig = Family(name: "LooseFootedSpritsailRig");
         var rigging = Family(name: "LooseFootedSpritsailRigging");
         var cloth = Family(name: "LooseFootedSpritsailCloth");
+        var geometry = Family(name: "LooseFootedSpritsailClothGeometry");
+        Check(
+            Instructions(method: cloth.GetMethod(name: "Refresh", bindingAttr: All))
+                .Any(i => i.Operand is FieldInfo f && f.Name == "currentUnroll")
+                && Calls(type: cloth, method: "Refresh", name: "Pose")
+                && Instructions(method: geometry.GetMethod(name: "Sample", bindingAttr: All))
+                    .Any(i => i.Operand is FieldInfo f && f.Name == "ReefPoses"),
+            "Native deployment must drive the authored cloth poses."
+        );
         var prefab = Family(name: "LooseFootedSpritsailPrefab");
         Check(
             Calls(type: cloth, method: "Refresh", name: "get_IsStruck")
