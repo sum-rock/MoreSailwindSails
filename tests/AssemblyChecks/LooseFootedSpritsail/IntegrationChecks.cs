@@ -20,6 +20,25 @@ internal static class IntegrationChecks
         var prefab = Type("LooseFootedSpritsailPrefab");
         var rig = Type("LooseFootedSpritsailRig");
         var assets = Type("LooseFootedSpritsailAssets");
+        var cutB = Type("MkB.LooseFootedSpritsailMkB");
+        if ((int)cutB.GetField(name: "PrefabIndex", bindingAttr: All).GetRawConstantValue() != 405)
+            throw new Exception("Mk.B save identity changed.");
+        foreach (
+            var entry in new[]
+            {
+                ("SpritsailRegistrationPatch", "Postfix", "Register"),
+                ("SpritsailShipyardPatch", "Postfix", "AddToShipyard"),
+                ("SpritsailShipyardFallbackPatch", "Prefix", "AddToShipyard"),
+            }
+        )
+            if (
+                !CalledMethods(
+                        method: Type("Patches." + entry.Item1)
+                            .GetMethod(name: entry.Item2, bindingAttr: All)
+                    )
+                    .Any(m => m.DeclaringType == cutB && m.Name == entry.Item3)
+            )
+                throw new Exception("Mk.B registration is missing.");
         var cut = Type("MkA.LooseFootedSpritsailMkA");
         if (
             (int)cut.GetField(name: "PrefabIndex", bindingAttr: All).GetRawConstantValue() != 404

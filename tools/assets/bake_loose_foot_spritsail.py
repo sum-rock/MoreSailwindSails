@@ -41,8 +41,11 @@ def object_named(name, kind):
     while ancestor is not None:
         require(
             not ancestor.constraints
-            and (not ancestor.animation_data or ancestor.name in ("Sail", "Sprit")),
-            f"{name}: constraints or animation outside Sail/Sprit are unsupported",
+            and (
+                not ancestor.animation_data
+                or ancestor.name in ("Sail", "Sprit", "SheetLineAttachment")
+            ),
+            f"{name}: constraints or animation outside Sail/Sprit/SheetLineAttachment are unsupported",
         )
         ancestor = ancestor.parent
     require(
@@ -98,24 +101,62 @@ def cloth_grid(obj):
         max(p.x for p in points) - min(p.x for p in points) < 1e-5,
         "Sail: cloth must be flat in local Y/Z",
     )
-    columns = {}
-    for i, point in enumerate(points):
-        columns.setdefault(round(point.y, 5), []).append(i)
-    columns = [
-        sorted(ids, key=lambda i: points[i].z) for _, ids in sorted(columns.items())
-    ]
-    require(
-        len(columns) >= 2 and len(columns[0]) >= 2, "Sail: missing grid rows/columns"
+    # Follow quad rows from the foot so tapered outer edges need no vertical columns.
+    neighbors = {i: set() for i in range(len(points))}
+    for edge in mesh.edges:
+        a, b = edge.vertices
+        neighbors[a].add(b)
+        neighbors[b].add(a)
+    corners = [i for i, adjacent in neighbors.items() if len(adjacent) == 2]
+    require(len(corners) == 4, "Sail: expected four grid corners")
+    tack, throat = sorted(
+        sorted(corners, key=lambda i: points[i].y)[-2:], key=lambda i: points[i].z
     )
-    rows = len(columns[0])
-    require(all(len(ids) == rows for ids in columns), "Sail: incomplete grid")
-    clew, peak = columns[0][0], columns[0][-1]
-    tack, throat = columns[-1][0], columns[-1][-1]
+    clew, peak = sorted(
+        [i for i in corners if i not in (tack, throat)], key=lambda i: points[i].z
+    )
+    foot = [clew]
+    while foot[-1] != tack:
+        candidates = neighbors[foot[-1]] - set(foot)
+        low = points[clew]
+        direction = points[tack] - low
+        candidates = [
+            i for i in candidates if (points[i] - low).cross(direction).length < 1e-4
+        ]
+        require(len(candidates) == 1, "Sail: missing straight foot boundary")
+        foot.append(candidates[0])
+    grid = [foot]
+    used = set()
+    while grid[-1][0] != peak:
+        row = grid[-1]
+        following = [None] * len(row)
+        for c in range(len(row) - 1):
+            matches = [
+                f
+                for f in mesh.polygons
+                if f.index not in used
+                and row[c] in f.vertices
+                and row[c + 1] in f.vertices
+            ]
+            require(len(matches) == 1, "Sail: incomplete quad rows")
+            face = matches[0]
+            used.add(face.index)
+            for offset in (0, 1):
+                current = row[c + offset]
+                other = [
+                    i for i in face.vertices if i not in row and i in neighbors[current]
+                ]
+                require(len(other) == 1, "Sail: invalid quad connectivity")
+                following[c + offset] = other[0]
+        require(all(i is not None for i in following), "Sail: incomplete row")
+        grid.append(following)
+        require(len(grid) <= len(points), "Sail: cyclic grid")
+    columns = [list(column) for column in zip(*grid)]
+    rows = len(grid)
     width = points[tack].y - points[clew].y
     require(width > 1e-5, "Sail: zero width")
-    require(points[peak].z - points[clew].z > 1e-5, "Sail: collapsed outer edge")
     fractions = [
-        (points[i].z - points[clew].z) / (points[peak].z - points[clew].z)
+        (points[i] - points[clew]).length / (points[peak] - points[clew]).length
         for i in columns[0]
     ]
     for ids in columns:
@@ -153,11 +194,13 @@ def cloth_grid(obj):
         require(old is None or (old - value).length < 1e-6, "Sail: UV seam")
         values[loop.vertex_index] = value
     # One similarity transform covers the whole plane, allowing UV rotation/reflection.
-    height = points[peak].z - points[clew].z
-    basis_z = (values[peak] - values[clew]) / height
-    basis_y = (
-        values[tack] - values[clew] - basis_z * (points[tack].z - points[clew].z)
-    ) / width
+    dy = points[peak].y - points[clew].y
+    dz = points[peak].z - points[clew].z
+    foot_dz = points[tack].z - points[clew].z
+    basis_z = (
+        (values[peak] - values[clew]) * width - (values[tack] - values[clew]) * dy
+    ) / (dz * width - foot_dz * dy)
+    basis_y = (values[tack] - values[clew] - basis_z * foot_dz) / width
     require(
         basis_y.length > 1e-8
         and abs(basis_y.length - basis_z.length) < basis_y.length * 1e-4
@@ -323,7 +366,7 @@ def attachment(name, parent):
     )
 
 
-def collect():
+def collect(reef_frames=REEF_FRAMES, generate_cloth_uv=False):
     require(
         bpy.app.background and bool(bpy.data.filepath),
         "open the asset in background Blender",
@@ -337,6 +380,19 @@ def collect():
     bpy.context.scene.frame_set(0)
     bpy.context.view_layer.update()
     sail = object_named("Sail", "MESH")
+    # Assets without a dedicated cloth map receive proportional planar UVs in memory.
+    if generate_cloth_uv and sail.data.uv_layers.get("ClothUV") is None:
+        layer = sail.data.uv_layers.new(name="ClothUV")
+        points = [v.co for v in sail.data.vertices]
+        min_y, min_z = min(p.y for p in points), min(p.z for p in points)
+        extent = max(max(p.y for p in points) - min_y, max(p.z for p in points) - min_z)
+        require(extent > 0, "Sail: empty UV extent")
+        for loop in sail.data.loops:
+            point = points[loop.vertex_index]
+            layer.data[loop.index].uv = (
+                (point.y - min_y) / extent,
+                (point.z - min_z) / extent,
+            )
     corners = cloth_grid(sail)
     data = {name: extract_part(name, sources) for name, sources in PARTS.items()}
     data["Struck"] = extract_part("Struck", STRUCK_PARTS)
@@ -376,12 +432,12 @@ def collect():
         "SheetLineAttachment: must coincide with the clew vertex",
     )
     data["SheetVertex"] = corners["Clew"]
-    data["ReefPoses"] = reef_poses(sail)
+    data["ReefPoses"] = reef_poses(sail, reef_frames=reef_frames)
     bpy.context.scene.frame_set(0)
     return data
 
 
-def reef_poses(sail):
+def reef_poses(sail, reef_frames=REEF_FRAMES):
     """Evaluate simulation in order; store only the five agreed poses in rest-local space."""
     scene = bpy.context.scene
     inverse = sail.matrix_world.inverted()
@@ -392,7 +448,7 @@ def reef_poses(sail):
     scale = sprit.matrix_world.to_scale()
     topology = [tuple(p.vertices) for p in sail.data.polygons]
     poses = []
-    for frame in range(REEF_FRAMES[-1] + 1):
+    for frame in range(reef_frames[-1] + 1):
         scene.frame_set(frame)
         depsgraph = bpy.context.evaluated_depsgraph_get()
         evaluated = sail.evaluated_get(depsgraph)
@@ -418,7 +474,7 @@ def reef_poses(sail):
                 and (matrix.to_scale() - scale).length < 1e-5,
                 f"Sprit: animation must rotate about a fixed hinge at frame {frame}",
             )
-            if frame in REEF_FRAMES:
+            if frame in reef_frames:
                 rotation = (
                     CONVERSION @ matrix @ CONVERSION
                 ).to_quaternion() @ rest_rotation.inverted()
@@ -489,7 +545,10 @@ def part_lines(name, data):
 
 def bake(cut="A"):
     definition = get_cut(cut)
-    data = collect()
+    data = collect(
+        reef_frames=definition.reef_frames,
+        generate_cloth_uv=definition.generate_cloth_uv,
+    )
     lines = [
         "// <auto-generated />",
         f"// Baked by mss assets bake loose_foot_spritsail --cut {cut.upper()}.",
