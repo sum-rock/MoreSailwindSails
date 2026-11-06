@@ -71,40 +71,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return SmoothStrength(current: current, target: target, deltaTime: deltaTime);
         }
 
-        // Broad, slow folds use cached spatial coefficients and three scalar wave terms.
-        internal static Vector3 GatheredWeights(float u, float v, float footLength)
-        {
-            float amplitude = Math.Min(footLength * 0.03f, 0.25f) * 4 * u * (1 - u) * (1 - v);
-            double phase = Math.PI * (u + 0.5 * v);
-            return new Vector3(
-                x: amplitude * 0.75f,
-                y: amplitude * 0.25f * (float)Math.Cos(phase),
-                z: -amplitude * 0.25f * (float)Math.Sin(phase)
-            );
-        }
-
-        internal static float GatheredStrength(float pressure, float shadow, float deployment)
-        {
-            if (!Finite(value: pressure) || !Finite(value: shadow) || !Finite(value: deployment))
-                return 0;
-            float gathered = 1 - Clamp01(value: deployment);
-            return Math.Max(-1, Math.Min(1, pressure))
-                * Clamp01(value: shadow)
-                * gathered
-                * gathered
-                * (3 - 2 * gathered);
-        }
-
-        internal static Vector3 GatheredWaves(double time, float phase, float strength)
-        {
-            double angle = 2 * Math.PI * 0.35 * time + phase;
-            return new Vector3(
-                x: strength,
-                y: (float)Math.Sin(angle) * strength,
-                z: (float)Math.Cos(angle) * strength
-            );
-        }
-
         private static float Clamp01(float value) => Math.Max(0, Math.Min(1, value));
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);

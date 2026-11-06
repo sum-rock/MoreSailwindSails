@@ -1,4 +1,4 @@
-// Poses fitted cloth and its rigid sprit from native deployment and signed wind pressure.
+// Poses fitted cloth and its rigid sprit from authored deployment poses with attachment correction.
 using System;
 using UnityEngine;
 
@@ -6,13 +6,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     internal sealed class LooseFootedSpritsailClothGeometry
     {
-        // Base depth relative to the local chord, before the mast-side profile adds fullness.
-        internal const float BillowDepth = 0.16f;
         private readonly LooseFootedSpritsailAssetData data;
         private readonly LooseFootedSpritsailPose rest;
         private readonly Vector2[] coordinates;
         private readonly Vector4[] flutterWeights;
-        private readonly Vector3[] gatheredWeights;
         private readonly float[] authoredDepth;
         private readonly Vector3 throat,
             tack,
@@ -40,7 +37,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Vertices = new Vector3[data.Sail.Vertices.Length];
             coordinates = new Vector2[Vertices.Length];
             flutterWeights = new Vector4[Vertices.Length];
-            gatheredWeights = new Vector3[Vertices.Length];
             authoredDepth = new float[Vertices.Length];
             // Work in the fitted assembly frame: +Y runs up the mast, -Z runs aft
             // across the sail, and X measures billow out of its neutral plane.
@@ -76,31 +72,21 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     x: u,
                     y: Mathf.Clamp01(value: (vertex.y - bottom) / (top - bottom))
                 );
-                gatheredWeights[i] = LooseFootedSpritsailFlutter.GatheredWeights(
-                    u: u,
-                    v: coordinates[i].y,
-                    footLength: footLength
-                );
                 flutterWeights[i] = LooseFootedSpritsailFlutter.Weights(
                     u: u,
                     v: coordinates[i].y,
                     footLength: footLength
                 );
             }
-            Pose(deployment: 1, load: 0);
+            Pose(deployment: 1);
         }
 
         // Read a visual position without modifying corners, edge budgets or aerodynamic inputs.
-        internal Vector3 VisualVertex(
-            int index,
-            Vector4 flutter,
-            Vector3 gathered = default,
-            float foldSide = 1
-        )
+        internal Vector3 VisualVertex(int index, Vector4 flutter, float foldSide = 1)
         {
             var point = Vertices[index];
             // Mirror only authored depth relative to the attachment surface. Hardware,
-            // physical geometry and wind-directed procedural movement stay unchanged.
+            // physical geometry and visual flutter stay unchanged.
             point.x += authoredDepth[index] * (foldSide - 1);
             var weights = flutterWeights[index];
             point.x +=
@@ -108,15 +94,12 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 + weights.y * flutter.y
                 + weights.z * flutter.z
                 + weights.w * flutter.w;
-            // Same sign convention as physical billow, but only the rendered copy moves.
-            point.x -= Vector3.Dot(lhs: gatheredWeights[index], rhs: gathered);
             return point;
         }
 
-        internal void Pose(float deployment, float load)
+        internal void Pose(float deployment)
         {
             float set = Mathf.Clamp01(value: deployment);
-            float pressure = Math.Max(-1, Math.Min(1, load));
             Samples(deployment: set, out int left, out int right, out float blend);
             Sprit = SpritPose(deployment: set);
             var posedPeak = Sprit.MultiplyPoint3x4(point: peakTie);
@@ -140,13 +123,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     )
                     .x;
                 authoredDepth[i] = point.x - attachmentDepth;
-                float across = 4 * u * (1 - u);
-                float vertical = 4 * v * (1 - v);
-                float envelope = across * (1 + 0.6f * (1 - u)) * (0.55f + 0.45f * vertical);
-                float chord = (
-                    Vector3.Lerp(a: clew, b: peak, t: v) - Vector3.Lerp(a: tack, b: throat, t: v)
-                ).magnitude;
-                point.x -= BillowDepth * chord * pressure * set * envelope;
                 Vertices[i] = point;
             }
             Vertices[data.Peak] = posedPeak;

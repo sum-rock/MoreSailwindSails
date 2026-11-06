@@ -218,7 +218,7 @@ internal static class ReefingIntegrationChecks
             "Preview capture requires the installed native wind-angle calculation."
         );
         Check(
-            Calls(type: cloth, method: "Refresh", name: "WindLoad")
+            Calls(type: cloth, method: "Render", name: "WindLoad")
                 && Calls(type: cloth, method: "Render", name: "RefreshAerodynamics")
                 && Calls(type: cloth, method: "Render", name: "CanAnimate"),
             "Preview cloth must sample wind and refresh its posed wind frame independently of propulsion."

@@ -22,17 +22,13 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private readonly float phase;
         private double flutterTime;
         private float flutterStrength;
-        private float gatheredStrength;
-        private Vector3 lastGathered;
         private float foldSide = 1;
         private float lastFoldSide = 1;
         private float foldTarget = 1;
         private Vector4 lastFlutter;
         private bool visualDirty = true;
-        private float load;
         private Vector3 apparentWind;
-        private float lastSet = -1,
-            lastLoad = float.NaN;
+        private float lastSet = -1;
         internal LooseFootedSpritsailClothGeometry Geometry { get; private set; }
 
         internal LooseFootedSpritsailCloth(
@@ -75,7 +71,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 rig.StruckRenderer.enabled = struck;
                 if (struck)
                 {
-                    Geometry.Pose(deployment: 0, load: 0);
+                    Geometry.Pose(deployment: 0);
                     rig.ReefLineAttachment.position = rig.Struck.TransformPoint(
                         position: rig.Data.StruckReefLineAttachment
                     );
@@ -94,21 +90,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     apparentWind =
                         Wind.currentWind
                         - (rig.Sail.shipRigidbody ? rig.Sail.shipRigidbody.velocity : Vector3.zero);
-                    float target = LooseFootedSpritsailClothGeometry.WindLoad(
-                        wind: apparentWind,
-                        normal: -rig.Frame.right
-                    );
-                    load = LooseFootedSpritsailClothGeometry.SmoothLoad(
-                        current: load,
-                        target: target,
-                        deltaTime: Time.deltaTime
-                    );
                 }
-                if (set == lastSet && load == lastLoad)
+                if (set == lastSet)
                     return;
                 lastSet = set;
-                lastLoad = load;
-                Geometry.Pose(deployment: set, load: load);
+                Geometry.Pose(deployment: set);
                 rig.Sprit.localPosition = Geometry.Pivot;
                 rig.Sprit.localRotation = Geometry.Sprit.rotation;
                 rig.Sprit.localScale = Geometry.Sprit.lossyScale;
@@ -174,38 +160,18 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                         target: target,
                         deltaTime: Time.deltaTime
                     );
-                    gatheredStrength = LooseFootedSpritsailFlutter.SmoothStrength(
-                        current: gatheredStrength,
-                        target: LooseFootedSpritsailFlutter.GatheredStrength(
-                            pressure: LooseFootedSpritsailClothGeometry.WindLoad(
-                                wind: apparentWind,
-                                normal: -rig.Frame.right
-                            ),
-                            shadow: shadow,
-                            deployment: lastSet
-                        ),
-                        deltaTime: Time.deltaTime
-                    );
                     flutterTime += Time.deltaTime;
                 }
                 else
-                    flutterStrength = gatheredStrength = 0;
+                    flutterStrength = 0;
                 var flutter = LooseFootedSpritsailFlutter.Waves(
                     time: flutterTime,
                     phase: phase,
                     strength: flutterStrength * lastSet
                 );
-                var gathered = LooseFootedSpritsailFlutter.GatheredWaves(
-                    time: flutterTime,
-                    phase: phase,
-                    strength: gatheredStrength
-                );
                 if (
                     !visualDirty
                     && foldSide == lastFoldSide
-                    && gathered.x == lastGathered.x
-                    && gathered.y == lastGathered.y
-                    && gathered.z == lastGathered.z
                     && flutter.x == lastFlutter.x
                     && flutter.y == lastFlutter.y
                     && flutter.z == lastFlutter.z
@@ -214,7 +180,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     return;
                 visualDirty = false;
                 lastFlutter = flutter;
-                lastGathered = gathered;
                 lastFoldSide = foldSide;
                 var frameToRenderer =
                     renderer.transform.worldToLocalMatrix * rig.Frame.localToWorldMatrix;
@@ -224,7 +189,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     var point = Geometry.VisualVertex(
                         index: i,
                         flutter: flutter,
-                        gathered: gathered,
                         foldSide: foldSide
                     );
                     localVertices[i] = inverseRestCloth.MultiplyPoint3x4(point: point);
