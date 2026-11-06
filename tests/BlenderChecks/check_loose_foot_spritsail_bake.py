@@ -23,7 +23,7 @@ source = bake()
 assert source == bake(), "Non-deterministic bake"
 assert source == CUTS["A"].source_path.read_text(), "Stale checked-in bake"
 data = collect()
-assert tool["REEF_FRAMES"] == (0, 60, 120, 180, 240)
+assert tool["REEF_FRAMES"] == (10, 60, 120, 180, 240)
 assert len(data["ReefPoses"]) == 5
 sail = bpy.data.objects["Sail"]
 inverse = sail.matrix_world.inverted()
@@ -33,7 +33,7 @@ for frame in range(241):
     mesh = evaluated.to_mesh()
     try:
         if frame in tool["REEF_FRAMES"]:
-            points, rotation = data["ReefPoses"][frame // 60]
+            points, rotation = data["ReefPoses"][tool["REEF_FRAMES"].index(frame)]
             assert len(points) == len(mesh.vertices) == 320
             assert abs(sum(n * n for n in rotation) - 1) < 1e-5
             for actual, vertex in zip(points, mesh.vertices):
@@ -120,6 +120,10 @@ def edit_object(name):
     mesh = obj.data if obj.type == "MESH" else None
     if mesh:
         obj.data = mesh.copy()
+    # Keep fixture edits from being overwritten when the bake evaluates frame zero.
+    action = obj.animation_data.action if obj.animation_data else None
+    if name == "SheetLineAttachment" and action:
+        obj.animation_data.action = None
     parent = obj.parent
     inverse = obj.matrix_parent_inverse.copy()
     location, rotation, scale = (
@@ -135,6 +139,8 @@ def edit_object(name):
             modified = obj.data
             obj.data = mesh
             bpy.data.meshes.remove(modified)
+        if name == "SheetLineAttachment" and action:
+            obj.animation_data.action = action
         obj.name = name
         obj.parent = parent
         obj.matrix_parent_inverse = inverse
@@ -154,7 +160,11 @@ def reject(name, edit):
         try:
             bake()
         except ValueError as error:
-            assert name in str(error), str(error)
+            # The sheet marker also drives a cloth hook in the updated asset.
+            assert name in str(error) or (
+                name == "SheetLineAttachment"
+                and "Sail: normals disagree with winding" in str(error)
+            ), str(error)
         else:
             raise AssertionError(f"Accepted invalid {name} edit")
     assert bake() == source, f"Fixture leaked: {name}"

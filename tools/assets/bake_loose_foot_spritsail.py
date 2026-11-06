@@ -20,7 +20,7 @@ PARTS = {
     "SnotterAssembly": ("Snotter", "SpritMountRod"),
     "RotationPlate": ("RotationPlate",),
 }
-REEF_FRAMES = (0, 60, 120, 180, 240)
+REEF_FRAMES = (10, 60, 120, 180, 240)
 MATERIALS = ("Cloth", "Metal", "DarkWood", "Black")
 STRUCK_PARTS = ("Sprit.struck", "Sail.struck", "Tie.01", "Tie.02", "Tie.03", "Tie.04")
 

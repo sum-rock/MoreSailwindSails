@@ -12,7 +12,7 @@ class SpritsailCut:
     source_path: Path
     class_name: str
     generate_cloth_uv: bool = False
-    reef_frames: tuple[int, ...] = (0, 60, 120, 180, 240)
+    reef_frames: tuple[int, ...] = (10, 60, 120, 180, 240)
 
 
 CUTS = {
@@ -28,7 +28,6 @@ CUTS = {
         / "src/Sails/LooseFootedSpritsail/MkB/LooseFootedSpritsailMkBBakedAsset.g.cs",
         class_name="LooseFootedSpritsailMkBBakedAsset",
         generate_cloth_uv=True,
-        reef_frames=(10, 60, 120, 180, 240),
     ),
 }
 
