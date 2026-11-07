@@ -9,6 +9,16 @@ internal static class BakedAssetChecks
 {
     internal static void Run()
     {
+        var b = LooseFootedSpritsailMkBBakedAsset.Create();
+        var bOther = LooseFootedSpritsailMkBBakedAsset.Create();
+        Check(part: b.Sail, other: bOther.Sail);
+        Check(part: b.Struck, other: bOther.Struck, folded: true);
+        Check(part: b.Sprit, other: bOther.Sprit);
+        Check(part: b.SnotterAssembly, other: bOther.SnotterAssembly);
+        Check(part: b.RotationPlate, other: bOther.RotationPlate);
+        if (b.ReefPoses.Length != 5 || b.Sail.Vertices.Length != 288)
+            throw new Exception("Mk.B lost its authored mesh or reef poses.");
+        Near(actual: b.SheetLineAttachment, expected: b.Sail.Vertices[b.Clew]);
         var asset = LooseFootedSpritsailMkABakedAsset.Create();
         var other = LooseFootedSpritsailMkABakedAsset.Create();
         Check(part: asset.Struck, other: other.Struck, folded: true);

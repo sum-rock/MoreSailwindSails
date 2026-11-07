@@ -1,6 +1,7 @@
 // Integrates spritsail fitting, paired sheets and native sailing physics with Sailwind.
 using HarmonyLib;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkA;
+using MoreSailwindSails.Sails.LooseFootedSpritsail.MkB;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
@@ -11,8 +12,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         [HarmonyPostfix]
         [HarmonyAfter("com.nandbrew.shipyardexpansion")]
         [HarmonyBefore("NatoriusG.AllSailsAllShipyards")]
-        private static void Postfix(PrefabsDirectory __instance) =>
+        private static void Postfix(PrefabsDirectory __instance)
+        {
             LooseFootedSpritsailMkA.Register(directory: __instance);
+            LooseFootedSpritsailMkB.Register(directory: __instance);
+        }
     }
 
     [HarmonyPatch(typeof(Shipyard), "Awake")]
@@ -20,16 +24,22 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
     {
         [HarmonyPostfix]
         [HarmonyPriority(Priority.Last)]
-        private static void Postfix(Shipyard __instance) =>
+        private static void Postfix(Shipyard __instance)
+        {
             LooseFootedSpritsailMkA.AddToShipyard(shipyard: __instance);
+            LooseFootedSpritsailMkB.AddToShipyard(shipyard: __instance);
+        }
     }
 
     [HarmonyPatch(typeof(Shipyard), "ActivateDocuments")]
     internal static class SpritsailShipyardFallbackPatch
     {
         [HarmonyPrefix]
-        private static void Prefix(Shipyard __instance) =>
+        private static void Prefix(Shipyard __instance)
+        {
             LooseFootedSpritsailMkA.AddToShipyard(shipyard: __instance);
+            LooseFootedSpritsailMkB.AddToShipyard(shipyard: __instance);
+        }
     }
 
     [HarmonyPatch(typeof(ShipyardUI), "SailMastCompatible")]

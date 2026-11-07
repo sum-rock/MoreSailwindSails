@@ -1,4 +1,4 @@
-// Exercises reversible billow/brailing, rigid hardware and neutral installation clearance.
+// Checks authored cloth poses, attachment correction, rigid hardware and fitting clearance.
 using System;
 using System.Linq;
 using MoreSailwindSails.Sails.LooseFootedSpritsail;
@@ -13,6 +13,7 @@ internal static class ClothChecks
         var data = LooseFootedSpritsailMkABakedAsset.Create();
         Check(data.ReefPoses.Length == 5, "Expected exactly five authored poses.");
         CheckSamples(data: data);
+        CheckSamples(data: LooseFootedSpritsailMkBBakedAsset.Create());
         float scale = LooseFootedSpritsailFittingGeometry.BaseScale(
             data: data,
             fullGaffHeight: 8.8f
@@ -35,12 +36,7 @@ internal static class ClothChecks
             var clew = cloth.Clew;
             var tie = LooseFootedSpritsailTransform.InversePoint(matrix: rest.Sprit, point: peak);
             CheckClearance(data: data, rest: rest, cloth: cloth);
-            for (int i = 0; i < data.Sail.Vertices.Length; i++)
-                Near(
-                    actual: cloth.Vertices[i],
-                    expected: rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[i]),
-                    message: "Full set must reproduce the fitted mesh."
-                );
+            CheckSamples(data: data, restPose: rest);
             var guide = new Vector3(x: 0, y: 5, z: 0);
             Check(
                 cloth.CanRoute(guide: guide),
@@ -64,9 +60,8 @@ internal static class ClothChecks
                     1f,
                 }
             )
-            foreach (float load in new[] { -1f, -0.3f, 0f, 0.3f, 1f })
             {
-                cloth.Pose(deployment: deployment, load: load);
+                cloth.Pose(deployment: deployment);
                 Near(
                     actual: cloth.Sprit.MultiplyPoint3x4(point: Vector3.zero),
                     expected: cloth.Pivot,
@@ -99,8 +94,8 @@ internal static class ClothChecks
                         Check(Finite(point: normal), "Non-finite folded normal.");
                     }
                 var saved = (Vector3[])cloth.Vertices.Clone();
-                cloth.Pose(deployment: 1 - deployment, load: -load);
-                cloth.Pose(deployment: deployment, load: load);
+                cloth.Pose(deployment: 1 - deployment);
+                cloth.Pose(deployment: deployment);
                 for (int i = 0; i < saved.Length; i++)
                     Near(
                         actual: cloth.Vertices[i],
@@ -133,20 +128,11 @@ internal static class ClothChecks
                     );
                 }
             }
-            cloth.Pose(deployment: 0, load: 0);
+            cloth.Pose(deployment: 0);
             Check(
                 cloth.Vertices.Any(p => Math.Abs(p.x) > 0.0001f),
                 "Full brail lost its visible folds."
             );
-            cloth.Pose(deployment: 1, load: 1);
-            CheckBillow(data: data, rest: rest, cloth: cloth);
-            var starboard = (Vector3[])cloth.Vertices.Clone();
-            cloth.Pose(deployment: 1, load: -1);
-            for (int i = 0; i < starboard.Length; i++)
-                Check(
-                    Math.Abs(starboard[i].x + cloth.Vertices[i].x) < 0.0001f,
-                    "Tack reversal did not mirror billow."
-                );
         }
         float smoothed = LooseFootedSpritsailClothGeometry.SmoothLoad(
             current: 1,
@@ -162,17 +148,22 @@ internal static class ClothChecks
             );
         Check(smoothed < -0.99f, "Billow does not settle after tacking.");
         Console.WriteLine(
-            "PASS: spritsail billow and brailing across independent sizes, deployments, winds and rakes; rigid sprit, authored poses, reversibility and neutral clearance."
+            "PASS: spritsail authored cloth across independent sizes, deployments and rakes; rigid sprit, authored poses, reversibility and neutral clearance."
         );
     }
 
-    private static void CheckSamples(LooseFootedSpritsailAssetData data)
+    private static void CheckSamples(
+        LooseFootedSpritsailAssetData data,
+        LooseFootedSpritsailPose? restPose = null
+    )
     {
-        var rest = new LooseFootedSpritsailPose
-        {
-            Sail = data.Sail.RestTransform,
-            Sprit = data.Sprit.RestTransform,
-        };
+        var rest =
+            restPose
+            ?? new LooseFootedSpritsailPose
+            {
+                Sail = data.Sail.RestTransform,
+                Sprit = data.Sprit.RestTransform,
+            };
         var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: rest);
         var tack = data.Sail.Vertices[data.Tack];
         var clew = data.Sail.Vertices[data.Clew];
@@ -184,7 +175,7 @@ internal static class ClothChecks
             int left = (int)sample,
                 right = Math.Min(left + 1, 4);
             float blend = sample - left;
-            cloth.Pose(deployment: 1 - sample / 4, load: 0);
+            cloth.Pose(deployment: 1 - sample / 4);
             Vector3 Expected(int index) =>
                 rest.Sail.MultiplyPoint3x4(
                     point: Vector3.Lerp(
@@ -193,30 +184,27 @@ internal static class ClothChecks
                         t: blend
                     )
                 );
+            for (int i = 0; i < cloth.Vertices.Length; i++)
+                Near(
+                    actual: cloth.VisualVertex(index: i, flutter: Vector4.zero),
+                    expected: cloth.Vertices[i],
+                    message: "Still cloth must retain its authored pose without added shaping."
+                );
             var correction = cloth.Peak - Expected(data.Peak);
             for (int i = 0; i < cloth.Vertices.Length; i++)
             {
                 var vertex = data.Sail.Vertices[i];
-                float u = (vertex.z - tack.z) / (clew.z - tack.z);
+                float u = Mathf.Clamp01(value: (vertex.z - tack.z) / (clew.z - tack.z));
                 float bottom = tack.y + (clew.y - tack.y) * u;
                 float top = throat.y + (peak.y - throat.y) * u;
-                float v = (vertex.y - bottom) / (top - bottom);
+                float v = Mathf.Clamp01(value: (vertex.y - bottom) / (top - bottom));
                 Near(
                     actual: cloth.Vertices[i],
-                    expected: Expected(i) + correction * u * v,
+                    expected: i == data.Peak ? cloth.Peak : Expected(i) + correction * u * v,
                     message: "Authored sample or midpoint was not reproduced."
                 );
             }
         }
-        cloth.Pose(deployment: 0, load: 0);
-        var brailed = (Vector3[])cloth.Vertices.Clone();
-        cloth.Pose(deployment: 0, load: 1);
-        for (int i = 0; i < brailed.Length; i++)
-            Near(
-                actual: cloth.Vertices[i],
-                expected: brailed[i],
-                message: "Billow did not fade at full brail."
-            );
     }
 
     private static void CheckClearance(
@@ -246,7 +234,7 @@ internal static class ClothChecks
                 "Cloth clearance crosses the mounting mast plane."
             );
         }
-        cloth.Pose(deployment: 0.5f, load: 1);
+        cloth.Pose(deployment: 0.5f);
         var saved = (Vector3[])cloth.Vertices.Clone();
         var again = cloth.Clearance();
         for (int i = 0; i < clearance.Length; i++)
@@ -272,7 +260,7 @@ internal static class ClothChecks
             cloth.Vertices.Any(p => !panels.Any(b => Inside(box: b, point: p))),
             "Installation panels still encompass the reefing and billow envelope."
         );
-        cloth.Pose(deployment: 1, load: 0);
+        cloth.Pose(deployment: 1);
     }
 
     private static bool Inside(LooseFootedSpritsailClearance box, Vector3 point)
@@ -286,77 +274,6 @@ internal static class ClothChecks
             point: point
         );
         return Inside(bounds: new Bounds(center: Vector3.zero, size: box.Size), point: local);
-    }
-
-    private static void CheckBillow(
-        LooseFootedSpritsailAssetData data,
-        LooseFootedSpritsailPose rest,
-        LooseFootedSpritsailClothGeometry cloth
-    )
-    {
-        var tack = data.Sail.Vertices[data.Tack];
-        var clew = data.Sail.Vertices[data.Clew];
-        var throat = data.Sail.Vertices[data.Throat];
-        var peak = data.Sail.Vertices[data.Peak];
-        int footSamples = 0,
-            headSamples = 0,
-            bellySamples = 0,
-            mastSamples = 0;
-        for (int i = 0; i < data.Sail.Vertices.Length; i++)
-        {
-            var point = data.Sail.Vertices[i];
-            float u = (point.z - tack.z) / (clew.z - tack.z);
-            var bottom = Vector3.Lerp(a: tack, b: clew, t: u);
-            var top = Vector3.Lerp(a: throat, b: peak, t: u);
-            float v = (point.y - bottom.y) / (top.y - bottom.y);
-            float chord = rest
-                .Sail.MultiplyVector(
-                    vector: Vector3.Lerp(a: clew, b: peak, t: v)
-                        - Vector3.Lerp(a: tack, b: throat, t: v)
-                )
-                .magnitude;
-            float depth = -cloth.Vertices[i].x / chord;
-            if (u > 0.15f && u < 0.3f && v > 0.4f && v < 0.6f)
-            {
-                float previousDepth = 0.16f * 4 * u * (1 - u);
-                Check(
-                    depth > previousDepth * 1.3f,
-                    "The forepart needs more camber behind the mast."
-                );
-                mastSamples++;
-            }
-            if (u < 0.4f || u > 0.6f)
-                continue;
-            if (v < 0.001f || v > 0.999f)
-            {
-                Check(
-                    depth > 0.085f && depth < 0.13f,
-                    "Head and foot must bow leeward between their corner ties."
-                );
-                if (v < 0.001f)
-                    footSamples++;
-                else
-                    headSamples++;
-            }
-            else if (v > 0.4f && v < 0.6f)
-            {
-                Check(
-                    depth > 0.17f && depth < 0.22f,
-                    "Loaded cloth needs a deeper belly than its bowed edges."
-                );
-                bellySamples++;
-            }
-        }
-        Check(
-            footSamples > 0 && headSamples > 0 && bellySamples > 0 && mastSamples > 0,
-            "Billow checks must cover both free edges and the belly."
-        );
-        foreach (int index in new[] { data.Tack, data.Throat, data.Peak })
-            Near(
-                actual: cloth.Vertices[index],
-                expected: rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[index]),
-                message: "Billow moved a corner off its attachment."
-            );
     }
 
     private static bool Inside(Bounds bounds, Vector3 point) =>
