@@ -43,7 +43,7 @@ def object_named(name, kind):
             not ancestor.constraints
             and (
                 not ancestor.animation_data
-                or ancestor.name in ("Sail", "Sprit", "SheetLineAttachment")
+                or ancestor.name in ("Sail", "Topsail", "Sprit", "SheetLineAttachment")
             ),
             f"{name}: constraints or animation outside Sail/Sprit/SheetLineAttachment are unsupported",
         )
@@ -62,9 +62,9 @@ def object_named(name, kind):
         require(
             all(
                 (
-                    name == "Sail"
+                    name in ("Sail", "Topsail")
                     and m.type in ("HOOK", "CLOTH")
-                    or name != "Sail"
+                    or name not in ("Sail", "Topsail")
                     and (
                         m.type in ("SOLIDIFY", "DECIMATE")
                         or (name in STRUCK_PARTS and m.type == "SMOOTH")
@@ -221,7 +221,7 @@ def extract_part(name, sources):
     """Evaluate sources and combine them around the first source's unchanged origin."""
     objects = [object_named(source, "MESH") for source in sources]
     root = objects[0]
-    cloth = name == "Sail"
+    cloth = name in ("Sail", "Topsail")
     vertices = (
         [tuple(CONVERSION.to_3x3() @ v.co) for v in root.data.vertices] if cloth else []
     )
@@ -366,7 +366,7 @@ def attachment(name, parent):
     )
 
 
-def collect(reef_frames=REEF_FRAMES, generate_cloth_uv=False):
+def collect(reef_frames=REEF_FRAMES, generate_cloth_uv=False, topsail=False):
     require(
         bpy.app.background and bool(bpy.data.filepath),
         "open the asset in background Blender",
@@ -434,6 +434,8 @@ def collect(reef_frames=REEF_FRAMES, generate_cloth_uv=False):
     data["SheetVertex"] = corners["Clew"]
     data["ReefPoses"] = reef_poses(sail, reef_frames=reef_frames)
     bpy.context.scene.frame_set(0)
+    if topsail:
+        add_topsail(data, reef_frames)
     return data
 
 
@@ -447,7 +449,7 @@ def reef_poses(sail, reef_frames=REEF_FRAMES):
     pivot = sprit.matrix_world.translation.copy()
     scale = sprit.matrix_world.to_scale()
     topology = [tuple(p.vertices) for p in sail.data.polygons]
-    poses = []
+    poses = {}
     for frame in range(reef_frames[-1] + 1):
         scene.frame_set(frame)
         depsgraph = bpy.context.evaluated_depsgraph_get()
@@ -478,10 +480,80 @@ def reef_poses(sail, reef_frames=REEF_FRAMES):
                 rotation = (
                     CONVERSION @ matrix @ CONVERSION
                 ).to_quaternion() @ rest_rotation.inverted()
-                poses.append((points, (rotation.x, rotation.y, rotation.z, rotation.w)))
+                poses[frame] = (
+                    points,
+                    (rotation.x, rotation.y, rotation.z, rotation.w),
+                )
         finally:
             evaluated.to_mesh_clear()
-    return poses
+    return [poses[frame] for frame in reef_frames]
+
+
+def add_topsail(data, reef_frames):
+    """Append the authored topsail in main-sail local space; preserve one cloth renderer."""
+    scene = bpy.context.scene
+    scene.frame_set(0)
+    sail = bpy.data.objects["Sail"]
+    top = object_named("Topsail", "MESH")
+    layer = top.data.uv_layers.get("ClothUV") or top.data.uv_layers.new(name="ClothUV")
+    points = [v.co for v in top.data.vertices]
+    low_y, low_z = min(p.y for p in points), min(p.z for p in points)
+    extent = max(max(p.y for p in points) - low_y, max(p.z for p in points) - low_z)
+    require(extent > 0, "Topsail: empty UV extent")
+    for loop in top.data.loops:
+        p = points[loop.vertex_index]
+        layer.data[loop.index].uv = ((p.y - low_y) / extent, (p.z - low_z) / extent)
+    part = extract_part("Topsail", ("Topsail",))
+    relative = data["Sail"]["RestTransform"].inverted() @ part["RestTransform"]
+    mesh = data["Sail"]
+    start = len(mesh["Vertices"])
+    data["TopsailVertexStart"] = start
+    data["TopsailTriangleStart"] = len(mesh["SubmeshTriangles"][0])
+    mesh["Vertices"].extend(tuple(relative @ Vector(v)) for v in part["Vertices"])
+    mesh["Normals"].extend(
+        tuple((relative.to_3x3().inverted().transposed() @ Vector(v)).normalized())
+        for v in part["Normals"]
+    )
+    mesh["UV"].extend(part["UV"])
+    require(part["Materials"] == ["Cloth"], "Topsail: expected cloth")
+    mesh["SubmeshTriangles"][0].extend(i + start for i in part["SubmeshTriangles"][0])
+    for field, operation in (("BoundsMin", min), ("BoundsMax", max)):
+        mesh[field] = tuple(operation(v[a] for v in mesh["Vertices"]) for a in range(3))
+    topology = [tuple(p.vertices) for p in top.data.polygons]
+    inverse = sail.matrix_world.inverted()
+    samples = {}
+    for frame in range(reef_frames[-1] + 1):
+        scene.frame_set(frame)
+        require(
+            top.hide_render == (frame >= 140), "Topsail: expected removal at frame 140"
+        )
+        # Visibility is exported separately; evaluate the folded pose even when hidden.
+        top.hide_viewport = False
+        depsgraph = bpy.context.evaluated_depsgraph_get()
+        evaluated = top.evaluated_get(depsgraph)
+        evaluated_mesh = evaluated.to_mesh()
+        try:
+            require(
+                len(evaluated_mesh.vertices) == len(top.data.vertices)
+                and [tuple(p.vertices) for p in evaluated_mesh.polygons] == topology,
+                "Topsail: changed topology",
+            )
+            if frame in reef_frames:
+                samples[frame] = [
+                    tuple(CONVERSION @ inverse @ evaluated.matrix_world @ v.co)
+                    for v in evaluated_mesh.vertices
+                ]
+                require(
+                    all(finite(v) for v in samples[frame]), "Topsail: non-finite pose"
+                )
+        finally:
+            evaluated.to_mesh_clear()
+    # Copy poses: the pause repeats frame 160 without sharing a mutable vertex list.
+    data["ReefPoses"] = [
+        (points + samples[frame], rotation)
+        for frame, (points, rotation) in zip(reef_frames, data["ReefPoses"])
+    ]
+    scene.frame_set(0)
 
 
 def number(value):
@@ -548,6 +620,7 @@ def bake(cut="A"):
     data = collect(
         reef_frames=definition.reef_frames,
         generate_cloth_uv=definition.generate_cloth_uv,
+        topsail=definition.topsail,
     )
     lines = [
         "// <auto-generated />",
@@ -563,6 +636,18 @@ def bake(cut="A"):
         "            new LooseFootedSpritsailAssetData",
         "            {",
     ]
+    if definition.reef_fractions is not None:
+        lines.append(
+            "                ReefFractions = new float[] { "
+            + ", ".join(number(v) for v in definition.reef_fractions)
+            + " },"
+        )
+        lines.append(
+            f"                TopsailVertexStart = {data['TopsailVertexStart']},"
+        )
+        lines.append(
+            f"                TopsailTriangleStart = {data['TopsailTriangleStart']},"
+        )
     lines.extend(
         (
             "                ReefPoses = new LooseFootedSpritsailReefPose[]",

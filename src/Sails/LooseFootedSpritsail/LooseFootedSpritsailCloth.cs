@@ -15,6 +15,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private readonly SkinnedMeshRenderer renderer;
         private readonly Mesh mesh;
         private readonly Vector3[] localVertices;
+        private readonly int[] mainTriangles;
+        private bool topsailVisible = true;
         private Matrix4x4 restCloth;
         private Matrix4x4 inverseRestCloth;
         private int windFrame = -1;
@@ -43,6 +45,15 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             mesh.MarkDynamic();
             renderer.sharedMesh = mesh;
             localVertices = new Vector3[mesh.vertexCount];
+            if (rig.Data.HasTopsail)
+            {
+                mainTriangles = new int[rig.Data.TopsailTriangleStart];
+                System.Array.Copy(
+                    rig.Data.Sail.SubmeshTriangles[0],
+                    mainTriangles,
+                    mainTriangles.Length
+                );
+            }
             phase = (rig.GetInstanceID() & 1023) * (2 * Mathf.PI / 1024);
         }
 
@@ -197,6 +208,16 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                         bounds = new Bounds(center: renderedPoint, size: Vector3.zero);
                     else
                         bounds.Encapsulate(point: renderedPoint);
+                }
+                if (mainTriangles != null && topsailVisible != Geometry.TopsailVisible)
+                {
+                    topsailVisible = Geometry.TopsailVisible;
+                    mesh.SetTriangles(
+                        triangles: topsailVisible
+                            ? rig.Data.Sail.SubmeshTriangles[0]
+                            : mainTriangles,
+                        submesh: 0
+                    );
                 }
                 mesh.vertices = localVertices;
                 mesh.RecalculateNormals();

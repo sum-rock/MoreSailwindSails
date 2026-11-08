@@ -32,7 +32,8 @@ def test_spritsail_native_donors(installed_scene):
             assert (
                 scene.ptr(renderer, scene.data(renderer)["m_Materials"][0]) is not None
             )
-    assert len(prefabs) <= 404 or scene.ptr(directory, prefabs[404]) is None
+    for index in (404, 405, 406):
+        assert len(prefabs) <= index or scene.ptr(directory, prefabs[index]) is None
 
 
 def test_junk_mizzen_unreadable_surface(installed_scene):

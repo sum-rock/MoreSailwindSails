@@ -5,7 +5,13 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     internal sealed class LooseFootedSpritsailAssetData
     {
-        // Five rest-local cloth poses at Blender frames 0, 60, 120, 180 and 240.
+        // Rest-local cloth poses; null fractions retain the original evenly spaced timing.
+        internal float[] ReefFractions;
+
+        // Optional topsail is appended to the same cloth mesh and triangle buffer.
+        internal int TopsailVertexStart;
+        internal int TopsailTriangleStart;
+        internal bool HasTopsail => TopsailVertexStart > 0;
         internal LooseFootedSpritsailReefPose[] ReefPoses;
         internal LooseFootedSpritsailMeshPart Sail;
         internal LooseFootedSpritsailMeshPart Struck;

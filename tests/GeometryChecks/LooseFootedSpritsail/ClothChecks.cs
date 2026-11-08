@@ -12,6 +12,8 @@ internal static class ClothChecks
     {
         var data = LooseFootedSpritsailMkABakedAsset.Create();
         Check(data.ReefPoses.Length == 5, "Expected exactly five authored poses.");
+        CheckMkC();
+        CheckTimeline();
         CheckSamples(data: data);
         CheckSamples(data: LooseFootedSpritsailMkBBakedAsset.Create());
         float scale = LooseFootedSpritsailFittingGeometry.BaseScale(
@@ -152,6 +154,106 @@ internal static class ClothChecks
         );
     }
 
+    private static void CheckMkC()
+    {
+        var data = LooseFootedSpritsailMkCBakedAsset.Create();
+        CheckSamples(data: data);
+        Check(
+            data.HasTopsail && data.Sail.Vertices.Length == 366,
+            "Mk.C must contain both cloth pieces."
+        );
+        Check(data.ReefPoses.Length == 9, "Mk.C timeline lost a pose.");
+        var cloth = new LooseFootedSpritsailClothGeometry(
+            data: data,
+            rest: new LooseFootedSpritsailPose
+            {
+                Sail = data.Sail.RestTransform,
+                Sprit = data.Sprit.RestTransform,
+            }
+        );
+        Check(
+            cloth.TopsailVisible && cloth.AreaFraction == 1,
+            "Deployed topsail must contribute area."
+        );
+        var deployedCenter = cloth.AreaCenter;
+        cloth.Pose(deployment: 0.8f);
+        Check(
+            !cloth.TopsailVisible && cloth.AreaFraction < 1 && cloth.AreaFraction > 0,
+            "Topsail must be removed at 20 percent."
+        );
+        Check(cloth.AreaCenter.y < deployedCenter.y, "Removing topsail must lower force center.");
+        cloth.Pose(deployment: 0.75f);
+        var held = (Vector3[])cloth.Vertices.Clone();
+        float heldArea = cloth.AreaFraction;
+        foreach (float reef in new[] { 0.25f, 0.275f, 0.3f })
+        {
+            cloth.Pose(deployment: 1 - reef);
+            for (int i = 0; i < held.Length; i++)
+                Near(
+                    actual: cloth.Vertices[i],
+                    expected: held[i],
+                    message: "Mk.C must hold frame 160."
+                );
+            Check(
+                Math.Abs(cloth.AreaFraction - heldArea) < 1e-6f,
+                "Reef pause changed force area."
+            );
+        }
+        cloth.Pose(deployment: 0);
+        Check(!cloth.TopsailVisible, "Fully reefed topsail reappeared.");
+        cloth.Pose(deployment: 1);
+        Check(
+            cloth.TopsailVisible && Math.Abs(cloth.AreaFraction - 1) < 1e-6f,
+            "Unreefing must restore topsail area."
+        );
+    }
+
+    private static void CheckTimeline()
+    {
+        var data = LooseFootedSpritsailMkABakedAsset.Create();
+        var original = data.ReefPoses;
+        data.ReefPoses = new[]
+        {
+            original[0],
+            original[1],
+            original[2],
+            original[3],
+            original[3],
+            original[4],
+        };
+        data.ReefFractions = new[] { 0f, 0.04f, 0.2f, 0.25f, 0.3f, 1f };
+        var cloth = new LooseFootedSpritsailClothGeometry(
+            data: data,
+            rest: new LooseFootedSpritsailPose
+            {
+                Sail = data.Sail.RestTransform,
+                Sprit = data.Sprit.RestTransform,
+            }
+        );
+        cloth.Pose(deployment: 0.75f);
+        var held = (Vector3[])cloth.Vertices.Clone();
+        foreach (float reef in new[] { 0.25f, 0.275f, 0.3f })
+        {
+            cloth.Pose(deployment: 1 - reef);
+            for (int i = 0; i < held.Length; i++)
+                Near(
+                    actual: cloth.Vertices[i],
+                    expected: held[i],
+                    message: "Reefing must pause from 25 to 30 percent."
+                );
+        }
+        cloth.Pose(deployment: 1);
+        var deployed = (Vector3[])cloth.Vertices.Clone();
+        cloth.Pose(deployment: 0);
+        cloth.Pose(deployment: 1);
+        for (int i = 0; i < deployed.Length; i++)
+            Near(
+                actual: cloth.Vertices[i],
+                expected: deployed[i],
+                message: "Explicit reef timeline must reverse."
+            );
+    }
+
     private static void CheckSamples(
         LooseFootedSpritsailAssetData data,
         LooseFootedSpritsailPose? restPose = null
@@ -169,13 +271,21 @@ internal static class ClothChecks
         var clew = data.Sail.Vertices[data.Clew];
         var throat = data.Sail.Vertices[data.Throat];
         var peak = data.Sail.Vertices[data.Peak];
-        for (int step = 0; step <= 8; step++)
+        for (int step = 0; step <= 2 * (data.ReefPoses.Length - 1); step++)
         {
             float sample = step * 0.5f;
             int left = (int)sample,
-                right = Math.Min(left + 1, 4);
+                right = Math.Min(left + 1, data.ReefPoses.Length - 1);
             float blend = sample - left;
-            cloth.Pose(deployment: 1 - sample / 4);
+            float reef =
+                data.ReefFractions == null
+                    ? sample / (data.ReefPoses.Length - 1)
+                    : Mathf.Lerp(
+                        a: data.ReefFractions[left],
+                        b: data.ReefFractions[right],
+                        t: blend
+                    );
+            cloth.Pose(deployment: 1 - reef);
             Vector3 Expected(int index) =>
                 rest.Sail.MultiplyPoint3x4(
                     point: Vector3.Lerp(

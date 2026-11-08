@@ -2,6 +2,7 @@
 using HarmonyLib;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkA;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkB;
+using MoreSailwindSails.Sails.LooseFootedSpritsail.MkC;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
@@ -16,6 +17,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         {
             LooseFootedSpritsailMkA.Register(directory: __instance);
             LooseFootedSpritsailMkB.Register(directory: __instance);
+            LooseFootedSpritsailMkC.Register(directory: __instance);
         }
     }
 
@@ -28,6 +30,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         {
             LooseFootedSpritsailMkA.AddToShipyard(shipyard: __instance);
             LooseFootedSpritsailMkB.AddToShipyard(shipyard: __instance);
+            LooseFootedSpritsailMkC.AddToShipyard(shipyard: __instance);
         }
     }
 
@@ -39,6 +42,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         {
             LooseFootedSpritsailMkA.AddToShipyard(shipyard: __instance);
             LooseFootedSpritsailMkB.AddToShipyard(shipyard: __instance);
+            LooseFootedSpritsailMkC.AddToShipyard(shipyard: __instance);
         }
     }
 
@@ -343,8 +347,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         [HarmonyPostfix]
         private static void Postfix(Sail __instance, ref float __result)
         {
-            if (__instance.GetComponent<LooseFootedSpritsailRig>())
-                __result *= LooseFootedSpritsailSailingGeometry.PowerMultiplier;
+            var rig = __instance.GetComponent<LooseFootedSpritsailRig>();
+            if (rig)
+                __result *=
+                    LooseFootedSpritsailSailingGeometry.PowerMultiplier * rig.ReefPowerMultiplier;
         }
     }
 

@@ -19,18 +19,22 @@ before = hashlib.sha256(asset.read_bytes()).digest()
 source = tool["bake"](cut)
 assert source == tool["bake"](cut), "Non-deterministic bake"
 assert source == definition.source_path.read_text(), "Stale bake"
-data = tool["collect"](reef_frames=definition.reef_frames)
-assert len(data["ReefPoses"]) == 5
+data = tool["collect"](
+    reef_frames=definition.reef_frames,
+    generate_cloth_uv=definition.generate_cloth_uv,
+    topsail=definition.topsail,
+)
+assert len(data["ReefPoses"]) == len(definition.reef_frames)
 sail = bpy.data.objects["Sail"]
 inverse = sail.matrix_world.inverted()
-for frame in range(241):
+for frame in range(definition.reef_frames[-1] + 1):
     bpy.context.scene.frame_set(frame)
     evaluated = sail.evaluated_get(bpy.context.evaluated_depsgraph_get())
     mesh = evaluated.to_mesh()
     try:
         if frame in definition.reef_frames:
             points, rotation = data["ReefPoses"][definition.reef_frames.index(frame)]
-            assert len(points) == len(mesh.vertices)
+            assert len(points) == len(mesh.vertices) + (78 if definition.topsail else 0)
             assert abs(sum(n * n for n in rotation) - 1) < 1e-5
             for point, vertex in zip(points, mesh.vertices):
                 expected = (
@@ -39,6 +43,29 @@ for frame in range(241):
                 assert (Vector(point) - expected).length < 1e-6
     finally:
         evaluated.to_mesh_clear()
+if definition.topsail:
+    assert data["TopsailVertexStart"] == 288
+    assert data["ReefPoses"][4] == data["ReefPoses"][5]
+    top = bpy.data.objects["Topsail"]
+    for frame in range(definition.reef_frames[-1] + 1):
+        bpy.context.scene.frame_set(frame)
+        assert top.hide_render == (frame >= 140)
+        top.hide_viewport = False
+        evaluated = top.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        mesh = evaluated.to_mesh()
+        try:
+            if frame in definition.reef_frames:
+                points, _ = data["ReefPoses"][definition.reef_frames.index(frame)]
+                for point, vertex in zip(points[288:], mesh.vertices):
+                    expected = (
+                        tool["CONVERSION"]
+                        @ inverse
+                        @ evaluated.matrix_world
+                        @ vertex.co
+                    )
+                    assert (Vector(point) - expected).length < 1e-6
+        finally:
+            evaluated.to_mesh_clear()
 assert data["Struck"]["Vertices"]
 assert hashlib.sha256(asset.read_bytes()).digest() == before
 print(
