@@ -432,15 +432,15 @@ def collect(reef_frames=REEF_FRAMES, generate_cloth_uv=False, topsail=False):
         "SheetLineAttachment: must coincide with the clew vertex",
     )
     data["SheetVertex"] = corners["Clew"]
-    data["ReefPoses"] = reef_poses(sail, reef_frames=reef_frames)
-    bpy.context.scene.frame_set(0)
     if topsail:
-        add_topsail(data, reef_frames)
+        add_topsail(data)
+    data["ReefPoses"] = reef_poses(sail, reef_frames=reef_frames, topsail=topsail)
+    bpy.context.scene.frame_set(0)
     return data
 
 
-def reef_poses(sail, reef_frames=REEF_FRAMES):
-    """Evaluate simulation in order; store only the five agreed poses in rest-local space."""
+def reef_poses(sail, reef_frames=REEF_FRAMES, topsail=False):
+    """Evaluate both cloth simulations together in one forward pass, without rewinding."""
     scene = bpy.context.scene
     inverse = sail.matrix_world.inverted()
     sprit = bpy.data.objects["Sprit"]
@@ -449,9 +449,18 @@ def reef_poses(sail, reef_frames=REEF_FRAMES):
     pivot = sprit.matrix_world.translation.copy()
     scale = sprit.matrix_world.to_scale()
     topology = [tuple(p.vertices) for p in sail.data.polygons]
+    top = bpy.data.objects["Topsail"] if topsail else None
+    top_topology = [tuple(p.vertices) for p in top.data.polygons] if top else None
     poses = {}
     for frame in range(reef_frames[-1] + 1):
         scene.frame_set(frame)
+        if top:
+            require(
+                top.hide_render == (frame >= 140),
+                "Topsail: expected removal at frame 140",
+            )
+            if top.hide_viewport:
+                top.hide_viewport = False
         depsgraph = bpy.context.evaluated_depsgraph_get()
         evaluated = sail.evaluated_get(depsgraph)
         mesh = evaluated.to_mesh()
@@ -486,10 +495,28 @@ def reef_poses(sail, reef_frames=REEF_FRAMES):
                 )
         finally:
             evaluated.to_mesh_clear()
+        if top:
+            evaluated_top = top.evaluated_get(depsgraph)
+            top_mesh = evaluated_top.to_mesh()
+            try:
+                require(
+                    len(top_mesh.vertices) == len(top.data.vertices)
+                    and [tuple(p.vertices) for p in top_mesh.polygons] == top_topology,
+                    "Topsail: changed topology",
+                )
+                if frame in reef_frames:
+                    points = [
+                        tuple(CONVERSION @ inverse @ evaluated_top.matrix_world @ v.co)
+                        for v in top_mesh.vertices
+                    ]
+                    require(all(finite(v) for v in points), "Topsail: non-finite pose")
+                    poses[frame][0].extend(points)
+            finally:
+                evaluated_top.to_mesh_clear()
     return [poses[frame] for frame in reef_frames]
 
 
-def add_topsail(data, reef_frames):
+def add_topsail(data):
     """Append the authored topsail in main-sail local space; preserve one cloth renderer."""
     scene = bpy.context.scene
     scene.frame_set(0)
@@ -519,41 +546,6 @@ def add_topsail(data, reef_frames):
     mesh["SubmeshTriangles"][0].extend(i + start for i in part["SubmeshTriangles"][0])
     for field, operation in (("BoundsMin", min), ("BoundsMax", max)):
         mesh[field] = tuple(operation(v[a] for v in mesh["Vertices"]) for a in range(3))
-    topology = [tuple(p.vertices) for p in top.data.polygons]
-    inverse = sail.matrix_world.inverted()
-    samples = {}
-    for frame in range(reef_frames[-1] + 1):
-        scene.frame_set(frame)
-        require(
-            top.hide_render == (frame >= 140), "Topsail: expected removal at frame 140"
-        )
-        # Visibility is exported separately; evaluate the folded pose even when hidden.
-        top.hide_viewport = False
-        depsgraph = bpy.context.evaluated_depsgraph_get()
-        evaluated = top.evaluated_get(depsgraph)
-        evaluated_mesh = evaluated.to_mesh()
-        try:
-            require(
-                len(evaluated_mesh.vertices) == len(top.data.vertices)
-                and [tuple(p.vertices) for p in evaluated_mesh.polygons] == topology,
-                "Topsail: changed topology",
-            )
-            if frame in reef_frames:
-                samples[frame] = [
-                    tuple(CONVERSION @ inverse @ evaluated.matrix_world @ v.co)
-                    for v in evaluated_mesh.vertices
-                ]
-                require(
-                    all(finite(v) for v in samples[frame]), "Topsail: non-finite pose"
-                )
-        finally:
-            evaluated.to_mesh_clear()
-    # Copy poses: the pause repeats frame 160 without sharing a mutable vertex list.
-    data["ReefPoses"] = [
-        (points + samples[frame], rotation)
-        for frame, (points, rotation) in zip(reef_frames, data["ReefPoses"])
-    ]
-    scene.frame_set(0)
 
 
 def number(value):
