@@ -59,8 +59,58 @@ namespace MoreSailwindSails.Compatibility.Patches
                         nameof(Flip)
                     )
                 );
+                InstallButtons(harmony: harmony, assembly: assembly);
                 return;
             }
+        }
+
+        private static void InstallButtons(Harmony harmony, Assembly assembly)
+        {
+            var ui = assembly.GetType(name: "ShipyardExpansion.Patches.ShipyardUIPatches");
+            if (ui != null)
+            {
+                rotateForward = AccessTools.Field(type: ui, name: "rotateForwardButton");
+                rotateBackward = AccessTools.Field(type: ui, name: "rotateBackwardButton");
+            }
+            if (
+                rotateForward?.FieldType != typeof(GameObject)
+                || rotateBackward?.FieldType != typeof(GameObject)
+            )
+            {
+                Plugin.Log?.LogWarning(
+                    "SE spritsail tilt buttons could not be hidden: incompatible UI API."
+                );
+                return;
+            }
+            harmony.Patch(
+                original: AccessTools.Method(type: typeof(ShipyardUI), name: "UpdateMoveButtons"),
+                postfix: new HarmonyMethod(
+                    typeof(ShipyardExpansionSpritsailFlipPatch),
+                    nameof(UpdateButtons)
+                )
+                {
+                    after = new[] { "com.nandbrew.shipyardexpansion" },
+                }
+            );
+        }
+
+        private static FieldInfo rotateForward;
+        private static FieldInfo rotateBackward;
+
+        // SE reestablishes normal visibility on every update, including selection changes.
+        private static void UpdateButtons()
+        {
+            if (!GameState.currentShipyard)
+                return;
+            var sail = GameState.currentShipyard.sailInstaller.GetCurrentSail();
+            if (!sail || !sail.GetComponent<LooseFootedSpritsailRig>())
+                return;
+            var forward = rotateForward.GetValue(obj: null) as GameObject;
+            var backward = rotateBackward.GetValue(obj: null) as GameObject;
+            if (forward)
+                forward.SetActive(value: false);
+            if (backward)
+                backward.SetActive(value: false);
         }
 
         private static MethodInfo flippedSetter;
