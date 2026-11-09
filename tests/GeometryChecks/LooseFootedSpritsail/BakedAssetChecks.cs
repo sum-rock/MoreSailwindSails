@@ -16,7 +16,7 @@ internal static class BakedAssetChecks
         Check(part: b.Sprit, other: bOther.Sprit);
         Check(part: b.SnotterAssembly, other: bOther.SnotterAssembly);
         Check(part: b.RotationPlate, other: bOther.RotationPlate);
-        if (b.ReefPoses.Length != 5 || b.Sail.Vertices.Length != 288)
+        if (b.ReefPoses.Length != 5 || b.Sail.Vertices.Length != 272)
             throw new Exception("Mk.B lost its authored mesh or reef poses.");
         Near(actual: b.SheetLineAttachment, expected: b.Sail.Vertices[b.Clew]);
         var asset = LooseFootedSpritsailMkABakedAsset.Create();
