@@ -63,7 +63,7 @@ def object_named(name, kind):
             all(
                 (
                     name in ("Sail", "Topsail")
-                    and m.type in ("HOOK", "CLOTH")
+                    and m.type in ("HOOK", "CLOTH", "COLLISION")
                     or name not in ("Sail", "Topsail")
                     and (
                         m.type in ("SOLIDIFY", "DECIMATE")
@@ -74,7 +74,7 @@ def object_named(name, kind):
                 and m.show_render
                 for m in obj.modifiers
             ),
-            f"{name}: expected enabled cloth Hook/Cloth, hardware Solidify/Decimate or struck Smooth",
+            f"{name}: expected enabled cloth Hook/Cloth/Collision, hardware Solidify/Decimate or struck Smooth",
         )
     return obj
 
