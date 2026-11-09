@@ -63,6 +63,7 @@ namespace MoreSailwindSails
             Utils.Profiling.PerformanceProfile.Configure(config: Config);
             var harmony = new Harmony(PluginGuid);
             harmony.PatchAll(typeof(Plugin).Assembly);
+            Compatibility.Patches.ShipyardExpansionSpritsailFlipPatch.Install(harmony: harmony);
             Sails.FishermansStaysail.Patches.FishermansStaysailSailInfoPatch.Install(harmony);
             Compatibility.Patches.SailInfoNamesPatch.Install(harmony: harmony);
             Compatibility.Patches.SailInfoWinchColorsPatch.Install(harmony: harmony);
