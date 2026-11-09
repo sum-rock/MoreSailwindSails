@@ -51,6 +51,28 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal static Vector3 Corner(LooseFootedSpritsailAssetData data, int index) =>
             data.Sail.RestTransform.MultiplyPoint3x4(point: data.Sail.Vertices[index]);
 
+        // Use deployed geometry, never the current reef pose, for mast support limits.
+        internal static float TopsailRise(LooseFootedSpritsailAssetData data, float scale)
+        {
+            if (data == null || !data.HasTopsail)
+                return 0;
+            float throat = Corner(data: data, index: data.Throat).y;
+            float top = throat;
+            for (int i = data.TopsailVertexStart; i < data.Sail.Vertices.Length; i++)
+                top = Math.Max(top, Corner(data: data, index: i).y);
+            return (top - throat) * scale;
+        }
+
+        internal static bool FitsMast(
+            float luff,
+            float rise,
+            float installHeight,
+            float mastHeight
+        ) =>
+            luff + rise <= mastHeight + 0.0001f
+            && installHeight >= luff - 0.0001f
+            && installHeight + rise <= mastHeight + 0.0001f;
+
         internal static float CollarRadius(LooseFootedSpritsailAssetData data)
         {
             float radius = data.CollarInnerRadius;

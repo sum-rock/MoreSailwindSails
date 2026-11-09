@@ -21,6 +21,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal readonly Vector3[] Vertices;
         internal Matrix4x4 Sprit { get; private set; }
         internal Vector3 Pivot { get; }
+        internal bool TopsailVisible { get; private set; }
+        internal float AreaFraction { get; private set; } = 1;
+        internal Vector3 AreaCenter { get; private set; }
+        private float deployedArea;
         internal Vector3 Throat => Vertices[data.Throat];
         internal Vector3 Tack => Vertices[data.Tack];
         internal Vector3 Peak => Vertices[data.Peak];
@@ -79,6 +83,12 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 );
             }
             Pose(deployment: 1);
+            if (data.HasTopsail)
+            {
+                deployedArea = ProjectedArea(out var center);
+                AreaCenter = center;
+                AreaFraction = 1;
+            }
         }
 
         // Read a visual position without modifying corners, edge budgets or aerodynamic inputs.
@@ -100,6 +110,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal void Pose(float deployment)
         {
             float set = Mathf.Clamp01(value: deployment);
+            TopsailVisible = data.HasTopsail && set > 0.8f;
             Samples(deployment: set, out int left, out int right, out float blend);
             Sprit = SpritPose(deployment: set);
             var posedPeak = Sprit.MultiplyPoint3x4(point: peakTie);
@@ -126,6 +137,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 Vertices[i] = point;
             }
             Vertices[data.Peak] = posedPeak;
+            if (data.HasTopsail && deployedArea > 0)
+            {
+                AreaFraction = Mathf.Clamp01(value: ProjectedArea(out var center) / deployedArea);
+                AreaCenter = center;
+            }
             authoredDepth[data.Tack] =
                 authoredDepth[data.Throat] =
                 authoredDepth[data.Peak] =
@@ -133,8 +149,41 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     0;
         }
 
+        // Project both cloth pieces onto the rig plane so folds do not add sail area.
+        private float ProjectedArea(out Vector3 center)
+        {
+            float area = 0;
+            center = Vector3.zero;
+            var triangles = data.Sail.SubmeshTriangles[0];
+            int count = TopsailVisible ? triangles.Length : data.TopsailTriangleStart;
+            for (int i = 0; i < count; i += 3)
+            {
+                var a = Vertices[triangles[i]];
+                var b = Vertices[triangles[i + 1]];
+                var c = Vertices[triangles[i + 2]];
+                float weight = Math.Abs(Vector3.Cross(lhs: b - a, rhs: c - a).x) / 2;
+                area += weight;
+                center += (a + b + c) * (weight / 3);
+            }
+            center = area > 1e-8f ? center / area : (Throat + Tack + Peak + Clew) / 4;
+            return area;
+        }
+
         private void Samples(float deployment, out int left, out int right, out float blend)
         {
+            if (data.ReefFractions != null)
+            {
+                float reef = 1 - Mathf.Clamp01(value: deployment);
+                left = 0;
+                while (left < data.ReefFractions.Length - 2 && reef > data.ReefFractions[left + 1])
+                    left++;
+                right = left + 1;
+                blend = Mathf.Clamp01(
+                    value: (reef - data.ReefFractions[left])
+                        / (data.ReefFractions[right] - data.ReefFractions[left])
+                );
+                return;
+            }
             float sample = (1 - Mathf.Clamp01(value: deployment)) * (data.ReefPoses.Length - 1);
             left = (int)sample;
             right = Math.Min(left + 1, data.ReefPoses.Length - 1);

@@ -66,6 +66,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         [SerializeField]
         internal float BaseArea;
         internal LooseFootedSpritsailAssetData Data;
+        internal float TopsailRise =>
+            LooseFootedSpritsailFittingGeometry.TopsailRise(
+                data: Data,
+                scale: BaseScale * ScaleRoot.localScale.y
+            );
         private Rigidbody body;
         private HingeJoint hinge;
         private LooseFootedSpritsailRigging rigging;
@@ -190,6 +195,16 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             }
         }
 
+        // Native power applies currentUnroll later; replace that linear reduction for Mk.C.
+        internal float ReefPowerMultiplier =>
+            Data != null && Data.HasTopsail && clothMotion?.Geometry != null
+                ? (
+                    Sail.currentUnroll > 0.0001f
+                        ? clothMotion.Geometry.AreaFraction / Sail.currentUnroll
+                        : 0
+                )
+                : 1;
+
         internal bool RefreshAerodynamics()
         {
             if (
@@ -203,6 +218,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 )
             )
                 return false;
+            if (Data.HasTopsail)
+                wind.Center = Frame.TransformPoint(position: clothMotion.Geometry.AreaCenter);
             Sail.windcenter.SetPositionAndRotation(
                 position: wind.Center,
                 rotation: Quaternion.LookRotation(forward: wind.Axis, upwards: wind.Normal)

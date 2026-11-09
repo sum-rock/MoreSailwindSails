@@ -12,6 +12,8 @@ class SpritsailCut:
     source_path: Path
     class_name: str
     generate_cloth_uv: bool = False
+    reef_fractions: tuple[float, ...] | None = None
+    topsail: bool = False
     reef_frames: tuple[int, ...] = (10, 60, 120, 180, 240)
 
 
@@ -28,6 +30,16 @@ CUTS = {
         / "src/Sails/LooseFootedSpritsail/MkB/LooseFootedSpritsailMkBBakedAsset.g.cs",
         class_name="LooseFootedSpritsailMkBBakedAsset",
         generate_cloth_uv=True,
+    ),
+    "C": SpritsailCut(
+        asset_path=ROOT / "assets/loose_foot_spritsail/loose_foot_spritsail-mkC.blend",
+        source_path=ROOT
+        / "src/Sails/LooseFootedSpritsail/MkC/LooseFootedSpritsailMkCBakedAsset.g.cs",
+        class_name="LooseFootedSpritsailMkCBakedAsset",
+        generate_cloth_uv=True,
+        reef_frames=(40, 60, 120, 140, 160, 160, 220, 280, 340),
+        reef_fractions=(0, 0.04, 0.16, 0.2, 0.25, 0.3, 8 / 15, 23 / 30, 1),
+        topsail=True,
     ),
 }
 

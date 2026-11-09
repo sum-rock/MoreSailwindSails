@@ -2,6 +2,7 @@
 using HarmonyLib;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkA;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkB;
+using MoreSailwindSails.Sails.LooseFootedSpritsail.MkC;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
@@ -16,6 +17,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         {
             LooseFootedSpritsailMkA.Register(directory: __instance);
             LooseFootedSpritsailMkB.Register(directory: __instance);
+            LooseFootedSpritsailMkC.Register(directory: __instance);
         }
     }
 
@@ -28,6 +30,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         {
             LooseFootedSpritsailMkA.AddToShipyard(shipyard: __instance);
             LooseFootedSpritsailMkB.AddToShipyard(shipyard: __instance);
+            LooseFootedSpritsailMkC.AddToShipyard(shipyard: __instance);
         }
     }
 
@@ -39,6 +42,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         {
             LooseFootedSpritsailMkA.AddToShipyard(shipyard: __instance);
             LooseFootedSpritsailMkB.AddToShipyard(shipyard: __instance);
+            LooseFootedSpritsailMkC.AddToShipyard(shipyard: __instance);
         }
     }
 
@@ -71,12 +75,33 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
             var mast = __instance.GetCurrentMast();
             sail.ChangeSailColor(newColor: 11);
             sail.LoadScale(y: 1, z: 1);
-            sail.ChangeInstallHeight(changeValue: mast.mastHeight - sail.GetCurrentInstallHeight());
+            sail.ChangeInstallHeight(
+                changeValue: mast.mastHeight - rig.TopsailRise - sail.GetCurrentInstallHeight()
+            );
             sail.UpdateInstallPosition();
             mast.UpdateControllerAttachments();
             __instance.RecheckAllSailsCols();
             ShipyardUI.instance.UpdateDescriptionText();
             GameState.currentShipyard.UpdateOrder();
+        }
+    }
+
+    // Preserve native errors while rejecting unsupported topsails at any fitted position.
+    [HarmonyPatch(typeof(ShipyardSailInstaller), "MastNotTallEnough")]
+    internal static class SpritsailMastHeightPatch
+    {
+        [HarmonyPostfix]
+        private static void Postfix(Mast mast, Sail sail, ref bool __result)
+        {
+            var rig = sail.GetComponent<LooseFootedSpritsailRig>();
+            if (!rig || rig.Data == null || !rig.Data.HasTopsail)
+                return;
+            __result |= !LooseFootedSpritsailFittingGeometry.FitsMast(
+                luff: sail.GetScaledHeight(),
+                rise: rig.TopsailRise,
+                installHeight: sail.GetCurrentInstallHeight(),
+                mastHeight: mast.mastHeight
+            );
         }
     }
 
@@ -343,8 +368,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         [HarmonyPostfix]
         private static void Postfix(Sail __instance, ref float __result)
         {
-            if (__instance.GetComponent<LooseFootedSpritsailRig>())
-                __result *= LooseFootedSpritsailSailingGeometry.PowerMultiplier;
+            var rig = __instance.GetComponent<LooseFootedSpritsailRig>();
+            if (rig)
+                __result *=
+                    LooseFootedSpritsailSailingGeometry.PowerMultiplier * rig.ReefPowerMultiplier;
         }
     }
 
@@ -394,11 +421,12 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
                 return true;
             if (sail.IsInstalled())
                 return false;
-            float minimum = Mathf.Min(a: sail.GetScaledHeight(), b: mast.mastHeight);
+            float maximum = mast.mastHeight - rig.TopsailRise;
+            float minimum = Mathf.Min(a: sail.GetScaledHeight(), b: maximum);
             float next = Mathf.Clamp(
                 value: sail.GetCurrentInstallHeight() + distance,
                 min: minimum,
-                max: mast.mastHeight
+                max: maximum
             );
             sail.ChangeInstallHeight(changeValue: next - sail.GetCurrentInstallHeight());
             sail.UpdateInstallPosition();

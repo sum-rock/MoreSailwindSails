@@ -201,7 +201,8 @@ def test_spritsail_default_and_explicit_cut(monkeypatch, tmp_path, options):
     ]
 
 
-def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path):
+@pytest.mark.parametrize("cut", ["A", "B", "C"])
+def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path, cut):
     from tools.assets.loose_foot_spritsail_authoring import CUTS, SpritsailCut
 
     definition = SpritsailCut(
@@ -209,7 +210,7 @@ def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path):
         source_path=tmp_path / "mkB.cs",
         class_name="MkB",
     )
-    monkeypatch.setitem(CUTS, "B", definition)
+    monkeypatch.setitem(CUTS, cut, definition)
     calls = []
     monkeypatch.setattr(runner.shutil, "which", lambda _: "/blender")
     monkeypatch.setattr(runner.subprocess, "run", lambda args, **kw: calls.append(args))
@@ -217,13 +218,13 @@ def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path):
         blender="blender",
         action="bake",
         asset="loose_foot_spritsail",
-        cut="B",
+        cut=cut,
         output=None,
         check=True,
     )
     args = calls[0]
     assert str(definition.asset_path) in args
-    assert args[-3:] == ["--cut", "B", "--check"]
+    assert args[-3:] == ["--cut", cut, "--check"]
     assert any(a.endswith("bake_loose_foot_spritsail.py") for a in args)
 
 
@@ -231,8 +232,8 @@ def test_spritsail_rejects_unauthored_cuts():
     from tools.assets.loose_foot_spritsail_authoring import get_cut
 
     result = CliRunner().invoke(
-        main, ["assets", "bake", "loose_foot_spritsail", "--cut", "C"]
+        main, ["assets", "bake", "loose_foot_spritsail", "--cut", "D"]
     )
     assert result.exit_code == 2
     with pytest.raises(ValueError, match="Unsupported loose footed spritsail cut"):
-        get_cut("C")
+        get_cut("D")
