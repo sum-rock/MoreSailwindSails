@@ -66,6 +66,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         [SerializeField]
         internal float BaseArea;
         internal LooseFootedSpritsailAssetData Data;
+        internal float TopsailRise =>
+            LooseFootedSpritsailFittingGeometry.TopsailRise(
+                data: Data,
+                scale: BaseScale * ScaleRoot.localScale.y
+            );
         private Rigidbody body;
         private HingeJoint hinge;
         private LooseFootedSpritsailRigging rigging;

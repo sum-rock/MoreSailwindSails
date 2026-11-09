@@ -20,6 +20,48 @@ internal static class CollisionIntegrationChecks
                 name: "MoreSailwindSails.Sails.LooseFootedSpritsail." + name,
                 throwOnError: true
             );
+        var heightPatch = Find(name: "Patches.SpritsailMastHeightPatch");
+        var heightTarget = heightPatch.GetCustomAttribute<HarmonyPatch>().info;
+        var nativeHeight = heightTarget.declaringType.GetMethod(
+            name: heightTarget.methodName,
+            bindingAttr: All
+        );
+        Require(
+            nativeHeight != null
+                && nativeHeight.ReturnType == typeof(bool)
+                && nativeHeight
+                    .GetParameters()
+                    .Select(p => p.ParameterType.Name)
+                    .SequenceEqual(new[] { "Mast", "Sail" }),
+            "Installed mast-height validation signature changed."
+        );
+        var installError = heightTarget.declaringType.GetMethod(
+            name: "GetInstallError",
+            bindingAttr: All
+        );
+        Require(
+            CalledMethods(method: installError).Contains(nativeHeight),
+            "Installation must use the patched mast-height validation."
+        );
+        foreach (
+            string patchName in new[]
+            {
+                "SpritsailNewSailPatch",
+                "SpritsailMovementPatch",
+                "SpritsailMastHeightPatch",
+            }
+        )
+        {
+            var patch = Find(name: "Patches." + patchName);
+            var method = patch.GetMethod(
+                name: patchName == "SpritsailMovementPatch" ? "Prefix" : "Postfix",
+                bindingAttr: All
+            );
+            Require(
+                CalledMethods(method: method).Any(m => m.Name == "get_TopsailRise"),
+                "Creation, movement and validation must reserve topsail height: " + patchName
+            );
+        }
         var overlap = Find(name: "Patches.SpritsailOverlapPatch");
         var contact = Find(name: "Patches.SpritsailSquareCollisionPatch");
         var pair = overlap.GetMethod(name: "SharesSquareMast", bindingAttr: All);

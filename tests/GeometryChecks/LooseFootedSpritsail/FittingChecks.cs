@@ -7,9 +7,47 @@ namespace MoreSailwindSails.Tests.GeometryChecks.LooseFootedSpritsail;
 
 internal static class FittingChecks
 {
+    private static void CheckTopsailFit()
+    {
+        foreach (
+            var data in new[]
+            {
+                LooseFootedSpritsailMkABakedAsset.Create(),
+                LooseFootedSpritsailMkBBakedAsset.Create(),
+            }
+        )
+            Near(
+                actual: LooseFootedSpritsailFittingGeometry.TopsailRise(data: data, scale: 2),
+                expected: 0
+            );
+        var cut = LooseFootedSpritsailMkCBakedAsset.Create();
+        float rise = LooseFootedSpritsailFittingGeometry.TopsailRise(data: cut, scale: 1);
+        if (rise <= 0)
+            throw new Exception("Mk.C requires topsail support above the throat.");
+        Near(
+            actual: LooseFootedSpritsailFittingGeometry.TopsailRise(data: cut, scale: 2),
+            expected: rise * 2
+        );
+        bool Fits(float height, float mast) =>
+            LooseFootedSpritsailFittingGeometry.FitsMast(
+                luff: 8,
+                rise: rise,
+                installHeight: height,
+                mastHeight: mast
+            );
+        if (
+            !Fits(height: 8, mast: 8 + rise)
+            || Fits(height: 8, mast: 8 + rise - 0.01f)
+            || Fits(height: 9, mast: 8 + rise)
+            || Fits(height: 7, mast: 8 + rise)
+        )
+            throw new Exception("Mk.C must fit both its tack and deployed topsail on the mast.");
+    }
+
     internal static void Run()
     {
         CheckMastRadius();
+        CheckTopsailFit();
         var data = LooseFootedSpritsailMkABakedAsset.Create();
         float scale = LooseFootedSpritsailFittingGeometry.BaseScale(
             data: data,
