@@ -136,12 +136,23 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         private void OnEnable()
         {
+            LooseFootedSpritsailNotice.Register(rig: this);
             SailingReady = false;
             dirty = true;
             Refresh();
         }
 
-        private void OnDisable() => SailingReady = false;
+        private void OnDisable()
+        {
+            SailingReady = false;
+            LooseFootedSpritsailNotice.Unregister(rig: this);
+        }
+
+        internal float TackPowerMultiplier =>
+            LooseFootedSpritsailSailingGeometry.TackPowerMultiplier(
+                wind: Sail.apparentWind,
+                spritSide: Frame.TransformVector(vector: Vector3.right)
+            );
 
         private void LateUpdate()
         {

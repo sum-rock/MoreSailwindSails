@@ -59,8 +59,13 @@ internal static class SailingIntegrationChecks
                     && m.IsGenericMethod
                     && m.GetGenericArguments().Contains(rig)
                 )
-                && Calls(type: powerPatch, method: "Postfix", called: "TackPowerMultiplier")
-                && Calls(type: powerPatch, method: "Postfix", called: "TransformVector")
+                && Calls(type: powerPatch, method: "Postfix", called: "get_TackPowerMultiplier")
+                && Calls(type: rig, method: "get_TackPowerMultiplier", called: "TransformVector")
+                && Calls(
+                    type: rig,
+                    method: "get_TackPowerMultiplier",
+                    called: "TackPowerMultiplier"
+                )
                 && Calls(type: powerPatch, method: "Postfix", called: "get_ReefPowerMultiplier"),
             "Spritsail power must combine reefing with the mirrored frame's tack penalty."
         );

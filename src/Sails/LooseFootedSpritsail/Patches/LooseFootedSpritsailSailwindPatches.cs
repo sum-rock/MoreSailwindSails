@@ -373,10 +373,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
                 __result *=
                     LooseFootedSpritsailSailingGeometry.PowerMultiplier
                     * rig.ReefPowerMultiplier
-                    * LooseFootedSpritsailSailingGeometry.TackPowerMultiplier(
-                        wind: __instance.apparentWind,
-                        spritSide: rig.Frame.TransformVector(vector: Vector3.right)
-                    );
+                    * rig.TackPowerMultiplier;
         }
     }
 
