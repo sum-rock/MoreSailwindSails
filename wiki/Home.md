@@ -19,6 +19,9 @@ Sailwind modders, with MoreSailwindSails as a working example.
 | Check a mapping against my installed game              | [Boat inspection command](MSS-command#boat-inspection)     |
 | Build this mod or contribute a correction              | [Developer Guide](Developer-Guide)                         |
 
+For Loose Footed Spritsail cuts, fitting, reefing, and sailing behavior, see
+[Loose Footed Spritsails](Loose-Footed-Spritsails).
+
 ## Controls
 
 - [How winches are placed](How-winches-are-placed): native positions, authored

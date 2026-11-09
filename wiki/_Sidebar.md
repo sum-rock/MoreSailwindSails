@@ -16,6 +16,7 @@
 - [Sails](Sails)
   - [Fisherman's Staysails](Fishermans-Staysails)
   - [Fisherman's Flying Sails](Fishermans-Flying-Sails)
+  - [Loose Footed Spritsails](Loose-Footed-Spritsails)
 - [Fisherman's Stay](Fishermans-Stay)
 - [Controls](Controls)
   - [How winches are placed](How-winches-are-placed)
