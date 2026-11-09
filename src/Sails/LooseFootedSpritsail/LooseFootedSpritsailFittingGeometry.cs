@@ -6,6 +6,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     internal static class LooseFootedSpritsailFittingGeometry
     {
+        internal static Vector3 MirrorScale(bool flipped) =>
+            new Vector3(x: flipped ? -1 : 1, y: 1, z: 1);
+
         internal const float Clearance = 0.01f;
         internal const float CollarClearance = 0.001f;
         internal const int CollisionStrips = 16;
