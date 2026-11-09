@@ -8,6 +8,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
     {
         internal const float PowerMultiplier = 0.80f;
 
+        // Local +X airflow comes from port and presses cloth across the sprit.
+        // The fitted frame's mirrored X axis reverses the bad tack when flipped.
+        internal static float TackPowerMultiplier(Vector3 wind, Vector3 spritSide) =>
+            Vector3.Dot(lhs: wind, rhs: spritSide) > 0 ? 0.90f : 1f;
+
         internal static Matrix4x4 PivotRotation(Vector3 center, Vector3 axis, float degrees)
         {
             float halfAngle = degrees * (float)Math.PI / 360;
