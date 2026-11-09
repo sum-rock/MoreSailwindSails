@@ -30,6 +30,7 @@ CUTS = {
         / "src/Sails/LooseFootedSpritsail/MkB/LooseFootedSpritsailMkBBakedAsset.g.cs",
         class_name="LooseFootedSpritsailMkBBakedAsset",
         generate_cloth_uv=True,
+        reef_frames=(40, 60, 120, 180, 240),
     ),
     "C": SpritsailCut(
         asset_path=ROOT / "assets/loose_foot_spritsail/loose_foot_spritsail-mkC.blend",
