@@ -34,8 +34,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 25,
-            "Preserve the twenty-five authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 27,
+            "Preserve the twenty-seven authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })

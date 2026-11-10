@@ -32,6 +32,26 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                     )
                 ),
                 new SheetFallbackDefinition(
+                    name: "MainmastAft",
+                    fallback: new SheetFallbackPair(
+                        // Reuse the measured Mainmast donor and native-scale rear depth.
+                        templateMast: 5,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(x: -0.00412714f, y: 0.96962647f, z: 0.24455566f),
+                        offset: 0.0766848f,
+                        // 2026-11-09 F9 #5/#6 trim captures: average |X|, Y/Z; mirror at X=0.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(x: -3.159835f, y: 5.149147f, z: -4.7498005f),
+                            normal: new Vector3(x: 0f, y: 0.999420f, z: 0.034041f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(x: 3.159835f, y: 5.149147f, z: -4.7498005f),
+                            normal: new Vector3(x: 0f, y: 0.999420f, z: 0.034041f)
+                        )
+                    )
+                ),
+                new SheetFallbackDefinition(
                     name: "Mizzenmast",
                     fallback: new SheetFallbackPair(
                         // Sailwind 0.39.2: rope_winch_mizzen_angle_left; inspected 2026-10-20.
@@ -49,6 +69,26 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                         starboard: new SheetFallbackSeat(
                             contact: new Vector3(2.662798f, 5.4580005f, -12.127725f),
                             normal: new Vector3(0f, 0.987032f, 0.160525f)
+                        )
+                    )
+                ),
+                new SheetFallbackDefinition(
+                    name: "Stern",
+                    fallback: new SheetFallbackPair(
+                        // Reuse the measured Mizzenmast donor and native-scale rear depth.
+                        templateMast: 7,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(x: -0.00333571f, y: 0.99976479f, z: 0.02143006f),
+                        offset: 0.0766848f,
+                        // 2026-11-09 F9 #3/#4 stern trim captures: average |X|, Y/Z; mirror at X=0.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(x: -2.268755f, y: 5.9101195f, z: -15.301575f),
+                            normal: new Vector3(x: 0f, y: 0.999645f, z: 0.026647f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(x: 2.268755f, y: 5.9101195f, z: -15.301575f),
+                            normal: new Vector3(x: 0f, y: 0.999645f, z: 0.026647f)
                         )
                     )
                 ),

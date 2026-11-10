@@ -17,7 +17,9 @@ internal static class SheetFallbackDonorChecks
         var donors = new[]
         {
             (BrigControls.Definition, "Mainmast", 5, WinchRole.Left, 0.095856f, 0.8f),
+            (BrigControls.Definition, "MainmastAft", 5, WinchRole.Left, 0.095856f, 0.8f),
             (BrigControls.Definition, "Mizzenmast", 7, WinchRole.Left, 0.095856f, 0.8f),
+            (BrigControls.Definition, "Stern", 7, WinchRole.Left, 0.095856f, 0.8f),
             (KakamControls.Definition, "Mainmast", 5, WinchRole.Left, 0.044704f, 1f),
             // Junk donor inspected 2026-10-21; rear depth uses native Z scale.
             (JunkControls.Definition, "Forward", 10, WinchRole.Left, 0.044704f, 1.34204996f),
@@ -117,7 +119,7 @@ internal static class SheetFallbackDonorChecks
             )
         );
         Console.WriteLine(
-            "PASS: all twenty-five sheet donor selections, native-scale rear depths, surface contacts and invalid donor configuration."
+            "PASS: all twenty-seven sheet donor selections, native-scale rear depths, surface contacts and invalid donor configuration."
         );
     }
 
