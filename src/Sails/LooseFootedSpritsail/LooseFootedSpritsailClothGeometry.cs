@@ -252,74 +252,25 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return true;
         }
 
-        internal LooseFootedSpritsailClearance[] Clearance()
+        internal LooseFootedSpritsailClearance Clearance()
         {
-            int strips = LooseFootedSpritsailFittingGeometry.CollisionStrips;
-            var bounds = new Bounds[strips + 1];
-            var initialized = new bool[bounds.Length];
-            // Shipyard fitting uses the deployed neutral sail, like native gaffs.
-            // Billow and reefing envelopes create false obstructions at zero trim.
-            for (int i = 0; i < data.Sail.Vertices.Length; i++)
-            {
-                var point = rest.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[i]);
-                int column = (int)Math.Round(coordinates[i].x * (strips - 1));
-                Include(bounds: bounds, initialized: initialized, index: column, point: point);
-                if (column > 0)
-                    Include(
-                        bounds: bounds,
-                        initialized: initialized,
-                        index: column - 1,
-                        point: point
-                    );
-            }
-            // Bound the sprit in its own axes instead of filling the triangle
-            // between the diagonal spar and the mast with an axis-aligned box.
+            // Native gaff fitting checks spars, not cloth. Keep the deployed sprit
+            // in its own axes so neither cloth nor reefing adds false obstructions.
             var scale = LooseFootedSpritsailTransform.Scale(matrix: rest.Sprit);
+            var bounds = new Bounds(
+                center: Vector3.Scale(a: data.Sprit.Vertices[0], b: scale),
+                size: Vector3.zero
+            );
             foreach (var point in data.Sprit.Vertices)
-                Include(
-                    bounds: bounds,
-                    initialized: initialized,
-                    index: strips,
-                    point: Vector3.Scale(a: point, b: scale)
-                );
-            var result = new LooseFootedSpritsailClearance[bounds.Length];
-            for (int i = 0; i < bounds.Length; i++)
+                bounds.Encapsulate(point: Vector3.Scale(a: point, b: scale));
+            bounds.Expand(amount: 0.02f);
+            var rotation = LooseFootedSpritsailTransform.Rotation(matrix: rest.Sprit);
+            return new LooseFootedSpritsailClearance
             {
-                bounds[i].Expand(amount: 0.02f);
-                var rotation =
-                    i == strips
-                        ? LooseFootedSpritsailTransform.Rotation(matrix: rest.Sprit)
-                        : Quaternion.identity;
-                var center = bounds[i].center;
-                if (i == strips)
-                    center = Pivot + rotation * center;
-                else
-                {
-                    // Do not pad the luff forward into its mounting mast.
-                    var maximum = bounds[i].max;
-                    maximum.z = Math.Min(maximum.z, throat.z);
-                    bounds[i].SetMinMax(min: bounds[i].min, max: maximum);
-                    center = bounds[i].center;
-                }
-                result[i] = new LooseFootedSpritsailClearance
-                {
-                    Center = center,
-                    Size = bounds[i].size,
-                    Rotation = rotation,
-                };
-            }
-            return result;
-        }
-
-        private static void Include(Bounds[] bounds, bool[] initialized, int index, Vector3 point)
-        {
-            if (!initialized[index])
-            {
-                bounds[index] = new Bounds(center: point, size: Vector3.zero);
-                initialized[index] = true;
-            }
-            else
-                bounds[index].Encapsulate(point: point);
+                Center = Pivot + rotation * bounds.center,
+                Size = bounds.size,
+                Rotation = rotation,
+            };
         }
     }
 

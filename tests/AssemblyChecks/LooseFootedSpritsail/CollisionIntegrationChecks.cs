@@ -154,6 +154,15 @@ internal static class CollisionIntegrationChecks
                     .Any(i => i.Operand is FieldInfo f && f.Name == "startMaxAngle"),
             "The custom sweep must preserve its completion-to-neutral handling."
         );
+        Require(
+            Find(name: "LooseFootedSpritsailRig")
+                .GetField(name: "CollisionBox", bindingAttr: All)
+                ?.FieldType.Name == "BoxCollider"
+                && Find(name: "LooseFootedSpritsailClothGeometry")
+                    .GetMethod(name: "Clearance", bindingAttr: All)
+                    ?.ReturnType == Find(name: "LooseFootedSpritsailClearance"),
+            "Spritsail installation must use a single spar box, without cloth panels."
+        );
         var refresh = Find(name: "LooseFootedSpritsailRig")
             .GetMethod(name: "RefreshCollision", bindingAttr: All);
         Require(

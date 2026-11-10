@@ -169,28 +169,6 @@ internal static class FittingChecks
                 point: data.Sprit.RestTransform.MultiplyPoint3x4(point: Vector3.zero)
             );
             Near(actual: hingeInCollar, expected: expectedHinge);
-            for (int i = 0; i < LooseFootedSpritsailFittingGeometry.CollisionStrips; i++)
-            {
-                if (
-                    !LooseFootedSpritsailFittingGeometry.CollisionStrip(
-                        data: data,
-                        pose: pose,
-                        column: i,
-                        out var center,
-                        out var size
-                    )
-                )
-                    throw new Exception("Valid spritsail collision strip disabled.");
-                if (
-                    size.x <= 0
-                    || size.y <= 0
-                    || size.z <= 0
-                    || center.z + size.z / 2 > throat.z + 1e-5f
-                )
-                    throw new Exception(
-                        "Collision strip crosses the luff/mast or has invalid dimensions."
-                    );
-            }
             var frame = LooseFootedSpritsailTransform.TRS(
                 pos: new Vector3(x: 13, y: -8, z: 2),
                 q: new Quaternion(x: 0.1825742f, y: 0.3651484f, z: -0.5477226f, w: 0.7302967f),
@@ -228,7 +206,7 @@ internal static class FittingChecks
         Near(actual: LooseFootedSpritsailFittingGeometry.ClampScale(value: 0.1f), expected: 0.2f);
         Near(actual: LooseFootedSpritsailFittingGeometry.ClampScale(value: 7), expected: 3);
         Console.WriteLine(
-            "PASS: 125 spritsail radius/height/width fittings, rigid collar/rod, circular spar, peak alignment, clearance strips and transformed frames."
+            "PASS: 125 spritsail radius/height/width fittings, rigid collar/rod, circular spar, peak alignment and transformed frames."
         );
     }
 

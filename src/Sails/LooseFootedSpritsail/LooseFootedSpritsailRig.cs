@@ -55,7 +55,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal Material TemplateMaterial;
 
         [SerializeField]
-        internal BoxCollider[] CollisionBoxes;
+        internal BoxCollider CollisionBox;
 
         [SerializeField]
         internal float BaseScale;
@@ -599,28 +599,19 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private void RefreshCollision()
         {
             var clearance = clothMotion.Geometry.Clearance();
-            for (int i = 0; i < CollisionBoxes.Length; i++)
-            {
-                var box = CollisionBoxes[i];
-                box.enabled = true;
-                box.transform.localPosition =
-                    Frame.localPosition
-                    + Frame.localRotation * Vector3.Scale(a: MirrorScale, b: clearance[i].Center);
-                box.transform.localRotation =
-                    Frame.localRotation
-                    * Quaternion.LookRotation(
-                        forward: Vector3.Scale(
-                            a: MirrorScale,
-                            b: clearance[i].Rotation * Vector3.forward
-                        ),
-                        upwards: Vector3.Scale(
-                            a: MirrorScale,
-                            b: clearance[i].Rotation * Vector3.up
-                        )
-                    );
-                box.center = Vector3.zero;
-                box.size = clearance[i].Size;
-            }
+            var box = CollisionBox;
+            box.enabled = true;
+            box.transform.localPosition =
+                Frame.localPosition
+                + Frame.localRotation * Vector3.Scale(a: MirrorScale, b: clearance.Center);
+            box.transform.localRotation =
+                Frame.localRotation
+                * Quaternion.LookRotation(
+                    forward: Vector3.Scale(a: MirrorScale, b: clearance.Rotation * Vector3.forward),
+                    upwards: Vector3.Scale(a: MirrorScale, b: clearance.Rotation * Vector3.up)
+                );
+            box.center = Vector3.zero;
+            box.size = clearance.Size;
         }
 
         internal void ChangeScale(float height, float width)
