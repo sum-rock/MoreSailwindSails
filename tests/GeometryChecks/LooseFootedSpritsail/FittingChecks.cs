@@ -44,8 +44,62 @@ internal static class FittingChecks
             throw new Exception("Mk.C must fit both its tack and deployed topsail on the mast.");
     }
 
+    private static void CheckMirroring()
+    {
+        foreach (
+            var data in new[]
+            {
+                LooseFootedSpritsailMkABakedAsset.Create(),
+                LooseFootedSpritsailMkBBakedAsset.Create(),
+                LooseFootedSpritsailMkCBakedAsset.Create(),
+            }
+        )
+        foreach (float size in new[] { 0.5f, 1f, 2f })
+        {
+            var pose = LooseFootedSpritsailFittingGeometry.Pose(
+                data: data,
+                baseScale: 1,
+                height: size,
+                width: 1.3f,
+                mastRadius: 0.2f
+            );
+            var mirror = LooseFootedSpritsailFittingGeometry.MirrorScale(flipped: true);
+            foreach (
+                var part in new[]
+                {
+                    pose.Sail,
+                    pose.Sprit,
+                    pose.Struck,
+                    pose.SnotterAssembly,
+                    pose.RotationPlate,
+                }
+            )
+            {
+                var point = part.MultiplyPoint3x4(point: new Vector3(x: 0.1f, y: 0.2f, z: 0.3f));
+                var reflected = Vector3.Scale(a: mirror, b: point);
+                Near(actual: reflected.x, expected: -point.x);
+                Near(actual: reflected.y, expected: point.y);
+                Near(actual: reflected.z, expected: point.z);
+                Near(actual: reflected.magnitude, expected: point.magnitude);
+                if (
+                    (Vector3.Scale(a: mirror, b: reflected) - point).sqrMagnitude > 1e-8f
+                    || (
+                        Vector3.Scale(
+                            a: LooseFootedSpritsailFittingGeometry.MirrorScale(flipped: false),
+                            b: point
+                        ) - point
+                    ).sqrMagnitude > 1e-8f
+                )
+                    throw new Exception(
+                        "Spritsail mirroring must preserve and restore the authored pose."
+                    );
+            }
+        }
+    }
+
     internal static void Run()
     {
+        CheckMirroring();
         CheckMastRadius();
         CheckTopsailFit();
         var data = LooseFootedSpritsailMkABakedAsset.Create();

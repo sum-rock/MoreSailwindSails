@@ -150,7 +150,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 rig.ClothBone = NewNode(name: "Neutral cloth", parent: rig.Frame);
                 rig.Sprit = NewNode(name: "Sprit", parent: rig.Frame);
                 rig.SnotterAssembly = NewNode(name: "Snotter and mounting rod", parent: rig.Frame);
-                rig.RotationPlate = NewNode(name: "Rotation plate", parent: rig.Frame);
+                rig.RotationPlate = NewNode(name: "Rotation plate", parent: sail.transform);
                 var clothMesh = CreateMesh(
                     assets: assets,
                     name: "Spritsail cloth",

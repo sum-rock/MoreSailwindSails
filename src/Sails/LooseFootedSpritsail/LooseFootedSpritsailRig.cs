@@ -94,6 +94,20 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         private Vector3 neutralPosition;
         private Matrix4x4 neutralWorld;
         private Matrix4x4 neutralPlate;
+        private Quaternion neutralPlateRotation;
+        internal bool Flipped { get; private set; }
+        internal Vector3 MirrorScale =>
+            LooseFootedSpritsailFittingGeometry.MirrorScale(flipped: Flipped);
+
+        internal void SetFlipped(bool flipped)
+        {
+            if (Flipped == flipped)
+                return;
+            Flipped = flipped;
+            dirty = true;
+            Refresh();
+        }
+
         private bool fitted;
         private int fittedFrame;
 
@@ -122,12 +136,23 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         private void OnEnable()
         {
+            LooseFootedSpritsailNotice.Register(rig: this);
             SailingReady = false;
             dirty = true;
             Refresh();
         }
 
-        private void OnDisable() => SailingReady = false;
+        private void OnDisable()
+        {
+            SailingReady = false;
+            LooseFootedSpritsailNotice.Unregister(rig: this);
+        }
+
+        internal float TackPowerMultiplier =>
+            LooseFootedSpritsailSailingGeometry.TackPowerMultiplier(
+                wind: Sail.apparentWind,
+                spritSide: Frame.TransformVector(vector: Vector3.right)
+            );
 
         private void LateUpdate()
         {
@@ -260,7 +285,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var world = neutralWorld * neutralPlate;
             RotationPlate.SetPositionAndRotation(
                 position: world.MultiplyPoint3x4(point: Vector3.zero),
-                rotation: world.rotation
+                rotation: neutralWorld.rotation * neutralPlateRotation
             );
         }
 
@@ -341,6 +366,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 dirty = true;
             Frame.localPosition = center;
             Frame.localRotation = rotation;
+            Frame.localScale = MirrorScale;
             // Cancel the serialized size-reference transform at the renderer. The skin
             // bone poses are computed separately, so hardware never inherits cloth stretching.
             var cloth = Sail.cloth.transform;
@@ -421,7 +447,14 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Apply(node: SnotterAssembly, pose: pose.SnotterAssembly);
             Apply(node: RotationPlate, pose: pose.RotationPlate);
             neutralPlate =
-                Matrix4x4.TRS(pos: center, q: rotation, s: Vector3.one) * pose.RotationPlate;
+                Matrix4x4.TRS(pos: center, q: rotation, s: MirrorScale) * pose.RotationPlate;
+            // Keep the fixed plate outside the mirrored moving frame so its reflection
+            // plane cannot turn with the hinge. Extract rotation from a proper matrix.
+            neutralPlateRotation = (neutralPlate * Matrix4x4.Scale(vector: MirrorScale)).rotation;
+            RotationPlate.localScale = Vector3.Scale(
+                a: MirrorScale,
+                b: pose.RotationPlate.lossyScale
+            );
             clothMotion.Fit(rest: pose);
             RefreshCollision();
             Sail.sailArea = BaseArea * height * width;
@@ -571,8 +604,20 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 var box = CollisionBoxes[i];
                 box.enabled = true;
                 box.transform.localPosition =
-                    Frame.localPosition + Frame.localRotation * clearance[i].Center;
-                box.transform.localRotation = Frame.localRotation * clearance[i].Rotation;
+                    Frame.localPosition
+                    + Frame.localRotation * Vector3.Scale(a: MirrorScale, b: clearance[i].Center);
+                box.transform.localRotation =
+                    Frame.localRotation
+                    * Quaternion.LookRotation(
+                        forward: Vector3.Scale(
+                            a: MirrorScale,
+                            b: clearance[i].Rotation * Vector3.forward
+                        ),
+                        upwards: Vector3.Scale(
+                            a: MirrorScale,
+                            b: clearance[i].Rotation * Vector3.up
+                        )
+                    );
                 box.center = Vector3.zero;
                 box.size = clearance[i].Size;
             }

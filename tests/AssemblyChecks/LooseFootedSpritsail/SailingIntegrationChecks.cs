@@ -51,6 +51,24 @@ internal static class SailingIntegrationChecks
             "Installed captured-force query must retain its patchable signature."
         );
         var rig = Family(name: "LooseFootedSpritsailRig");
+        var powerPatch = Family(name: "Patches.SpritsailPowerPatch");
+        Check(
+            CalledMethods(method: powerPatch.GetMethod(name: "Postfix", bindingAttr: All))
+                .Any(m =>
+                    m.Name == "GetComponent"
+                    && m.IsGenericMethod
+                    && m.GetGenericArguments().Contains(rig)
+                )
+                && Calls(type: powerPatch, method: "Postfix", called: "get_TackPowerMultiplier")
+                && Calls(type: rig, method: "get_TackPowerMultiplier", called: "TransformVector")
+                && Calls(
+                    type: rig,
+                    method: "get_TackPowerMultiplier",
+                    called: "TackPowerMultiplier"
+                )
+                && Calls(type: powerPatch, method: "Postfix", called: "get_ReefPowerMultiplier"),
+            "Spritsail power must combine reefing with the mirrored frame's tack penalty."
+        );
         var rigging = Family(name: "LooseFootedSpritsailRigging");
         var physics = Family(name: "LooseFootedSpritsailPhysics");
         var prefab = Family(name: "LooseFootedSpritsailPrefab");

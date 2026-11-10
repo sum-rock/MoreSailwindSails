@@ -23,6 +23,8 @@ namespace MoreSailwindSails
 
         internal static ManualLogSource Log { get; private set; }
         internal static bool ForceSheetFallbacks { get; private set; }
+        private ConfigEntry<bool> showSpritsailBadTackNotice;
+        private Sails.LooseFootedSpritsail.LooseFootedSpritsailNotice spritsailNotice;
         private ConfigEntry<KeyboardShortcut> captureWinchPosition;
         private ConfigEntry<bool> enableWinchMountOverlay;
         private ConfigEntry<KeyboardShortcut> toggleWinchMountOverlay;
@@ -33,6 +35,14 @@ namespace MoreSailwindSails
         {
             Log = Logger;
             ConfigureSheetFallbacks(config: Config);
+            showSpritsailBadTackNotice = Config.Bind(
+                section: "Interface",
+                key: "ShowSpritsailBadTackNotice",
+                defaultValue: true,
+                description: "Show a small bottom-right notice when a deployed spritsail on your current boat is on the bad tack. It fades out over two seconds after 30 seconds. Disabling this does not change the force penalty."
+            );
+            spritsailNotice =
+                gameObject.AddComponent<Sails.LooseFootedSpritsail.LooseFootedSpritsailNotice>();
             captureWinchPosition = Config.Bind(
                 "Diagnostics",
                 "CaptureWinchPosition",
@@ -63,6 +73,7 @@ namespace MoreSailwindSails
             Utils.Profiling.PerformanceProfile.Configure(config: Config);
             var harmony = new Harmony(PluginGuid);
             harmony.PatchAll(typeof(Plugin).Assembly);
+            Compatibility.Patches.ShipyardExpansionSpritsailFlipPatch.Install(harmony: harmony);
             Sails.FishermansStaysail.Patches.FishermansStaysailSailInfoPatch.Install(harmony);
             Compatibility.Patches.SailInfoNamesPatch.Install(harmony: harmony);
             Compatibility.Patches.SailInfoWinchColorsPatch.Install(harmony: harmony);
@@ -85,6 +96,7 @@ namespace MoreSailwindSails
         private void LateUpdate()
         {
             Utils.Profiling.PerformanceProfile.Tick();
+            spritsailNotice.enabled = showSpritsailBadTackNotice.Value;
             if (captureWinchPosition.Value.IsDown())
                 Utils.LogFallbackWinchPlacement.Capture();
             if (!enableWinchMountOverlay.Value)
@@ -104,6 +116,8 @@ namespace MoreSailwindSails
         private void OnDisable()
         {
             Utils.Profiling.PerformanceProfile.Stop();
+            if (spritsailNotice)
+                spritsailNotice.enabled = false;
             RemoveOverlay();
         }
 

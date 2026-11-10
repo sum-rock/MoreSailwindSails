@@ -144,7 +144,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     float shadow = rig.Sail.GetCurrentShadowMult();
                     float pressure = LooseFootedSpritsailClothGeometry.WindLoad(
                         wind: apparentWind,
-                        normal: -rig.Frame.right
+                        normal: -rig.Frame.TransformVector(vector: Vector3.right).normalized
                     );
                     if (pressure != 0)
                         foldTarget = pressure < 0 ? -1 : 1;

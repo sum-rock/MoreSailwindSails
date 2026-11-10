@@ -142,6 +142,7 @@ internal static class SailingChecks
         ClothChecks.Run();
         FlutterChecks.Run();
         CheckCentroid();
+        CheckTackPower();
         Check(
             !LooseFootedSpritsailSailingGeometry.TryWindFrame(
                 throat: Vector3.zero,
@@ -196,6 +197,43 @@ internal static class SailingChecks
         );
         Near(actual: wind.Center, expected: new Vector3(x: 0, y: 7f / 3, z: -13f / 6));
         Near(actual: wind.Normal, expected: Vector3.left);
+    }
+
+    private static void CheckTackPower()
+    {
+        foreach (float angle in new[] { -85f, 0f, 35f, 180f })
+        foreach (bool flipped in new[] { false, true })
+        {
+            var rotation = LooseFootedSpritsailSailingGeometry.PivotRotation(
+                center: Vector3.zero,
+                axis: Vector3.up,
+                degrees: angle
+            );
+            var frame =
+                rotation
+                * Matrix4x4.Scale(
+                    vector: LooseFootedSpritsailFittingGeometry.MirrorScale(flipped: flipped)
+                );
+            var side = frame.MultiplyVector(vector: Vector3.right);
+            foreach (float airflow in new[] { -8f, 0f, 8f })
+            {
+                float expected = (flipped ? airflow < 0 : airflow > 0) ? 0.9f : 1f;
+                float multiplier = LooseFootedSpritsailSailingGeometry.TackPowerMultiplier(
+                    wind: rotation.MultiplyVector(vector: Vector3.right * airflow),
+                    spritSide: side
+                );
+                Near(actual: multiplier, expected: expected);
+                foreach (float reef in new[] { 0f, 0.4f, 1f })
+                    Near(actual: 0.8f * reef * multiplier, expected: 0.8f * reef * expected);
+            }
+            Near(
+                actual: LooseFootedSpritsailSailingGeometry.TackPowerMultiplier(
+                    wind: Vector3.up * 8,
+                    spritSide: side
+                ),
+                expected: 1
+            );
+        }
     }
 
     private static void Near(Vector3 actual, Vector3 expected) =>

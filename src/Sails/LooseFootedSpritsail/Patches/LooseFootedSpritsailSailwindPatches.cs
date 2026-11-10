@@ -371,7 +371,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
             var rig = __instance.GetComponent<LooseFootedSpritsailRig>();
             if (rig)
                 __result *=
-                    LooseFootedSpritsailSailingGeometry.PowerMultiplier * rig.ReefPowerMultiplier;
+                    LooseFootedSpritsailSailingGeometry.PowerMultiplier
+                    * rig.ReefPowerMultiplier
+                    * rig.TackPowerMultiplier;
         }
     }
 
