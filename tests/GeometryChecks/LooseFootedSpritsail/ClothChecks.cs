@@ -13,6 +13,7 @@ internal static class ClothChecks
         var data = LooseFootedSpritsailMkABakedAsset.Create();
         Check(data.ReefPoses.Length == 5, "Expected exactly five authored poses.");
         CheckMkC();
+        CheckAllClearances();
         CheckTimeline();
         CheckSamples(data: data);
         CheckSamples(data: LooseFootedSpritsailMkBBakedAsset.Create());
@@ -37,7 +38,6 @@ internal static class ClothChecks
             var peak = cloth.Peak;
             var clew = cloth.Clew;
             var tie = LooseFootedSpritsailTransform.InversePoint(matrix: rest.Sprit, point: peak);
-            CheckClearance(data: data, rest: rest, cloth: cloth);
             CheckSamples(data: data, restPose: rest);
             var guide = new Vector3(x: 0, y: 5, z: 0);
             Check(
@@ -150,7 +150,7 @@ internal static class ClothChecks
             );
         Check(smoothed < -0.99f, "Billow does not settle after tacking.");
         Console.WriteLine(
-            "PASS: spritsail authored cloth across independent sizes, deployments and rakes; rigid sprit, authored poses, reversibility and neutral clearance."
+            "PASS: spritsail authored cloth across independent sizes, deployments and rakes; rigid sprit, authored poses, reversibility and spar-only clearance across all three cuts."
         );
     }
 
@@ -317,60 +317,83 @@ internal static class ClothChecks
         }
     }
 
+    private static void CheckAllClearances()
+    {
+        foreach (
+            var data in new[]
+            {
+                LooseFootedSpritsailMkABakedAsset.Create(),
+                LooseFootedSpritsailMkBBakedAsset.Create(),
+                LooseFootedSpritsailMkCBakedAsset.Create(),
+            }
+        )
+        foreach (float radius in new[] { 0.1f, 0.3f, 0.6f })
+        foreach (float height in new[] { 0.2f, 1f, 3f })
+        foreach (float width in new[] { 0.2f, 1f, 3f })
+        {
+            var rest = LooseFootedSpritsailFittingGeometry.Pose(
+                data: data,
+                baseScale: LooseFootedSpritsailFittingGeometry.BaseScale(
+                    data: data,
+                    fullGaffHeight: 8.8f
+                ),
+                height: height,
+                width: width,
+                mastRadius: radius
+            );
+            var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: rest);
+            CheckClearance(data: data, rest: rest, cloth: cloth);
+        }
+    }
+
     private static void CheckClearance(
         LooseFootedSpritsailAssetData data,
         LooseFootedSpritsailPose rest,
         LooseFootedSpritsailClothGeometry cloth
     )
     {
-        var clearance = cloth.Clearance();
-        var panels = clearance.Take(clearance.Length - 1).ToArray();
-        foreach (var point in data.Sail.Vertices)
-            Check(
-                panels.Any(b => Inside(box: b, point: rest.Sail.MultiplyPoint3x4(point: point))),
-                "Neutral cloth escaped installation clearance."
-            );
-        var spar = clearance[clearance.Length - 1];
+        var spar = cloth.Clearance();
         foreach (var point in data.Sprit.Vertices)
             Check(
                 Inside(box: spar, point: rest.Sprit.MultiplyPoint3x4(point: point)),
                 "Deployed sprit escaped its oriented clearance box."
             );
-        foreach (var panel in panels)
+        Check(
+            !Inside(box: spar, point: cloth.Throat),
+            "Cloth at the mast must not add an installation obstruction."
+        );
+        foreach (float deployment in new[] { 0f, 0.5f, 1f })
         {
-            Check(panel.Size.x <= 0.021f, "Billow must not inflate neutral cloth clearance.");
-            Check(
-                panel.Center.z + panel.Size.z / 2 <= cloth.Throat.z + 0.0001f,
-                "Cloth clearance crosses the mounting mast plane."
-            );
-        }
-        cloth.Pose(deployment: 0.5f);
-        var saved = (Vector3[])cloth.Vertices.Clone();
-        var again = cloth.Clearance();
-        for (int i = 0; i < clearance.Length; i++)
-        {
+            cloth.Pose(deployment: deployment);
+            var saved = (Vector3[])cloth.Vertices.Clone();
+            var again = cloth.Clearance();
             Near(
-                actual: again[i].Center,
-                expected: clearance[i].Center,
+                actual: again.Center,
+                expected: spar.Center,
                 message: "Reefing changed installation clearance."
             );
             Near(
-                actual: again[i].Size,
-                expected: clearance[i].Size,
-                message: "Billow changed installation clearance."
+                actual: again.Size,
+                expected: spar.Size,
+                message: "Reefing changed installation clearance size."
             );
-        }
-        for (int i = 0; i < saved.Length; i++)
             Near(
-                actual: cloth.Vertices[i],
-                expected: saved[i],
-                message: "Computing clearance changed the animated cloth."
+                actual: again.Rotation * Vector3.forward,
+                expected: spar.Rotation * Vector3.forward,
+                message: "Reefing changed installation clearance orientation."
             );
-        Check(
-            cloth.Vertices.Any(p => !panels.Any(b => Inside(box: b, point: p))),
-            "Installation panels still encompass the reefing and billow envelope."
-        );
-        cloth.Pose(deployment: 1);
+            Near(
+                actual: again.Rotation * Vector3.up,
+                expected: spar.Rotation * Vector3.up,
+                message: "Reefing changed installation clearance orientation."
+            );
+            for (int i = 0; i < saved.Length; i++)
+                Near(
+                    actual: cloth.Vertices[i],
+                    expected: saved[i],
+                    message: "Computing clearance changed the animated cloth."
+                );
+        }
     }
 
     private static bool Inside(LooseFootedSpritsailClearance box, Vector3 point)

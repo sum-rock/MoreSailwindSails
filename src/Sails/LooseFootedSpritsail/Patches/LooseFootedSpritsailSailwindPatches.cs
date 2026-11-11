@@ -76,7 +76,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
             sail.ChangeSailColor(newColor: 11);
             sail.LoadScale(y: 1, z: 1);
             sail.ChangeInstallHeight(
-                changeValue: mast.mastHeight - rig.TopsailRise - sail.GetCurrentInstallHeight()
+                changeValue: Mathf.Min(
+                    a: mast.mastHeight,
+                    b: LooseFootedSpritsailMastSupport.Height(mast: mast) - rig.TopsailRise
+                ) - sail.GetCurrentInstallHeight()
             );
             sail.UpdateInstallPosition();
             mast.UpdateControllerAttachments();
@@ -100,7 +103,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
                 luff: sail.GetScaledHeight(),
                 rise: rig.TopsailRise,
                 installHeight: sail.GetCurrentInstallHeight(),
-                mastHeight: mast.mastHeight
+                mastHeight: mast.mastHeight,
+                supportHeight: LooseFootedSpritsailMastSupport.Height(mast: mast)
             );
         }
     }
@@ -423,7 +427,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
                 return true;
             if (sail.IsInstalled())
                 return false;
-            float maximum = mast.mastHeight - rig.TopsailRise;
+            float maximum = Mathf.Min(
+                a: mast.mastHeight,
+                b: LooseFootedSpritsailMastSupport.Height(mast: mast) - rig.TopsailRise
+            );
             float minimum = Mathf.Min(a: sail.GetScaledHeight(), b: maximum);
             float next = Mathf.Clamp(
                 value: sail.GetCurrentInstallHeight() + distance,

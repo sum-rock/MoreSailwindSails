@@ -17,7 +17,9 @@ internal static class SheetFallbackDonorChecks
         var donors = new[]
         {
             (BrigControls.Definition, "Mainmast", 5, WinchRole.Left, 0.095856f, 0.8f),
+            (BrigControls.Definition, "MainmastAft", 5, WinchRole.Left, 0.095856f, 0.8f),
             (BrigControls.Definition, "Mizzenmast", 7, WinchRole.Left, 0.095856f, 0.8f),
+            (BrigControls.Definition, "Stern", 7, WinchRole.Left, 0.095856f, 0.8f),
             (KakamControls.Definition, "Mainmast", 5, WinchRole.Left, 0.044704f, 1f),
             // Junk donor inspected 2026-10-21; rear depth uses native Z scale.
             (JunkControls.Definition, "Forward", 10, WinchRole.Left, 0.044704f, 1.34204996f),
@@ -32,6 +34,9 @@ internal static class SheetFallbackDonorChecks
             (LargeDhowControls.Definition, "Stern", 2, WinchRole.Left, 0.054718f, 1.19999981f),
             (SanbuqControls.Definition, "Stern", 12, WinchRole.Left, 0.054718f, 1.19391859f),
             (SanbuqControls.Definition, "Midships", 12, WinchRole.Left, 0.054718f, 1.19391859f),
+            (SanbuqControls.Definition, "MidshipsAft", 12, WinchRole.Left, 0.054718f, 1.19391859f),
+            (SanbuqControls.Definition, "Aft", 12, WinchRole.Left, 0.054718f, 1.19391859f),
+            (SanbuqControls.Definition, "SternAft", 12, WinchRole.Left, 0.054718f, 1.19391859f),
             (CogControls.Definition, "Stern", 8, WinchRole.Left, 0.053125f, 1.05000019f),
             (DhowControls.Definition, "Stern", 6, WinchRole.Left, 0.054718f, 1.16000009f),
             (GlorianaControls.Definition, "Mainmast", 2, WinchRole.Left, 0.130912f, 0.7f),
@@ -40,6 +45,8 @@ internal static class SheetFallbackDonorChecks
             (ChronianControls.Definition, "MainmastForward", 4, WinchRole.Left, 0.130912f, 0.6f),
             (ChronianControls.Definition, "Mizzenmast", 6, WinchRole.Left, 0.130912f, 0.6f),
             (CaelanorControls.Definition, "Mainmast", 5, WinchRole.Left, 0.130912f, 0.6f),
+            (CaelanorControls.Definition, "MainmastForward", 5, WinchRole.Left, 0.130912f, 0.6f),
+            (CaelanorControls.Definition, "Stern", 5, WinchRole.Left, 0.130912f, 0.6f),
             (ShroudControls.Definition, "Foremast", 6, WinchRole.Reef, 0.088011f, 1f),
             (ShroudControls.Definition, "Midships", 6, WinchRole.Reef, 0.088011f, 1f),
             (ShroudControls.Definition, "Aft", 6, WinchRole.Reef, 0.088011f, 1f),
@@ -117,7 +124,7 @@ internal static class SheetFallbackDonorChecks
             )
         );
         Console.WriteLine(
-            "PASS: all twenty-five sheet donor selections, native-scale rear depths, surface contacts and invalid donor configuration."
+            "PASS: all authored sheet donor selections, native-scale rear depths, surface contacts and invalid donor configuration."
         );
     }
 

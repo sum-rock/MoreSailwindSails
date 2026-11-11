@@ -28,12 +28,30 @@ internal static class FittingChecks
             actual: LooseFootedSpritsailFittingGeometry.TopsailRise(data: cut, scale: 2),
             expected: rise * 2
         );
+        bool Spans(float luff, float height, float support) =>
+            LooseFootedSpritsailFittingGeometry.FitsMast(
+                luff: luff,
+                rise: 4,
+                installHeight: height,
+                mastHeight: 10,
+                supportHeight: support
+            );
+        if (
+            !Spans(8, 10, 14)
+            || Spans(8, 10, 13.99f)
+            || Spans(11, 10, 20)
+            || Spans(8, 10.01f, 20)
+            || Spans(8, 7.99f, 20)
+            || !Spans(8, 8, 12)
+        )
+            throw new Exception("Only the topsail may extend beyond the selected mast.");
         bool Fits(float height, float mast) =>
             LooseFootedSpritsailFittingGeometry.FitsMast(
                 luff: 8,
                 rise: rise,
                 installHeight: height,
-                mastHeight: mast
+                mastHeight: mast,
+                supportHeight: mast
             );
         if (
             !Fits(height: 8, mast: 8 + rise)
@@ -99,6 +117,32 @@ internal static class FittingChecks
 
     internal static void Run()
     {
+        var parents = new System.Collections.Generic.Dictionary<int, int>
+        {
+            { 0, -1 },
+            { 1, 0 },
+            { 2, 1 },
+            { 3, -1 },
+            { 4, 0 },
+        };
+        bool Supports(int selected, int section, int inactive = -1) =>
+            LooseFootedSpritsailFittingGeometry.SupportedSection(
+                parents: parents,
+                selected: selected,
+                section: section,
+                active: index => index != inactive
+            );
+        if (
+            !Supports(0, 2)
+            || !Supports(1, 2)
+            || Supports(1, 4)
+            || Supports(0, 3)
+            || Supports(0, 2, 1)
+            || Supports(0, 2, 2)
+            || Supports(0, 2, 0)
+            || Supports(99, 2)
+        )
+            throw new Exception("Topmast support requires a complete active descendant chain.");
         CheckMirroring();
         CheckMastRadius();
         CheckTopsailFit();
@@ -169,28 +213,6 @@ internal static class FittingChecks
                 point: data.Sprit.RestTransform.MultiplyPoint3x4(point: Vector3.zero)
             );
             Near(actual: hingeInCollar, expected: expectedHinge);
-            for (int i = 0; i < LooseFootedSpritsailFittingGeometry.CollisionStrips; i++)
-            {
-                if (
-                    !LooseFootedSpritsailFittingGeometry.CollisionStrip(
-                        data: data,
-                        pose: pose,
-                        column: i,
-                        out var center,
-                        out var size
-                    )
-                )
-                    throw new Exception("Valid spritsail collision strip disabled.");
-                if (
-                    size.x <= 0
-                    || size.y <= 0
-                    || size.z <= 0
-                    || center.z + size.z / 2 > throat.z + 1e-5f
-                )
-                    throw new Exception(
-                        "Collision strip crosses the luff/mast or has invalid dimensions."
-                    );
-            }
             var frame = LooseFootedSpritsailTransform.TRS(
                 pos: new Vector3(x: 13, y: -8, z: 2),
                 q: new Quaternion(x: 0.1825742f, y: 0.3651484f, z: -0.5477226f, w: 0.7302967f),
@@ -228,7 +250,7 @@ internal static class FittingChecks
         Near(actual: LooseFootedSpritsailFittingGeometry.ClampScale(value: 0.1f), expected: 0.2f);
         Near(actual: LooseFootedSpritsailFittingGeometry.ClampScale(value: 7), expected: 3);
         Console.WriteLine(
-            "PASS: 125 spritsail radius/height/width fittings, rigid collar/rod, circular spar, peak alignment, clearance strips and transformed frames."
+            "PASS: 125 spritsail radius/height/width fittings, rigid collar/rod, circular spar, peak alignment and transformed frames."
         );
     }
 

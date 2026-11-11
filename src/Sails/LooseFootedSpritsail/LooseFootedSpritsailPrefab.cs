@@ -390,16 +390,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             checker.startMinAngle = -85;
             checker.startMaxAngle = 85;
             rig.Sail.GetComponent<SailConnections>().colChecker = checker;
-            rig.CollisionBoxes = new BoxCollider[
-                LooseFootedSpritsailFittingGeometry.CollisionStrips + 1
-            ];
-            for (int i = 0; i < rig.CollisionBoxes.Length; i++)
-            {
-                var node = NewNode(name: "Clearance " + i, parent: root);
-                var box = node.gameObject.AddComponent<BoxCollider>();
-                box.isTrigger = true;
-                rig.CollisionBoxes[i] = box;
-            }
+            var node = NewNode(name: "Sprit clearance", parent: root);
+            rig.CollisionBox = node.gameObject.AddComponent<BoxCollider>();
+            rig.CollisionBox.isTrigger = true;
         }
 
         internal static void AddToShipyard(Shipyard shipyard, GameObject prefab)

@@ -64,6 +64,7 @@ internal static class Program
         Controls.SailControlInterfaceChecks.Run(assembly);
         Utils.WinchDiagnosticChecks.Run(assembly);
         FishermansStaysail.RegistrationChecks.Run(assembly);
+        FishermansStaysail.LuffCompatibilityChecks.Run(assembly);
         FishermansStaysail.MkA.PatchChecks.Run(assembly);
         FishermansStaysail.MkB.PatchChecks.Run(assembly);
         FishermansStaysail.MkC.PatchChecks.Run(assembly);

@@ -254,7 +254,7 @@ internal static class ReefingIntegrationChecks
         );
         Check(
             Calls(type: rig, method: "RefreshCollision", name: "Clearance"),
-            "Installation must include the moving sprit and billow envelope."
+            "Installation must use the deployed sprit clearance."
         );
         var nativeUpdate = Instructions(method: reef.GetMethod(name: "Update", bindingAttr: All))
             .ToArray();

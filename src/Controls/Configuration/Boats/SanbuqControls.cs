@@ -32,6 +32,48 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                     )
                 ),
                 new SheetFallbackDefinition(
+                    name: "MidshipsAft",
+                    fallback: new SheetFallbackPair(
+                        // Same inspected native donor and mounting frame as the stern pair.
+                        templateMast: 12,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.06932204f, 0.99134989f, 0.11144437f),
+                        offset: 0.065328836f,
+                        // F9 #2/#3 on structure/Cube_013, 2026-11-10; average |X|, Y/Z
+                        // and mirror across boat X=0. Both captures share the same normal.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.418497f, 3.3136765f, -2.679495f),
+                            normal: new Vector3(0f, 0.999992f, 0.003991f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.418497f, 3.3136765f, -2.679495f),
+                            normal: new Vector3(0f, 0.999992f, 0.003991f)
+                        )
+                    )
+                ),
+                new SheetFallbackDefinition(
+                    name: "Aft",
+                    fallback: new SheetFallbackPair(
+                        // Same inspected native donor and mounting frame as the stern pair.
+                        templateMast: 12,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.06932204f, 0.99134989f, 0.11144437f),
+                        offset: 0.065328836f,
+                        // F9 #7/#8 (superseding #4/#5) on structure/Cube_013, 2026-11-10; average |X|, Y/Z
+                        // and mirror across boat X=0. Both captures share the same normal.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.4448315f, 3.324036f, -5.2734345f),
+                            normal: new Vector3(0f, 0.999992f, 0.003991f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.4448315f, 3.324036f, -5.2734345f),
+                            normal: new Vector3(0f, 0.999992f, 0.003991f)
+                        )
+                    )
+                ),
+                new SheetFallbackDefinition(
                     name: "Stern",
                     fallback: new SheetFallbackPair(
                         // Sailwind 0.39.2: rope_winch_back_angle_left (1); inspected 2026-10-20.
@@ -50,6 +92,27 @@ namespace MoreSailwindSails.Controls.Configuration.Boats
                         starboard: new SheetFallbackSeat(
                             contact: new Vector3(2.073849f, 3.511429f, -10.657480f),
                             normal: new Vector3(-0.998812f, 0f, 0.0487285f)
+                        )
+                    )
+                ),
+                new SheetFallbackDefinition(
+                    name: "SternAft",
+                    fallback: new SheetFallbackPair(
+                        // Same inspected native donor and mounting frame as the stern pair.
+                        templateMast: 12,
+                        templateRole: WinchRole.Left,
+                        templateIndex: 0,
+                        sourceNormal: new Vector3(0.06932204f, 0.99134989f, 0.11144437f),
+                        offset: 0.065328836f,
+                        // F9 #9/#10 on structure/Cube_013, 2026-11-10; average |X|, Y/Z
+                        // and reflected normals to mirror across boat X=0.
+                        port: new SheetFallbackSeat(
+                            contact: new Vector3(-2.0230825f, 3.637566f, -11.659580f),
+                            normal: new Vector3(0.998411f, 0.018453f, 0.053246f)
+                        ),
+                        starboard: new SheetFallbackSeat(
+                            contact: new Vector3(2.0230825f, 3.637566f, -11.659580f),
+                            normal: new Vector3(-0.998411f, 0.018453f, 0.053246f)
                         )
                     )
                 ),

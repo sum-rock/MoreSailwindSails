@@ -11,7 +11,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         internal const float Clearance = 0.01f;
         internal const float CollarClearance = 0.001f;
-        internal const int CollisionStrips = 16;
 
         // Measure the visible shaft where the collar sits, including tapered mast sections.
         internal static float MastRadius(
@@ -66,15 +65,35 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return (top - throat) * scale;
         }
 
+        internal static bool SupportedSection(
+            System.Collections.Generic.IReadOnlyDictionary<int, int> parents,
+            int selected,
+            int section,
+            Func<int, bool> active
+        )
+        {
+            if (parents == null || !parents.ContainsKey(selected))
+                return false;
+            while (section >= 0 && active(section))
+            {
+                if (section == selected)
+                    return true;
+                if (!parents.TryGetValue(section, out section))
+                    return false;
+            }
+            return false;
+        }
+
         internal static bool FitsMast(
             float luff,
             float rise,
             float installHeight,
-            float mastHeight
+            float mastHeight,
+            float supportHeight
         ) =>
-            luff + rise <= mastHeight + 0.0001f
+            installHeight <= mastHeight + 0.0001f
             && installHeight >= luff - 0.0001f
-            && installHeight + rise <= mastHeight + 0.0001f;
+            && installHeight + rise <= supportHeight + 0.0001f;
 
         internal static float CollarRadius(LooseFootedSpritsailAssetData data)
         {
@@ -171,39 +190,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 SnotterAssembly = hardware * data.SnotterAssembly.RestTransform,
                 RotationPlate = hardware * data.RotationPlate.RestTransform,
             };
-        }
-
-        internal static bool CollisionStrip(
-            LooseFootedSpritsailAssetData data,
-            LooseFootedSpritsailPose pose,
-            int column,
-            out Vector3 center,
-            out Vector3 size
-        )
-        {
-            var tack = pose.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Tack]);
-            var throat = pose.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Throat]);
-            var clew = pose.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Clew]);
-            var peak = pose.Sail.MultiplyPoint3x4(point: data.Sail.Vertices[data.Peak]);
-            float a = (column + 0.05f) / CollisionStrips;
-            float b = (column + 0.95f) / CollisionStrips;
-            float top = Math.Min(
-                Vector3.Lerp(a: throat, b: peak, t: a).y,
-                Vector3.Lerp(a: throat, b: peak, t: b).y
-            );
-            float bottom = Math.Max(
-                Vector3.Lerp(a: tack, b: clew, t: a).y,
-                Vector3.Lerp(a: tack, b: clew, t: b).y
-            );
-            float start = Mathf.Lerp(a: throat.z, b: peak.z, t: a);
-            float end = Mathf.Lerp(a: throat.z, b: peak.z, t: b);
-            center = new Vector3(x: 0, y: (top + bottom) / 2, z: (start + end) / 2);
-            size = new Vector3(
-                x: 0.02f,
-                y: Math.Max(0.001f, top - bottom - 0.02f),
-                z: Math.Abs(end - start)
-            );
-            return top - bottom > 0.02f;
         }
 
         internal static float ClampScale(float value) =>

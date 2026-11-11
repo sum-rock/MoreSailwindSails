@@ -119,6 +119,31 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
         }
     }
 
+    // Spars may pass through staysail cloth when their luffs are separated on the same mast.
+    [HarmonyPatch(typeof(ShipyardSailColChecker), "OnTriggerEnter")]
+    internal static class FishermansStaysailLuffCollisionPatch
+    {
+        private static readonly AccessTools.FieldRef<ShipyardSailColChecker, Sail> CheckerSail =
+            AccessTools.FieldRefAccess<ShipyardSailColChecker, Sail>(fieldName: "sail");
+
+        [HarmonyPrefix]
+        private static bool Prefix(Sail ___sail, Collider other)
+        {
+            if (!___sail || !other)
+                return true;
+            if (!other.CompareTag("SailColChecker") && !other.CompareTag("SailColCheckerSub"))
+                return true;
+            var checker = other.GetComponentInParent<ShipyardSailColChecker>();
+            return !checker
+                || !FishermansStaysailLuffCompatibility.TryOverlap(
+                    first: ___sail,
+                    second: CheckerSail(checker),
+                    overlap: out bool overlap
+                )
+                || overlap;
+        }
+    }
+
     // Checks custom support geometry for the native mast-height fitting test.
     [HarmonyPatch(typeof(ShipyardSailInstaller), "MastNotTallEnough")]
     internal static class FishermansStaysailFitPatch
@@ -210,6 +235,23 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
             error = true;
             __result = reason;
             return false;
+        }
+    }
+
+    // Validate across stay/physical-mast lists even when no collision triggers touch.
+    [HarmonyPatch(typeof(ShipyardSailInstaller), "GetInstallError")]
+    internal static class FishermansStaysailLuffOverlapPatch
+    {
+        [HarmonyPostfix]
+        private static void Postfix(Sail sail, Mast mast, ref bool error, ref string __result)
+        {
+            if (
+                !string.IsNullOrEmpty(__result)
+                || !FishermansStaysailLuffCompatibility.HasOverlap(sail: sail, mast: mast)
+            )
+                return;
+            error = true;
+            __result = "(SAILS OVERLAP)";
         }
     }
 
