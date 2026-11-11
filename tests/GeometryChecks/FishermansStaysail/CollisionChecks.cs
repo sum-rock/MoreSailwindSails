@@ -12,6 +12,7 @@ internal static class CollisionChecks
     internal static void Run()
     {
         CheckLuffMastCompatibility();
+        CheckLuffIntervals();
         var marks = new (string Name, Func<float, float, FishermansStaysailMeshData> Create)[]
         {
             ("Mk.A", BehaviorCases.CreateA),
@@ -100,6 +101,58 @@ internal static class CollisionChecks
             throw new Exception("A clipped sliver must not be expanded beyond the mast clearance.");
         Console.WriteLine(
             "PASS (executed): all three cuts retain collision strips inside both edges and mast clearance; shallow/clipped strips are disabled."
+        );
+    }
+
+    private static void CheckLuffIntervals()
+    {
+        // A staysail luff spans heights 8..12. Include separated, touching,
+        // partially overlapping and contained gaff/spritsail luffs in both orders.
+        var cases = new[]
+        {
+            (Bottom: 0f, Top: 7.9f, Overlap: false),
+            (Bottom: 0f, Top: 8f, Overlap: true),
+            (Bottom: 4f, Top: 9f, Overlap: true),
+            (Bottom: 9f, Top: 11f, Overlap: true),
+            (Bottom: 0f, Top: 15f, Overlap: true),
+            (Bottom: 12f, Top: 15f, Overlap: true),
+            (Bottom: 12.1f, Top: 15f, Overlap: false),
+        };
+        foreach (float rake in new[] { -20f, 0f, 25f })
+        {
+            var rotation =
+                MoreSailwindSails.Sails.LooseFootedSpritsail.LooseFootedSpritsailSailingGeometry.PivotRotation(
+                    center: Vector3.zero,
+                    axis: Vector3.right,
+                    degrees: rake
+                );
+            var offset = new Vector3(x: 120f, y: 30f, z: -70f);
+            Vector3 Point(float height) =>
+                offset + rotation.MultiplyVector(vector: Vector3.up * height);
+            var axis = rotation.MultiplyVector(vector: Vector3.up);
+            foreach (var item in cases)
+            foreach (bool reverse in new[] { false, true })
+            {
+                var firstHead = reverse ? Point(item.Top) : Point(12);
+                var firstFoot = reverse ? Point(item.Bottom) : Point(8);
+                var secondHead = reverse ? Point(12) : Point(item.Top);
+                var secondFoot = reverse ? Point(8) : Point(item.Bottom);
+                if (
+                    FishermansStaysailInstallationGeometry.LuffsOverlap(
+                        firstHead: firstHead,
+                        firstFoot: firstFoot,
+                        secondHead: secondHead,
+                        secondFoot: secondFoot,
+                        axis: axis
+                    ) != item.Overlap
+                )
+                    throw new Exception(
+                        "Luff overlap changed with rake, position or installation order."
+                    );
+            }
+        }
+        Console.WriteLine(
+            "PASS: separated, touching, crossing and contained luffs in both orders on upright/raked masts."
         );
     }
 

@@ -2,20 +2,31 @@
 
 ## Overview
 
-MoreSailwindSails adds two families of sails to Sailwind:
+MoreSailwindSails adds three families of sails to Sailwind:
 
 - **Fisherman's Staysails** — Mk.A, Mk.B and Mk.C cuts fitted to a Fisherman's
   Stay between two masts.
 - **Fisherman's Flying Sails** — sails fitted directly to a physical mast, with
   a fitted mast behind it for support.
+- **Loose Footed Spritsails** — Mk.A, Mk.B and Mk.C cuts fitted to a single
+  mast, with no boom. Mk.C includes a topsail.
 
-**Fisherman's Stays** provide the rigging mounts for the staysail family.
+Jump to [Fisherman's Sail](#fishermans-sail) or [Spritsail](#spritsail) for boat
+support, fitting and sailing instructions.
 
 ### Current versions
 
 **Latest release:** 0.3.1
 
+**Upcoming release:** 4.0.0, introducing Loose Footed Spritsails. The spritsail
+instructions below apply to 4.0.0.
+
 See the [changelog](#changelog).
+
+## Fisherman's Sail
+
+Fisherman's sails include Staysails and Flying Sails. Both need two masts;
+**Fisherman's Stays** provide the rigging mounts for the staysail family.
 
 <p align="center">
   <a href="images/junk-fishermans-sail.png"><img src="images/junk-fishermans-sail.png" width="32%" alt="Junk with a Fisherman's Staysail set between its masts, viewed from above"></a>
@@ -56,12 +67,10 @@ On the Dhow, one stay option covers both supported mainmast heights. Caelanor's
 stay uses the aft mainmast position, not the Midmast alternative. Chronian's
 main-to-mizzen Fisherman's Stay cannot be fitted alongside its Mizzen Royalstay.
 
-**Leopard and Gallus are not supported.** Gallus has only one mast, while
-Fisherman's sails require two. Experimental spritsails are not included in this
-version. Future Leopard compatibility is tracked in
+**Fisherman's sails do not support Leopard or Gallus.** Gallus has only one
+mast, while Fisherman's sails require two. Future Leopard compatibility for
+Fisherman's sails is tracked in
 [issue #33](https://github.com/sum-rock/MoreSailwindSails/issues/33).
-
-## Usage
 
 ### Fitting a staysail
 
@@ -74,10 +83,10 @@ version. Future Leopard compatibility is tracked in
    clearance from the deck, aft mast and other rigging.
 5. Complete the shipyard order.
 
-**Mk.A, Mk.B and Mk.C fit only on Fisherman's Stays.** Each stay carries one
-sail; these stays can also carry vanilla staysails. Supported three-masted boats
-offer additional mast pairs. Staysails can coexist with square sails on their
-forward physical mast, including its topmast sections.
+**Fisherman's Staysail Mk.A, Mk.B and Mk.C fit only on Fisherman's Stays.** Each
+stay carries one sail; these stays can also carry vanilla staysails. Supported
+three-masted boats offer additional mast pairs. Staysails can coexist with
+square sails on their forward physical mast, including its topmast sections.
 
 All three cuts start with the same width. Mk.C's forward edge (the luff) is 50%
 longer than Mk.A/B's and needs more room on the forward mast. Resize using the
@@ -97,20 +106,78 @@ Its own hoist winch raises it from the deck, and its port and starboard sheets
 control the trim. Fully lowering it hides the sail. Leave clearance below the
 aft supporting pulley when sizing and positioning it.
 
-### Colors and controls
+## Spritsail
 
-Both sail families start with plain white cloth and can be recolored at the
+Loose Footed Spritsails are boomless sails supported by a diagonal wooden spar.
+Choose Mk.A or Mk.B for a main sail, or Mk.C for a sail with an added topsail.
+These sails are introduced in 4.0.0.
+
+### Mast support
+
+Loose Footed Spritsails can be selected on any physical mast, including on
+single-masted boats. They do not need a second mast or a Fisherman's Stay.
+Fitting still depends on enough room for the sail and available winch positions.
+
+### Fitting a spritsail
+
+1. At a shipyard, select the **mast** you want to use and open **Other**.
+2. Choose **Loose Footed Spritsail Mk.A**, **Mk.B** or **Mk.C**. Preview the
+   cuts to choose a shape that suits your rig; Mk.C includes a topsail and needs
+   extra room above the main sail.
+3. Adjust height, width and position, leaving clearance for the sail and its
+   diagonal wooden spar, called the **sprit**, to swing around the mast.
+4. Complete the shipyard order.
+
+Spritsails can share a mast with square sails, subject to the remaining fitting
+and clearance checks. Spritsails do not use Shipyard Expansion's
+forward/backward tilt buttons.
+
+**Mk.C topsail:** the topsail is hidden once the sail is 20% reefed.
+
+### Price and sailing performance
+
+Spritsails cost less than gaff or junk sails of equal area: about **20% less
+than a gaff** and **25% less than a junk sail**, before currency rounding.
+Larger sails cost more, and Mk.C's price includes its topsail.
+
+On the favorable tack, their basic power sits between gaff and junk sails of
+equal area. When the wind presses the cloth against the sprit—the **bad
+tack**—the spritsail loses an additional **10% force**. Actual drive still
+varies with trim, wind, reefing and shelter from other sails.
+
+A small **Spritsail bad tack: −10% force** notice appears at the bottom right
+when a deployed spritsail on your boat is affected. It fades after 30 seconds;
+the penalty continues while you remain on that tack. To hide the notice, set
+`ShowSpritsailBadTackNotice` to `false` in the `[Interface]` section of
+`BepInEx/config/com.august.moresailwindsails.cfg`. Hiding it does not change
+sailing performance.
+
+### Flipping a spritsail
+
+With Shipyard Expansion installed, select the spritsail at the shipyard and use
+its **flip** control to move the sprit to the other side of the sail. This
+reverses which tack is favorable and which receives the 10% bad-tack penalty.
+
+Flip the sail to favor the tack you expect to spend more time on during a
+voyage. It trades the penalty from one tack to the other; it does not remove it
+on both. Shipyard Expansion is optional for using spritsails, but is needed for
+this flip control.
+
+## Shared colors and controls
+
+All three sail families start with plain white cloth and can be recolored at the
 shipyard. With the supported Shipyard Expansion texture integration, cycling is
 restricted to plain cloth; older saved patterned selections are changed to plain
 cloth when loaded.
 
-Both sail families use free native mounting points first, then authored fallback
-positions. Sheet fallbacks must lie aft of the fitted sail's span; enlarging a
-sail can move its sheet controls farther aft. If no suitable position is free,
-the affected controls stay hidden until one becomes available.
+All three sail families use free native mounting points first, then authored
+fallback positions. Sheet fallbacks must lie aft of the fitted sail's span;
+enlarging a sail can move its sheet controls farther aft. If no suitable
+position is free, the affected controls stay hidden until one becomes available.
 
 SailInfo is optional. When installed, its hover labels identify Fisherman's
-Flying Sails and Staysails; staysails also report their sheet angle.
+Flying Sails, Staysails and Loose Footed Spritsails; staysails also report their
+sheet angle.
 
 ## Requirements and installation
 
@@ -154,11 +221,13 @@ Expansion texture integration.
 
 - **No stay or sail option:** check the boat, installed mods and fitted masts.
   Staysails require a Fisherman's Stay; Flying Sails require a physical mast and
-  a supported mast behind it.
+  a supported mast behind it. Spritsails are in **Other** and need only their
+  fitted mast; they require version 4.0.0.
 - **A stay or mast cannot be removed:** remove its fitted sail first.
 - **Missing winches:** other sails may occupy the available control positions.
   Check for competing sails on the same masts. Large sails may also leave no
-  eligible sheet fallback position aft of their fitted span.
+  eligible sheet fallback position aft of their fitted span. Spritsails need
+  both sheet winches before they can produce drive.
 
 For a bug report, include the boat, fitted masts, mod versions, steps to
 reproduce, a screenshot if useful, and `BepInEx/LogOutput.log`. Submit it
@@ -168,8 +237,8 @@ through the
 ## Removing the mod
 
 Before uninstalling, remove all sails and rigging added by MoreSailwindSails
-(currently the Fisherman's sails and stays), then save your game. Remove fitted
-sails before removing the stays or masts that support them.
+(including spritsails, Fisherman's sails and stays), then save your game. Remove
+fitted sails before removing the stays or masts that support them.
 
 ## Changelog
 

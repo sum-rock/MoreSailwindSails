@@ -6,6 +6,7 @@ namespace MoreSailwindSails.Utils.Profiling
         Unspecified,
         FlyingSail,
         Staysail,
+        Spritsail,
         Count,
     }
 }

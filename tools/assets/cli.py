@@ -41,10 +41,15 @@ def asset_command(*, action: str, asset: str):
         except (ValueError, OSError, subprocess.CalledProcessError) as error:
             raise click.ClickException(str(error)) from error
 
-    if asset == "staysail":
+    if asset in ("staysail", "loose_foot_spritsail"):
+        from tools.assets.loose_foot_spritsail_authoring import CUTS
+
         command = click.option(
             "--cut",
-            type=click.Choice(["A", "B", "C"], case_sensitive=False),
+            type=click.Choice(
+                ["A", "B", "C"] if asset == "staysail" else list(CUTS),
+                case_sensitive=False,
+            ),
             default="A",
             show_default=True,
         )(command)
@@ -70,7 +75,7 @@ def generate() -> None:
     """Create an editable Blender asset (replaces its output file)."""
 
 
-for asset in ("flying_sail", "staysail", "stay"):
+for asset in ("flying_sail", "staysail", "stay", "loose_foot_spritsail"):
     bake.add_command(asset_command(action="bake", asset=asset))
 for asset in ("flying_sail", "staysail"):
     generate.add_command(asset_command(action="generate", asset=asset))

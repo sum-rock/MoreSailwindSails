@@ -42,9 +42,12 @@ internal static class Program
             Path.Combine(AppContext.BaseDirectory, "MoreSailwindSails.dll")
         );
 
+        Compatibility.SpritsailFlipChecks.Run(assembly: assembly);
         PluginMetadataChecks.Run(assembly: assembly);
         Visuals.RoutedRopeChecks.Run(assembly: assembly);
         HarmonySignatureChecks.Run(assembly);
+        LooseFootedSpritsail.IntegrationChecks.Run(assembly: assembly);
+        LooseFootedSpritsail.CollisionIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileIntegrationChecks.Run(assembly: assembly);
         Utils.ProfileConfigurationChecks.Run(assembly: assembly);
         Controls.SheetFallbackConfigurationChecks.Run(assembly: assembly);
@@ -52,6 +55,7 @@ internal static class Program
         Compatibility.NativeAppearanceChecks.Run(assembly);
         Compatibility.ShipyardExpansionTextureChecks.Run(assembly: assembly);
         Compatibility.SailInfoNamesChecks.Run(assembly: assembly, gameDir: gameDir);
+        Controls.NativeSailControlChecks.Run(assembly: assembly, gameDir: gameDir);
         FlyingSailChecks.Run(assembly);
         StayChecks.Run(assembly);
         FishermansStay.CollarChecks.Run(assembly);
@@ -60,6 +64,7 @@ internal static class Program
         Controls.SailControlInterfaceChecks.Run(assembly);
         Utils.WinchDiagnosticChecks.Run(assembly);
         FishermansStaysail.RegistrationChecks.Run(assembly);
+        FishermansStaysail.LuffCompatibilityChecks.Run(assembly);
         FishermansStaysail.MkA.PatchChecks.Run(assembly);
         FishermansStaysail.MkB.PatchChecks.Run(assembly);
         FishermansStaysail.MkC.PatchChecks.Run(assembly);

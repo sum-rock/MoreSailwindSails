@@ -22,6 +22,23 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             && boat.MastParents.ContainsKey(squareSection)
             && boat.Base(section: forwardSection) == boat.Base(section: squareSection);
 
+        // Project both luffs onto one physical mast axis, including raked/topmast sections.
+        // Touching endpoints count as overlap, matching the native fitting rule.
+        internal static bool LuffsOverlap(
+            Vector3 firstHead,
+            Vector3 firstFoot,
+            Vector3 secondHead,
+            Vector3 secondFoot,
+            Vector3 axis
+        )
+        {
+            float firstBottom = Vector3.Dot(lhs: firstFoot - firstHead, rhs: axis);
+            float secondTop = Vector3.Dot(lhs: secondHead - firstHead, rhs: axis);
+            float secondBottom = Vector3.Dot(lhs: secondFoot - firstHead, rhs: axis);
+            return Math.Max(Math.Min(0, firstBottom), Math.Min(secondTop, secondBottom))
+                <= Math.Min(Math.Max(0, firstBottom), Math.Max(secondTop, secondBottom));
+        }
+
         internal static float HeadSlope(Vector3 stay, Vector3 mastAxis)
         {
             float along = Vector3.Dot(stay, mastAxis.normalized);

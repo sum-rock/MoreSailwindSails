@@ -1,0 +1,209 @@
+// Computes cut-independent neutral fitting, collar sizing and spar poses in a Y-up assembly frame.
+using System;
+using UnityEngine;
+
+namespace MoreSailwindSails.Sails.LooseFootedSpritsail
+{
+    internal static class LooseFootedSpritsailFittingGeometry
+    {
+        internal static Vector3 MirrorScale(bool flipped) =>
+            new Vector3(x: flipped ? -1 : 1, y: 1, z: 1);
+
+        internal const float Clearance = 0.01f;
+        internal const float CollarClearance = 0.001f;
+
+        // Measure the visible shaft where the collar sits, including tapered mast sections.
+        internal static float MastRadius(
+            Vector3[] vertices,
+            int[] triangles,
+            Matrix4x4 matrix,
+            Vector3 center,
+            Vector3 axis
+        )
+        {
+            float radius = 0;
+            for (int i = 0; i < triangles.Length; i += 3)
+            for (int edge = 0; edge < 3; edge++)
+            {
+                var a = matrix.MultiplyPoint3x4(point: vertices[triangles[i + edge]]) - center;
+                var b =
+                    matrix.MultiplyPoint3x4(point: vertices[triangles[i + (edge + 1) % 3]])
+                    - center;
+                float da = Vector3.Dot(lhs: a, rhs: axis);
+                float db = Vector3.Dot(lhs: b, rhs: axis);
+                if ((da > 0 && db > 0) || (da < 0 && db < 0))
+                    continue;
+                var point = da == db ? a : Vector3.Lerp(a: a, b: b, t: da / (da - db));
+                radius = Math.Max(radius, point.magnitude);
+            }
+            return radius;
+        }
+
+        internal static float BaseScale(LooseFootedSpritsailAssetData data, float fullGaffHeight)
+        {
+            float luff =
+                Corner(data: data, index: data.Throat).y - Corner(data: data, index: data.Tack).y;
+            if (!Finite(luff) || luff <= 0 || !Finite(fullGaffHeight) || fullGaffHeight <= 0)
+                throw new ArgumentException(
+                    "Expected positive authored and reference luff heights."
+                );
+            return fullGaffHeight / luff;
+        }
+
+        internal static Vector3 Corner(LooseFootedSpritsailAssetData data, int index) =>
+            data.Sail.RestTransform.MultiplyPoint3x4(point: data.Sail.Vertices[index]);
+
+        // Use deployed geometry, never the current reef pose, for mast support limits.
+        internal static float TopsailRise(LooseFootedSpritsailAssetData data, float scale)
+        {
+            if (data == null || !data.HasTopsail)
+                return 0;
+            float throat = Corner(data: data, index: data.Throat).y;
+            float top = throat;
+            for (int i = data.TopsailVertexStart; i < data.Sail.Vertices.Length; i++)
+                top = Math.Max(top, Corner(data: data, index: i).y);
+            return (top - throat) * scale;
+        }
+
+        internal static bool SupportedSection(
+            System.Collections.Generic.IReadOnlyDictionary<int, int> parents,
+            int selected,
+            int section,
+            Func<int, bool> active
+        )
+        {
+            if (parents == null || !parents.ContainsKey(selected))
+                return false;
+            while (section >= 0 && active(section))
+            {
+                if (section == selected)
+                    return true;
+                if (!parents.TryGetValue(section, out section))
+                    return false;
+            }
+            return false;
+        }
+
+        internal static bool FitsMast(
+            float luff,
+            float rise,
+            float installHeight,
+            float mastHeight,
+            float supportHeight
+        ) =>
+            installHeight <= mastHeight + 0.0001f
+            && installHeight >= luff - 0.0001f
+            && installHeight + rise <= supportHeight + 0.0001f;
+
+        internal static float CollarRadius(LooseFootedSpritsailAssetData data)
+        {
+            float radius = data.CollarInnerRadius;
+            if (!Finite(radius) || radius <= 0)
+                throw new ArgumentException("The snotter requires a measurable inner radius.");
+            return radius;
+        }
+
+        internal static LooseFootedSpritsailPose Pose(
+            LooseFootedSpritsailAssetData data,
+            float baseScale,
+            float height,
+            float width,
+            float mastRadius
+        )
+        {
+            if (
+                !Finite(baseScale)
+                || baseScale <= 0
+                || !Finite(height)
+                || height <= 0
+                || !Finite(width)
+                || width <= 0
+                || !Finite(mastRadius)
+                || mastRadius <= 0
+            )
+                throw new ArgumentException(
+                    "Expected positive finite spritsail fitting dimensions."
+                );
+            var throat = Corner(data: data, index: data.Throat);
+            var clothScale = new Vector3(x: baseScale, y: baseScale * height, z: baseScale * width);
+            var cloth = LooseFootedSpritsailTransform.TRS(
+                pos: new Vector3(
+                    x: 0,
+                    y: -throat.y * clothScale.y,
+                    z: -mastRadius - Clearance - throat.z * clothScale.z
+                ),
+                q: Quaternion.identity,
+                s: clothScale
+            );
+            var snotterOrigin = data.SnotterAssembly.RestTransform.MultiplyPoint3x4(
+                point: Vector3.zero
+            );
+            float hardwareScale = (mastRadius + CollarClearance) / CollarRadius(data: data);
+            var hardware =
+                LooseFootedSpritsailTransform.TRS(
+                    pos: new Vector3(x: 0, y: (snotterOrigin.y - throat.y) * clothScale.y, z: 0),
+                    q: Quaternion.identity,
+                    s: Vector3.one * hardwareScale
+                ) * Matrix4x4.Translate(vector: -snotterOrigin);
+            var hinge = hardware.MultiplyPoint3x4(
+                point: data.Sprit.RestTransform.MultiplyPoint3x4(point: Vector3.zero)
+            );
+            var target =
+                cloth.MultiplyPoint3x4(point: Corner(data: data, index: data.Peak)) - hinge;
+            // The baked peak in spar-local space is a virtual tie point. Retain the authored
+            // gap to the physical tip while mapping that virtual point exactly to the cloth peak.
+            var reference = LooseFootedSpritsailTransform.InversePoint(
+                matrix: data.Sprit.RestTransform,
+                point: Corner(data: data, index: data.Peak)
+            );
+            float thickness = baseScale * (float)Math.Sqrt(height * width);
+            float radialSquared =
+                thickness * thickness * (reference.x * reference.x + reference.y * reference.y);
+            if (Math.Abs(reference.z) < 0.01f || target.sqrMagnitude <= radialSquared)
+                throw new ArgumentException("The fitted peak is too close to the sprit hinge.");
+            var sparScale = new Vector3(
+                x: thickness,
+                y: thickness,
+                z: (float)Math.Sqrt(target.sqrMagnitude - radialSquared) / Math.Abs(reference.z)
+            );
+            var restRotation = LooseFootedSpritsailTransform.Rotation(
+                matrix: data.Sprit.RestTransform
+            );
+            var from = restRotation * Vector3.Scale(a: reference, b: sparScale);
+            var sparRotation =
+                LooseFootedSpritsailTransform.FromTo(from: from, to: target) * restRotation;
+            return new LooseFootedSpritsailPose
+            {
+                Sail = cloth * data.Sail.RestTransform,
+                // Keep the bundled spar seated on the same fitted hinge. Its local axes
+                // and relative cloth/tie placement come directly from the struck asset.
+                Struck = LooseFootedSpritsailTransform.TRS(
+                    pos: hinge,
+                    q: LooseFootedSpritsailTransform.Rotation(matrix: data.Struck.RestTransform),
+                    s: sparScale
+                ),
+                Sprit = LooseFootedSpritsailTransform.TRS(
+                    pos: hinge,
+                    q: sparRotation,
+                    s: sparScale
+                ),
+                SnotterAssembly = hardware * data.SnotterAssembly.RestTransform,
+                RotationPlate = hardware * data.RotationPlate.RestTransform,
+            };
+        }
+
+        internal static float ClampScale(float value) =>
+            Mathf.Clamp(value: value, min: 0.2f, max: 3f);
+
+        internal static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+    }
+
+    internal struct LooseFootedSpritsailPose
+    {
+        internal Matrix4x4 Sail;
+        internal Matrix4x4 Struck;
+        internal Matrix4x4 Sprit;
+        internal Matrix4x4 SnotterAssembly;
+        internal Matrix4x4 RotationPlate;
+    }
+}
