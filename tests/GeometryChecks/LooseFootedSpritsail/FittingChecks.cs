@@ -28,12 +28,30 @@ internal static class FittingChecks
             actual: LooseFootedSpritsailFittingGeometry.TopsailRise(data: cut, scale: 2),
             expected: rise * 2
         );
+        bool Spans(float luff, float height, float support) =>
+            LooseFootedSpritsailFittingGeometry.FitsMast(
+                luff: luff,
+                rise: 4,
+                installHeight: height,
+                mastHeight: 10,
+                supportHeight: support
+            );
+        if (
+            !Spans(8, 10, 14)
+            || Spans(8, 10, 13.99f)
+            || Spans(11, 10, 20)
+            || Spans(8, 10.01f, 20)
+            || Spans(8, 7.99f, 20)
+            || !Spans(8, 8, 12)
+        )
+            throw new Exception("Only the topsail may extend beyond the selected mast.");
         bool Fits(float height, float mast) =>
             LooseFootedSpritsailFittingGeometry.FitsMast(
                 luff: 8,
                 rise: rise,
                 installHeight: height,
-                mastHeight: mast
+                mastHeight: mast,
+                supportHeight: mast
             );
         if (
             !Fits(height: 8, mast: 8 + rise)
@@ -99,6 +117,32 @@ internal static class FittingChecks
 
     internal static void Run()
     {
+        var parents = new System.Collections.Generic.Dictionary<int, int>
+        {
+            { 0, -1 },
+            { 1, 0 },
+            { 2, 1 },
+            { 3, -1 },
+            { 4, 0 },
+        };
+        bool Supports(int selected, int section, int inactive = -1) =>
+            LooseFootedSpritsailFittingGeometry.SupportedSection(
+                parents: parents,
+                selected: selected,
+                section: section,
+                active: index => index != inactive
+            );
+        if (
+            !Supports(0, 2)
+            || !Supports(1, 2)
+            || Supports(1, 4)
+            || Supports(0, 3)
+            || Supports(0, 2, 1)
+            || Supports(0, 2, 2)
+            || Supports(0, 2, 0)
+            || Supports(99, 2)
+        )
+            throw new Exception("Topmast support requires a complete active descendant chain.");
         CheckMirroring();
         CheckMastRadius();
         CheckTopsailFit();

@@ -58,7 +58,12 @@ internal static class CollisionIntegrationChecks
                 bindingAttr: All
             );
             Require(
-                CalledMethods(method: method).Any(m => m.Name == "get_TopsailRise"),
+                CalledMethods(method: method).Any(m => m.Name == "get_TopsailRise")
+                    && CalledMethods(method: method)
+                        .Any(m =>
+                            m.DeclaringType == Find(name: "LooseFootedSpritsailMastSupport")
+                            && m.Name == "Height"
+                        ),
                 "Creation, movement and validation must reserve topsail height: " + patchName
             );
         }

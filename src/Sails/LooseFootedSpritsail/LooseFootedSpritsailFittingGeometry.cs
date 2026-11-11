@@ -65,15 +65,35 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return (top - throat) * scale;
         }
 
+        internal static bool SupportedSection(
+            System.Collections.Generic.IReadOnlyDictionary<int, int> parents,
+            int selected,
+            int section,
+            Func<int, bool> active
+        )
+        {
+            if (parents == null || !parents.ContainsKey(selected))
+                return false;
+            while (section >= 0 && active(section))
+            {
+                if (section == selected)
+                    return true;
+                if (!parents.TryGetValue(section, out section))
+                    return false;
+            }
+            return false;
+        }
+
         internal static bool FitsMast(
             float luff,
             float rise,
             float installHeight,
-            float mastHeight
+            float mastHeight,
+            float supportHeight
         ) =>
-            luff + rise <= mastHeight + 0.0001f
+            installHeight <= mastHeight + 0.0001f
             && installHeight >= luff - 0.0001f
-            && installHeight + rise <= mastHeight + 0.0001f;
+            && installHeight + rise <= supportHeight + 0.0001f;
 
         internal static float CollarRadius(LooseFootedSpritsailAssetData data)
         {

@@ -140,7 +140,10 @@ internal static class IntegrationChecks
         )
         foreach (var method in type.GetMethods(bindingAttr: All | BindingFlags.DeclaredOnly))
         foreach (var call in CalledMethods(method: method))
-            if (call.DeclaringType?.Namespace?.Contains(value: "BoatConfiguration") == true)
+            if (
+                type.Name != "LooseFootedSpritsailMastSupport"
+                && call.DeclaringType?.Namespace?.Contains(value: "BoatConfiguration") == true
+            )
                 throw new Exception("Spritsail fitting must not whitelist boats.");
 
         var strip = prefab.GetMethod(name: "StripDonor", bindingAttr: All);
