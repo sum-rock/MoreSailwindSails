@@ -45,6 +45,8 @@ internal static class SheetFallbackDonorChecks
             (ChronianControls.Definition, "MainmastForward", 4, WinchRole.Left, 0.130912f, 0.6f),
             (ChronianControls.Definition, "Mizzenmast", 6, WinchRole.Left, 0.130912f, 0.6f),
             (CaelanorControls.Definition, "Mainmast", 5, WinchRole.Left, 0.130912f, 0.6f),
+            (CaelanorControls.Definition, "MainmastForward", 5, WinchRole.Left, 0.130912f, 0.6f),
+            (CaelanorControls.Definition, "Stern", 5, WinchRole.Left, 0.130912f, 0.6f),
             (ShroudControls.Definition, "Foremast", 6, WinchRole.Reef, 0.088011f, 1f),
             (ShroudControls.Definition, "Midships", 6, WinchRole.Reef, 0.088011f, 1f),
             (ShroudControls.Definition, "Aft", 6, WinchRole.Reef, 0.088011f, 1f),
@@ -122,7 +124,7 @@ internal static class SheetFallbackDonorChecks
             )
         );
         Console.WriteLine(
-            "PASS: all thirty sheet donor selections, native-scale rear depths, surface contacts and invalid donor configuration."
+            "PASS: all authored sheet donor selections, native-scale rear depths, surface contacts and invalid donor configuration."
         );
     }
 

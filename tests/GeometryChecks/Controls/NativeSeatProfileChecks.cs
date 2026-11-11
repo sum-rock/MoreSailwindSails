@@ -34,8 +34,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 30,
-            "Preserve the thirty authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 32,
+            "Preserve the thirty-two authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
@@ -66,12 +66,11 @@ internal static class NativeSeatProfileChecks
             "Invalid mounting normals must make a fallback unavailable."
         );
         var caelanor = CaelanorControls.Definition;
-        var caelanorPair = caelanor.SheetFallbacks.Single().Fallback;
         Vector3 Reflect(Vector3 value) => new Vector3(-value.x, value.y, value.z);
         foreach (
             var pair in BrigControls
                 .Definition.SheetFallbacks.Select(definition => definition.Fallback)
-                .Append(caelanorPair)
+                .Concat(caelanor.SheetFallbacks.Select(definition => definition.Fallback))
                 .Concat(
                     SanbuqControls.Definition.SheetFallbacks.Select(definition =>
                         definition.Fallback
@@ -134,8 +133,8 @@ internal static class NativeSeatProfileChecks
                 ) < 0.000001f
                 && SheetFallbackOrder
                     .FromBoundary(fallbacks: caelanor.SheetFallbacks, aftBoundaryZ: -2.306270f)
-                    .Count() == 1,
-            "Caelanor must retain its mainmast reef fallback and its aft-eligible sheet pair."
+                    .Count() == 2,
+            "Caelanor must retain its mainmast reef fallback and its two aft-eligible sheet pairs."
         );
         var rows = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
