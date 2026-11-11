@@ -34,6 +34,9 @@ internal static class SheetFallbackDonorChecks
             (LargeDhowControls.Definition, "Stern", 2, WinchRole.Left, 0.054718f, 1.19999981f),
             (SanbuqControls.Definition, "Stern", 12, WinchRole.Left, 0.054718f, 1.19391859f),
             (SanbuqControls.Definition, "Midships", 12, WinchRole.Left, 0.054718f, 1.19391859f),
+            (SanbuqControls.Definition, "MidshipsAft", 12, WinchRole.Left, 0.054718f, 1.19391859f),
+            (SanbuqControls.Definition, "Aft", 12, WinchRole.Left, 0.054718f, 1.19391859f),
+            (SanbuqControls.Definition, "SternAft", 12, WinchRole.Left, 0.054718f, 1.19391859f),
             (CogControls.Definition, "Stern", 8, WinchRole.Left, 0.053125f, 1.05000019f),
             (DhowControls.Definition, "Stern", 6, WinchRole.Left, 0.054718f, 1.16000009f),
             (GlorianaControls.Definition, "Mainmast", 2, WinchRole.Left, 0.130912f, 0.7f),
@@ -119,7 +122,7 @@ internal static class SheetFallbackDonorChecks
             )
         );
         Console.WriteLine(
-            "PASS: all twenty-seven sheet donor selections, native-scale rear depths, surface contacts and invalid donor configuration."
+            "PASS: all thirty sheet donor selections, native-scale rear depths, surface contacts and invalid donor configuration."
         );
     }
 

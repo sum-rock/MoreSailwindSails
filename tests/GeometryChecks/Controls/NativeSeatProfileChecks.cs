@@ -34,8 +34,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 27,
-            "Preserve the twenty-seven authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 30,
+            "Preserve the thirty authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
@@ -73,6 +73,11 @@ internal static class NativeSeatProfileChecks
                 .Definition.SheetFallbacks.Select(definition => definition.Fallback)
                 .Append(caelanorPair)
                 .Concat(
+                    SanbuqControls.Definition.SheetFallbacks.Select(definition =>
+                        definition.Fallback
+                    )
+                )
+                .Concat(
                     ShroudControls.Definition.SheetFallbacks.Select(definition =>
                         definition.Fallback
                     )
@@ -102,7 +107,7 @@ internal static class NativeSeatProfileChecks
                     ).magnitude < 0.000001f
                     && pair.Port.Contact.x < 0
                     && pair.Starboard.Contact.x > 0,
-                "Brig, Caelanor, Gloriana, Chronian, LargeDhow and Shroud sheet contacts, mounting offsets and normals must mirror at the deck centreline."
+                "Brig, Caelanor, Gloriana, Chronian, LargeDhow, Sanbuq and Shroud sheet contacts, mounting offsets and normals must mirror at the deck centreline."
             );
         Check(
             SheetFallbackOrder
