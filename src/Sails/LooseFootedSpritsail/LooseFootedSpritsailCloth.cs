@@ -79,6 +79,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 bool struck = rig.IsStruck;
                 renderer.enabled = !struck;
                 rig.SpritRenderer.enabled = !struck;
+                if (rig.Spar)
+                    rig.Spar.gameObject.SetActive(value: !struck);
                 rig.StruckRenderer.enabled = struck;
                 if (struck)
                 {
@@ -106,6 +108,14 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     return;
                 lastSet = set;
                 Geometry.Pose(deployment: set);
+                if (rig.Spar)
+                {
+                    var spar =
+                        rig.Data.Sail.RestTransform.inverse * Geometry.SparPose(deployment: set);
+                    rig.Spar.localPosition = spar.GetColumn(3);
+                    rig.Spar.localRotation = spar.rotation;
+                    rig.Spar.localScale = spar.lossyScale;
+                }
                 rig.Sprit.localPosition = Geometry.Pivot;
                 rig.Sprit.localRotation = Geometry.Sprit.rotation;
                 rig.Sprit.localScale = Geometry.Sprit.lossyScale;

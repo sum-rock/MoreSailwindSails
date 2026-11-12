@@ -21,6 +21,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal Transform ClothBone;
 
         [SerializeField]
+        internal Transform Spar;
+
+        [SerializeField]
         internal Transform Sprit;
 
         [SerializeField]

@@ -14,6 +14,8 @@ class SpritsailCut:
     generate_cloth_uv: bool = False
     reef_fractions: tuple[float, ...] | None = None
     topsail: bool = False
+    spar: bool = False
+    topsail_hide_frame: int | None = 140
     reef_frames: tuple[int, ...] = (10, 60, 120, 180, 240)
 
 
@@ -41,6 +43,18 @@ CUTS = {
         reef_frames=(40, 60, 120, 140, 160, 160, 220, 280, 340),
         reef_fractions=(0, 0.04, 0.16, 0.2, 0.25, 0.3, 8 / 15, 23 / 30, 1),
         topsail=True,
+    ),
+    "D": SpritsailCut(
+        asset_path=ROOT / "assets/loose_foot_spritsail/loose_foot_spritsail-mkD.blend",
+        source_path=ROOT
+        / "src/Sails/LooseFootedSpritsail/MkD/LooseFootedSpritsailMkDBakedAsset.g.cs",
+        class_name="LooseFootedSpritsailMkDBakedAsset",
+        generate_cloth_uv=True,
+        reef_frames=(40, 60, 80, 120, 150, 150, 151, 180, 210, 240, 270),
+        reef_fractions=(0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.26, 0.4375, 0.625, 0.8125, 1),
+        topsail=True,
+        spar=True,
+        topsail_hide_frame=None,
     ),
 }
 

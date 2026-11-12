@@ -17,6 +17,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal LooseFootedSpritsailMeshPart Struck;
         internal Vector3 StruckReefLineAttachment;
         internal Vector3 StruckSheetLineAttachment;
+        internal LooseFootedSpritsailMeshPart Spar;
         internal LooseFootedSpritsailMeshPart Sprit;
         internal LooseFootedSpritsailMeshPart SnotterAssembly;
         internal LooseFootedSpritsailMeshPart RotationPlate;
@@ -40,6 +41,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
     {
         internal Vector3[] Vertices;
         internal Quaternion SpritRotation;
+        internal Matrix4x4 SparTransform;
     }
 
     internal struct LooseFootedSpritsailMeshPart
