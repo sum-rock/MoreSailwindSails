@@ -173,6 +173,17 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 sail.cloth = renderer.gameObject.AddComponent<Cloth>();
                 sail.cloth.enabled = false;
                 sail.cloth.coefficients = new ClothSkinningCoefficient[clothMesh.vertexCount];
+                if (data.Spar.Vertices != null)
+                {
+                    rig.Spar = NewNode(name: "Topsail spar", parent: rig.ClothBone);
+                    AddHardware(
+                        assets: assets,
+                        node: rig.Spar,
+                        data: data.Spar,
+                        wood: wood,
+                        metal: metal
+                    );
+                }
                 AddHardware(
                     assets: assets,
                     node: rig.Sprit,

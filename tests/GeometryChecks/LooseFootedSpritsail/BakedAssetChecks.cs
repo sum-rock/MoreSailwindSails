@@ -9,6 +9,19 @@ internal static class BakedAssetChecks
 {
     internal static void Run()
     {
+        var d = LooseFootedSpritsailMkDBakedAsset.Create();
+        var dOther = LooseFootedSpritsailMkDBakedAsset.Create();
+        Check(part: d.Sail, other: dOther.Sail);
+        Check(part: d.Spar, other: dOther.Spar);
+        if (
+            !d.HasTopsail
+            || d.ReefPoses.Length != 11
+            || d.ReefFractions[4] != 0.2f
+            || d.ReefFractions[5] != 0.25f
+        )
+            throw new Exception("Mk.D lost its staged topsail reefing.");
+        for (int i = 0; i < d.Sail.Vertices.Length; i++)
+            Near(actual: d.ReefPoses[4].Vertices[i], expected: d.ReefPoses[5].Vertices[i]);
         var b = LooseFootedSpritsailMkBBakedAsset.Create();
         var bOther = LooseFootedSpritsailMkBBakedAsset.Create();
         Check(part: b.Sail, other: bOther.Sail);

@@ -169,6 +169,26 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             return area;
         }
 
+        internal Matrix4x4 SparPose(float deployment)
+        {
+            Samples(deployment: deployment, out int left, out int right, out float blend);
+            var a = data.ReefPoses[left].SparTransform;
+            var b = data.ReefPoses[right].SparTransform;
+            return LooseFootedSpritsailTransform.TRS(
+                pos: Vector3.Lerp(a: a.GetColumn(3), b: b.GetColumn(3), t: blend),
+                q: LooseFootedSpritsailTransform.InterpolateRotation(
+                    a: LooseFootedSpritsailTransform.Rotation(matrix: a),
+                    b: LooseFootedSpritsailTransform.Rotation(matrix: b),
+                    t: blend
+                ),
+                s: Vector3.Lerp(
+                    a: LooseFootedSpritsailTransform.Scale(matrix: a),
+                    b: LooseFootedSpritsailTransform.Scale(matrix: b),
+                    t: blend
+                )
+            );
+        }
+
         private void Samples(float deployment, out int left, out int right, out float blend)
         {
             if (data.ReefFractions != null)

@@ -82,6 +82,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 rig.StruckRenderer.enabled = struck;
                 if (struck)
                 {
+                    if (rig.Spar)
+                        rig.Spar.gameObject.SetActive(value: false);
                     Geometry.Pose(deployment: 0);
                     rig.ReefLineAttachment.position = rig.Struck.TransformPoint(
                         position: rig.Data.StruckReefLineAttachment
@@ -106,6 +108,15 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     return;
                 lastSet = set;
                 Geometry.Pose(deployment: set);
+                if (rig.Spar)
+                {
+                    rig.Spar.gameObject.SetActive(value: Geometry.TopsailVisible);
+                    var spar =
+                        rig.Data.Sail.RestTransform.inverse * Geometry.SparPose(deployment: set);
+                    rig.Spar.localPosition = spar.GetColumn(3);
+                    rig.Spar.localRotation = spar.rotation;
+                    rig.Spar.localScale = spar.lossyScale;
+                }
                 rig.Sprit.localPosition = Geometry.Pivot;
                 rig.Sprit.localRotation = Geometry.Sprit.rotation;
                 rig.Sprit.localScale = Geometry.Sprit.lossyScale;

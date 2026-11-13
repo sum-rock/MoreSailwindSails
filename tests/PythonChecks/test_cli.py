@@ -232,8 +232,8 @@ def test_spritsail_rejects_unauthored_cuts():
     from tools.assets.loose_foot_spritsail_authoring import get_cut
 
     result = CliRunner().invoke(
-        main, ["assets", "bake", "loose_foot_spritsail", "--cut", "D"]
+        main, ["assets", "bake", "loose_foot_spritsail", "--cut", "E"]
     )
     assert result.exit_code == 2
     with pytest.raises(ValueError, match="Unsupported loose footed spritsail cut"):
-        get_cut("D")
+        get_cut("E")

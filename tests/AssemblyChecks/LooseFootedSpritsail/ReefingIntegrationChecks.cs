@@ -31,6 +31,10 @@ internal static class ReefingIntegrationChecks
                     .Any(i => i.Operand is FieldInfo f && f.Name == "ReefPoses"),
             "Native deployment must drive the authored cloth poses."
         );
+        Check(
+            Calls(type: cloth, method: "Refresh", name: "get_TopsailVisible"),
+            "The topsail spar must follow topsail visibility during reefing."
+        );
         var prefab = Family(name: "LooseFootedSpritsailPrefab");
         Check(
             Calls(type: cloth, method: "Refresh", name: "get_IsStruck")

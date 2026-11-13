@@ -19,6 +19,16 @@ internal static class IntegrationChecks
         Type Type(string name) => assembly.GetType(name: Family + name, throwOnError: true);
         var prefab = Type("LooseFootedSpritsailPrefab");
         var rig = Type("LooseFootedSpritsailRig");
+        foreach (string fieldName in new[] { "Sprit", "Spar" })
+        {
+            var field = rig.GetField(name: fieldName, bindingAttr: All);
+            if (
+                !field
+                    .GetCustomAttributesData()
+                    .Any(a => a.AttributeType.FullName == "UnityEngine.SerializeField")
+            )
+                throw new Exception($"Spritsail {fieldName} must survive Unity prefab cloning.");
+        }
         var assets = Type("LooseFootedSpritsailAssets");
         var cutC = Type("MkC.LooseFootedSpritsailMkC");
         if ((int)cutC.GetField(name: "PrefabIndex", bindingAttr: All).GetRawConstantValue() != 406)

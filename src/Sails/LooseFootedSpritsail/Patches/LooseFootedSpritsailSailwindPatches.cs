@@ -3,6 +3,7 @@ using HarmonyLib;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkA;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkB;
 using MoreSailwindSails.Sails.LooseFootedSpritsail.MkC;
+using MoreSailwindSails.Sails.LooseFootedSpritsail.MkD;
 using UnityEngine;
 
 namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
@@ -18,6 +19,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
             LooseFootedSpritsailMkA.Register(directory: __instance);
             LooseFootedSpritsailMkB.Register(directory: __instance);
             LooseFootedSpritsailMkC.Register(directory: __instance);
+            LooseFootedSpritsailMkD.Register(directory: __instance);
         }
     }
 
@@ -31,6 +33,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
             LooseFootedSpritsailMkA.AddToShipyard(shipyard: __instance);
             LooseFootedSpritsailMkB.AddToShipyard(shipyard: __instance);
             LooseFootedSpritsailMkC.AddToShipyard(shipyard: __instance);
+            LooseFootedSpritsailMkD.AddToShipyard(shipyard: __instance);
         }
     }
 
@@ -43,6 +46,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
             LooseFootedSpritsailMkA.AddToShipyard(shipyard: __instance);
             LooseFootedSpritsailMkB.AddToShipyard(shipyard: __instance);
             LooseFootedSpritsailMkC.AddToShipyard(shipyard: __instance);
+            LooseFootedSpritsailMkD.AddToShipyard(shipyard: __instance);
         }
     }
 
