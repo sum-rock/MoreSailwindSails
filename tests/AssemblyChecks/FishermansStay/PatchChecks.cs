@@ -21,6 +21,30 @@ internal static class PatchChecks
                     method,
                     BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic
                 );
+        var anchor = StayMethod("Anchor", "Postfix");
+        var anchorCalls = CalledMethods(anchor).ToArray();
+        if (
+            !anchorCalls.Any(m => m.Name == "TryFind")
+            || !anchorCalls.Any(m => m.Name == "InverseTransformPoint")
+            || !anchorCalls.Any(m => m.Name == "set_connectedAnchor")
+            || anchorCalls.Any(m => m.Name == "get_localPosition")
+        )
+            throw new Exception(
+                "Stay attachment must scope hinge correction to registered stays and use rigidbody coordinates."
+            );
+        var stay = assembly.GetType(stayNamespace + "FishermansStay", throwOnError: true);
+        const BindingFlags instance = BindingFlags.Instance | BindingFlags.NonPublic;
+        var create = stay.GetMethod("Create", instance);
+        if (
+            !Instructions(create).Any(i => i.Operand is FieldInfo f && f.Name == "boatModel")
+            || !CalledMethods(create).Any(m => m.Name == "SetParent")
+            // Only the walking frame's scale should be updated during placement.
+            || CalledMethods(stay.GetMethod("Place", instance))
+                .Count(m => m.Name == "set_localScale") != 1
+        )
+            throw new Exception(
+                "Stay mounts must join the boat model without resetting their preserved scale."
+            );
         foreach (string name in new[] { "Registration", "SaveCapacity", "MountButtons" })
             if (
                 !StayMethod(name, "Postfix")

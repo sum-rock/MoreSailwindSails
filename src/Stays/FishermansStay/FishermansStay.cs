@@ -59,11 +59,13 @@ namespace MoreSailwindSails.Stays.FishermansStay
         internal void Create(Mesh ropeMesh, Mesh collarMesh)
         {
             var definition = references.Definition;
-            // Native hinges use the mount's boat-local position as their anchor.
+            // Preserve the root-relative scale, then join the native rigging hierarchy
+            // so boat-model scans (including VirtualCrew) can discover this mount.
             var root = NewInactive(
                 $"FishermansStay {definition.MountIndex} {definition.Label}",
                 boat.transform
             );
+            root.transform.SetParent(parent: boat.boatModel, worldPositionStays: true);
             Mount = root.AddComponent<Mast>();
             Mount.orderIndex = definition.MountIndex;
             Mount.maxSails = 1;
@@ -207,7 +209,6 @@ namespace MoreSailwindSails.Stays.FishermansStay
             );
             bool moved = Mount.transform.position != aft || Mount.transform.rotation != rotation;
             Mount.transform.SetPositionAndRotation(aft, rotation);
-            Mount.transform.localScale = Vector3.one;
             Mount.mastHeight = span;
             // The sail checker's walking frame mirrors the boat model, whose import frame
             // can differ from the rigidbody root (including a 90-degree rotation).

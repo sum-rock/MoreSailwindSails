@@ -108,8 +108,8 @@ internal static class HarmonySignatureChecks
                 count++;
             }
         }
-        if (count != 83)
-            throw new Exception($"Expected all 83 patch targets, found {count}.");
+        if (count != 84)
+            throw new Exception($"Expected all 84 patch targets, found {count}.");
 
         Console.WriteLine($"PASS: {count} Harmony targets and injected argument types.");
     }
