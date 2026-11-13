@@ -112,6 +112,14 @@ Loose Footed Spritsails are boomless sails supported by a diagonal wooden spar.
 Choose Mk.A or Mk.B for a main sail, or Mk.C for a sail with an added topsail.
 These sails are introduced in 4.0.0.
 
+<p align="center">
+  <a href="images/baghala-spritsail.png"><img src="images/baghala-spritsail.png" width="48%" alt="Baghala fitted with spritsails"></a>
+  <a href="images/cog-spritsail.png"><img src="images/cog-spritsail.png" width="48%" alt="Cog fitted with spritsails"></a>
+  <br>
+  <a href="images/junk-spritsail.png"><img src="images/junk-spritsail.png" width="48%" alt="Junk fitted with spritsails"></a>
+  <a href="images/kakam-spritsail.png"><img src="images/kakam-spritsail.png" width="48%" alt="Kakam fitted with spritsails"></a>
+</p>
+
 ### Mast support
 
 Loose Footed Spritsails can be selected on any physical mast, including on
