@@ -14,12 +14,9 @@ MoreSailwindSails adds three families of sails to Sailwind:
 Jump to [Fisherman's Sail](#fishermans-sail) or [Spritsail](#spritsail) for boat
 support, fitting and sailing instructions.
 
-### Current versions
+### Current release
 
-**Latest release:** 0.3.1
-
-**Upcoming release:** 4.0.0, introducing Loose Footed Spritsails. The spritsail
-instructions below apply to 4.0.0.
+**Current release:** 4.0.0, introducing Loose Footed Spritsails.
 
 See the [changelog](#changelog).
 
@@ -158,18 +155,18 @@ placements are needed.
 responsible for damage, data loss, or other issues affecting your computer,
 game, or save files from using this mod. Back up your saves before installing.
 
-- Built against **Sailwind 0.39**
-- **BepInEx 5**
+- Developed against **Sailwind 0.40.1**
+- Requires **BepInEx 5**; developed against **5.4.23.5**.
 
-**Optional mods:**
+**Optional mods (development versions):**
 
-- **Shipyard Expansion 0.12^** for additional rigging and shipyard controls.
+- **Shipyard Expansion 0.12.2** for additional rigging and shipyard controls.
   Starting with 0.3.0, it is no longer required to load MoreSailwindSails, but
   some boat fittings still need its parts (see
   [supported boats](#supported-boats)).
-- **SailInfo** for control hover labels and sail information; integration was
-  checked against version **1.2.1**.
-- **Shattered Seas Expansion** or **OldChronian** for their respective boats.
+- **SailInfo 1.2.1** for control hover labels and sail information.
+- **Shattered Seas Expansion 0.1.3** or **OldChronian 0.6.0** for their
+  respective boats.
 
 1. Download `MoreSailwindSails.dll` from the
    [release page](https://github.com/sum-rock/MoreSailwindSails/releases).
@@ -200,6 +197,22 @@ Before uninstalling, remove all sails and rigging added by MoreSailwindSails
 fitted sails before removing the stays or masts that support them.
 
 ## Changelog
+
+### 4.0.0
+
+- Added **Loose Footed Spritsails** with four variations.
+- **VirtualCrew can now discover Fisherman's Stays and their fitted sails.**
+  Updated sail hinge anchors to preserve correct attachment under the boat
+  model.
+- **Fisherman's Staysails can now share a mast with gaffs or spritsails whose
+  spars cross the staysail cloth**, provided their luffs do not touch or
+  overlap.
+- Added **two sheet-winch fallback pairs on Brig, three on Sanbuq and two on
+  Caelanor**, providing more control positions for crowded sail plans.
+- Guarded native control attachment against missing or occupied winch slots,
+  preserving existing sail controls while assigning Flying Sail controls.
+- Fixed **SailInfo's optional winch coloring during loading** attempting to
+  access unavailable winch slots for sails managed by the mod.
 
 ### 0.3.1
 
