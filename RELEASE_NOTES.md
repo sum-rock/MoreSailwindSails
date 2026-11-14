@@ -1,4 +1,4 @@
-# MoreSailwindSails 4.0.0
+# MoreSailwindSails 0.4.0
 
 - Added **Loose Footed Spritsails** with four variations.
 - **VirtualCrew can now discover Fisherman's Stays and their fitted sails.**

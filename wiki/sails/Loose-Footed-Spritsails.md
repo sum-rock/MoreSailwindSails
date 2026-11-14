@@ -5,7 +5,7 @@ luff is tied to the mast; a wooden sprit supports the peak from a snotter
 assembly around the mast. The sprit and snotter turn with the sail, while the
 rotation plate remains fixed in the mast frame.
 
-Loose Footed Spritsails are introduced in **4.0.0**. This page describes that
+Loose Footed Spritsails are introduced in **0.4.0**. This page describes that
 release's feature implementation. Source links point to the inspected
 implementation at revision
 [`e00d024`](https://github.com/sum-rock/MoreSailwindSails/tree/e00d0247302d2ad070fd1e206bc1fe0155a48722),

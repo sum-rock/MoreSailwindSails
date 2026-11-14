@@ -16,7 +16,7 @@ support, fitting and sailing instructions.
 
 ### Current release
 
-**Current release:** 4.0.0, introducing Loose Footed Spritsails.
+**Current release:** 0.4.0, introducing Loose Footed Spritsails.
 
 See the [changelog](#changelog).
 
@@ -198,7 +198,7 @@ fitted sails before removing the stays or masts that support them.
 
 ## Changelog
 
-### 4.0.0
+### 0.4.0
 
 - Added **Loose Footed Spritsails** with four variations.
 - **VirtualCrew can now discover Fisherman's Stays and their fitted sails.**
