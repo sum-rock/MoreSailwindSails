@@ -7,6 +7,26 @@ using Object = UnityEngine.Object;
 
 namespace MoreSailwindSails.Stays.FishermansStay.Patches
 {
+    // Native attachment assumes the mast's parent is the rigidbody frame.
+    // Our mounts live beneath the boat model, which may have a different import frame.
+    [HarmonyPatch(typeof(Mast), "AttachSailToMast")]
+    internal static class FishermansStayAnchorPatch
+    {
+        [HarmonyPostfix]
+        private static void Postfix(Mast __instance, GameObject sailObject)
+        {
+            if (!FishermansStayRegistry.TryFind(mount: __instance, stay: out _))
+                return;
+            var hinge = sailObject.GetComponent<HingeJoint>();
+            hinge.autoConfigureConnectedAnchor = false;
+            hinge.connectedAnchor = __instance.shipRigidbody.transform.InverseTransformPoint(
+                position: __instance.transform.position
+            );
+            // Fisherman's sails subsequently refine this to their forward-mast pivot;
+            // vanilla staysails fitted here retain the native mount-origin anchor.
+        }
+    }
+
     // Extends the native parts panel only when SE is not supplying its own pages.
     [HarmonyPatch(typeof(ShipyardUI), "RefreshPartsPanel")]
     internal static class FishermansStayPartsPagesPatch
