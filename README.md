@@ -80,11 +80,13 @@ Mk.A and Mk.B have only the mainsail portion. Mk.C and Mk.D have both a mainsail
 and topsail.
 
 <p align="center">
-  <a href="images/baghala-spritsail.png"><img src="images/baghala-spritsail.png" width="48%" alt="Baghala fitted with spritsails"></a>
-  <a href="images/cog-spritsail.png"><img src="images/cog-spritsail.png" width="48%" alt="Cog fitted with spritsails"></a>
+  <a href="images/baghala-spritsail.png"><img src="images/baghala-spritsail.png" width="32%" alt="Baghala fitted with spritsails"></a>
+  <a href="images/cog-spritsail.png"><img src="images/cog-spritsail.png" width="32%" alt="Cog fitted with spritsails"></a>
+  <a href="images/junk-spritsail.png"><img src="images/junk-spritsail.png" width="32%" alt="Junk fitted with spritsails"></a>
   <br>
-  <a href="images/junk-spritsail.png"><img src="images/junk-spritsail.png" width="48%" alt="Junk fitted with spritsails"></a>
-  <a href="images/kakam-spritsail.png"><img src="images/kakam-spritsail.png" width="48%" alt="Kakam fitted with spritsails"></a>
+  <a href="images/kakam-spritsail.png"><img src="images/kakam-spritsail.png" width="32%" alt="Kakam fitted with spritsails"></a>
+  <a href="images/brig-spritsail.png"><img src="images/brig-spritsail.png" width="32%" alt="Brig fitted with spritsails"></a>
+  <a href="images/sanbuq-spritsail.png"><img src="images/sanbuq-spritsail.png" width="32%" alt="Sanbuq fitted with spritsails"></a>
 </p>
 
 ### Bad tack
