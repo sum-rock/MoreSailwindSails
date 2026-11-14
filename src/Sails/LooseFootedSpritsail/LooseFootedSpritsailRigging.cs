@@ -262,13 +262,18 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             );
         }
 
-        private void ReleaseControls()
+        private void HideControls()
         {
             SetSheetsActive(active: false);
             if (Reef)
                 Reef.gameObject.SetActive(value: false);
             ropes?.Hide();
             reefGuide = null;
+        }
+
+        private void ReleaseControls()
+        {
+            HideControls();
             if (boat)
                 WinchControls.Unregister(boat: boat, owner: gameObject, consumer: this);
             leftWinch?.Retire();
@@ -277,13 +282,18 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             leftWinch = rightWinch = reefWinch = null;
         }
 
-        private void OnDisable() => ReleaseControls();
+        // Keep controllers in place during hierarchy activation changes. The allocator
+        // releases inactive requests on its next update, when reparenting is safe.
+        private void OnDisable() => HideControls();
 
         private void OnDestroy()
         {
-            ReleaseControls();
-            // The allocator detaches controllers to the boat before retiring winches.
-            // They remain hidden across disables, and must be explicitly destroyed here.
+            HideControls();
+            // Final disposal releases claims without rescuing ropes into a dying boat.
+            leftWinch?.Dispose();
+            rightWinch?.Dispose();
+            reefWinch?.Dispose();
+            // Controllers may have been detached to the boat during live placement.
             if (Left)
                 Destroy(obj: Left.gameObject);
             if (Right)

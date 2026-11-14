@@ -142,15 +142,40 @@ internal static class SailingIntegrationChecks
         );
 
         foreach (string lifecycle in new[] { "OnDisable", "OnDestroy" })
+        {
+            var calls = CalledMethods(method: rigging.GetMethod(name: lifecycle, bindingAttr: All))
+                .ToArray();
             Check(
-                Calls(type: rigging, method: lifecycle, called: "ReleaseControls"),
-                "Sheets must release claims on " + lifecycle
+                calls.Any(m => m.Name == "HideControls")
+                    && !calls.Any(m => m.Name is "ReleaseControls" or "Retire" or "Unregister"),
+                "Spritsail " + lifecycle + " must not reparent controllers during teardown."
             );
+        }
+        var hidden = CalledMethods(
+                method: rigging.GetMethod(name: "HideControls", bindingAttr: All)
+            )
+            .ToArray();
+        Check(
+            hidden.Any(m => m.Name == "SetSheetsActive")
+                && hidden.Any(m => m.Name == "SetActive")
+                && hidden.Any(m => m.Name == "Hide")
+                && !hidden.Any(m =>
+                    m.Name
+                        is "ReleaseControls"
+                            or "Unregister"
+                            or "Retire"
+                            or "Dispose"
+                            or "SetParent"
+                ),
+            "Disabling must hide ropes while retaining controls for the allocator's next update."
+        );
         Check(
             Calls(type: rigging, method: "ReleaseControls", called: "Unregister")
                 && Calls(type: rigging, method: "OnDestroy", called: "Destroy")
+                && CalledMethods(method: rigging.GetMethod(name: "OnDestroy", bindingAttr: All))
+                    .Count(m => m.DeclaringType.Name == "OwnedWinch" && m.Name == "Dispose") == 3
                 && Calls(type: rigging, method: "ReleaseControls", called: "Retire"),
-            "Claims must be released and externally parented controllers destroyed with their owner."
+            "Live release must preserve controllers; destruction must dispose all three winches and destroy external controllers."
         );
         Check(
             rigging

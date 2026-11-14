@@ -229,8 +229,8 @@ namespace MoreSailwindSails.Stays.FishermansStay
 
         internal void Destroy()
         {
-            if (Mount && controlRig != null)
-                WinchControls.Unregister(boat: boat, owner: Mount.gameObject, consumer: controlRig);
+            // Disposal removes the group; live unregistration would rescue its ropes
+            // into the boat even when this is called during boat destruction.
             foreach (var control in controls)
                 control.Dispose();
             controls.Clear();
