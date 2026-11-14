@@ -137,7 +137,8 @@ internal static class ReefingIntegrationChecks
             "Mast routes must shorten as the sprit rises."
         );
         Check(
-            Calls(type: rigging, method: "ReleaseControls", name: "Hide"),
+            Calls(type: rigging, method: "ReleaseControls", name: "HideControls")
+                && Calls(type: rigging, method: "HideControls", name: "Hide"),
             "Unavailable controls must hide their routed ropes."
         );
 

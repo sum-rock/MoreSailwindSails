@@ -390,9 +390,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
     {
         // Mast schedules this native reset after attachment. The rig has already set
         // its own neutral pivot; toggling it again would retire freshly placed sheets.
+        // The delayed callback can outlive its component, so check Unity lifetime first.
         [HarmonyPrefix]
         private static bool Prefix(JibAngleMaster __instance) =>
-            !__instance.GetComponent<LooseFootedSpritsailRig>();
+            __instance && !__instance.GetComponent<LooseFootedSpritsailRig>();
     }
 
     [HarmonyPatch(typeof(JibAngleMaster), "Update")]

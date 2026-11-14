@@ -203,7 +203,7 @@ internal static class WinchChecks
         )
             Check(
                 CalledMethods(cleanup).Any(m => m.DeclaringType == owned && m.Name == "Dispose")
-                    && !CalledMethods(cleanup).Any(m => m.Name == "Retire"),
+                    && !CalledMethods(cleanup).Any(m => m.Name is "Retire" or "Unregister"),
                 cleanup.DeclaringType.Name + " must use final disposal during destruction."
             );
         Check(
