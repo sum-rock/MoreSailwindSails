@@ -1,5 +1,6 @@
 // Exercises neutral mast fitting, independent resizing, rigid hardware and attachment preservation.
 using System;
+using MoreSailwindSails.BoatConfiguration.Boats;
 using MoreSailwindSails.Sails.LooseFootedSpritsail;
 using UnityEngine;
 
@@ -7,6 +8,45 @@ namespace MoreSailwindSails.Tests.GeometryChecks.LooseFootedSpritsail;
 
 internal static class FittingChecks
 {
+    private static void CheckShBaSupport()
+    {
+        // Installed fore and main topmasts must support only their matching base option.
+        foreach (
+            var pair in new[]
+            {
+                (Top: 25, Base: 0),
+                (Top: 26, Base: 1),
+                (Top: 27, Base: 2),
+                (Top: 28, Base: 3),
+            }
+        )
+        {
+            for (int selected = 0; selected <= 5; selected++)
+            {
+                bool supported = LooseFootedSpritsailFittingGeometry.SupportedSection(
+                    parents: ShBa.Definition.MastParents,
+                    selected: selected,
+                    section: pair.Top,
+                    active: index => true
+                );
+                if (supported != (selected == pair.Base))
+                    throw new Exception("Sh'ba topsails require the matching physical base mast.");
+            }
+            foreach (int inactive in new[] { pair.Base, pair.Top })
+                if (
+                    LooseFootedSpritsailFittingGeometry.SupportedSection(
+                        parents: ShBa.Definition.MastParents,
+                        selected: pair.Base,
+                        section: pair.Top,
+                        active: index => index != inactive
+                    )
+                )
+                    throw new Exception(
+                        "Sh'ba topsail support requires both mast sections active."
+                    );
+        }
+    }
+
     private static void CheckTopsailFit()
     {
         foreach (
@@ -146,6 +186,7 @@ internal static class FittingChecks
         CheckMirroring();
         CheckMastRadius();
         CheckTopsailFit();
+        CheckShBaSupport();
         var data = LooseFootedSpritsailMkABakedAsset.Create();
         float scale = LooseFootedSpritsailFittingGeometry.BaseScale(
             data: data,
