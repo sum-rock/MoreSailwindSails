@@ -15,6 +15,7 @@ internal static class ClothChecks
         CheckMkC();
         CheckAllClearances();
         CheckTimeline();
+        CheckFurlTransitions();
         CheckSamples(data: data);
         CheckSamples(data: LooseFootedSpritsailMkBBakedAsset.Create());
         float scale = LooseFootedSpritsailFittingGeometry.BaseScale(
@@ -152,6 +153,54 @@ internal static class ClothChecks
         Console.WriteLine(
             "PASS: spritsail authored cloth across independent sizes, deployments and rakes; rigid sprit, authored poses, reversibility and spar-only clearance across all three cuts."
         );
+    }
+
+    private static void CheckFurlTransitions()
+    {
+        foreach (
+            var data in new[]
+            {
+                LooseFootedSpritsailMkABakedAsset.Create(),
+                LooseFootedSpritsailMkBBakedAsset.Create(),
+                LooseFootedSpritsailMkCBakedAsset.Create(),
+                LooseFootedSpritsailMkDBakedAsset.Create(),
+            }
+        )
+        {
+            var rest = LooseFootedSpritsailFittingGeometry.Pose(
+                data: data,
+                baseScale: 1,
+                height: 1,
+                width: 1,
+                mastRadius: 0.3f
+            );
+            var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: rest);
+            cloth.Pose(deployment: 1);
+            var deployed = (Vector3[])cloth.Vertices.Clone();
+            var sheet = cloth.Vertices[data.SheetVertex];
+            for (int cycle = 0; cycle < 2; cycle++)
+            {
+                cloth.Pose(deployment: 0);
+                Check(!cloth.TopsailVisible, "Furling must hide the topsail.");
+                cloth.Pose(deployment: 1);
+                Check(
+                    cloth.TopsailVisible == data.HasTopsail,
+                    "Unfurling must restore the cut's topsail visibility."
+                );
+                Near(
+                    actual: cloth.Vertices[data.SheetVertex],
+                    expected: sheet,
+                    message: "Unfurling must restore the deployed sheet attachment."
+                );
+                for (int i = 0; i < deployed.Length; i++)
+                    Near(
+                        actual: cloth.Vertices[i],
+                        expected: deployed[i],
+                        message: "Repeated furl toggles must restore the deployed cloth."
+                    );
+            }
+            CheckClearance(data: data, rest: rest, cloth: cloth);
+        }
     }
 
     private static void CheckMkC()

@@ -77,6 +77,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
                 return;
             var sail = rig.Sail;
             var mast = __instance.GetCurrentMast();
+            // Start new previews open; subsequent shipyard furl actions own deployment.
+            sail.currentUnroll = 1;
             sail.ChangeSailColor(newColor: 11);
             sail.LoadScale(y: 1, z: 1);
             sail.ChangeInstallHeight(

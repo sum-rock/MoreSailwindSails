@@ -43,7 +43,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         [SerializeField]
         internal int StruckClothMaterialIndex;
-        internal bool IsStruck => Sail.IsInstalled() && Sail.currentUnroll <= 0.001f;
+        internal bool IsStruck => Sail.currentUnroll <= 0.001f;
 
         [SerializeField]
         internal Transform ReefLineAttachment;

@@ -33,6 +33,11 @@ internal static class IlReader
                 key = (ushort)(0xfe00 | reader.ReadByte());
             var code = opcodes[key];
             var operand = code.OperandType;
+            if (operand == OperandType.ShortInlineR)
+            {
+                yield return (code, reader.ReadSingle());
+                continue;
+            }
             if (operand == OperandType.InlineString)
             {
                 yield return (code, method.Module.ResolveString(reader.ReadInt32()));
