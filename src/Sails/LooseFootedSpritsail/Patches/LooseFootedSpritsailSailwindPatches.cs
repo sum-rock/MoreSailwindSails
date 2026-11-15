@@ -50,21 +50,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         }
     }
 
-    [HarmonyPatch(typeof(ShipyardUI), "SailMastCompatible")]
-    internal static class SpritsailMastCompatiblePatch
-    {
-        [HarmonyPrefix]
-        private static bool Prefix(GameObject sailPrefab, ref bool __result)
-        {
-            if (!sailPrefab.GetComponent<LooseFootedSpritsailRig>())
-                return true;
-            __result =
-                GameState.currentShipyard
-                && GameState.currentShipyard.sailInstaller.GetCurrentMast();
-            return false;
-        }
-    }
-
     [HarmonyPatch(typeof(ShipyardSailInstaller), "AddNewSail")]
     internal static class SpritsailNewSailPatch
     {
