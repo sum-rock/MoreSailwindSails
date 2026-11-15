@@ -107,7 +107,6 @@ internal static class IntegrationChecks
         foreach (
             string patch in new[]
             {
-                "SpritsailMastCompatiblePatch",
                 "SpritsailHeightPatch",
                 "SpritsailScalePatch",
                 "SpritsailAreaPatch",
@@ -133,16 +132,37 @@ internal static class IntegrationChecks
             )
                 throw new Exception(patch + " affects unrelated sails.");
         }
-        var compatible = Type("Patches.SpritsailMastCompatiblePatch")
-            .GetMethod(name: "Prefix", bindingAttr: All);
         if (
-            Instructions(method: compatible)
-                .Any(i =>
-                    i.Operand is FieldInfo f
-                    && (f.Name == "onlySquareSails" || f.Name == "onlyStaysails")
+            assembly
+                .GetTypes()
+                .Where(t => t.Namespace?.StartsWith(value: Family.TrimEnd('.')) == true)
+                .SelectMany(t => t.GetCustomAttributes<HarmonyPatch>())
+                .Any(p =>
+                    p.info.declaringType?.Name == "ShipyardUI"
+                    && p.info.methodName == "SailMastCompatible"
                 )
         )
-            throw new Exception("Spritsails must not depend on category-only mast restrictions.");
+            throw new Exception("Spritsails must use native mast compatibility restrictions.");
+        int categoryStore = Array.FindIndex(
+            array: instructions,
+            match: i =>
+                i.Code == OpCodes.Stfld
+                && i.Operand is FieldInfo f
+                && f.DeclaringType.Name == "Sail"
+                && f.Name == "category"
+        );
+        if (
+            categoryStore <= 0
+            || !new CodeInstruction(opcode: instructions[categoryStore - 1].Code).LoadsConstant(
+                Convert.ToInt64(
+                    Enum.Parse(
+                        enumType: ((FieldInfo)instructions[categoryStore].Operand).FieldType,
+                        value: "other"
+                    )
+                )
+            )
+        )
+            throw new Exception("Spritsails must retain the native Other sail category.");
         foreach (
             var type in assembly
                 .GetTypes()
@@ -242,7 +262,7 @@ internal static class IntegrationChecks
         )
             throw new Exception("Native saved sail sizing no longer uses LoadScale.");
         Console.WriteLine(
-            "PASS (structural): spritsail registration, universal mast compatibility, scoped sailing patches, native controller retention, asset cleanup, plain textures and native save sizing."
+            "PASS (structural): spritsail registration, native mast compatibility and Other category, scoped sailing patches, native controller retention, asset cleanup, plain textures and native save sizing."
         );
         SailingIntegrationChecks.Run(assembly: assembly);
     }

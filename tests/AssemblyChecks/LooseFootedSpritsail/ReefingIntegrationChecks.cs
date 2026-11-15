@@ -32,6 +32,29 @@ internal static class ReefingIntegrationChecks
             "Native deployment must drive the authored cloth poses."
         );
         Check(
+            !Calls(type: cloth, method: "Refresh", name: "IsInstalled")
+                && !Calls(type: rig, method: "get_IsStruck", name: "IsInstalled")
+                && Instructions(method: rig.GetMethod(name: "get_IsStruck", bindingAttr: All))
+                    .Any(i => i.Operand is FieldInfo f && f.Name == "currentUnroll"),
+            "Uninstalled previews must honor native deployment and show the struck bundle when furled."
+        );
+        var newSail = Instructions(
+                method: Family(name: "Patches.SpritsailNewSailPatch")
+                    .GetMethod(name: "Postfix", bindingAttr: All)
+            )
+            .ToArray();
+        int deploymentInitialization = Array.FindIndex(
+            array: newSail,
+            match: i =>
+                i.Code == OpCodes.Stfld && i.Operand is FieldInfo f && f.Name == "currentUnroll"
+        );
+        Check(
+            deploymentInitialization > 0
+                && newSail[deploymentInitialization - 1].Code == OpCodes.Ldc_R4
+                && (float)newSail[deploymentInitialization - 1].Operand == 1f,
+            "New spritsail previews must start fully open despite the furled prefab default."
+        );
+        Check(
             Calls(type: cloth, method: "Refresh", name: "get_TopsailVisible"),
             "The topsail spar must follow topsail visibility during reefing."
         );

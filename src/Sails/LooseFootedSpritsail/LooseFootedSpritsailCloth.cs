@@ -95,8 +95,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     return;
                 }
                 rig.ReefLineAttachment.localPosition = rig.Data.ReefLineAttachment;
-                bool preview = !rig.Sail.IsInstalled();
-                float set = preview ? 1 : Mathf.Clamp01(value: rig.Sail.currentUnroll);
+                float set = Mathf.Clamp01(value: rig.Sail.currentUnroll);
                 if (windFrame != Time.frameCount)
                 {
                     windFrame = Time.frameCount;
