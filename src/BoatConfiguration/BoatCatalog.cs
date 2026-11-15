@@ -18,6 +18,7 @@ namespace MoreSailwindSails.BoatConfiguration
                 Sanbuq.Definition,
                 Cog.Definition,
                 Shroud.Definition,
+                ShBa.Definition,
                 LargeDhow.Definition,
                 Gloriana.Definition,
                 Chronian.Definition,
