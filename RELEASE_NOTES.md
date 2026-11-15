@@ -1,15 +1,12 @@
-# MoreSailwindSails 0.4.0
+# MoreSailwindSails 0.4.1
 
-- Added **Loose Footed Spritsails** with four variations.
-- **VirtualCrew can now discover Fisherman's Stays and their fitted sails.**
-  Updated sail hinge anchors to preserve correct attachment under the boat
-  model.
-- **Fisherman's Staysails can now share a mast with gaffs or spritsails whose
-  spars cross the staysail cloth**, provided their luffs do not touch or
-  overlap.
-- Added **two sheet-winch fallback pairs on Brig, three on Sanbuq and two on
-  Caelanor**, providing more control positions for crowded sail plans.
-- Guarded native control attachment against missing or occupied winch slots,
-  preserving existing sail controls while assigning Flying Sail controls.
-- Fixed **SailInfo's optional winch coloring during loading** attempting to
-  access unavailable winch slots for sails managed by the mod.
+- Fixed **spritsail centers of effort staying stale when resizing sails in the
+  shipyard**. Centers now refresh after fitting and cloth posing, including
+  independent height and width changes for all four cuts.
+- Fixed **spritsail furling and unfurling in shipyard previews**, including
+  restoring topsails.
+- Restored **native mount restrictions for spritsails**. They now follow the
+  same fitting restrictions as gaff sails, preventing installation on stays and
+  square-only mounts.
+- Added **Sh’ba spritsail topsail support**, allowing the mainsail to use a base
+  mast while its topsail uses the matching fitted topmast.
