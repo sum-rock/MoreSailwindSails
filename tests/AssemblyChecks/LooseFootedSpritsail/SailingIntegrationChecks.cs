@@ -141,6 +141,26 @@ internal static class SailingIntegrationChecks
             "Aerodynamics and collision travel must use the custom fitted geometry."
         );
 
+        foreach (string update in new[] { "Refresh", "LateUpdate" })
+        {
+            var calls = CalledMethods(method: rig.GetMethod(name: update, bindingAttr: All))
+                .ToArray();
+            int pose = Array.FindLastIndex(
+                array: calls,
+                match: m =>
+                    m.DeclaringType == Family(name: "LooseFootedSpritsailCloth")
+                    && m.Name == "Refresh"
+            );
+            int center = Array.FindLastIndex(
+                array: calls,
+                match: m => m.Name == "RefreshAerodynamics"
+            );
+            Check(
+                pose >= 0 && center > pose,
+                "Fitting and visual updates must refresh the effort center after posing cloth, even outside sailing."
+            );
+        }
+
         foreach (string lifecycle in new[] { "OnDisable", "OnDestroy" })
         {
             var calls = CalledMethods(method: rigging.GetMethod(name: lifecycle, bindingAttr: All))

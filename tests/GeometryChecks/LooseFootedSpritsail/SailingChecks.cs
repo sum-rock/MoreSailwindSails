@@ -142,6 +142,7 @@ internal static class SailingChecks
         ClothChecks.Run();
         FlutterChecks.Run();
         CheckCentroid();
+        CheckScaledCenters();
         CheckTackPower();
         Check(
             !LooseFootedSpritsailSailingGeometry.TryWindFrame(
@@ -197,6 +198,75 @@ internal static class SailingChecks
         );
         Near(actual: wind.Center, expected: new Vector3(x: 0, y: 7f / 3, z: -13f / 6));
         Near(actual: wind.Normal, expected: Vector3.left);
+    }
+
+    private static void CheckScaledCenters()
+    {
+        foreach (
+            var data in new[]
+            {
+                LooseFootedSpritsailMkABakedAsset.Create(),
+                LooseFootedSpritsailMkBBakedAsset.Create(),
+                LooseFootedSpritsailMkCBakedAsset.Create(),
+                LooseFootedSpritsailMkDBakedAsset.Create(),
+            }
+        )
+        {
+            float baseScale = LooseFootedSpritsailFittingGeometry.BaseScale(
+                data: data,
+                fullGaffHeight: 8.8f
+            );
+            var originalPose = LooseFootedSpritsailFittingGeometry.Pose(
+                data: data,
+                baseScale: baseScale,
+                height: 1,
+                width: 1,
+                mastRadius: 0.3f
+            );
+            var original = new LooseFootedSpritsailClothGeometry(data: data, rest: originalPose);
+            var authoredCenter = LooseFootedSpritsailTransform.InversePoint(
+                matrix: originalPose.Sail,
+                point: Center(data: data, cloth: original)
+            );
+            foreach (float height in new[] { 0.2f, 1f, 3f })
+            foreach (float width in new[] { 0.2f, 1f, 3f })
+            {
+                var pose = LooseFootedSpritsailFittingGeometry.Pose(
+                    data: data,
+                    baseScale: baseScale,
+                    height: height,
+                    width: width,
+                    mastRadius: 0.3f
+                );
+                var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: pose);
+                // Scale about the fitted attachment, retaining the fixed mast clearance.
+                Near(
+                    actual: Center(data: data, cloth: cloth),
+                    expected: pose.Sail.MultiplyPoint3x4(point: authoredCenter)
+                );
+            }
+        }
+        Console.WriteLine(
+            "PASS: Mk.A–D effort centers follow independent height and width scaling."
+        );
+    }
+
+    private static Vector3 Center(
+        LooseFootedSpritsailAssetData data,
+        LooseFootedSpritsailClothGeometry cloth
+    )
+    {
+        Check(
+            LooseFootedSpritsailSailingGeometry.TryWindFrame(
+                throat: cloth.Throat,
+                tack: cloth.Tack,
+                peak: cloth.Peak,
+                clew: cloth.Clew,
+                out var wind
+            ),
+            "Scaled cloth must retain its aerodynamic frame."
+        );
+        return data.HasTopsail ? cloth.AreaCenter : wind.Center;
     }
 
     private static void CheckTackPower()

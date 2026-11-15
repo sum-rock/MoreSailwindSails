@@ -169,6 +169,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 Refresh();
                 rigging.Refresh();
                 clothMotion.Refresh();
+                RefreshAerodynamics();
                 clothMotion.Render();
                 rigging.Draw();
                 UpdatePlate();
@@ -477,6 +478,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             dirty = false;
             fitted = true;
             clothMotion.Refresh();
+            // Shipyard previews need the fitted center before sailing physics is enabled.
+            RefreshAerodynamics();
             UpdatePlate();
         }
 
