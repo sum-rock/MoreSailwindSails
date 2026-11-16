@@ -71,8 +71,9 @@ precedence over historical design choices.
 ### Commit Messages
 
 - When asked to write commit messages, the first line should describe in the
-  present tense what changed. The message should contain details of WHY the
-  change occured and what it solves.
+  present tense what changed. The message details should explain only WHY the
+  change was needed and what problem it solves. Do not include lists of
+  validations or checks that were run.
 
 ## Verification and handoff
 
@@ -86,8 +87,7 @@ not change dependencies to bypass first-time restore/network failures.
 
 In-game validation is implied and does not need to be written in documentation.
 Do not add in-game validation requirements, pending-validation reminders or
-runtime checklists to the docs. Record concrete observed behavior and automated
-check results separately when relevant.
+runtime checklists to the docs.
 
 At handoff, report the version, changes, checks actually run and built DLL path
 when applicable.
