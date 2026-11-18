@@ -6,14 +6,12 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from tools.assets import sail_baking
-from tools.assets.staysail.authoring import CUTS, WIDTH, dimensions, source_path
+from tools.assets.staysail.authoring import CUTS, source_path
 
 
 def bake(cut: str = "A") -> str:
     source = sail_baking.bake(
         animated=cut == "B",
-        width=WIDTH,
-        heights=dimensions(cut=cut),
         object_name=f"Fishermans Staysail Mk.{cut}",
         namespace=f"MoreSailwindSails.Sails.FishermansStaysail.Mk{cut}",
         class_name=f"FishermansStaysailMk{cut}BakedMesh",

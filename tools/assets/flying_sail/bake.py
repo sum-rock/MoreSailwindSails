@@ -6,13 +6,11 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 from tools.assets import sail_baking
-from tools.assets.flying_sail.authoring import HEIGHTS, OBJECT_NAME, SOURCE_PATH, WIDTH
+from tools.assets.flying_sail.authoring import OBJECT_NAME, SOURCE_PATH
 
 
 def bake() -> str:
     return sail_baking.bake(
-        width=WIDTH,
-        heights=HEIGHTS,
         object_name=OBJECT_NAME,
         namespace="MoreSailwindSails.Sails.FishermansFlyingSail",
         class_name="FishermansFlyingSailBakedMesh",

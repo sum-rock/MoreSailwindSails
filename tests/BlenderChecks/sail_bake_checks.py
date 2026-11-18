@@ -42,17 +42,34 @@ def check(*, bake, source_path, object_name, main, cli_args=()):
         face = obj.data.polygons[0]
         face.vertices = tuple(reversed(face.vertices))
 
+    # Authored shape and continuous UV edits must reach the exported data.
+    obj.data = original.copy()
+    try:
+        obj.data.vertices[10].co = (0.1, 0.2, -0.3)
+        reshaped = bake()
+        assert reshaped != source, "Authored shape edit was ignored"
+        for loop in obj.data.loops:
+            if loop.vertex_index == 10:
+                obj.data.uv_layers[0].data[loop.index].uv = (0.2, 0.3)
+        assert bake() != reshaped, "Authored UV edit was ignored"
+    finally:
+        modified = obj.data
+        obj.data = original
+        bpy.data.meshes.remove(modified)
+
+    reject("zero span", lambda o: setattr(o.data.vertices[24].co, "x", 0))
+    reject("negative span", lambda o: setattr(o.data.vertices[24].co, "x", -1))
+    reject(
+        "non-finite UV",
+        lambda o: setattr(o.data.uv_layers[0].data[0], "uv", (float("nan"), 0)),
+    )
     reject("object transform", move_object)
     reject("vertex count", add_vertex)
-    reject("non-planar surface", lambda o: setattr(o.data.vertices[10].co, "y", 0.1))
-    reject("vertex correspondence", lambda o: setattr(o.data.vertices[10].co, "x", 0.1))
     reject(
         "non-finite vertex",
         lambda o: setattr(o.data.vertices[10].co, "z", float("nan")),
     )
-    reject(
-        "UV distortion", lambda o: setattr(o.data.uv_layers[0].data[0], "uv", (0, 0))
-    )
+    reject("UV seam", lambda o: setattr(o.data.uv_layers[0].data[1], "uv", (0, 0)))
     reject("missing UV layer", lambda o: o.data.uv_layers.remove(o.data.uv_layers[0]))
     reject("winding", flip_face)
     reject("modifier", lambda o: o.modifiers.new(name="Solidify", type="SOLIDIFY"))
