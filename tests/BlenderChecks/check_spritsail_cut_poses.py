@@ -9,8 +9,8 @@ import bpy
 from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(ROOT / "tools/assets/bake_loose_foot_spritsail.py"))
-from loose_foot_spritsail_authoring import get_cut
+tool = runpy.run_path(str(ROOT / "tools/assets/loose_foot_spritsail/bake.py"))
+from tools.assets.loose_foot_spritsail.authoring import get_cut
 
 cut = sys.argv[sys.argv.index("--") + 1]
 definition = get_cut(cut)

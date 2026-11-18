@@ -9,8 +9,8 @@ import bmesh
 import bpy
 from mathutils import Matrix, Vector
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from loose_foot_spritsail_authoring import CUTS, get_cut
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from tools.assets.loose_foot_spritsail.authoring import CUTS, get_cut
 
 # Reflect handedness while making Z-up authoring data Y-up in Unity.
 CONVERSION = Matrix(((1, 0, 0, 0), (0, 0, 1, 0), (0, 1, 0, 0), (0, 0, 0, 1)))

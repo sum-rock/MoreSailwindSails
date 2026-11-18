@@ -2,7 +2,7 @@
 
 import math
 import bpy
-from sail_authoring import require
+from tools.assets.sail_baking import require
 
 SHEET_FRAMES = (60, 90, 120)
 REEF_FRAMES = (200, 240, 280, 320, 360, 400, 420)

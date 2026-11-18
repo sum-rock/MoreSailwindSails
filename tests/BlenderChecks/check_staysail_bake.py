@@ -7,7 +7,7 @@ import sys
 
 
 root = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(root / "tools/assets/bake_staysail.py"))
+tool = runpy.run_path(str(root / "tools/assets/staysail/bake.py"))
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--cut", choices=("A", "B", "C"), default="A")
 args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
@@ -24,7 +24,7 @@ from sail_bake_checks import check
 if cut == "B":
     # The animated asset must retain its hooks and simulation during checks.
     import bpy
-    from staysail_animation import samples
+    from tools.assets.staysail.animation import samples
 
     source = bake()
     assert source == bake(), "Animated bake is not deterministic"

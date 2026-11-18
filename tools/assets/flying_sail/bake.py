@@ -4,13 +4,13 @@ import argparse
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import sail_authoring
-from flying_sail_authoring import HEIGHTS, OBJECT_NAME, SOURCE_PATH, WIDTH
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from tools.assets import sail_baking
+from tools.assets.flying_sail.authoring import HEIGHTS, OBJECT_NAME, SOURCE_PATH, WIDTH
 
 
 def bake() -> str:
-    return sail_authoring.bake(
+    return sail_baking.bake(
         width=WIDTH,
         heights=HEIGHTS,
         object_name=OBJECT_NAME,
@@ -29,7 +29,7 @@ def main() -> None:
     )
     args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
     options = parser.parse_args(args)
-    sail_authoring.write_bake(source=bake(), output=options.output, check=options.check)
+    sail_baking.write_bake(source=bake(), output=options.output, check=options.check)
 
 
 if __name__ == "__main__":

@@ -45,7 +45,6 @@ def test_asset_command_passes_cut_and_read_only_flag(
     assert calls == [
         dict(
             blender=blender,
-            action="bake",
             asset="staysail",
             cut="B",
             check=True,
@@ -64,7 +63,6 @@ def test_blender_arguments_do_not_use_a_shell(monkeypatch, tmp_path):
     )
     runner.run(
         blender="blender",
-        action="bake",
         asset="flying_sail",
         cut="A",
         output=tmp_path / "with spaces.cs",
@@ -192,7 +190,6 @@ def test_spritsail_default_and_explicit_cut(monkeypatch, tmp_path, options):
     assert calls == [
         dict(
             blender="custom blender",
-            action="bake",
             asset="loose_foot_spritsail",
             cut="A",
             output=output,
@@ -203,7 +200,7 @@ def test_spritsail_default_and_explicit_cut(monkeypatch, tmp_path, options):
 
 @pytest.mark.parametrize("cut", ["A", "B", "C"])
 def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path, cut):
-    from tools.assets.loose_foot_spritsail_authoring import CUTS, SpritsailCut
+    from tools.assets.loose_foot_spritsail.authoring import CUTS, SpritsailCut
 
     definition = SpritsailCut(
         asset_path=tmp_path / "mkB.blend",
@@ -216,7 +213,6 @@ def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path, cut):
     monkeypatch.setattr(runner.subprocess, "run", lambda args, **kw: calls.append(args))
     runner.run(
         blender="blender",
-        action="bake",
         asset="loose_foot_spritsail",
         cut=cut,
         output=None,
@@ -225,11 +221,11 @@ def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path, cut):
     args = calls[0]
     assert str(definition.asset_path) in args
     assert args[-3:] == ["--cut", cut, "--check"]
-    assert any(a.endswith("bake_loose_foot_spritsail.py") for a in args)
+    assert any(a.endswith("loose_foot_spritsail/bake.py") for a in args)
 
 
 def test_spritsail_rejects_unauthored_cuts():
-    from tools.assets.loose_foot_spritsail_authoring import get_cut
+    from tools.assets.loose_foot_spritsail.authoring import get_cut
 
     result = CliRunner().invoke(
         main, ["assets", "bake", "loose_foot_spritsail", "--cut", "E"]
@@ -237,3 +233,53 @@ def test_spritsail_rejects_unauthored_cuts():
     assert result.exit_code == 2
     with pytest.raises(ValueError, match="Unsupported loose footed spritsail cut"):
         get_cut("E")
+
+
+@pytest.mark.parametrize(
+    "asset, cut, source",
+    [
+        ("flying_sail", "A", "flying_sail/fishermans_flying_sail.blend"),
+        ("stay", "A", "stays/stay.blend"),
+        *[
+            ("staysail", cut, f"staysails/fishermans_staysail_mk{cut.lower()}.blend")
+            for cut in "ABC"
+        ],
+        *[
+            (
+                "loose_foot_spritsail",
+                cut,
+                f"loose_foot_spritsail/loose_foot_spritsail-mk{cut}.blend",
+            )
+            for cut in "ABCD"
+        ],
+    ],
+)
+def test_bake_routes_to_existing_package_worker(
+    monkeypatch, tmp_path, asset, cut, source
+):
+    calls = []
+    monkeypatch.setattr(runner.shutil, "which", lambda _: "/blender")
+    monkeypatch.setattr(runner.subprocess, "run", lambda args, **kw: calls.append(args))
+    options = (
+        ["--cut", cut.lower()] if asset in ("staysail", "loose_foot_spritsail") else []
+    )
+    output = tmp_path / "bake.cs"
+    result = CliRunner().invoke(
+        main, ["bake", asset, *options, "--check", "--output", str(output)]
+    )
+    assert result.exit_code == 0, result.output
+    args = calls[0]
+    assert str(runner.ROOT / "assets" / source) in args
+    worker = runner.ROOT / "tools/assets" / asset / "bake.py"
+    assert worker.is_file() and str(worker) == args[args.index("--python") + 1]
+    assert args[-3:] == ["--output", str(output), "--check"]
+    assert "bpy" not in sys.modules
+
+
+def test_asset_generation_is_removed():
+    cli = CliRunner()
+    assert "generate" not in cli.invoke(main, ["assets", "--help"]).output
+    for asset in ("flying_sail", "staysail"):
+        result = cli.invoke(main, ["assets", "generate", asset])
+        assert result.exit_code == 2
+        assert "No such command 'generate'" in result.output

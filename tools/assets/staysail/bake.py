@@ -4,13 +4,13 @@ import argparse
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import sail_authoring
-from staysail_authoring import CUTS, WIDTH, dimensions, source_path
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+from tools.assets import sail_baking
+from tools.assets.staysail.authoring import CUTS, WIDTH, dimensions, source_path
 
 
 def bake(cut: str = "A") -> str:
-    source = sail_authoring.bake(
+    source = sail_baking.bake(
         animated=cut == "B",
         width=WIDTH,
         heights=dimensions(cut=cut),
@@ -22,7 +22,7 @@ def bake(cut: str = "A") -> str:
     )
 
     if cut == "B":
-        from staysail_animation import bake_animation
+        from tools.assets.staysail.animation import bake_animation
 
         source = source.replace("    }\n}\n", bake_animation() + "    }\n}\n")
     return source
@@ -39,7 +39,7 @@ def main() -> None:
     options = parser.parse_args(args)
     options.output = options.output or source_path(cut=options.cut)
     source = bake(cut=options.cut)
-    sail_authoring.write_bake(source=source, output=options.output, check=options.check)
+    sail_baking.write_bake(source=source, output=options.output, check=options.check)
 
 
 if __name__ == "__main__":

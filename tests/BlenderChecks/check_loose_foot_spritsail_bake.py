@@ -12,8 +12,8 @@ import bpy
 from mathutils import Matrix, Vector
 
 ROOT = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(ROOT / "tools/assets/bake_loose_foot_spritsail.py"))
-from loose_foot_spritsail_authoring import CUTS, SpritsailCut
+tool = runpy.run_path(str(ROOT / "tools/assets/loose_foot_spritsail/bake.py"))
+from tools.assets.loose_foot_spritsail.authoring import CUTS, SpritsailCut
 
 bake, collect, extract = tool["bake"], tool["collect"], tool["extract_part"]
 conversion = tool["CONVERSION"]

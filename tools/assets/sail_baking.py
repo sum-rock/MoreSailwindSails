@@ -1,91 +1,14 @@
-"""Shared flat sail grid generation, validation and deterministic C# mesh export."""
+"""Shared flat sail grid validation and deterministic C# mesh export."""
 
 import math
 from pathlib import Path
 
 import bpy
-from mathutils import Matrix, Quaternion, Vector
+from mathutils import Matrix, Vector
 
 COLUMNS = 24
 ROWS = 32
 UV_MARGIN = 0.05
-
-
-def generate(*, output: Path, width: float, heights: tuple, object_name: str) -> None:
-    # Reset only a disposable background session, never an open editing session.
-    if not bpy.app.background:
-        raise RuntimeError("Run this generator with blender --background.")
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-
-    head_rise, foot_fore, foot_aft = heights
-    bottom = min(foot_fore, foot_aft)
-    height = head_rise - bottom
-    vertices = []
-    faces = []
-    stride = COLUMNS + 1
-
-    # X runs fore to aft, Z points up, and the forward head is the origin.
-    # Row-major order retains the current procedural mesh's grid correspondence.
-    for row in range(ROWS + 1):
-        v = row / ROWS
-        for column in range(COLUMNS + 1):
-            u = column / COLUMNS
-            top_z = head_rise * u
-            bottom_z = foot_fore * (1.0 - u) + foot_aft * u
-            vertices.append((width * u, 0.0, top_z * (1.0 - v) + bottom_z * v))
-            if row < ROWS and column < COLUMNS:
-                i = row * stride + column
-                # Face Blender's front view (normal -Y); retain editable quads.
-                faces.append((i, i + stride, i + stride + 1, i + 1))
-
-    mesh = bpy.data.meshes.new(name=object_name + " Cloth")
-    mesh.from_pydata(vertices=vertices, edges=[], faces=faces)
-    mesh.update()
-
-    # A single uniform scale preserves the cut's proportions in a square texture.
-    # Center the island inside 0..1 without stretching it to fill a rectangle.
-    uv_scale = (1.0 - 2.0 * UV_MARGIN) / max(width, height)
-    uv_left = (1.0 - width * uv_scale) / 2.0
-    uv_bottom = (1.0 - height * uv_scale) / 2.0
-    uv_layer = mesh.uv_layers.new(name="ClothUV")
-    for loop in mesh.loops:
-        x, _, z = vertices[loop.vertex_index]
-        uv_layer.data[loop.index].uv = (
-            uv_left + x * uv_scale,
-            uv_bottom + (z - bottom) * uv_scale,
-        )
-
-    sail = bpy.data.objects.new(name=object_name, object_data=mesh)
-    bpy.context.scene.collection.objects.link(sail)
-    material = bpy.data.materials.new(name="Neutral Cloth")
-    material.diffuse_color = (0.8, 0.78, 0.72, 1.0)
-    shader = material.node_tree.nodes.get("Principled BSDF")
-    shader.inputs["Base Color"].default_value = material.diffuse_color
-    shader.inputs["Roughness"].default_value = 0.85
-    mesh.materials.append(material)
-
-    bpy.context.view_layer.objects.active = sail
-    sail.select_set(state=True)
-    sail.show_wire = True
-    sail.show_all_edges = True
-    bpy.context.scene.unit_settings.system = "METRIC"
-    bpy.context.scene.unit_settings.scale_length = 1.0
-
-    # Open ready for inspection, centered on the outline with the grid visible.
-    for screen in bpy.data.screens:
-        for area in screen.areas:
-            if area.type == "VIEW_3D":
-                view = area.spaces.active.region_3d
-                view.view_rotation = Quaternion((1.0, 0.0, 0.0), math.pi / 2.0)
-                view.view_perspective = "ORTHO"
-                view.view_location = Vector(
-                    (width / 2.0, 0.0, (head_rise + bottom) / 2.0)
-                )
-                view.view_distance = max(width, height) * 1.5
-
-    output.parent.mkdir(parents=True, exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=str(output))
-    print(f"Saved {output}: {len(mesh.vertices)} vertices, {len(mesh.polygons)} quads.")
 
 
 def require(condition: bool, message: str) -> None:

@@ -8,7 +8,7 @@ from tools.settings import ROOT
 
 
 def run(
-    *, blender: str, action: str, asset: str, cut: str, output: Path | None, check: bool
+    *, blender: str, asset: str, cut: str, output: Path | None, check: bool
 ) -> None:
     executable = shutil.which(blender)
     if executable is None:
@@ -16,26 +16,26 @@ def run(
             f"Blender executable not found: {blender}; use assets --blender PATH."
         )
     command = [executable, "--background", "--factory-startup", "--disable-autoexec"]
-    if action == "bake":
-        from tools.assets.loose_foot_spritsail_authoring import get_cut
+    from tools.assets.flying_sail.authoring import ASSET_PATH
+    from tools.assets.staysail.authoring import asset_path
+    from tools.assets.loose_foot_spritsail.authoring import get_cut
 
-        source = (
-            get_cut(cut).asset_path
-            if asset == "loose_foot_spritsail"
-            else {
-                "flying_sail": ROOT / "assets/flying_sail/fishermans_flying_sail.blend",
-                "staysail": ROOT
-                / f"assets/staysails/fishermans_staysail_mk{cut.lower()}.blend",
-                "stay": ROOT / "assets/stays/stay.blend",
-            }[asset]
-        )
-        command.append(str(source))
+    source = (
+        get_cut(cut).asset_path
+        if asset == "loose_foot_spritsail"
+        else {
+            "flying_sail": ASSET_PATH,
+            "staysail": asset_path(cut=cut),
+            "stay": ROOT / "assets/stays/stay.blend",
+        }[asset]
+    )
+    command.append(str(source))
     command.extend(
         [
             "--python-exit-code",
             "1",
             "--python",
-            str(Path(__file__).with_name(f"{action}_{asset}.py")),
+            str(Path(__file__).parent / asset / "bake.py"),
             "--",
         ]
     )
