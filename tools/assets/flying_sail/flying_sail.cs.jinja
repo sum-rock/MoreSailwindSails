@@ -10,14 +10,14 @@ namespace MoreSailwindSails.Sails.FishermansFlyingSail
         internal static FishermansFlyingSailMeshData Create() =>
             new FishermansFlyingSailMeshData
             {
-{% for name, kind, values in arrays %}
+            {% for name, kind, values in arrays %}
                 {{ name }} = new {{ kind }}[]
                 {
-{% for value in values %}
+                    {% for value in values %}
                     {{ value }},
-{% endfor %}
+                    {% endfor %}
                 },
-{% endfor %}
+            {% endfor %}
             };
     }
 }

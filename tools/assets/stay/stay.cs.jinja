@@ -7,26 +7,26 @@ namespace MoreSailwindSails.Stays.FishermansStay
 {
     internal static class FishermansStayBakedMesh
     {
-{% for name, value in dimensions.items() %}
+    {% for name, value in dimensions.items() %}
         internal const float {{ name }} = {{ value }};
-{% endfor %}
+    {% endfor %}
 
-{% for method, arrays in meshes %}
+    {% for method, arrays in meshes %}
         internal static FishermansStayMeshData {{ method }}() =>
             new FishermansStayMeshData
             {
-{% for name, kind, values in arrays %}
+            {% for name, kind, values in arrays %}
                 {{ name }} = new {{ kind }}[]
                 {
-{% for value in values %}
+                    {% for value in values %}
                     {{ value }},
-{% endfor %}
+                    {% endfor %}
                 },
-{% endfor %}
+            {% endfor %}
             };
-{% if not loop.last %}
+        {% if not loop.last %}
 
-{% endif %}
-{% endfor %}
+        {% endif %}
+    {% endfor %}
     }
 }

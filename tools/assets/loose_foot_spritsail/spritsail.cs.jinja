@@ -10,73 +10,73 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal static LooseFootedSpritsailAssetData Create() =>
             new LooseFootedSpritsailAssetData
             {
-{% if definition.reef_fractions is not none %}
+            {% if definition.reef_fractions is not none %}
                 ReefFractions = new float[] { {% for fraction in definition.reef_fractions %}{{ number(fraction) }}{{ ", " if not loop.last else "" }}{% endfor %} },
                 TopsailVertexStart = {{ topsail.TopsailVertexStart }},
                 TopsailTriangleStart = {{ topsail.TopsailTriangleStart }},
-{% endif %}
+            {% endif %}
                 ReefPoses = new LooseFootedSpritsailReefPose[]
                 {
-{% for pose in poses %}
+                {% for pose in poses %}
                     new LooseFootedSpritsailReefPose
                     {
                         SpritRotation = {{ pose.rotation }},
-{% if pose.spar is not none %}
+                    {% if pose.spar is not none %}
                         SparTransform = new Matrix4x4({{ pose.spar }}),
-{% endif %}
+                    {% endif %}
                         Vertices = new Vector3[]
                         {
-{% for point in pose.points %}
+                        {% for point in pose.points %}
                             {{ point }},
-{% endfor %}
+                        {% endfor %}
                         },
                     },
-{% endfor %}
+                {% endfor %}
                 },
-{% for name, part in parts.items() %}
+            {% for name, part in parts.items() %}
                 {{ name }} = new LooseFootedSpritsailMeshPart
                 {
                     RestTransform = new Matrix4x4(
-{% for column in part.RestTransform %}
+                    {% for column in part.RestTransform %}
                         {{ vector(column, "Vector4") }}{{ "," if not loop.last else "" }}
-{% endfor %}
+                    {% endfor %}
                     ),
                     BoundsMin = {{ vector(part.BoundsMin) }},
                     BoundsMax = {{ vector(part.BoundsMax) }},
-{% for field, kind in [("Vertices", "Vector3"), ("Normals", "Vector3"), ("UV", "Vector2")] %}
+                {% for field, kind in [("Vertices", "Vector3"), ("Normals", "Vector3"), ("UV", "Vector2")] %}
                     {{ field }} = new {{ kind }}[]
                     {
-{% for value in part[field] %}
+                        {% for value in part[field] %}
                         {{ vector(value, kind) }},
-{% endfor %}
+                        {% endfor %}
                     },
-{% endfor %}
+                {% endfor %}
                     Materials = new LooseFootedSpritsailMaterial[]
                     {
-{% for material in part.Materials %}
+                    {% for material in part.Materials %}
                         LooseFootedSpritsailMaterial.{{ material }},
-{% endfor %}
+                    {% endfor %}
                     },
                     SubmeshTriangles = new int[][]
                     {
-{% for triangles in part.SubmeshTriangles %}
+                    {% for triangles in part.SubmeshTriangles %}
                         new int[]
                         {
-{% for index in triangles %}
+                        {% for index in triangles %}
                             {{ index }},
-{% endfor %}
+                        {% endfor %}
                         },
-{% endfor %}
+                    {% endfor %}
                     },
                 },
-{% endfor %}
+            {% endfor %}
                 CollarInnerRadius = {{ radius }},
-{% for name, point in attachments.items() %}
+            {% for name, point in attachments.items() %}
                 {{ name }} = {{ point }},
-{% endfor %}
-{% for name, index in corners.items() %}
+            {% endfor %}
+            {% for name, index in corners.items() %}
                 {{ name }} = {{ index }},
-{% endfor %}
+            {% endfor %}
             };
     }
 }
