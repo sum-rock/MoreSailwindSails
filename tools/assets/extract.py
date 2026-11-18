@@ -10,14 +10,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 def collect(*, asset, cut):
-    if asset in ("flying_sail", "staysail"):
-        from tools.assets.grid_collect import collect as collect_grid
-
-        return collect_grid(asset=asset, cut=cut)
     module = importlib.import_module(f"tools.assets.{asset}.collect")
     return (
         module.collect_cut(cut=cut)
-        if asset == "loose_foot_spritsail"
+        if asset in ("staysail", "loose_foot_spritsail")
         else module.collect()
     )
 

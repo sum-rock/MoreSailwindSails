@@ -30,6 +30,7 @@ namespaces = false
 testpaths = ["tests/PythonChecks"]
 
 [tool.setuptools.package-data]
-"tools.assets" = ["*.jinja"]
+"tools.assets.flying_sail" = ["*.jinja"]
+"tools.assets.staysail" = ["*.jinja"]
 "tools.assets.stay" = ["*.jinja"]
 "tools.assets.loose_foot_spritsail" = ["*.jinja"]

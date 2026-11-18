@@ -1,4 +1,4 @@
-"""Collect validated sail grids and sequential animation samples from Blender."""
+"""Collect validated staysail grids and sequential animation samples from Blender."""
 
 import math
 
@@ -135,12 +135,10 @@ def samples():
     return result
 
 
-def collect(*, asset, cut="A"):
-    animated = asset == "staysail" and cut == "B"
+def collect_cut(*, cut="A"):
+    animated = cut == "B"
     data = collect_mesh(
-        object_name=f"Fishermans Staysail Mk.{cut}"
-        if asset == "staysail"
-        else "Fishermans Flying Sail",
+        object_name=f"Fishermans Staysail Mk.{cut}",
         animated=animated,
     )
     data["Poses"] = []

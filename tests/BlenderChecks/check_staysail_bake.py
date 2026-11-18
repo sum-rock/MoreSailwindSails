@@ -28,7 +28,7 @@ if cut == "B":
     import hashlib
     import bpy
     from tools.assets.staysail.authoring import SAMPLE_FRAMES
-    from tools.assets.grid_collect import samples, collect
+    from tools.assets.staysail.collect import samples, collect_cut
 
     asset = Path(bpy.data.filepath)
     before = hashlib.sha256(asset.read_bytes()).digest()
@@ -53,7 +53,7 @@ if cut == "B":
     modifier = obj.modifiers.new(name="Invalid topology", type="SOLIDIFY")
     try:
         try:
-            collect(asset="staysail", cut="B")
+            collect_cut(cut="B")
         except ValueError:
             pass
         else:

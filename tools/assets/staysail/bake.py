@@ -1,12 +1,12 @@
-"""Render extracted sail grids and animation as C# outside Blender."""
+"""Render extracted staysail grids and animation as C# outside Blender."""
 
 from pathlib import Path
 from tools.assets.rendering import render
 from tools.assets.staysail.authoring import SHEET_FRAMES, REEF_FRAMES, EASED_FRAMES
 
 
-def bake(*, data, asset, cut="A"):
-    animated = asset == "staysail" and cut == "B"
+def bake(*, data, cut="A"):
+    animated = cut == "B"
 
     def number(value, *, animated=False):
         zero = abs(value) < 1e-10 if animated else value == 0
@@ -16,19 +16,9 @@ def bake(*, data, asset, cut="A"):
         return f"new {kind}({', '.join(number(n, animated=animated) for n in point)})"
 
     return render(
-        template=Path(__file__).with_name("grid.cs.jinja"),
-        asset=asset,
+        template=Path(__file__).with_name("staysail.cs.jinja"),
         cut=cut,
         animated=animated,
-        class_name=f"FishermansStaysailMk{cut}BakedMesh"
-        if asset == "staysail"
-        else "FishermansFlyingSailBakedMesh",
-        namespace=f"MoreSailwindSails.Sails.FishermansStaysail.Mk{cut}"
-        if asset == "staysail"
-        else "MoreSailwindSails.Sails.FishermansFlyingSail",
-        data_type="FishermansStaysailMeshData"
-        if asset == "staysail"
-        else "FishermansFlyingSailMeshData",
         arrays=(
             ("Vertices", "Vector3", [vector(p) for p in data["Vertices"]]),
             ("UV", "Vector2", [vector(p, kind="Vector2") for p in data["UV"]]),

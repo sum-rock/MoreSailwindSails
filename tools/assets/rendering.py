@@ -28,10 +28,6 @@ def write(*, source: str, output: Path, check: bool) -> None:
 
 
 def bake(*, asset, cut, data):
-    if asset in ("flying_sail", "staysail"):
-        from tools.assets.grid_bake import bake as render_grid
-
-        return render_grid(data=data, asset=asset, cut=cut)
     from importlib import import_module
 
     return import_module(f"tools.assets.{asset}.bake").bake(data=data, cut=cut)
