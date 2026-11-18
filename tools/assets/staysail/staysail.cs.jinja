@@ -10,36 +10,36 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Mk{{ cut }}
         internal static FishermansStaysailMeshData Create() =>
             new FishermansStaysailMeshData
             {
-{% for name, kind, values in arrays %}
+            {% for name, kind, values in arrays %}
                 {{ name }} = new {{ kind }}[]
                 {
-{% for value in values %}
+                    {% for value in values %}
                     {{ value }},
-{% endfor %}
+                    {% endfor %}
                 },
-{% endfor %}
+            {% endfor %}
             };
-{% if animated %}
+    {% if animated %}
         internal static FishermansStaysailAnimationData CreateAnimation() =>
             new FishermansStaysailAnimationData
             {
                 CornerIndices = new int[] { 0, 24, 800, 824 },
                 ReefFractions = new float[] { {{ reef_fractions }} },
-{% for name, frames in channels %}
+            {% for name, frames in channels %}
                 {{ name }} = new Vector3[][]
                 {
-{% for frame in frames %}
+                {% for frame in frames %}
                     // Blender frame {{ frame }}.
                     new Vector3[]
                     {
-{% for point in poses[frame] %}
+                    {% for point in poses[frame] %}
                         {{ point }},
-{% endfor %}
+                    {% endfor %}
                     },
-{% endfor %}
+                {% endfor %}
                 },
-{% endfor %}
+            {% endfor %}
             };
-{% endif %}
+    {% endif %}
     }
 }
