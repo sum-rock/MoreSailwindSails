@@ -10,7 +10,8 @@ from staysail_authoring import CUTS, WIDTH, dimensions, source_path
 
 
 def bake(cut: str = "A") -> str:
-    return sail_authoring.bake(
+    source = sail_authoring.bake(
+        animated=cut == "B",
         width=WIDTH,
         heights=dimensions(cut=cut),
         object_name=f"Fishermans Staysail Mk.{cut}",
@@ -19,6 +20,12 @@ def bake(cut: str = "A") -> str:
         data_type="FishermansStaysailMeshData",
         source_comment=f"// Baked by mss assets bake staysail from the Mk.{cut} Blender authoring mesh.",
     )
+
+    if cut == "B":
+        from staysail_animation import bake_animation
+
+        source = source.replace("    }\n}\n", bake_animation() + "    }\n}\n")
+    return source
 
 
 def main() -> None:

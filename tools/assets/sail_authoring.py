@@ -102,6 +102,7 @@ def bake(
     class_name: str,
     data_type: str,
     source_comment: str,
+    animated: bool = False,
 ) -> str:
     require(bpy.app.background, "run in background Blender")
     require(bool(bpy.data.filepath), "open the saved .blend file before baking")
@@ -111,7 +112,7 @@ def bake(
     )
     require(obj.matrix_world == Matrix.Identity(4), "apply object transforms")
     require(
-        not obj.modifiers and not obj.data.shape_keys,
+        (not obj.modifiers or animated) and not obj.data.shape_keys,
         "modifiers and shape keys are unsupported",
     )
     mesh = obj.data

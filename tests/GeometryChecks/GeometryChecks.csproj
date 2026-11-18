@@ -7,6 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Sails/FishermansStaysail/FishermansStaysailAnimation.cs"
+      Link="FishermansStaysail/FishermansStaysailAnimation.cs"
+    />
+    <Compile
       Include="../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailSailingGeometry.cs;../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailClothGeometry.cs;../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailFlutter.cs"
       Link="LooseFootedSpritsail/%(Filename)%(Extension)"
     />
