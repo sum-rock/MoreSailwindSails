@@ -2,12 +2,15 @@
 
 import argparse
 from pathlib import Path
-import runpy
 import sys
 
 
 root = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(root / "tools/assets/staysail/bake.py"))
+sys.path.insert(0, str(root))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tools.assets.staysail.authoring import source_path
+from json_bake_checks import bake as bake_json
+
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--cut", choices=("A", "B", "C"), default="A")
 args = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
@@ -15,72 +18,56 @@ cut = parser.parse_args(args).cut
 
 
 def bake():
-    return tool["bake"](cut=cut)
+    return bake_json(asset="staysail", cut=cut)
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from sail_bake_checks import check
 
 if cut == "B":
-    # The animated asset must retain its hooks and simulation during checks.
+    import hashlib
     import bpy
-    from tools.assets.staysail.animation import samples
+    from tools.assets.staysail.authoring import SAMPLE_FRAMES
+    from tools.assets.grid_collect import samples, collect
 
-    source = bake()
-    assert source == bake(), "Animated bake is not deterministic"
-    assert source == tool["source_path"](cut=cut).read_text(), "Stale Mk.B bake"
+    asset = Path(bpy.data.filepath)
+    before = hashlib.sha256(asset.read_bytes()).digest()
+    assert bake() == source_path(cut="B").read_text()
     poses = samples()
-    assert set(poses) == {
-        60,
-        90,
-        120,
-        200,
-        240,
-        280,
-        320,
-        360,
-        400,
-        420,
-        500,
-        540,
-        580,
-        620,
-        660,
-        700,
-        720,
-    }
-    obj = bpy.data.objects[f"Fishermans Staysail Mk.{cut}"]
-    bpy.context.scene.frame_set(420)
-    evaluated = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
-    point = evaluated.data.vertices[824].co
+    assert set(poses) == set(SAMPLE_FRAMES)
+    obj = bpy.data.objects["Fishermans Staysail Mk.B"]
     span = obj.data.vertices[24].co.x
-    assert (
-        max(
-            abs(a - b)
-            for a, b in zip(
-                poses[420][824], (point.z / span, -point.y / span, point.x / span - 1)
-            )
-        )
-        < 1e-6
-    )
+    bpy.context.scene.frame_set(0)
+    for frame in range(1, max(SAMPLE_FRAMES) + 1):
+        bpy.context.scene.frame_set(frame)
+        evaluated = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+        mesh = evaluated.to_mesh()
+        try:
+            if frame in poses:
+                assert poses[frame] == [
+                    (v.co.z / span, -v.co.y / span, v.co.x / span - 1)
+                    for v in mesh.vertices
+                ]
+        finally:
+            evaluated.to_mesh_clear()
     modifier = obj.modifiers.new(name="Invalid topology", type="SOLIDIFY")
     try:
         try:
-            bake()
+            collect(asset="staysail", cut="B")
         except ValueError:
             pass
         else:
             raise AssertionError("Accepted topology-changing modifier")
     finally:
         obj.modifiers.remove(modifier)
+    assert hashlib.sha256(asset.read_bytes()).digest() == before
     print(
-        "PASS: Mk.B deterministic animation bake, frame samples, final clew and modifier rejection."
+        "PASS: Mk.B JSON bake, all frame samples, modifier rejection and source preservation."
     )
+
 else:
     check(
         bake=bake,
-        source_path=tool["source_path"](cut=cut),
+        source_path=source_path(cut=cut),
         object_name=f"Fishermans Staysail Mk.{cut}",
-        main=tool["main"],
-        cli_args=("--cut", cut),
     )

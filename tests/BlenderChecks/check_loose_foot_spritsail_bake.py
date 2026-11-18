@@ -12,10 +12,18 @@ import bpy
 from mathutils import Matrix, Vector
 
 ROOT = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(ROOT / "tools/assets/loose_foot_spritsail/bake.py"))
+tool = runpy.run_path(str(ROOT / "tools/assets/loose_foot_spritsail/collect.py"))
 from tools.assets.loose_foot_spritsail.authoring import CUTS, SpritsailCut
 
-bake, collect, extract = tool["bake"], tool["collect"], tool["extract_part"]
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_bake_checks import bake as bake_json
+
+
+def bake(cut="A"):
+    return bake_json(asset="loose_foot_spritsail", cut=cut)
+
+
+collect, extract = tool["collect"], tool["extract_part"]
 conversion = tool["CONVERSION"]
 asset = Path(bpy.data.filepath)
 before = hashlib.sha256(asset.read_bytes()).digest()
@@ -318,31 +326,10 @@ with tempfile.TemporaryDirectory(prefix="mss-spritsail-") as directory:
             )
             bpy.context.view_layer.update()
             assert len(collect()["Sail"]["Vertices"]) == 20
-            second_source = bake("B")
-            assert "LooseFootedSpritsailMkBBakedAsset" in second_source
-            assert second_source == bake("B")
+            second_data = tool["collect_cut"](cut="B")
+            assert len(second_data["Sail"]["Vertices"]) == 20
     finally:
         del CUTS["B"]
-    args = sys.argv
-    try:
-        for stale in (None, "stale"):
-            if stale is not None:
-                output.write_text(stale)
-            sys.argv = ["blender", "--", "--output", str(output), "--check"]
-            try:
-                tool["main"]()
-            except RuntimeError:
-                pass
-            else:
-                raise AssertionError("Accepted stale output")
-            assert not output.exists() if stale is None else output.read_text() == stale
-        sys.argv = ["blender", "--", "--output", str(output)]
-        tool["main"]()
-        assert output.read_text() == source
-        sys.argv.append("--check")
-        tool["main"]()
-    finally:
-        sys.argv = args
 
 assert hashlib.sha256(asset.read_bytes()).digest() == before, "Authoring file changed"
 assert bake() == source

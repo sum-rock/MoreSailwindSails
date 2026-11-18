@@ -9,8 +9,11 @@ import bpy
 from mathutils import Vector
 
 ROOT = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(ROOT / "tools/assets/loose_foot_spritsail/bake.py"))
+tool = runpy.run_path(str(ROOT / "tools/assets/loose_foot_spritsail/collect.py"))
 from tools.assets.loose_foot_spritsail.authoring import get_cut
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_bake_checks import bake as bake_json
 
 cut = sys.argv[sys.argv.index("--") + 1]
 definition = get_cut(cut)
@@ -24,15 +27,19 @@ def reopen():
 
 
 reopen()
-source = tool["bake"](cut)
+source = bake_json(asset="loose_foot_spritsail", cut=cut)
 reopen()
-assert source == tool["bake"](cut), "Non-deterministic bake"
+assert source == bake_json(asset="loose_foot_spritsail", cut=cut), (
+    "Non-deterministic bake"
+)
 assert source == definition.source_path.read_text(), "Stale bake"
 reopen()
 data = tool["collect"](
     reef_frames=definition.reef_frames,
     generate_cloth_uv=definition.generate_cloth_uv,
     topsail=definition.topsail,
+    spar=definition.spar,
+    topsail_hide_frame=definition.topsail_hide_frame,
 )
 assert len(data["ReefPoses"]) == len(definition.reef_frames)
 reopen()
@@ -46,10 +53,26 @@ if top:
 for frame in range(definition.reef_frames[-1] + 1):
     bpy.context.scene.frame_set(frame)
     if top:
-        assert top.hide_render == (frame >= 140)
+        if definition.topsail_hide_frame is not None:
+            assert top.hide_render == (frame >= definition.topsail_hide_frame)
         if top.hide_viewport:
             top.hide_viewport = False
     depsgraph = bpy.context.evaluated_depsgraph_get()
+    if definition.spar and frame in definition.reef_frames:
+        pose = data["ReefPoses"][definition.reef_frames.index(frame)]
+        expected_spar = (
+            tool["CONVERSION"]
+            @ bpy.data.objects["Spar"].evaluated_get(depsgraph).matrix_world
+            @ tool["CONVERSION"]
+        )
+        assert (
+            max(
+                abs(pose[2][row][col] - expected_spar[row][col])
+                for row in range(4)
+                for col in range(4)
+            )
+            < 1e-6
+        )
     offset = 0
     for obj in (sail, top) if top else (sail,):
         evaluated = obj.evaluated_get(depsgraph)
@@ -58,7 +81,7 @@ for frame in range(definition.reef_frames[-1] + 1):
             if frame in definition.reef_frames:
                 points, rotation = data["ReefPoses"][
                     definition.reef_frames.index(frame)
-                ]
+                ][:2]
                 assert len(points) == len(sail.data.vertices) + (
                     len(top.data.vertices) if top else 0
                 )
@@ -75,8 +98,8 @@ for frame in range(definition.reef_frames[-1] + 1):
                         frame,
                         vertex.index,
                     )
-                if obj == top and frame == 120:
-                    # The old two-pass export stretched an edge from <2 m to >9 m.
+                if obj == top and cut == "C" and frame == 120:
+                    # Mk.C regression: the old two-pass export stretched an edge from <2 m to >9 m.
                     for edge in mesh.edges:
                         a, b = edge.vertices
                         rest_length = (

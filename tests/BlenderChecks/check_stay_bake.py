@@ -5,13 +5,21 @@ import math
 from pathlib import Path
 import runpy
 import sys
-import tempfile
 
 import bpy
 
 ROOT = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(ROOT / "tools/assets/stay/bake.py"))
-bake, extract, main = tool["bake"], tool["extract"], tool["main"]
+tool = runpy.run_path(str(ROOT / "tools/assets/stay/collect.py"))
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from json_bake_checks import bake as bake_json
+
+
+def bake():
+    return bake_json(asset="stay")
+
+
+extract = tool["extract"]
 asset = Path(bpy.data.filepath)
 before = hashlib.sha256(asset.read_bytes()).digest()
 source = bake()
@@ -155,29 +163,6 @@ edit_case(
     edit=lambda o: setattr(o.scale, "x", o.scale.x * 2),
     verify=check_scaled_rope,
 )
-
-with tempfile.TemporaryDirectory(prefix="mss-stay-bake-") as directory:
-    output = Path(directory) / "mesh.g.cs"
-    args = sys.argv
-    try:
-        sys.argv = ["blender", "--", "--check", "--output", str(output)]
-        for stale in (None, "stale source"):
-            if stale is not None:
-                output.write_text(stale, encoding="utf-8")
-            try:
-                main()
-            except RuntimeError:
-                pass
-            else:
-                raise AssertionError("Stale output was accepted")
-            assert not output.exists() if stale is None else output.read_text() == stale
-        sys.argv = ["blender", "--", "--output", str(output)]
-        main()
-        assert output.read_text() == source
-        sys.argv.insert(2, "--check")
-        main()
-    finally:
-        sys.argv = args
 
 assert hashlib.sha256(asset.read_bytes()).digest() == before, "Authoring file changed"
 assert bake() == source, "Checks changed the in-memory authoring geometry"
