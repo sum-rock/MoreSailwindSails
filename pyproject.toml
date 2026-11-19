@@ -12,6 +12,7 @@ dependencies = [
     "UnityPy>=1.23,<2",
     "numpy>=2,<3",
     "TypeTreeGeneratorAPI>=0.0.1",
+    "jinja2>=3.1,<4",
 ]
 
 [project.scripts]
@@ -27,3 +28,9 @@ namespaces = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests/PythonChecks"]
+
+[tool.setuptools.package-data]
+"tools.assets.flying_sail" = ["*.jinja"]
+"tools.assets.staysail" = ["*.jinja"]
+"tools.assets.stay" = ["*.jinja"]
+"tools.assets.loose_foot_spritsail" = ["*.jinja"]

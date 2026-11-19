@@ -45,35 +45,12 @@ def test_asset_command_passes_cut_and_read_only_flag(
     assert calls == [
         dict(
             blender=blender,
-            action="bake",
             asset="staysail",
             cut="B",
             check=True,
             output=tmp_path / "out.cs",
         )
     ]
-
-
-def test_blender_arguments_do_not_use_a_shell(monkeypatch, tmp_path):
-    calls = []
-    monkeypatch.setattr(
-        runner.shutil, "which", lambda value: "/path with spaces/blender"
-    )
-    monkeypatch.setattr(
-        runner.subprocess, "run", lambda args, **kw: calls.append((args, kw))
-    )
-    runner.run(
-        blender="blender",
-        action="bake",
-        asset="flying_sail",
-        cut="A",
-        output=tmp_path / "with spaces.cs",
-        check=True,
-    )
-    args, kw = calls[0]
-    assert args[0] == "/path with spaces/blender" and kw == {"check": True}
-    assert "--disable-autoexec" in args and "--check" in args
-    assert str(tmp_path / "with spaces.cs") in args
 
 
 def test_missing_blender_and_failed_worker(monkeypatch):
@@ -192,7 +169,6 @@ def test_spritsail_default_and_explicit_cut(monkeypatch, tmp_path, options):
     assert calls == [
         dict(
             blender="custom blender",
-            action="bake",
             asset="loose_foot_spritsail",
             cut="A",
             output=output,
@@ -201,35 +177,8 @@ def test_spritsail_default_and_explicit_cut(monkeypatch, tmp_path, options):
     ]
 
 
-@pytest.mark.parametrize("cut", ["A", "B", "C"])
-def test_spritsail_worker_uses_catalog(monkeypatch, tmp_path, cut):
-    from tools.assets.loose_foot_spritsail_authoring import CUTS, SpritsailCut
-
-    definition = SpritsailCut(
-        asset_path=tmp_path / "mkB.blend",
-        source_path=tmp_path / "mkB.cs",
-        class_name="MkB",
-    )
-    monkeypatch.setitem(CUTS, cut, definition)
-    calls = []
-    monkeypatch.setattr(runner.shutil, "which", lambda _: "/blender")
-    monkeypatch.setattr(runner.subprocess, "run", lambda args, **kw: calls.append(args))
-    runner.run(
-        blender="blender",
-        action="bake",
-        asset="loose_foot_spritsail",
-        cut=cut,
-        output=None,
-        check=True,
-    )
-    args = calls[0]
-    assert str(definition.asset_path) in args
-    assert args[-3:] == ["--cut", cut, "--check"]
-    assert any(a.endswith("bake_loose_foot_spritsail.py") for a in args)
-
-
 def test_spritsail_rejects_unauthored_cuts():
-    from tools.assets.loose_foot_spritsail_authoring import get_cut
+    from tools.assets.loose_foot_spritsail.authoring import get_cut
 
     result = CliRunner().invoke(
         main, ["assets", "bake", "loose_foot_spritsail", "--cut", "E"]
@@ -237,3 +186,95 @@ def test_spritsail_rejects_unauthored_cuts():
     assert result.exit_code == 2
     with pytest.raises(ValueError, match="Unsupported loose footed spritsail cut"):
         get_cut("E")
+
+
+def test_asset_generation_is_removed():
+    cli = CliRunner()
+    assert "generate" not in cli.invoke(main, ["assets", "--help"]).output
+    for asset in ("flying_sail", "staysail"):
+        result = cli.invoke(main, ["assets", "generate", asset])
+        assert result.exit_code == 2
+        assert "No such command 'generate'" in result.output
+
+
+CASES = (
+    [("flying_sail", "A"), ("stay", "A")]
+    + [("staysail", c) for c in "ABC"]
+    + [("loose_foot_spritsail", c) for c in "ABCD"]
+)
+
+
+@pytest.mark.parametrize("asset,cut", CASES)
+def test_private_json_handoff(monkeypatch, tmp_path, asset, cut):
+    from pathlib import Path
+    import json
+
+    calls = []
+    monkeypatch.setattr(runner.shutil, "which", lambda _: "/path with spaces/blender")
+    data = {"precise": 0.12345678912345678, "poses": [[1, 2], [1, 2]]}
+
+    def extract(args, **kw):
+        calls.append((args, kw))
+        Path(args[-1]).write_text(json.dumps(data))
+
+    def render(**kwargs):
+        assert kwargs == dict(asset=asset, cut=cut, data=data)
+        return "generated source"
+
+    monkeypatch.setattr(runner.subprocess, "run", extract)
+    monkeypatch.setattr(runner.rendering, "bake", render)
+    output = tmp_path / "out.cs"
+    runner.run(blender="blender", asset=asset, cut=cut, output=output, check=False)
+    args, kw = calls[0]
+    assert kw == {"check": True} and args[0] == "/path with spaces/blender"
+    assert str(runner.paths(asset=asset, cut=cut)[0]) in args
+    assert args[args.index("--python") + 1].endswith("/extract.py")
+    assert not Path(args[-1]).exists()
+    assert output.read_text() == "generated source"
+    runner.run(blender="blender", asset=asset, cut=cut, output=output, check=True)
+    output.write_text("stale")
+    with pytest.raises(ValueError, match="Stale"):
+        runner.run(blender="blender", asset=asset, cut=cut, output=output, check=True)
+    assert output.read_text() == "stale" and not Path(calls[-1][0][-1]).exists()
+    assert "bpy" not in sys.modules
+
+
+@pytest.mark.parametrize("failure", ["extraction", "rendering", "json", "nan"])
+def test_failure_preserves_destination_and_cleans_handoff(
+    monkeypatch, tmp_path, failure
+):
+    from pathlib import Path
+
+    calls = []
+    monkeypatch.setattr(runner.shutil, "which", lambda _: "/blender")
+
+    def extract(args, **kw):
+        calls.append(Path(args[-1]))
+        if failure == "extraction":
+            raise subprocess.CalledProcessError(1, args)
+        calls[-1].write_text(
+            "invalid"
+            if failure == "json"
+            else '{"x": NaN}'
+            if failure == "nan"
+            else "{}"
+        )
+
+    def render(**kwargs):
+        raise ValueError("render failure")
+
+    monkeypatch.setattr(runner.subprocess, "run", extract)
+    monkeypatch.setattr(runner.rendering, "bake", render)
+    output = tmp_path / "out.cs"
+    output.write_text("original")
+    with pytest.raises((ValueError, subprocess.CalledProcessError)):
+        runner.run(blender="blender", asset="stay", cut="A", output=output, check=False)
+    assert output.read_text() == "original" and not calls[0].parent.exists()
+
+
+def test_intermediate_format_has_no_public_commands():
+    cli = CliRunner()
+    assert cli.invoke(main, ["assets", "export"]).exit_code == 2
+    assert (
+        cli.invoke(main, ["bake", "stay", "--usd-input", "example.usdc"]).exit_code == 2
+    )
