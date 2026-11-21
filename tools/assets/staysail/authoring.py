@@ -18,7 +18,7 @@ def source_path(cut: str) -> Path:
     )
 
 
-# Authored Blender frame numbers for Mk.B animation.
+# Authored Blender frame numbers for all staysail animations.
 SHEET_FRAMES = (60, 90, 120)
 REEF_FRAMES = (200, 240, 280, 320, 360, 400, 420)
 EASED_FRAMES = tuple(frame + 300 for frame in REEF_FRAMES)

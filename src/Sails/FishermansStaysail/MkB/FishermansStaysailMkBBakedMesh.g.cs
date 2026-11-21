@@ -6281,6 +6281,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.MkB
         internal static FishermansStaysailAnimationData CreateAnimation() =>
             new FishermansStaysailAnimationData
             {
+                FootFore = -1f,
+                FootAft = -1f,
                 CornerIndices = new int[] { 0, 24, 800, 824 },
                 ReefFractions = new float[] { 0f, 0.181818182f, 0.363636364f, 0.545454545f, 0.727272727f, 0.909090909f, 1f },
                 Sheet = new Vector3[][]

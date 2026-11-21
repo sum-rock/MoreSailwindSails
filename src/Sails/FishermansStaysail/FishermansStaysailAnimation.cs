@@ -54,10 +54,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 var point = Vector3.Lerp(a: inside, b: outside, t: ease);
                 point += (data.Sheet[1][i] - (data.Sheet[0][i] + data.Sheet[2][i]) * 0.5f) * middle;
                 // Follow gathered cloth up the fitted head slope; the source's
-                // lower edge is -1 and its head rises with fore-to-aft distance.
+                // lower edge follows this cut and its head rises toward the aft mast.
                 float along = Mathf.Clamp01(point.z + 1);
+                float foot = Mathf.Lerp(data.FootFore, data.FootAft, along);
                 float height = Mathf.Clamp01(
-                    (point.x + 1) / (1 + along * (float)Math.Tan(20 * Math.PI / 180))
+                    (point.x - foot) / (along * (float)Math.Tan(20 * Math.PI / 180) - foot)
                 );
                 point.x += headDelta * along * height;
                 point.y *= Math.Max(-1, Math.Min(1, side));
@@ -74,6 +75,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
     internal struct FishermansStaysailAnimationData
     {
+        internal float FootFore,
+            FootAft;
         internal int[] CornerIndices;
         internal float[] ReefFractions;
         internal Vector3[][] Sheet,

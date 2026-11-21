@@ -95,8 +95,8 @@ def collect_mesh(
     }
 
 
-def samples():
-    obj = bpy.data.objects["Fishermans Staysail Mk.B"]
+def samples(*, cut="A"):
+    obj = bpy.data.objects[f"Fishermans Staysail Mk.{cut}"]
     require(
         all(
             m.type in ("HOOK", "CLOTH", "COLLISION") and m.show_viewport
@@ -136,24 +136,21 @@ def samples():
 
 
 def collect_cut(*, cut="A"):
-    animated = cut == "B"
     data = collect_mesh(
         object_name=f"Fishermans Staysail Mk.{cut}",
-        animated=animated,
+        animated=True,
     )
-    data["Poses"] = []
-    if animated:
-        poses = samples()
-        for reef, sheet in ((200, 60), (500, 120)):
-            require(
-                max(
-                    abs(a - b)
-                    for i in (0, 24, 800, 824)
-                    for a, b in zip(poses[reef][i], poses[sheet][i])
-                )
-                < 1e-4,
-                "deployed reef and sheet attachments disagree",
+    poses = samples(cut=cut)
+    for reef, sheet in ((200, 60), (500, 120)):
+        require(
+            max(
+                abs(a - b)
+                for i in (0, 24, 800, 824)
+                for a, b in zip(poses[reef][i], poses[sheet][i])
             )
-            poses[reef] = poses[sheet]
-        data["Poses"] = [(frame, points) for frame, points in poses.items()]
+            < 1e-4,
+            "deployed reef and sheet attachments disagree",
+        )
+        poses[reef] = poses[sheet]
+    data["Poses"] = [(frame, points) for frame, points in poses.items()]
     return data
