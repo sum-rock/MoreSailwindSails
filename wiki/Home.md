@@ -35,6 +35,8 @@ For Loose Footed Spritsail cuts, fitting, reefing, and sailing behavior, see
 
 ## Developer Guide
 
+- [Adding boat support](Adding-boat-support): registering a boat's mast
+  ancestry, stays, and optional additional control positions for a contribution.
 - [Building and contributing](Building-and-contributing): environment setup,
   builds, automated checks, and contributions.
 - [Profiling](Profiling): CPU and frame capture settings, category selection,
