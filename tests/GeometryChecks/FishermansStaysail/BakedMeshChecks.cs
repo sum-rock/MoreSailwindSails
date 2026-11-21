@@ -121,7 +121,7 @@ internal static class BakedMeshChecks
                     v = (i / 25) / 32f;
                 var expected = new Vector3(
                     rise * u * (1 - v) + (footFore + footRise * u) * v,
-                    FishermansStaysailGeometry.RestCamber(width: width, u: u, v: v),
+                    0,
                     -width * (1 - u)
                 );
                 Near(

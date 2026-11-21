@@ -22,52 +22,43 @@ def bake():
 
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from sail_bake_checks import check
 
-if cut == "B":
-    import hashlib
-    import bpy
-    from tools.assets.staysail.authoring import SAMPLE_FRAMES
-    from tools.assets.staysail.collect import samples, collect_cut
+import hashlib
+import bpy
+from tools.assets.staysail.authoring import SAMPLE_FRAMES
+from tools.assets.staysail.collect import samples, collect_cut
 
-    asset = Path(bpy.data.filepath)
-    before = hashlib.sha256(asset.read_bytes()).digest()
-    assert bake() == source_path(cut="B").read_text()
-    poses = samples()
-    assert set(poses) == set(SAMPLE_FRAMES)
-    obj = bpy.data.objects["Fishermans Staysail Mk.B"]
-    span = obj.data.vertices[24].co.x
-    bpy.context.scene.frame_set(0)
-    for frame in range(1, max(SAMPLE_FRAMES) + 1):
-        bpy.context.scene.frame_set(frame)
-        evaluated = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
-        mesh = evaluated.to_mesh()
-        try:
-            if frame in poses:
-                assert poses[frame] == [
-                    (v.co.z / span, -v.co.y / span, v.co.x / span - 1)
-                    for v in mesh.vertices
-                ]
-        finally:
-            evaluated.to_mesh_clear()
-    modifier = obj.modifiers.new(name="Invalid topology", type="SOLIDIFY")
+asset = Path(bpy.data.filepath)
+before = hashlib.sha256(asset.read_bytes()).digest()
+assert bake() == source_path(cut=cut).read_text()
+poses = samples(cut=cut)
+assert set(poses) == set(SAMPLE_FRAMES)
+obj = bpy.data.objects[f"Fishermans Staysail Mk.{cut}"]
+span = obj.data.vertices[24].co.x
+bpy.context.scene.frame_set(0)
+for frame in range(1, max(SAMPLE_FRAMES) + 1):
+    bpy.context.scene.frame_set(frame)
+    evaluated = obj.evaluated_get(bpy.context.evaluated_depsgraph_get())
+    mesh = evaluated.to_mesh()
     try:
-        try:
-            collect_cut(cut="B")
-        except ValueError:
-            pass
-        else:
-            raise AssertionError("Accepted topology-changing modifier")
+        if frame in poses:
+            assert poses[frame] == [
+                (v.co.z / span, -v.co.y / span, v.co.x / span - 1)
+                for v in mesh.vertices
+            ]
     finally:
-        obj.modifiers.remove(modifier)
-    assert hashlib.sha256(asset.read_bytes()).digest() == before
-    print(
-        "PASS: Mk.B JSON bake, all frame samples, modifier rejection and source preservation."
-    )
-
-else:
-    check(
-        bake=bake,
-        source_path=source_path(cut=cut),
-        object_name=f"Fishermans Staysail Mk.{cut}",
-    )
+        evaluated.to_mesh_clear()
+modifier = obj.modifiers.new(name="Invalid topology", type="SOLIDIFY")
+try:
+    try:
+        collect_cut(cut=cut)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("Accepted topology-changing modifier")
+finally:
+    obj.modifiers.remove(modifier)
+assert hashlib.sha256(asset.read_bytes()).digest() == before
+print(
+    f"PASS: Mk.{cut} JSON bake, frame samples, modifier rejection and source preservation."
+)

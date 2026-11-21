@@ -19,10 +19,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Mk{{ cut }}
                 },
             {% endfor %}
             };
-    {% if animated %}
         internal static FishermansStaysailAnimationData CreateAnimation() =>
             new FishermansStaysailAnimationData
             {
+                FootFore = {{ foot_fore }},
+                FootAft = {{ foot_aft }},
                 CornerIndices = new int[] { 0, 24, 800, 824 },
                 ReefFractions = new float[] { {{ reef_fractions }} },
             {% for name, frames in channels %}
@@ -40,6 +41,5 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Mk{{ cut }}
                 },
             {% endfor %}
             };
-    {% endif %}
     }
 }

@@ -6,8 +6,6 @@ from tools.assets.staysail.authoring import SHEET_FRAMES, REEF_FRAMES, EASED_FRA
 
 
 def bake(*, data, cut="A"):
-    animated = cut == "B"
-
     def number(value, *, animated=False):
         zero = abs(value) < 1e-10 if animated else value == 0
         return ("0" if zero else format(value, ".9g")) + "f"
@@ -18,7 +16,8 @@ def bake(*, data, cut="A"):
     return render(
         template=Path(__file__).with_name("staysail.cs.jinja"),
         cut=cut,
-        animated=animated,
+        foot_fore=number(data["Vertices"][800][0]),
+        foot_aft=number(data["Vertices"][824][0]),
         arrays=(
             ("Vertices", "Vector3", [vector(p) for p in data["Vertices"]]),
             ("UV", "Vector2", [vector(p, kind="Vector2") for p in data["UV"]]),

@@ -1,15 +1,67 @@
 // Verifies the authored control surface at samples, between samples and across tacks.
 using System;
 using MoreSailwindSails.Sails.FishermansStaysail;
+using MoreSailwindSails.Sails.FishermansStaysail.MkA;
 using MoreSailwindSails.Sails.FishermansStaysail.MkB;
+using MoreSailwindSails.Sails.FishermansStaysail.MkC;
 
-namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail.MkB;
+namespace MoreSailwindSails.Tests.GeometryChecks.FishermansStaysail;
 
 internal static class AnimationChecks
 {
     internal static void Run()
     {
-        var data = FishermansStaysailMkBBakedMesh.CreateAnimation();
+        Check(FishermansStaysailMkABakedMesh.CreateAnimation());
+        CheckFitting(
+            FishermansStaysailMkABakedMesh.CreateAnimation(),
+            FishermansStaysailMkABakedMesh.Create
+        );
+        Check(FishermansStaysailMkBBakedMesh.CreateAnimation());
+        CheckFitting(
+            FishermansStaysailMkBBakedMesh.CreateAnimation(),
+            FishermansStaysailMkBBakedMesh.Create
+        );
+        Check(FishermansStaysailMkCBakedMesh.CreateAnimation());
+        CheckFitting(
+            FishermansStaysailMkCBakedMesh.CreateAnimation(),
+            FishermansStaysailMkCBakedMesh.Create
+        );
+    }
+
+    private static void CheckFitting(
+        FishermansStaysailAnimationData data,
+        Func<FishermansStaysailMeshData> create
+    )
+    {
+        // An undeformed authored surface must retarget exactly like the fitting mesh,
+        // including Mk.A's falling foot and Mk.C's longer luff and rising foot.
+        var flat = create().Vertices;
+        data.Sheet = new[] { flat, flat, flat };
+        data.ReefIn = data.ReefOut = new[] { flat, flat };
+        data.ReefFractions = new[] { 0f, 1f };
+        foreach (float slope in new[] { 0f, 20f, 75f })
+        {
+            var fitted = FishermansStaysailMeshFitting.Fit(
+                data: create(),
+                width: 13.8f,
+                headSlope: slope
+            );
+            var animation = new FishermansStaysailAnimation(
+                data: data,
+                width: 13.8f,
+                headSlope: slope
+            );
+            animation.Pose(deployment: 1, ease: 0, side: 1);
+            for (int i = 0; i < flat.Length; i++)
+                if ((animation.Vertices[i] - fitted.Vertices[i]).magnitude > 0.0001f)
+                    throw new Exception(
+                        "Authored slope retargeting disagrees with the fitted cut."
+                    );
+        }
+    }
+
+    private static void Check(FishermansStaysailAnimationData data)
+    {
         var animation = new FishermansStaysailAnimation(data: data, width: 1, headSlope: 20);
         for (int sample = 0; sample < data.ReefFractions.Length; sample++)
         for (int side = -1; side <= 1; side += 2)
@@ -70,7 +122,7 @@ internal static class AnimationChecks
         )
             throw new Exception("Asymmetric sheet travel mapping changed.");
         Console.WriteLine(
-            "PASS: Mk.B authored sheet/reef samples, tack mirroring and fitted animation."
+            "PASS: Staysail authored sheet/reef samples, tack mirroring and fitted animation."
         );
     }
 }

@@ -23,6 +23,7 @@
   - [Fallback winch templates](Fallback-winch-templates)
   - [Winch placement diagnostics](Winch-placement-diagnostics)
 - [Developer Guide](Developer-Guide)
+  - [Adding boat support](Adding-boat-support)
   - [Building and contributing](Building-and-contributing)
   - [Profiling](Profiling)
   - [mss command](MSS-command)

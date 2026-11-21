@@ -12,7 +12,6 @@ internal static class BehaviorCases
     {
         internal readonly string Name;
         internal readonly Func<float, float, FishermansStaysailMeshData> Create;
-        internal float HeadAngle => FishermansStaysailFixedHead.DeployedAngle;
 
         internal Mark(string name, Func<float, float, FishermansStaysailMeshData> create)
         {
@@ -69,7 +68,6 @@ internal static class BehaviorCases
     {
         foreach (var mark in Marks)
         {
-            Near(mark.HeadAngle, 14, 0, mark.Name + " deployed head policy");
             foreach (float width in new[] { 3f, 6.9f, 13.8f })
             foreach (float slope in new[] { 0f, 8.483f, 20f, 35f, 55f })
                 Check(

@@ -3,6 +3,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.MkB
 {
     internal sealed class FishermansStaysailMkBShape : FishermansStaysailShape
     {
+        internal override FishermansStaysailAnimationData CreateAnimation() =>
+            FishermansStaysailMkBBakedMesh.CreateAnimation();
+
         internal override string ObjectPrefix => "FishermansStaysailMkB";
 
         internal override FishermansStaysailMeshData Create(float width, float headSlope) =>

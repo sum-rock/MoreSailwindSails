@@ -7,7 +7,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
     // rotating cloth transform or load magnitude is used to set the angle.
     internal struct FishermansStaysailFixedHead
     {
-        internal const float DeployedAngle = 14f;
         private int targetSide;
         internal float Side { get; private set; }
 
@@ -15,44 +14,30 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         {
             var positiveAngleDirection = Vector3.Cross(mastAxis, aftDirection).normalized;
             float across = Vector3.Dot(wind, positiveAngleDirection);
-            int next = FishermansStaysailBillow.CamberSide(
-                targetSide == 0 ? 1 : targetSide,
-                across
-            );
+            int next = CamberSide(targetSide == 0 ? 1 : targetSide, across);
             if (targetSide == 0)
                 Side = next;
             else
             {
-                Side = FishermansStaysailBillow.SmoothLoad(Side, next, seconds);
+                Side = SmoothLoad(Side, next, seconds);
                 if (Math.Abs(Side - next) < 0.0005f)
                     Side = next;
             }
             targetSide = next;
         }
 
-        internal static float ReefFraction(float unroll) =>
-            float.IsNaN(unroll) ? 0 : Math.Max(0, Math.Min(1, unroll));
-
-        internal static float LowerAngle(float sheetAngle, float deployedHeadAngle, float unroll)
+        internal static float SmoothLoad(float previous, float target, float seconds)
         {
-            float headAngle = deployedHeadAngle * ReefFraction(unroll);
-            return headAngle
-                + (sheetAngle - headAngle) * FishermansStaysailBillow.Deployment(unroll);
+            if (float.IsNaN(target) || float.IsInfinity(target))
+                target = 0;
+            target = Math.Max(-1, Math.Min(1, target));
+            float blend = 1 - (float)Math.Exp(-3 * Math.Max(0, Math.Min(0.1f, seconds)));
+            return previous + (target - previous) * blend;
         }
 
-        internal static Vector3 Position(
-            Vector3 neutralHead,
-            Vector3 foreHead,
-            Vector3 mastAxis,
-            float side,
-            float angle,
-            float unroll
-        ) =>
-            FishermansStaysailFrameGeometry.RotateAroundMast(
-                neutralHead,
-                foreHead,
-                mastAxis,
-                side * angle * ReefFraction(unroll)
-            );
+        internal static int CamberSide(int previous, float normalFlow) =>
+            normalFlow > 0.6f ? 1
+            : normalFlow < -0.6f ? -1
+            : previous;
     }
 }
