@@ -53,7 +53,7 @@ internal static class PatchChecks
             || CalledMethods(Method("FishermansStaysailRig", "PoseAnimation"))
                 .Any(m =>
                     m.DeclaringType == Type("FishermansStaysailReefing")
-                    || m.DeclaringType == Type("FishermansStaysailEdgeFit")
+                    || m.DeclaringType.Name == "FishermansStaysailEdgeFit"
                 )
         )
             throw new Exception("Mk.B authored posing is missing or uses procedural reefing.");

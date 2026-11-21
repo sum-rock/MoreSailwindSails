@@ -121,24 +121,10 @@ internal static class PatchChecks
         if (!CalledMethods(Patch("Travel", "Postfix")).Any(m => m.Name == "ConstrainHinge"))
             throw new Exception("Mk.A travel is not constrained after native sway.");
         if (
-            !CalledMethods(Method("FishermansStaysailReefing", "Sample"))
-                .Any(m =>
-                    m.Name == "SampleAnimation"
-                    && m.DeclaringType.FullName == "UnityEngine.AnimationClip"
-                )
+            Method("FishermansStaysailReefing", "Sample") != null
+            || Method("FishermansStaysailRig", "UpdateShapeBones") != null
         )
-            throw new Exception("Mk.A is not sampling the actual native reef animation.");
-        if (
-            Type("FishermansStaysailReefing").GetProperty("Spread", all) != null
-            || Type("FishermansStaysailReefing").GetField("FoldBone", all) != null
-        )
-            throw new Exception("Unused reef spread sampling returned.");
-        var shaping = CalledMethods(Method("FishermansStaysailRig", "UpdateShapeBones")).ToArray();
-        foreach (string getter in new[] { "get_Active", "get_ForePoint", "get_ForeAxis" })
-            if (shaping.Count(m => m.Name == getter) != 1)
-                throw new Exception("Resolve the luff frame once per bone update: " + getter);
-        if (shaping.Any(m => m.Name == "LuffPoint"))
-            throw new Exception("Bone updates must project with the captured mast frame.");
+            throw new Exception("Procedural staysail animation returned.");
         var newSail = Patch("NewSail", "Postfix");
         if (
             !CalledMethods(newSail)
@@ -183,14 +169,6 @@ internal static class PatchChecks
                 )
             )
                 throw new Exception("Live staysail mesh replacement in " + method.Name);
-            if (
-                method.Name == "UpdateShapeBones"
-                && calls.Any(m =>
-                    m.DeclaringType.FullName == "UnityEngine.Cloth"
-                    || m.Name is "set_localScale" or "set_localRotation"
-                )
-            )
-                throw new Exception("Staysail shaping must only move existing bones.");
         }
         if (
             !CalledMethods(Method("FishermansStaysailRig", "InitializeCut"))
@@ -198,31 +176,22 @@ internal static class PatchChecks
         )
             throw new Exception("The family rig must request the cut from its mark.");
         var lateUpdate = CalledMethods(Method("FishermansStaysailRig", "LateUpdate")).ToArray();
-        if (
-            !lateUpdate.Any(m =>
-                m.DeclaringType.Name == "FishermansStaysailEdgeFit" && m.Name == "Fit"
+        if (!lateUpdate.Any(m => m.Name == "PoseAnimation"))
+            throw new Exception("All staysails must use authored poses.");
+        foreach (string cut in new[] { "A", "B", "C" })
+            if (
+                !CalledMethods(
+                        Method(
+                            "Mk" + cut + ".FishermansStaysailMk" + cut + "Shape",
+                            "CreateAnimation"
+                        )
+                    )
+                    .Any(m =>
+                        m.DeclaringType.Name == "FishermansStaysailMk" + cut + "BakedMesh"
+                        && m.Name == "CreateAnimation"
+                    )
             )
-        )
-            throw new Exception("The family rig must retain active edge fitting.");
-        if (
-            !lateUpdate.Any(m =>
-                m.DeclaringType.Name == "FishermansStaysailFixedHead" && m.Name == "Update"
-            )
-            || !lateUpdate.Any(m =>
-                m.DeclaringType.Name == "FishermansStaysailFixedHead" && m.Name == "Position"
-            )
-            || Type("FishermansStaysailShape").GetProperty("FixedUpperHeadAngle", all) != null
-            || Type("FishermansStaysailShape").GetProperty("UpperCornerTrim", all) != null
-            || Type("FishermansStaysailFrameGeometry").GetMethod("UpperHead", all) != null
-            || assembly.GetType(family + "FishermansStaysailUpperTrim") != null
-            || (float)
-                Type("FishermansStaysailFixedHead")
-                    .GetField("DeployedAngle", all)
-                    .GetRawConstantValue() != 14f
-        )
-            throw new Exception(
-                "Mk.A must select the fixed 14-degree policy without its old upper trim."
-            );
+                throw new Exception("Missing authored animation for Mk." + cut);
         if (
             assembly.GetType(family + "FishermansStaysailSupportLine") != null
             || Type("FishermansStaysailRig").GetField("HalyardAttachment", all)?.FieldType.FullName
@@ -245,7 +214,7 @@ internal static class PatchChecks
                 "Aft halyard route must refresh its controls and use the aft mast axis."
             );
         Console.WriteLine(
-            "PASS: Mk.A prefab identity, stay membership, fit guards, animation sampling, native bundle, native control binding and fixed-mesh lifecycle."
+            "PASS: Mk.A prefab identity, stay membership, fit guards, authored playback, native bundle, native control binding and fixed-mesh lifecycle."
         );
     }
 }

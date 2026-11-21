@@ -47,12 +47,15 @@ internal static class PatchChecks
         }
         if (
             Type("MkC.FishermansStaysailMkCShape").BaseType != Type("FishermansStaysailShape")
-            || (float)
-                Type("FishermansStaysailFixedHead")
-                    .GetField("DeployedAngle", all)
-                    .GetRawConstantValue() != 14f
+            || !CalledMethods(Method("MkC.FishermansStaysailMkCShape", "CreateAnimation"))
+                .Any(m =>
+                    m.DeclaringType.Name == "FishermansStaysailMkCBakedMesh"
+                    && m.Name == "CreateAnimation"
+                )
         )
-            throw new Exception("Mk.C does not use the shared rig's 14-degree fixed head.");
-        Console.WriteLine("PASS: Mk.C index 403, shipyard registration and shared fixed-head rig.");
+            throw new Exception("Mk.C does not use its authored animation in the shared rig.");
+        Console.WriteLine(
+            "PASS: Mk.C index 403, shipyard registration and shared authored animation rig."
+        );
     }
 }
