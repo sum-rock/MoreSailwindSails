@@ -1,12 +1,9 @@
 """Shared bake regression checks; mutate temporary mesh copies without saving assets."""
 
-from pathlib import Path
-import sys
-import tempfile
 import bpy
 
 
-def check(*, bake, source_path, object_name, main, cli_args=()):
+def check(*, bake, source_path, object_name):
     source = bake()
     assert source == bake(), "Bake is not deterministic"
     assert source == source_path.read_text(encoding="utf-8"), "Stale checked-in bake"
@@ -42,46 +39,39 @@ def check(*, bake, source_path, object_name, main, cli_args=()):
         face = obj.data.polygons[0]
         face.vertices = tuple(reversed(face.vertices))
 
+    # Authored shape and continuous UV edits must reach the exported data.
+    obj.data = original.copy()
+    try:
+        obj.data.vertices[10].co = (0.1, 0.2, -0.3)
+        reshaped = bake()
+        assert reshaped != source, "Authored shape edit was ignored"
+        for loop in obj.data.loops:
+            if loop.vertex_index == 10:
+                obj.data.uv_layers[0].data[loop.index].uv = (0.2, 0.3)
+        assert bake() != reshaped, "Authored UV edit was ignored"
+    finally:
+        modified = obj.data
+        obj.data = original
+        bpy.data.meshes.remove(modified)
+
+    reject("zero span", lambda o: setattr(o.data.vertices[24].co, "x", 0))
+    reject("negative span", lambda o: setattr(o.data.vertices[24].co, "x", -1))
+    reject(
+        "non-finite UV",
+        lambda o: setattr(o.data.uv_layers[0].data[0], "uv", (float("nan"), 0)),
+    )
     reject("object transform", move_object)
     reject("vertex count", add_vertex)
-    reject("non-planar surface", lambda o: setattr(o.data.vertices[10].co, "y", 0.1))
-    reject("vertex correspondence", lambda o: setattr(o.data.vertices[10].co, "x", 0.1))
     reject(
         "non-finite vertex",
         lambda o: setattr(o.data.vertices[10].co, "z", float("nan")),
     )
-    reject(
-        "UV distortion", lambda o: setattr(o.data.uv_layers[0].data[0], "uv", (0, 0))
-    )
+    reject("UV seam", lambda o: setattr(o.data.uv_layers[0].data[1], "uv", (0, 0)))
     reject("missing UV layer", lambda o: o.data.uv_layers.remove(o.data.uv_layers[0]))
     reject("winding", flip_face)
     reject("modifier", lambda o: o.modifiers.new(name="Solidify", type="SOLIDIFY"))
     assert bake() == source, "Checks changed the source asset"
 
-    # Exercise the actual CLI check path and confirm stale checks never overwrite output.
-    with tempfile.TemporaryDirectory(prefix="mss-bake-check-") as directory:
-        output = Path(directory) / "mesh.g.cs"
-        original_args = sys.argv
-        try:
-            sys.argv = ["blender", "--", *cli_args, "--check", "--output", str(output)]
-            for stale in (None, "stale source"):
-                if stale is not None:
-                    output.write_text(stale, encoding="utf-8")
-                try:
-                    main()
-                except RuntimeError:
-                    pass
-                else:
-                    raise AssertionError("Stale check unexpectedly passed")
-                assert (
-                    (not output.exists())
-                    if stale is None
-                    else output.read_text() == stale
-                )
-            output.write_text(source, encoding="utf-8")
-            main()
-        finally:
-            sys.argv = original_args
     print(
-        f"PASS: {object_name} deterministic bake, incompatible edit rejection and read-only freshness checks."
+        f"PASS: {object_name} deterministic JSON bake and incompatible edit rejection."
     )

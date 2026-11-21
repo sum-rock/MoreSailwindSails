@@ -36,23 +36,15 @@ internal static class CutChecks
             for (int col = 0; col <= FishermansStaysailGeometry.Columns; col++)
             {
                 int i = row * (FishermansStaysailGeometry.Columns + 1) + col;
-                bool expected =
-                    col == 0
-                    || (
-                        col == FishermansStaysailGeometry.Columns
-                        && (row == 0 || row == FishermansStaysailGeometry.Rows)
-                    );
-                if ((mesh.Constraints[i].maxDistance == 0) != expected)
-                    throw new Exception("Mk.B pin mask changed.");
-                if (expected)
-                    pinned++;
-                var weights = mesh.Weights[i];
-                var rest =
-                    mesh.BonePositions[weights.boneIndex0] * weights.weight0
-                    + mesh.BonePositions[weights.boneIndex1] * weights.weight1;
-                Near((rest - mesh.Vertices[i]).magnitude, 0, width * 1e-5f, "skin");
+                if (
+                    mesh.Constraints[i].maxDistance != 0
+                    || mesh.Weights[i].weight0 != 1
+                    || mesh.Weights[i].boneIndex0 != 0
+                )
+                    throw new Exception("Authored cloth must use a fixed identity skin.");
+                pinned++;
             }
-            if (pinned != FishermansStaysailGeometry.Rows + 3)
+            if (pinned != mesh.Vertices.Length)
                 throw new Exception("Mk.B pin count changed.");
             for (int i = 0; i < mesh.Triangles.Length; i += 3)
             {
@@ -62,24 +54,6 @@ internal static class CutChecks
                 if (Vector3.Cross(q - p, r - p).y <= 0)
                     throw new Exception("Inverted Mk.B panel.");
             }
-            var leechPoints = new Vector3[33];
-            if (
-                !FishermansStaysailTension.Fit(
-                    c[3],
-                    c[1],
-                    c[2],
-                    Vector3.zero,
-                    (c[1] - c[3]).magnitude,
-                    (c[3] - c[2]).magnitude,
-                    1,
-                    leechPoints
-                )
-            )
-                throw new Exception("Mk.B nominal sheet and leech cannot fit.");
-            var furledFore = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], 0);
-            var furledAft = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], 0);
-            if (furledFore.x <= c[2].x || furledAft.x <= c[3].x)
-                throw new Exception("Mk.B foot does not gather toward the head.");
         }
         if (ReferenceEquals(BehaviorCases.CreateB(3).Vertices, BehaviorCases.CreateB(3).Vertices))
             throw new Exception("Mk.B cuts share mutable vertices.");
@@ -96,7 +70,7 @@ internal static class CutChecks
             throw new Exception("Mk.B accepted an invalid width.");
         }
         Console.WriteLine(
-            "PASS: Mk.B shared stay head, level 90-degree foot, pins, skin, reef and nominal tension."
+            "PASS: Mk.B shared stay head, level 90-degree foot, identity skin and geometry."
         );
     }
 

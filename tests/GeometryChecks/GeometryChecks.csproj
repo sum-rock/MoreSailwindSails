@@ -7,6 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Sails/FishermansStaysail/FishermansStaysailAnimation.cs"
+      Link="FishermansStaysail/FishermansStaysailAnimation.cs"
+    />
+    <Compile
       Include="../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailSailingGeometry.cs;../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailClothGeometry.cs;../../src/Sails/LooseFootedSpritsail/LooseFootedSpritsailFlutter.cs"
       Link="LooseFootedSpritsail/%(Filename)%(Extension)"
     />
@@ -225,10 +229,6 @@
       Link="FishermansStaysail/FishermansStaysailGeometry.cs"
     />
     <Compile
-      Include="../../src/Sails/FishermansStaysail/FishermansStaysailBillow.cs"
-      Link="FishermansStaysail/FishermansStaysailBillow.cs"
-    />
-    <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailFrameGeometry.cs"
       Link="FishermansStaysail/FishermansStaysailFrameGeometry.cs"
     />
@@ -237,20 +237,12 @@
       Link="FishermansStaysail/FishermansStaysailTravel.cs"
     />
     <Compile
-      Include="../../src/Sails/FishermansStaysail/FishermansStaysailTension.cs"
-      Link="FishermansStaysail/FishermansStaysailTension.cs"
-    />
-    <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailAerodynamics.cs"
       Link="FishermansStaysail/FishermansStaysailAerodynamics.cs"
     />
     <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailInstallationGeometry.cs"
       Link="FishermansStaysail/FishermansStaysailInstallationGeometry.cs"
-    />
-    <Compile
-      Include="../../src/Sails/FishermansStaysail/FishermansStaysailReefingGeometry.cs"
-      Link="FishermansStaysail/FishermansStaysailReefingGeometry.cs"
     />
     <Compile
       Include="../../src/Sails/FishermansStaysail/MkA/FishermansStaysailMkABakedMesh.g.cs"
@@ -271,10 +263,6 @@
     <Compile
       Include="../../src/Sails/FishermansStaysail/MkC/FishermansStaysailMkCBakedMesh.g.cs"
       Link="FishermansStaysail/MkC/FishermansStaysailMkCBakedMesh.g.cs"
-    />
-    <Compile
-      Include="../../src/Sails/FishermansStaysail/FishermansStaysailEdgeFit.cs"
-      Link="FishermansStaysail/FishermansStaysailEdgeFit.cs"
     />
     <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailFixedHead.cs"

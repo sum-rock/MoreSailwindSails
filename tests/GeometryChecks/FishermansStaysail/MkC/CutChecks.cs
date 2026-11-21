@@ -46,23 +46,15 @@ internal static class CutChecks
             for (int col = 0; col <= FishermansStaysailGeometry.Columns; col++)
             {
                 int i = row * (FishermansStaysailGeometry.Columns + 1) + col;
-                bool expected =
-                    col == 0
-                    || (
-                        col == FishermansStaysailGeometry.Columns
-                        && (row == 0 || row == FishermansStaysailGeometry.Rows)
-                    );
-                if ((mesh.Constraints[i].maxDistance == 0) != expected)
-                    throw new Exception("Mk.C pin mask changed.");
-                if (expected)
-                    pinned++;
-                var weights = mesh.Weights[i];
-                var rest =
-                    mesh.BonePositions[weights.boneIndex0] * weights.weight0
-                    + mesh.BonePositions[weights.boneIndex1] * weights.weight1;
-                Near((rest - mesh.Vertices[i]).magnitude, 0, width * 1e-5f, "skin");
+                if (
+                    mesh.Constraints[i].maxDistance != 0
+                    || mesh.Weights[i].weight0 != 1
+                    || mesh.Weights[i].boneIndex0 != 0
+                )
+                    throw new Exception("Authored cloth must use a fixed identity skin.");
+                pinned++;
             }
-            if (pinned != FishermansStaysailGeometry.Rows + 3)
+            if (pinned != mesh.Vertices.Length)
                 throw new Exception("Mk.C pin count changed.");
             float projectedArea = 0;
             for (int i = 0; i < mesh.Triangles.Length; i += 3)
@@ -81,24 +73,6 @@ internal static class CutChecks
                 width * width * 1e-4f,
                 "projected trapezoid area"
             );
-            var leechPoints = new Vector3[33];
-            if (
-                !FishermansStaysailTension.Fit(
-                    c[3],
-                    c[1],
-                    c[2],
-                    Vector3.zero,
-                    (c[1] - c[3]).magnitude,
-                    (c[3] - c[2]).magnitude,
-                    1,
-                    leechPoints
-                )
-            )
-                throw new Exception("Mk.C nominal sheet and leech cannot fit.");
-            var furledFore = FishermansStaysailReefingGeometry.Pose(c[2], c[0], c[1], 0);
-            var furledAft = FishermansStaysailReefingGeometry.Pose(c[3], c[0], c[1], 0);
-            if (furledFore.x <= c[2].x || furledAft.x <= c[3].x)
-                throw new Exception("Mk.C foot does not gather toward the head.");
         }
         if (ReferenceEquals(BehaviorCases.CreateC(3).Vertices, BehaviorCases.CreateC(3).Vertices))
             throw new Exception("Mk.C cuts share mutable vertices.");
@@ -156,7 +130,7 @@ internal static class CutChecks
         )
             throw new Exception("Mk.C must respect its longer luff when checking mast clearance.");
         Console.WriteLine(
-            "PASS: Mk.C shared stay head, 50% longer luff, rising 40-degree foot, pins, skin, reef and nominal tension."
+            "PASS: Mk.C shared stay head, 50% longer luff, rising 40-degree foot, identity skin and geometry."
         );
     }
 
