@@ -1,17 +1,17 @@
-"""Check the Flying Sail bake without saving or changing its source asset."""
+"""Check the Flying Sail JSON pipeline without saving its source asset."""
 
 from pathlib import Path
-import runpy
 import sys
 
 root = Path(__file__).resolve().parents[2]
-tool = runpy.run_path(str(root / "tools/assets/bake_flying_sail.py"))
+sys.path.insert(0, str(root))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from tools.assets.flying_sail.authoring import SOURCE_PATH, OBJECT_NAME
+from json_bake_checks import bake
 from sail_bake_checks import check
 
 check(
-    bake=tool["bake"],
-    source_path=tool["SOURCE_PATH"],
-    object_name=tool["OBJECT_NAME"],
-    main=tool["main"],
+    bake=lambda: bake(asset="flying_sail"),
+    source_path=SOURCE_PATH,
+    object_name=OBJECT_NAME,
 )

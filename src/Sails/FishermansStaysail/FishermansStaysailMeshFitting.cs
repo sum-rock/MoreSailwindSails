@@ -52,12 +52,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                     v = (float)row / rows;
                 var point = data.Vertices[i] * width;
                 point.x += headDelta * u * (1 - v);
-                // Reproject the flat fitted cut, then add the established rest belly.
+                // Reproject the flat fitted cut for stable cloth texture coordinates.
                 data.UV[i] = new Vector2(
                     uvLeft + (point.z + width) * uvScale,
                     uvBottom + (point.x - bottom) * uvScale
                 );
-                point.y = FishermansStaysailGeometry.RestCamber(width: width, u: u, v: v);
                 data.Vertices[i] = point;
             }
             data.Corners = new[]

@@ -24,20 +24,6 @@ internal static class CutChecks
             CheckMesh(mesh, width);
             if (ReferenceEquals(mesh.Vertices, BehaviorCases.CreateA(width).Vertices))
                 throw new Exception("Mk.A cuts share mutable arrays.");
-            var points = new Vector3[33];
-            if (
-                !FishermansStaysailTension.Fit(
-                    c[3],
-                    c[1],
-                    c[2],
-                    Vector3.zero,
-                    (c[1] - c[3]).magnitude,
-                    (c[3] - c[2]).magnitude,
-                    1,
-                    points
-                )
-            )
-                throw new Exception("Mk.A nominal tension cannot fit.");
         }
         foreach (float bad in new[] { 0f, -1f, float.NaN, float.PositiveInfinity, 101f })
         {
@@ -55,7 +41,7 @@ internal static class CutChecks
         }
         CheckProfiles();
         Console.WriteLine(
-            "PASS: Mk.A 110-degree cut, pinned straight luff, free stay-independent head, skinning, tension and authored-stay alignment."
+            "PASS: Mk.A 110-degree cut, pinned straight luff, free stay-independent head, identity skin and authored-stay alignment."
         );
     }
 
@@ -66,29 +52,20 @@ internal static class CutChecks
         for (int col = 0; col <= FishermansStaysailGeometry.Columns; col++)
         {
             int i = row * (FishermansStaysailGeometry.Columns + 1) + col;
-            bool expected =
-                col == 0
-                || (
-                    col == FishermansStaysailGeometry.Columns
-                    && (row == 0 || row == FishermansStaysailGeometry.Rows)
-                );
-            if ((mesh.Constraints[i].maxDistance == 0) != expected)
-                throw new Exception("Wrong Mk.A pin mask.");
-            if (expected)
-                pinned++;
+            if (
+                mesh.Constraints[i].maxDistance != 0
+                || mesh.Weights[i].weight0 != 1
+                || mesh.Weights[i].boneIndex0 != 0
+            )
+                throw new Exception("Authored cloth must use a fixed identity skin.");
+            pinned++;
             if (col == 0)
             {
                 Near(mesh.Vertices[i].y, 0, 1e-6f, "straight luff");
                 Near(mesh.Vertices[i].z, -width, 1e-6f, "mast luff");
             }
-            var w = mesh.Weights[i];
-            Near(w.weight0 + w.weight1 + w.weight2 + w.weight3, 1, 1e-6f, "skin sum");
-            var rest =
-                mesh.BonePositions[w.boneIndex0] * w.weight0
-                + mesh.BonePositions[w.boneIndex1] * w.weight1;
-            Near((rest - mesh.Vertices[i]).magnitude, 0, width * 1e-5f, "skin reconstruction");
         }
-        if (pinned != FishermansStaysailGeometry.Rows + 3)
+        if (pinned != mesh.Vertices.Length)
             throw new Exception("Wrong luff pin count.");
         for (int i = 0; i < mesh.Triangles.Length; i += 3)
         {

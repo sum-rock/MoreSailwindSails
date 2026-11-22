@@ -46,13 +46,17 @@ internal static class PatchChecks
                 throw new Exception("Mk.B is absent from shipyard insertion: " + patch);
         }
         if (
-            Type("MkB.FishermansStaysailMkBShape").BaseType != Type("FishermansStaysailShape")
-            || (float)
-                Type("FishermansStaysailFixedHead")
-                    .GetField("DeployedAngle", all)
-                    .GetRawConstantValue() != 14f
+            !CalledMethods(Method("FishermansStaysailRig", "InitializeCut"))
+                .Any(m => m.Name == "CreateAnimation")
+            || !CalledMethods(Method("FishermansStaysailRig", "LateUpdate"))
+                .Any(m => m.Name == "PoseAnimation")
+            || CalledMethods(Method("FishermansStaysailRig", "PoseAnimation"))
+                .Any(m =>
+                    m.DeclaringType == Type("FishermansStaysailReefing")
+                    || m.DeclaringType.Name == "FishermansStaysailEdgeFit"
+                )
         )
-            throw new Exception("Mk.B does not use the shared rig's 14-degree fixed head.");
-        Console.WriteLine("PASS: Mk.B index 402, shipyard registration and shared fixed-head rig.");
+            throw new Exception("Mk.B authored posing is missing or uses procedural reefing.");
+        Console.WriteLine("PASS: Mk.B index 402, registration and authored animation wiring.");
     }
 }

@@ -1,4 +1,4 @@
-"""Expose asset generation and baking commands without importing Blender."""
+"""Expose asset baking commands without importing Blender."""
 
 from pathlib import Path
 import subprocess
@@ -15,12 +15,12 @@ import click
 )
 @click.pass_context
 def assets(context: click.Context, blender: str) -> None:
-    """Generate Blender assets or bake authored meshes into C#."""
+    """Bake authored Blender assets into C#."""
     context.ensure_object(dict)
     context.obj["blender"] = blender
 
 
-def asset_command(*, action: str, asset: str):
+def asset_command(*, asset: str):
     @click.command(name=asset)
     @click.option("--output", type=click.Path(path_type=Path, dir_okay=False))
     @click.pass_context
@@ -32,7 +32,6 @@ def asset_command(*, action: str, asset: str):
         try:
             run(
                 blender=context.obj["blender"],
-                action=action,
                 asset=asset,
                 cut=cut,
                 output=output,
@@ -42,23 +41,23 @@ def asset_command(*, action: str, asset: str):
             raise click.ClickException(str(error)) from error
 
     if asset in ("staysail", "loose_foot_spritsail"):
-        from tools.assets.loose_foot_spritsail_authoring import CUTS
+        from tools.assets.loose_foot_spritsail.authoring import CUTS as SPRITSAIL_CUTS
+        from tools.assets.staysail.authoring import CUTS as STAYSAIL_CUTS
 
         command = click.option(
             "--cut",
             type=click.Choice(
-                ["A", "B", "C"] if asset == "staysail" else list(CUTS),
+                STAYSAIL_CUTS if asset == "staysail" else list(SPRITSAIL_CUTS),
                 case_sensitive=False,
             ),
             default="A",
             show_default=True,
         )(command)
-    if action == "bake":
-        command = click.option(
-            "--check",
-            is_flag=True,
-            help="Compare against the current bake; write nothing.",
-        )(command)
+    command = click.option(
+        "--check",
+        is_flag=True,
+        help="Compare against the current bake; write nothing.",
+    )(command)
     return command
 
 
@@ -70,12 +69,5 @@ def bake(context: click.Context) -> None:
     context.obj.setdefault("blender", "blender")
 
 
-@assets.group()
-def generate() -> None:
-    """Create an editable Blender asset (replaces its output file)."""
-
-
 for asset in ("flying_sail", "staysail", "stay", "loose_foot_spritsail"):
-    bake.add_command(asset_command(action="bake", asset=asset))
-for asset in ("flying_sail", "staysail"):
-    generate.add_command(asset_command(action="generate", asset=asset))
+    bake.add_command(asset_command(asset=asset))

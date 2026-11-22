@@ -98,7 +98,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
                 string registrationMessage =
                     $"Registered {displayName}: source={SourceIndex}, index={prefabIndex}, "
-                    + $"vertices={mesh.vertexCount}, corners=4, pinnedLuff=true, "
+                    + $"vertices={mesh.vertexCount}, corners=4, authoredAnimation=true, "
                     + $"area={sail.sailArea:F2}.";
 
                 if (directory.sails.Length <= prefabIndex)

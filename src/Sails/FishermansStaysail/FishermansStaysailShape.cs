@@ -6,6 +6,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
     // in the family rig. This component is copied with the native sail prefab.
     internal abstract class FishermansStaysailShape : MonoBehaviour
     {
+        internal abstract FishermansStaysailAnimationData CreateAnimation();
         internal abstract string ObjectPrefix { get; }
         internal abstract FishermansStaysailMeshData Create(float width, float headSlope);
     }
