@@ -121,7 +121,7 @@ internal static class PatchChecks
         if (!CalledMethods(Patch("Travel", "Postfix")).Any(m => m.Name == "ConstrainHinge"))
             throw new Exception("Mk.A travel is not constrained after native sway.");
         if (
-            Method("FishermansStaysailReefing", "Sample") != null
+            assembly.GetType(family + "FishermansStaysailReefing") != null
             || Method("FishermansStaysailRig", "UpdateShapeBones") != null
         )
             throw new Exception("Procedural staysail animation returned.");
@@ -150,12 +150,18 @@ internal static class PatchChecks
                 throw new Exception(
                     "Default size must not override existing sail sizes: " + type.Name
                 );
-        var draw = CalledMethods(Method("FishermansStaysailReefing", "DrawBundle")).ToArray();
         if (
-            !draw.Any(m => m.Name == "set_enabled")
-            || !draw.Any(m => m.Name == "set_sharedMaterial")
+            Method("FishermansStaysailGeometry", "RenderState") != null
+            || Type("FishermansStaysailRig").GetField("ReefedRenderer", all) != null
+            || Instructions(Method("FishermansStaysailRig", "LateUpdate"))
+                .Any(i => i.Operand is FieldInfo field && field.Name == "currentUnroll")
         )
-            throw new Exception("Native resting bundle visibility/material not maintained.");
+            throw new Exception("Authored panel visibility must not depend on reef thresholds.");
+        if (
+            Type("FishermansStaysailTravel").GetField("MaximumAngle", all) != null
+            || Method("FishermansStaysailTravel", "Clamp") != null
+        )
+            throw new Exception("Staysail trim must retain fitted limits without a fixed cap.");
         foreach (
             var method in Type("FishermansStaysailRig").GetMethods(all | BindingFlags.DeclaredOnly)
         )
@@ -214,7 +220,7 @@ internal static class PatchChecks
                 "Aft halyard route must refresh its controls and use the aft mast axis."
             );
         Console.WriteLine(
-            "PASS: Mk.A prefab identity, stay membership, fit guards, authored playback, native bundle, native control binding and fixed-mesh lifecycle."
+            "PASS: Mk.A prefab identity, stay membership, fit guards, full-range authored playback, native control binding and fixed-mesh lifecycle."
         );
     }
 }

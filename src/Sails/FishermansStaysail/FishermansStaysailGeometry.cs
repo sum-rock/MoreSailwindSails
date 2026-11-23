@@ -43,11 +43,5 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             data.Center /= area;
             return data;
         }
-
-        // 0 = native resting bundle, 1 = animated panel, 2 = deployed panel.
-        internal static int RenderState(float unroll) =>
-            unroll < 0.04f ? 0
-            : unroll < 0.98f ? 1
-            : 2;
     }
 }

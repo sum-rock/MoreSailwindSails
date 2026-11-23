@@ -116,9 +116,30 @@ internal static class AnimationChecks
                         throw new Exception("Non-finite fitted animation.");
             }
         }
+        // Near fully reefed, use the final authored interval without substituting a bundle.
+        foreach (float deployment in new[] { 0f, 0.001f, 0.039f, 0.04f, 0.041f, 0f })
+        foreach (int side in new[] { -1, 1 })
+        {
+            animation = new FishermansStaysailAnimation(data: data, width: 1, headSlope: 20);
+            animation.Pose(deployment: deployment, ease: 0.3f, side: side);
+            int last = data.ReefFractions.Length - 1;
+            float blend =
+                (1 - deployment - data.ReefFractions[last - 1])
+                / (1 - data.ReefFractions[last - 1]);
+            for (int i = 0; i < animation.Vertices.Length; i++)
+            {
+                var inside = data.ReefIn[last - 1][i] * (1 - blend) + data.ReefIn[last][i] * blend;
+                var outside =
+                    data.ReefOut[last - 1][i] * (1 - blend) + data.ReefOut[last][i] * blend;
+                var expected = inside * 0.7f + outside * 0.3f;
+                expected.y *= side;
+                if ((animation.Vertices[i] - expected).magnitude > 1e-5f)
+                    throw new Exception("Fully reefed transition must follow authored samples.");
+            }
+        }
         if (
-            FishermansStaysailAnimation.SheetEase(angle: -10, minimum: -20, maximum: 40) != 0.5f
-            || FishermansStaysailAnimation.SheetEase(angle: 10, minimum: -20, maximum: 40) != 0.25f
+            FishermansStaysailAnimation.SheetEase(angle: -30, minimum: -60, maximum: 80) != 0.5f
+            || FishermansStaysailAnimation.SheetEase(angle: 60, minimum: -60, maximum: 80) != 0.75f
         )
             throw new Exception("Asymmetric sheet travel mapping changed.");
         Console.WriteLine(
