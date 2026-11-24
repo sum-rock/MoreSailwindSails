@@ -605,8 +605,17 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 Bones[i].localPosition = animatedVertices[corners[i]];
             HalyardAttachment.localPosition = Vector3.zero;
             SheetAttachment.localPosition = Vector3.zero;
-            if (FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll))
-                SheetAttachment.position = Bones[1].position;
+            if (supported && FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll))
+            {
+                var aft = FishermansStaysailFrameGeometry.FurledAftPoint(
+                    fore: rigging.ForePoint,
+                    aft: rigging.AftPoint,
+                    mastAxis: rigging.ForeAxis,
+                    width: clothTransform.TransformVector(Vector3.forward * -Corners[0].z).magnitude
+                );
+                HalyardAttachment.position = aft;
+                SheetAttachment.position = aft;
+            }
             if (supported)
                 rigging.UpdateHalyard(HalyardAttachment);
         }
@@ -643,8 +652,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 bool furled = FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll);
                 animatedRenderer.enabled = visible && !furled;
                 Reefing.DrawBundle(
-                    foreHead: Bones[0].position,
-                    aftHead: Bones[1].position,
+                    foreHead: supported ? rigging.ForePoint : Bones[0].position,
+                    aftHead: HalyardAttachment.position,
                     mastAxis: supported ? rigging.ForeAxis : Sail.cloth.transform.right,
                     scale: Sail.cloth.transform.parent.localScale.x,
                     material: animatedRenderer.sharedMaterial,

@@ -9,6 +9,20 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         internal static Vector3 ProjectOntoMast(Vector3 point, Vector3 forePoint, Vector3 axis) =>
             forePoint + axis * Vector3.Dot(point - forePoint, axis);
 
+        // Gather onto the physical stay, retaining fitted width across the mast axis.
+        // Installation drop, authored billow and independent luff scaling do not move the bundle.
+        internal static Vector3 FurledAftPoint(
+            Vector3 fore,
+            Vector3 aft,
+            Vector3 mastAxis,
+            float width
+        )
+        {
+            var stay = aft - fore;
+            float span = Vector3.ProjectOnPlane(stay, mastAxis).magnitude;
+            return fore + stay * Mathf.Clamp01(width / span);
+        }
+
         internal static Vector3 ModelOffset(Vector3 pivot, Vector3 alignedHead) =>
             pivot - alignedHead;
 

@@ -166,6 +166,18 @@ internal static class PatchChecks
                 throw new Exception(
                     "Sheet attachment and visibility must share the fully-furled boundary."
                 );
+        var poseCalls = CalledMethods(Method("FishermansStaysailRig", "PoseAnimation")).ToArray();
+        if (
+            !poseCalls.Any(m => m.Name == "FurledAftPoint")
+            || !poseCalls.Any(m => m.Name == "get_ForePoint")
+            || !poseCalls.Any(m => m.Name == "get_AftPoint")
+            || poseCalls.Count(m => m.Name == "set_position") != 2
+            || !CalledMethods(Method("FishermansStaysailRig", "LateUpdate"))
+                .Any(m => m.Name == "get_ForePoint")
+        )
+            throw new Exception(
+                "Furled bundle and both rope leaves must follow the physical stay."
+            );
         var bundleCalls = CalledMethods(Method("FishermansStaysailReefing", "DrawBundle"))
             .ToArray();
         if (
