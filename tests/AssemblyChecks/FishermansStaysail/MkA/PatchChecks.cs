@@ -121,7 +121,7 @@ internal static class PatchChecks
         if (!CalledMethods(Patch("Travel", "Postfix")).Any(m => m.Name == "ConstrainHinge"))
             throw new Exception("Mk.A travel is not constrained after native sway.");
         if (
-            assembly.GetType(family + "FishermansStaysailReefing") != null
+            Method("FishermansStaysailReefing", "Sample") != null
             || Method("FishermansStaysailRig", "UpdateShapeBones") != null
         )
             throw new Exception("Procedural staysail animation returned.");
@@ -153,10 +153,32 @@ internal static class PatchChecks
         if (
             Method("FishermansStaysailGeometry", "RenderState") != null
             || Type("FishermansStaysailRig").GetField("ReefedRenderer", all) != null
-            || Instructions(Method("FishermansStaysailRig", "LateUpdate"))
-                .Any(i => i.Operand is FieldInfo field && field.Name == "currentUnroll")
         )
-            throw new Exception("Authored panel visibility must not depend on reef thresholds.");
+            throw new Exception("Staysails must retain a single animated panel renderer.");
+        foreach (string method in new[] { "PoseAnimation", "LateUpdate" })
+            if (
+                !CalledMethods(Method("FishermansStaysailRig", method))
+                    .Any(m =>
+                        m.Name == "IsFurled"
+                        && m.DeclaringType == Type("FishermansStaysailGeometry")
+                    )
+            )
+                throw new Exception(
+                    "Sheet attachment and visibility must share the fully-furled boundary."
+                );
+        var bundleCalls = CalledMethods(Method("FishermansStaysailReefing", "DrawBundle"))
+            .ToArray();
+        if (
+            !bundleCalls.Any(m => m.Name == "set_enabled")
+            || !bundleCalls.Any(m => m.Name == "set_sharedMaterial")
+            || !CalledMethods(Method("FishermansStaysailRig", "LateUpdate"))
+                .Any(m =>
+                    m.DeclaringType == Type("FishermansStaysailReefing") && m.Name == "DrawBundle"
+                )
+        )
+            throw new Exception(
+                "The fitted native bundle must track visibility and the current sail material."
+            );
         if (
             Type("FishermansStaysailTravel").GetField("MaximumAngle", all) != null
             || Method("FishermansStaysailTravel", "Clamp") != null

@@ -20,7 +20,7 @@ internal static class NativeAppearanceChecks
                     appearance.GetMethod("Configure", BindingFlags.Static | BindingFlags.NonPublic)
                 )
                 .ToArray();
-            int sharedReferences = family == "FishermansFlyingSail" ? 2 : 0;
+            int sharedReferences = family == "FishermansFlyingSail" ? 2 : 1;
             if (
                 !calls.Any(m => m.DeclaringType.Name == "Sail" && m.Name == "ChangeSailColor")
                 || !calls.Any(m => m.Name == "get_sharedMaterial")

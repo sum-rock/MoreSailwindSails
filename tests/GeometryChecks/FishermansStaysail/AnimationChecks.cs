@@ -11,6 +11,17 @@ internal static class AnimationChecks
 {
     internal static void Run()
     {
+        // The old 4% substitution must not return, including after repeated furl/unfurl cycles.
+        foreach (
+            float unroll in new[] { 0f, float.Epsilon, 0.001f, 0.039f, 0.04f, 1f, 0f, 0.001f, 0f }
+        )
+        {
+            bool expectedBundle = unroll == 0f;
+            if (FishermansStaysailGeometry.IsFurled(unroll: unroll) != expectedBundle)
+                throw new Exception("The native bundle must appear only at fully reefed.");
+        }
+        if (!FishermansStaysailGeometry.IsFurled(unroll: -0.001f))
+            throw new Exception("Negative deployment must remain furled.");
         Check(FishermansStaysailMkABakedMesh.CreateAnimation());
         CheckFitting(
             FishermansStaysailMkABakedMesh.CreateAnimation(),

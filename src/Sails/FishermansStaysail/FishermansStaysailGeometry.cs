@@ -10,6 +10,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         internal const int Rows = 32;
         internal const int BoneCount = 4;
 
+        // Every positive deployment uses the authored panel, however small.
+        internal static bool IsFurled(float unroll) => unroll <= 0f;
+
         internal static void ValidateWidth(float width)
         {
             if (float.IsNaN(width) || float.IsInfinity(width) || width < 0.25f || width > 100f)

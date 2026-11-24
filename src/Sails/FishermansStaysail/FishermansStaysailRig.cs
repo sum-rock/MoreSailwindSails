@@ -25,6 +25,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
     internal sealed class FishermansStaysailRig : MonoBehaviour
     {
         public Sail Sail;
+        public FishermansStaysailReefing Reefing;
         private Mesh instanceMesh,
             instanceShadow;
         private bool cutInitialized;
@@ -87,6 +88,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             var reef = sail.GetComponent<ReefEffectAnimUniversal>();
             if (!reef || !reef.overrideAnimator)
                 throw new InvalidOperationException("Expected the brig jib's furl animator.");
+            var nativeReefing = FishermansStaysailReefing.Create(sail: sail, donor: reef);
             // WindCloth can re-enable the solver and renderer during visibility refreshes.
             var windCloth = cloth.GetComponent<WindCloth>();
             if (windCloth)
@@ -94,7 +96,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             renderer.enabled = false;
             reef.enabled = false;
             reef.overrideAnimator.enabled = false;
-            // Native ChangeSailColor still requires the donor's hidden furled renderer.
+            // Hide the original donor bundle; the fitted copy follows the authored head.
             if (reef.furledSail)
                 reef.furledSail.enabled = false;
             // Retain the disabled Animator as Shipyard Expansion's scaling reference.
@@ -106,6 +108,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
             var rig = sail.gameObject.AddComponent<FishermansStaysailRig>();
             rig.Sail = sail;
+            rig.Reefing = nativeReefing;
+            reef.furledSail = nativeReefing.Bundle;
             rig.Corners = data.Corners;
             var originalHinge = sail.GetComponent<HingeJoint>();
             rig.OriginalHingeAxis = originalHinge.axis;
@@ -601,6 +605,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 Bones[i].localPosition = animatedVertices[corners[i]];
             HalyardAttachment.localPosition = Vector3.zero;
             SheetAttachment.localPosition = Vector3.zero;
+            if (FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll))
+                SheetAttachment.position = Bones[1].position;
             if (supported)
                 rigging.UpdateHalyard(HalyardAttachment);
         }
@@ -633,8 +639,17 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
                 RefreshAerodynamics();
                 Sail.cloth.enabled = false;
-                // The authored panel supplies every pose, including fully reefed.
-                animatedRenderer.enabled = supported && !GameState.currentlyLoading;
+                bool visible = supported && !GameState.currentlyLoading;
+                bool furled = FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll);
+                animatedRenderer.enabled = visible && !furled;
+                Reefing.DrawBundle(
+                    foreHead: Bones[0].position,
+                    aftHead: Bones[1].position,
+                    mastAxis: supported ? rigging.ForeAxis : Sail.cloth.transform.right,
+                    scale: Sail.cloth.transform.parent.localScale.x,
+                    material: animatedRenderer.sharedMaterial,
+                    visible: visible && furled
+                );
             }
         }
     }

@@ -16,6 +16,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             // a private recolored material. Keep its shader; avoid the brig atlas
             // on planar UVs. Optional SE material updates have their own white restriction.
             material.mainTexture = Texture2D.whiteTexture;
+            sail.GetComponent<FishermansStaysailRig>().Reefing.Bundle.sharedMaterial = material;
         }
     }
 }
