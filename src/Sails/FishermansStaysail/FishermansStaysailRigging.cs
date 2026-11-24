@@ -192,14 +192,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             controlsDirty = false;
             var connections = sail.GetComponent<SailConnections>();
             connections.colChecker.RegisterBoatWalkCol(mast.walkColMast);
-            // Old saves can restore the wider donor range; keep the checker,
-            // shipyard description and native sail limits in agreement.
-            connections.colChecker.colAngleMin = FishermansStaysailTravel.Clamp(
-                connections.colChecker.colAngleMin
-            );
-            connections.colChecker.colAngleMax = FishermansStaysailTravel.Clamp(
-                connections.colChecker.colAngleMax
-            );
+            // Preserve native collision results, including limits restored from saves.
             sail.minAngle = connections.colChecker.colAngleMin;
             sail.maxAngle = connections.colChecker.colAngleMax;
         }

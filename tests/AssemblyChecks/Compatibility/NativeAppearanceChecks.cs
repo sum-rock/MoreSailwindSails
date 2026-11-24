@@ -1,4 +1,4 @@
-// Checks native recoloring, private sail texture initialization and reefed material sharing.
+// Checks native recoloring, private textures and material sharing for multi-renderer sails.
 using System;
 using System.Linq;
 using System.Reflection;
@@ -20,14 +20,16 @@ internal static class NativeAppearanceChecks
                     appearance.GetMethod("Configure", BindingFlags.Static | BindingFlags.NonPublic)
                 )
                 .ToArray();
+            int sharedReferences = family == "FishermansFlyingSail" ? 2 : 1;
             if (
                 !calls.Any(m => m.DeclaringType.Name == "Sail" && m.Name == "ChangeSailColor")
                 || !calls.Any(m => m.Name == "get_sharedMaterial")
-                || calls.Count(m => m.Name == "set_sharedMaterial") != 2
+                || calls.Count(m => m.Name == "set_sharedMaterial") != sharedReferences
                 || calls.Any(m => m.Name == "SetTexture")
             )
                 throw new Exception(
-                    "Appearance must share the native recolored material with both reefed references."
+                    family
+                        + " must retain native recoloring and share materials only with its additional renderers."
                 );
             int textureWrite = Array.FindIndex(calls, m => m.Name == "set_mainTexture");
             int recolor = Array.FindIndex(calls, m => m.Name == "ChangeSailColor");

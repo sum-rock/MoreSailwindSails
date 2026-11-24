@@ -1,4 +1,4 @@
-// Draws the native furled bundle along the authored head attachments.
+// Draws the native furled bundle on the physical stay over the fitted sail span.
 using System;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -42,6 +42,10 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             bool visible
         )
         {
+            Bundle.sharedMaterial = material;
+            Bundle.enabled = visible;
+            if (!visible)
+                return;
             var head = aftHead - foreHead;
             BundleRoot.SetPositionAndRotation(
                 (foreHead + aftHead) * 0.5f,
@@ -51,8 +55,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             float nativeLength = mesh.bounds.size.z * Bundle.transform.localScale.z;
             // Fit length independently of thickness, including steeper stays.
             BundleRoot.localScale = new Vector3(scale, scale, head.magnitude / nativeLength);
-            Bundle.sharedMaterial = material;
-            Bundle.enabled = visible;
         }
     }
 }

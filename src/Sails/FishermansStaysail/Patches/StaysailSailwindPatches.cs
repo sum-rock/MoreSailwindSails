@@ -190,18 +190,15 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
         }
     }
 
-    // Refreshes custom cloth through its rig instead of the native animation path.
+    // Prevents native refresh from restarting Cloth or the unused donor animation.
     [HarmonyPatch(typeof(ReefEffectAnimUniversal), "RefreshCloth")]
     internal static class FishermansStaysailClothRefreshPatch
     {
         [HarmonyPrefix]
         private static bool Prefix(ReefEffectAnimUniversal __instance)
         {
-            var rig = __instance.GetComponent<FishermansStaysailRig>();
-            if (!rig)
-                return true;
-            rig.RefreshCloth();
-            return false;
+            // Authored playback owns the mesh; the disabled donor animator never starts.
+            return !__instance.GetComponent<FishermansStaysailRig>();
         }
     }
 
@@ -378,26 +375,14 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
         }
     }
 
-    // Constrains native sheet and hinge travel to the custom sail limits.
+    // Keeps native sway within fitted travel without imposing a fixed trim cap.
     [HarmonyPatch(typeof(JibAngleMaster), "Update")]
     internal static class FishermansStaysailTravelPatch
     {
-        [HarmonyPrefix]
-        private static void Prefix(Sail ___sail, out bool __state)
-        {
-            __state = ___sail && ___sail.GetComponent<FishermansStaysailRig>();
-            if (!__state)
-                return;
-            // Native Update caches these for both sheet controllers. Saved
-            // limits and later mast refreshes may still contain the old range.
-            ___sail.minAngle = FishermansStaysailTravel.Clamp(___sail.minAngle);
-            ___sail.maxAngle = FishermansStaysailTravel.Clamp(___sail.maxAngle);
-        }
-
         [HarmonyPostfix]
-        private static void Postfix(JibAngleMaster __instance, Sail ___sail, bool __state)
+        private static void Postfix(JibAngleMaster __instance, Sail ___sail)
         {
-            if (!__state)
+            if (!___sail || !___sail.GetComponent<FishermansStaysailRig>())
                 return;
             var hinge = __instance.sailHinge;
             var limits = hinge.limits;

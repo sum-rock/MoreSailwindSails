@@ -10,6 +10,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         internal const int Rows = 32;
         internal const int BoneCount = 4;
 
+        // Every positive deployment uses the authored panel, however small.
+        internal static bool IsFurled(float unroll) => unroll <= 0f;
+
         internal static void ValidateWidth(float width)
         {
             if (float.IsNaN(width) || float.IsInfinity(width) || width < 0.25f || width > 100f)
@@ -43,11 +46,5 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             data.Center /= area;
             return data;
         }
-
-        // 0 = native resting bundle, 1 = animated panel, 2 = deployed panel.
-        internal static int RenderState(float unroll) =>
-            unroll < 0.04f ? 0
-            : unroll < 0.98f ? 1
-            : 2;
     }
 }

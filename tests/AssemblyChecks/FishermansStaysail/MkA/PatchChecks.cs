@@ -150,12 +150,52 @@ internal static class PatchChecks
                 throw new Exception(
                     "Default size must not override existing sail sizes: " + type.Name
                 );
-        var draw = CalledMethods(Method("FishermansStaysailReefing", "DrawBundle")).ToArray();
         if (
-            !draw.Any(m => m.Name == "set_enabled")
-            || !draw.Any(m => m.Name == "set_sharedMaterial")
+            Method("FishermansStaysailGeometry", "RenderState") != null
+            || Type("FishermansStaysailRig").GetField("ReefedRenderer", all) != null
         )
-            throw new Exception("Native resting bundle visibility/material not maintained.");
+            throw new Exception("Staysails must retain a single animated panel renderer.");
+        foreach (string method in new[] { "PoseAnimation", "LateUpdate" })
+            if (
+                !CalledMethods(Method("FishermansStaysailRig", method))
+                    .Any(m =>
+                        m.Name == "IsFurled"
+                        && m.DeclaringType == Type("FishermansStaysailGeometry")
+                    )
+            )
+                throw new Exception(
+                    "Sheet attachment and visibility must share the fully-furled boundary."
+                );
+        var poseCalls = CalledMethods(Method("FishermansStaysailRig", "PoseAnimation")).ToArray();
+        if (
+            !poseCalls.Any(m => m.Name == "FurledAftPoint")
+            || !poseCalls.Any(m => m.Name == "get_ForePoint")
+            || !poseCalls.Any(m => m.Name == "get_AftPoint")
+            || poseCalls.Count(m => m.Name == "set_position") != 2
+            || !CalledMethods(Method("FishermansStaysailRig", "LateUpdate"))
+                .Any(m => m.Name == "get_ForePoint")
+        )
+            throw new Exception(
+                "Furled bundle and both rope leaves must follow the physical stay."
+            );
+        var bundleCalls = CalledMethods(Method("FishermansStaysailReefing", "DrawBundle"))
+            .ToArray();
+        if (
+            !bundleCalls.Any(m => m.Name == "set_enabled")
+            || !bundleCalls.Any(m => m.Name == "set_sharedMaterial")
+            || !CalledMethods(Method("FishermansStaysailRig", "LateUpdate"))
+                .Any(m =>
+                    m.DeclaringType == Type("FishermansStaysailReefing") && m.Name == "DrawBundle"
+                )
+        )
+            throw new Exception(
+                "The fitted native bundle must track visibility and the current sail material."
+            );
+        if (
+            Type("FishermansStaysailTravel").GetField("MaximumAngle", all) != null
+            || Method("FishermansStaysailTravel", "Clamp") != null
+        )
+            throw new Exception("Staysail trim must retain fitted limits without a fixed cap.");
         foreach (
             var method in Type("FishermansStaysailRig").GetMethods(all | BindingFlags.DeclaredOnly)
         )
@@ -178,6 +218,33 @@ internal static class PatchChecks
         var lateUpdate = CalledMethods(Method("FishermansStaysailRig", "LateUpdate")).ToArray();
         if (!lateUpdate.Any(m => m.Name == "PoseAnimation"))
             throw new Exception("All staysails must use authored poses.");
+        var flutterCalls = CalledMethods(Method("FishermansStaysailRig", "UpdateFlutter"))
+            .ToArray();
+        if (
+            !poseCalls.Any(m => m.Name == "UpdateFlutter")
+            || !poseCalls.Any(m =>
+                m.Name == "VisualVertex" && m.DeclaringType == Type("FishermansStaysailFlutter")
+            )
+            || !flutterCalls.Any(m => m.Name == "GetCapturedWindFraction")
+            || !flutterCalls.Any(m => m.Name == "GetCurrentShadowMult")
+            || flutterCalls.Any(m => m.Name == "GetCapturedForceFraction")
+        )
+            throw new Exception(
+                "Staysail visual flutter must use native wind capture and shadowing."
+            );
+        var instructions = Instructions(Method("FishermansStaysailRig", "LateUpdate")).ToArray();
+        int clothSetter = Array.FindIndex(
+            instructions,
+            i =>
+                i.Operand is MethodInfo m
+                && m.DeclaringType.Name == "Cloth"
+                && m.Name == "set_enabled"
+        );
+        if (
+            clothSetter < 1
+            || instructions[clothSetter - 1].Code != System.Reflection.Emit.OpCodes.Ldc_I4_0
+        )
+            throw new Exception("Authored staysails must keep the native Cloth solver disabled.");
         foreach (string cut in new[] { "A", "B", "C" })
             if (
                 !CalledMethods(
@@ -214,7 +281,7 @@ internal static class PatchChecks
                 "Aft halyard route must refresh its controls and use the aft mast axis."
             );
         Console.WriteLine(
-            "PASS: Mk.A prefab identity, stay membership, fit guards, authored playback, native bundle, native control binding and fixed-mesh lifecycle."
+            "PASS: Mk.A prefab identity, stay membership, fit guards, full-range authored playback, native control binding and fixed-mesh lifecycle."
         );
     }
 }

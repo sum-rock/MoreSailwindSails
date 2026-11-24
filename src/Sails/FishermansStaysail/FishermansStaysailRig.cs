@@ -30,6 +30,10 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             instanceShadow;
         private bool cutInitialized;
         private FishermansStaysailAnimation animation;
+        private FishermansStaysailFlutter flutter;
+        private double flutterTime;
+        private float flutterStrength;
+        private float flutterPhase;
         private Vector3[] animatedVertices;
         private ShipyardSailColChecker animatedChecker;
         private SkinnedMeshRenderer animatedRenderer;
@@ -37,18 +41,14 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         public Vector3[] Corners;
         public Transform SheetAttachment;
         public Transform HalyardAttachment;
-        public SkinnedMeshRenderer ReefedRenderer;
-        public MeshRenderer FurledColorReference;
         public Transform MastFrame;
         public Vector3 OriginalHingeAxis;
         public Vector3 OriginalHingeAnchor;
         public bool OriginalAutoAnchor;
         public Transform Shadow;
         private FishermansStaysailFixedHead fixedHead;
-        private int lastRenderState = -1;
         private FishermansStaysailRigging rigging;
         private Mast lastMount;
-        private bool refreshRequested;
         private bool bindingDirty = true;
         private bool boundToMast;
         private Vector3 pivot;
@@ -79,8 +79,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         private void FixedUpdate() => RefreshFrame();
 
-        internal void RefreshCloth() => refreshRequested = true;
-
         internal static void Configure(
             Sail sail,
             FishermansStaysailMeshData data,
@@ -94,9 +92,15 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             var reef = sail.GetComponent<ReefEffectAnimUniversal>();
             if (!reef || !reef.overrideAnimator)
                 throw new InvalidOperationException("Expected the brig jib's furl animator.");
-            var nativeReefing = FishermansStaysailReefing.Create(sail, reef);
+            var nativeReefing = FishermansStaysailReefing.Create(sail: sail, donor: reef);
+            // WindCloth can re-enable the solver and renderer during visibility refreshes.
+            var windCloth = cloth.GetComponent<WindCloth>();
+            if (windCloth)
+                windCloth.enabled = false;
+            renderer.enabled = false;
             reef.enabled = false;
             reef.overrideAnimator.enabled = false;
+            // Hide the original donor bundle; the fitted copy follows the authored head.
             if (reef.furledSail)
                 reef.furledSail.enabled = false;
             // Retain the disabled Animator as Shipyard Expansion's scaling reference.
@@ -109,6 +113,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             var rig = sail.gameObject.AddComponent<FishermansStaysailRig>();
             rig.Sail = sail;
             rig.Reefing = nativeReefing;
+            reef.furledSail = nativeReefing.Bundle;
             rig.Corners = data.Corners;
             var originalHinge = sail.GetComponent<HingeJoint>();
             rig.OriginalHingeAxis = originalHinge.axis;
@@ -196,24 +201,10 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                     box.size = bounds.size;
                 }
             }
-            var reefed = new GameObject("FishermansStaysail reefing cloth");
-            reefed.transform.SetParent(scaleRoot, false);
-            rig.ReefedRenderer = reefed.AddComponent<SkinnedMeshRenderer>();
-            rig.ReefedRenderer.sharedMesh = mesh;
-            rig.ReefedRenderer.bones = renderer.bones;
-            rig.ReefedRenderer.rootBone = cloth.transform;
-            rig.ReefedRenderer.quality = SkinQuality.Bone4;
-            rig.ReefedRenderer.localBounds = renderer.localBounds;
-            rig.ReefedRenderer.sharedMaterials = renderer.sharedMaterials;
-            rig.ReefedRenderer.enabled = false;
-            rig.FurledColorReference = nativeReefing.Bundle;
-            reef.furledSail = nativeReefing.Bundle;
         }
 
         private static void ConfigureCollision(ShipyardSailColChecker checker, Vector3[] corners)
         {
-            checker.startMinAngle = -FishermansStaysailTravel.MaximumAngle;
-            checker.startMaxAngle = FishermansStaysailTravel.MaximumAngle;
             checker.colAngleMin = checker.startMinAngle;
             checker.colAngleMax = checker.startMaxAngle;
             // Use narrow inscribed strips rather than the old triangular clew box.
@@ -290,7 +281,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                         originalHinge.axis = OriginalHingeAxis;
                         originalHinge.anchor = OriginalHingeAnchor;
                         originalHinge.autoConfigureConnectedAnchor = OriginalAutoAnchor;
-                        refreshRequested = true;
                     }
                     boundToMast = false;
                     bindingDirty = true;
@@ -360,7 +350,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                         )
                     );
                     clothRenderer.localBounds = bounds;
-                    ReefedRenderer.localBounds = bounds;
                     hinge.autoConfigureConnectedAnchor = false;
                     hinge.connectedBody = mount.shipRigidbody;
                     hinge.axis = nextAxis;
@@ -392,13 +381,12 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                     );
                     boundToMast = true;
                     bindingDirty = false;
-                    refreshRequested = true;
                 }
                 return true;
             }
         }
 
-        // This runs once per installed/preview instance, before its Cloth is enabled.
+        // This runs once per installed/preview instance, before authored playback.
         // Each shared inactive prefab retains its mark's nominal cut.
         private void InitializeCut(float slope)
         {
@@ -419,6 +407,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 headSlope: slope
             );
             animatedVertices = new Vector3[data.Vertices.Length];
+            flutter = new FishermansStaysailFlutter(width: -Corners[0].z);
+            flutterPhase = (GetInstanceID() & 0xffff) * 0.01f;
             animatedChecker = Sail.GetComponent<SailConnections>().colChecker;
             animatedRenderer = renderer;
             instanceMesh.MarkDynamic();
@@ -426,7 +416,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             instanceMesh.RecalculateTangents();
             instanceMesh.RecalculateBounds();
             renderer.sharedMesh = instanceMesh;
-            ReefedRenderer.sharedMesh = instanceMesh;
             Sail.cloth.coefficients = data.Constraints;
             if (Shadow)
             {
@@ -611,22 +600,67 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                         s: scaleRoot.localScale
                     );
             }
+            // Keep physical attachments on the authored surface, independently of visual motion.
+            var corners = animation.CornerIndices;
+            for (int i = 0; i < corners.Length; i++)
+                Bones[i].localPosition = toLocal.MultiplyPoint3x4(animation.Vertices[corners[i]]);
+            var waves = UpdateFlutter(supported: supported);
             for (int i = 0; i < animatedVertices.Length; i++)
-                animatedVertices[i] = toLocal.MultiplyPoint3x4(animation.Vertices[i]);
+                animatedVertices[i] = toLocal.MultiplyPoint3x4(
+                    flutter.VisualVertex(authored: animation.Vertices[i], index: i, waves: waves)
+                );
             instanceMesh.vertices = animatedVertices;
             instanceMesh.RecalculateNormals();
             instanceMesh.RecalculateBounds();
             animatedRenderer.localBounds = instanceMesh.bounds;
-            ReefedRenderer.localBounds = instanceMesh.bounds;
-            var corners = animation.CornerIndices;
-            for (int i = 0; i < corners.Length; i++)
-                Bones[i].localPosition = animatedVertices[corners[i]];
             HalyardAttachment.localPosition = Vector3.zero;
             SheetAttachment.localPosition = Vector3.zero;
-            if (FishermansStaysailGeometry.RenderState(Sail.currentUnroll) == 0)
-                SheetAttachment.position = Bones[1].position;
+            if (supported && FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll))
+            {
+                var aft = FishermansStaysailFrameGeometry.FurledAftPoint(
+                    fore: rigging.ForePoint,
+                    aft: rigging.AftPoint,
+                    mastAxis: rigging.ForeAxis,
+                    width: clothTransform.TransformVector(Vector3.forward * -Corners[0].z).magnitude
+                );
+                HalyardAttachment.position = aft;
+                SheetAttachment.position = aft;
+            }
             if (supported)
                 rigging.UpdateHalyard(HalyardAttachment);
+        }
+
+        private Vector4 UpdateFlutter(bool supported)
+        {
+            bool active =
+                supported
+                && GameState.playing
+                && !GameState.currentShipyard
+                && !GameState.currentlyLoading
+                && !GameState.shipyardUpdatingOrder
+                && !(Sail.damage && Sail.damage.sunk);
+            if (!active)
+                flutterStrength = 0;
+            else if (Time.deltaTime > 0)
+            {
+                float target = FishermansStaysailFlutter.Strength(
+                    capturedWind: Sail.GetCapturedWindFraction(),
+                    windSpeed: Sail.apparentWind.magnitude,
+                    shadow: Sail.GetCurrentShadowMult()
+                );
+                flutterStrength = FishermansStaysailFlutter.SmoothStrength(
+                    current: flutterStrength,
+                    target: target,
+                    seconds: Time.deltaTime
+                );
+                flutterTime += Time.deltaTime;
+            }
+            return FishermansStaysailFlutter.Waves(
+                time: flutterTime,
+                phase: flutterPhase,
+                strength: flutterStrength
+                    * FishermansStaysailFlutter.Deployment(unroll: Sail.currentUnroll)
+            );
         }
 
         private void LateUpdate()
@@ -648,43 +682,26 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                     Shadow.localRotation = scale.localRotation;
                     Shadow.localScale = scale.localScale;
                 }
-                int state;
                 using (PerformanceProfile.Measure(target: ProfileTarget.Shape))
                 {
                     if (!cutInitialized)
                         return;
                     PoseAnimation(supported: supported);
-                    state = FishermansStaysailGeometry.RenderState(Sail.currentUnroll);
                 }
 
                 RefreshAerodynamics();
-                if (refreshRequested || state != lastRenderState)
-                {
-                    // Refresh after applying our corner poses. The donor animator's
-                    // Start never runs, so its RefreshCloth must not be invoked.
-                    Sail.cloth.enabled = false;
-                    Sail.cloth.ClearTransformMotion();
-                    refreshRequested = false;
-                }
                 Sail.cloth.enabled = false;
-                var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
                 bool visible = supported && !GameState.currentlyLoading;
-                // WindCloth writes renderer.enabled in Update; select the correct
-                // renderer here in LateUpdate so the disabled solver cannot leave
-                // stale full-size triangles visible when the sail is struck.
-                clothRenderer.enabled = visible && state == 2;
-                ReefedRenderer.sharedMaterial = clothRenderer.sharedMaterial;
-                FurledColorReference.sharedMaterial = clothRenderer.sharedMaterial;
-                ReefedRenderer.enabled = visible && state == 1;
+                bool furled = FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll);
+                animatedRenderer.enabled = visible && !furled;
                 Reefing.DrawBundle(
-                    Bones[0].position,
-                    Bones[1].position,
-                    supported ? rigging.ForeAxis : Sail.cloth.transform.right,
-                    Sail.cloth.transform.parent.localScale.x,
-                    clothRenderer.sharedMaterial,
-                    visible && state == 0
+                    foreHead: supported ? rigging.ForePoint : Bones[0].position,
+                    aftHead: HalyardAttachment.position,
+                    mastAxis: supported ? rigging.ForeAxis : Sail.cloth.transform.right,
+                    scale: Sail.cloth.transform.parent.localScale.x,
+                    material: animatedRenderer.sharedMaterial,
+                    visible: visible && furled
                 );
-                lastRenderState = state;
             }
         }
     }

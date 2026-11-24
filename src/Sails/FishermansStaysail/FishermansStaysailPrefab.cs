@@ -64,8 +64,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 sail.sailName = displayName;
                 sail.category = SailCategory.staysail;
                 sail.obsolete = false;
-                sail.minAngle = -FishermansStaysailTravel.MaximumAngle;
-                sail.maxAngle = FishermansStaysailTravel.MaximumAngle;
+                var checker = sail.GetComponent<SailConnections>().colChecker;
+                sail.minAngle = checker.startMinAngle;
+                sail.maxAngle = checker.startMaxAngle;
                 var hinge = sail.GetComponent<HingeJoint>();
                 var limits = hinge.limits;
                 limits.min = sail.minAngle;

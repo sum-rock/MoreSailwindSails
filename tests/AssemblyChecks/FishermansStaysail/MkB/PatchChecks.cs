@@ -52,7 +52,7 @@ internal static class PatchChecks
                 .Any(m => m.Name == "PoseAnimation")
             || CalledMethods(Method("FishermansStaysailRig", "PoseAnimation"))
                 .Any(m =>
-                    m.DeclaringType == Type("FishermansStaysailReefing")
+                    m.DeclaringType.Name == "FishermansStaysailReefing"
                     || m.DeclaringType.Name == "FishermansStaysailEdgeFit"
                 )
         )
