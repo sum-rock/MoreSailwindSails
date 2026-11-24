@@ -218,6 +218,33 @@ internal static class PatchChecks
         var lateUpdate = CalledMethods(Method("FishermansStaysailRig", "LateUpdate")).ToArray();
         if (!lateUpdate.Any(m => m.Name == "PoseAnimation"))
             throw new Exception("All staysails must use authored poses.");
+        var flutterCalls = CalledMethods(Method("FishermansStaysailRig", "UpdateFlutter"))
+            .ToArray();
+        if (
+            !poseCalls.Any(m => m.Name == "UpdateFlutter")
+            || !poseCalls.Any(m =>
+                m.Name == "VisualVertex" && m.DeclaringType == Type("FishermansStaysailFlutter")
+            )
+            || !flutterCalls.Any(m => m.Name == "GetCapturedWindFraction")
+            || !flutterCalls.Any(m => m.Name == "GetCurrentShadowMult")
+            || flutterCalls.Any(m => m.Name == "GetCapturedForceFraction")
+        )
+            throw new Exception(
+                "Staysail visual flutter must use native wind capture and shadowing."
+            );
+        var instructions = Instructions(Method("FishermansStaysailRig", "LateUpdate")).ToArray();
+        int clothSetter = Array.FindIndex(
+            instructions,
+            i =>
+                i.Operand is MethodInfo m
+                && m.DeclaringType.Name == "Cloth"
+                && m.Name == "set_enabled"
+        );
+        if (
+            clothSetter < 1
+            || instructions[clothSetter - 1].Code != System.Reflection.Emit.OpCodes.Ldc_I4_0
+        )
+            throw new Exception("Authored staysails must keep the native Cloth solver disabled.");
         foreach (string cut in new[] { "A", "B", "C" })
             if (
                 !CalledMethods(

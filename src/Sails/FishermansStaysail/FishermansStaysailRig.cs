@@ -30,6 +30,10 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             instanceShadow;
         private bool cutInitialized;
         private FishermansStaysailAnimation animation;
+        private FishermansStaysailFlutter flutter;
+        private double flutterTime;
+        private float flutterStrength;
+        private float flutterPhase;
         private Vector3[] animatedVertices;
         private ShipyardSailColChecker animatedChecker;
         private SkinnedMeshRenderer animatedRenderer;
@@ -403,6 +407,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 headSlope: slope
             );
             animatedVertices = new Vector3[data.Vertices.Length];
+            flutter = new FishermansStaysailFlutter(width: -Corners[0].z);
+            flutterPhase = (GetInstanceID() & 0xffff) * 0.01f;
             animatedChecker = Sail.GetComponent<SailConnections>().colChecker;
             animatedRenderer = renderer;
             instanceMesh.MarkDynamic();
@@ -594,15 +600,19 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                         s: scaleRoot.localScale
                     );
             }
+            // Keep physical attachments on the authored surface, independently of visual motion.
+            var corners = animation.CornerIndices;
+            for (int i = 0; i < corners.Length; i++)
+                Bones[i].localPosition = toLocal.MultiplyPoint3x4(animation.Vertices[corners[i]]);
+            var waves = UpdateFlutter(supported: supported);
             for (int i = 0; i < animatedVertices.Length; i++)
-                animatedVertices[i] = toLocal.MultiplyPoint3x4(animation.Vertices[i]);
+                animatedVertices[i] = toLocal.MultiplyPoint3x4(
+                    flutter.VisualVertex(authored: animation.Vertices[i], index: i, waves: waves)
+                );
             instanceMesh.vertices = animatedVertices;
             instanceMesh.RecalculateNormals();
             instanceMesh.RecalculateBounds();
             animatedRenderer.localBounds = instanceMesh.bounds;
-            var corners = animation.CornerIndices;
-            for (int i = 0; i < corners.Length; i++)
-                Bones[i].localPosition = animatedVertices[corners[i]];
             HalyardAttachment.localPosition = Vector3.zero;
             SheetAttachment.localPosition = Vector3.zero;
             if (supported && FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll))
@@ -618,6 +628,39 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             }
             if (supported)
                 rigging.UpdateHalyard(HalyardAttachment);
+        }
+
+        private Vector4 UpdateFlutter(bool supported)
+        {
+            bool active =
+                supported
+                && GameState.playing
+                && !GameState.currentShipyard
+                && !GameState.currentlyLoading
+                && !GameState.shipyardUpdatingOrder
+                && !(Sail.damage && Sail.damage.sunk);
+            if (!active)
+                flutterStrength = 0;
+            else if (Time.deltaTime > 0)
+            {
+                float target = FishermansStaysailFlutter.Strength(
+                    capturedWind: Sail.GetCapturedWindFraction(),
+                    windSpeed: Sail.apparentWind.magnitude,
+                    shadow: Sail.GetCurrentShadowMult()
+                );
+                flutterStrength = FishermansStaysailFlutter.SmoothStrength(
+                    current: flutterStrength,
+                    target: target,
+                    seconds: Time.deltaTime
+                );
+                flutterTime += Time.deltaTime;
+            }
+            return FishermansStaysailFlutter.Waves(
+                time: flutterTime,
+                phase: flutterPhase,
+                strength: flutterStrength
+                    * FishermansStaysailFlutter.Deployment(unroll: Sail.currentUnroll)
+            );
         }
 
         private void LateUpdate()
