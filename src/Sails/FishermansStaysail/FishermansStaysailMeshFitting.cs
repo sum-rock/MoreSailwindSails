@@ -44,6 +44,17 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             float uvScale = (1 - 2 * UVMargin) / Math.Max(width, height);
             float uvLeft = (1 - width * uvScale) / 2;
             float uvBottom = (1 - height * uvScale) / 2;
+            // Retarget the authored marker by its height between the foot and head.
+            // The fitted cut stays in the same plane, so its authored axes are retained.
+            float along = data.Center.z + 1;
+            float foot = Mathf.Lerp(
+                data.Vertices[rows * (columns + 1)].x,
+                data.Vertices[data.Vertices.Length - 1].x,
+                along
+            );
+            float head = data.Vertices[columns].x * along;
+            float markerHeight = (data.Center.x - foot) / (head - foot);
+            data.Center = data.Center * width + new Vector3(headDelta * along * markerHeight, 0, 0);
             for (int row = 0; row <= rows; row++)
             for (int col = 0; col <= columns; col++)
             {

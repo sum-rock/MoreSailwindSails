@@ -13,5 +13,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         internal Vector3[] Corners;
         internal Vector3[] BonePositions;
         internal Vector3 Center;
+        internal Quaternion WindRotation;
     }
 }

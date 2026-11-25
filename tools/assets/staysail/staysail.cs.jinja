@@ -10,6 +10,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Mk{{ cut }}
         internal static FishermansStaysailMeshData Create() =>
             new FishermansStaysailMeshData
             {
+                Center = {{ center }},
+                WindRotation = {{ wind_rotation }},
             {% for name, kind, values in arrays %}
                 {{ name }} = new {{ kind }}[]
                 {

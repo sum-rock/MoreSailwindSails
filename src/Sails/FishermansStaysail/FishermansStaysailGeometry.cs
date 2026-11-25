@@ -1,4 +1,4 @@
-// Supplies attachment bones, identity skinning and centroids for fitted baked cuts.
+// Supplies attachment bones and identity skinning for fitted baked cuts.
 using System;
 using UnityEngine;
 
@@ -32,18 +32,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             data.Constraints = new ClothSkinningCoefficient[data.Vertices.Length];
             for (int i = 0; i < data.Vertices.Length; i++)
                 data.Weights[i] = new BoneWeight { boneIndex0 = 0, weight0 = 1 };
-            // Area-weighted centroid, also used for the aerodynamic force point.
-            float area = 0;
-            for (int i = 0; i < data.Triangles.Length; i += 3)
-            {
-                var a = data.Vertices[data.Triangles[i]];
-                var b = data.Vertices[data.Triangles[i + 1]];
-                var c = data.Vertices[data.Triangles[i + 2]];
-                float weight = Vector3.Cross(b - a, c - a).magnitude;
-                data.Center += (a + b + c) * (weight / 3);
-                area += weight;
-            }
-            data.Center /= area;
             return data;
         }
     }

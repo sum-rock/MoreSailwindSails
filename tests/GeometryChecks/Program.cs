@@ -40,6 +40,7 @@ internal static class Program
         BakedMeshChecks.Run();
         FishermansStaysail.MkA.CutChecks.Run();
         FishermansStaysail.BakedMeshChecks.Run();
+        FishermansStaysail.WindCenterChecks.Run();
         FishermansStaysail.MkB.CutChecks.Run();
         FishermansStaysail.AnimationChecks.Run();
         FishermansStaysail.FlutterChecks.Run();
