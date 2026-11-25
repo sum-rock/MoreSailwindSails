@@ -38,7 +38,8 @@ internal static class SailingChecks
             var neutralClew = neutralCloth.MultiplyPoint3x4(point: data.Sail.Vertices[data.Clew]);
             var neutralWind = LooseFootedSpritsailSailingGeometry.FitWindCenter(
                 authored: data.WindCenter,
-                sail: neutralCloth
+                sail: neutralCloth,
+                resizeScale: Vector3.one
             );
             var peakTie = LooseFootedSpritsailTransform.InversePoint(
                 matrix: data.Sprit.RestTransform,
@@ -80,7 +81,8 @@ internal static class SailingChecks
                 );
                 var wind = LooseFootedSpritsailSailingGeometry.FitWindCenter(
                     authored: data.WindCenter,
-                    sail: cloth
+                    sail: cloth,
+                    resizeScale: Vector3.one
                 );
                 Near(actual: (wind.Rotation * Vector3.forward), expected: axis);
                 Near(actual: (wind.Rotation * Vector3.up).magnitude, expected: 1);
@@ -164,9 +166,10 @@ internal static class SailingChecks
                 data: data,
                 fullGaffHeight: 8.8f
             );
-            foreach (float height in new[] { 0.2f, 1f, 3f })
-            foreach (float width in new[] { 0.2f, 1f, 3f })
+            foreach (float height in new[] { 0.2f, 1f, 1.25f, 3f })
+            foreach (float width in new[] { 0.2f, 1f, 1.25f, 3f })
             foreach (bool flipped in new[] { false, true })
+            foreach (float rake in new[] { -15f, 0f, 22f })
             {
                 var pose = LooseFootedSpritsailFittingGeometry.Pose(
                     data: data,
@@ -178,7 +181,20 @@ internal static class SailingChecks
                 var mirror = Matrix4x4.Scale(
                     vector: LooseFootedSpritsailFittingGeometry.MirrorScale(flipped: flipped)
                 );
-                var fitted = mirror * pose.Sail;
+                var mast = LooseFootedSpritsailSailingGeometry.PivotRotation(
+                    center: Vector3.zero,
+                    axis: Vector3.right,
+                    degrees: rake
+                );
+                var fitted =
+                    Matrix4x4.Translate(vector: new Vector3(x: 0.25f, y: 1.5f, z: -0.12f))
+                    * mast
+                    * mirror
+                    * pose.Sail;
+                // Include a distinct depth scale: every component of the resize parent
+                // must be cancelled, even though only height/width drive cloth fitting.
+                var resizeScale = new Vector3(x: 0.7f, y: height, z: width);
+                var resize = Matrix4x4.Scale(vector: resizeScale);
                 foreach (
                     var authored in new[]
                     {
@@ -189,29 +205,44 @@ internal static class SailingChecks
                 {
                     var sensor = LooseFootedSpritsailSailingGeometry.FitWindCenter(
                         authored: authored,
-                        sail: fitted
+                        sail: fitted,
+                        resizeScale: resizeScale
                     );
                     Near(
-                        actual: sensor.Position,
+                        actual: resize.MultiplyPoint3x4(point: sensor.Position),
                         expected: fitted.MultiplyPoint3x4(point: authored.Position)
                     );
-                    Near(actual: sensor.Rotation * Vector3.forward, expected: Vector3.up);
-                    Near(actual: sensor.Rotation * Vector3.right, expected: Vector3.back);
-                    Near(actual: sensor.Rotation * Vector3.up, expected: Vector3.left);
+                    Near(
+                        actual: sensor.Rotation * Vector3.forward,
+                        expected: mast.MultiplyVector(vector: Vector3.up)
+                    );
+                    Near(
+                        actual: sensor.Rotation * Vector3.right,
+                        expected: mast.MultiplyVector(vector: Vector3.back)
+                    );
+                    Near(
+                        actual: sensor.Rotation * Vector3.up,
+                        expected: mast.MultiplyVector(vector: Vector3.left)
+                    );
                 }
                 var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: pose);
                 var full = LooseFootedSpritsailSailingGeometry.FitWindCenter(
                     authored: data.WindCenter,
-                    sail: fitted
+                    sail: fitted,
+                    resizeScale: resizeScale
                 );
                 var main = LooseFootedSpritsailSailingGeometry.FitWindCenter(
                     authored: data.WindCenterMain ?? data.WindCenter,
-                    sail: fitted
+                    sail: fitted,
+                    resizeScale: resizeScale
                 );
                 if (data.HasTopsail)
                     Check(
-                        main.Position.y < full.Position.y,
-                        "Main-only marker must lower the effort center."
+                        Vector3.Dot(
+                            lhs: resize.MultiplyVector(vector: main.Position - full.Position),
+                            rhs: mast.MultiplyVector(vector: Vector3.up)
+                        ) < 0,
+                        "Main-only marker must lower the effort center along the mast."
                     );
                 // Boundary and reverse travel share the cloth's visibility rule.
                 foreach (
@@ -235,14 +266,14 @@ internal static class SailingChecks
                         "Topsail boundary changed."
                     );
                     Near(
-                        actual: full.Position,
+                        actual: resize.MultiplyPoint3x4(point: full.Position),
                         expected: fitted.MultiplyPoint3x4(point: data.WindCenter.Position)
                     );
                 }
             }
         }
         Console.WriteLine(
-            "PASS: Mk.A–D authored centers follow independent size/flip fitting and the existing topsail boundary."
+            "PASS: Mk.A–D resize-local centers preserve fitted positions/axes through independent resizing, offsets, rake, flips and the topsail boundary."
         );
     }
 

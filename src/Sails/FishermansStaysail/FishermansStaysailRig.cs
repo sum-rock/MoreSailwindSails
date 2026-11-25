@@ -185,8 +185,12 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 throw new InvalidOperationException("Expected a shared brig jib sheet attachment.");
             rig.SheetAttachment.SetParent(rig.Bones[3], false);
             rig.SheetAttachment.localPosition = Vector3.zero;
-            // SailFlapAudio.Awake searches at most two parents up for Sail.
+            // Keep donor audio within SailFlapAudio.Awake's two-parent lookup.
+            // The separate sensor follows cloth resizing without moving that component.
             sail.windcenter.SetParent(rig.MastFrame, false);
+            sail.windcenter.name = "FishermansStaysail audio";
+            sail.windcenter = new GameObject(name: "FishermansStaysail wind center").transform;
+            sail.windcenter.SetParent(parent: scaleRoot, worldPositionStays: false);
             rig.windCenter = data.Center;
             rig.windRotation = data.WindRotation;
             rig.UpdateWindCenter();
@@ -524,14 +528,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             return true;
         }
 
-        // Update only when fitting changes; the parent supplies live hinge rotation.
+        // The resize hierarchy supplies scaling and live hinge rotation.
         private void UpdateWindCenter()
         {
-            var scaleRoot = Sail.cloth.transform.parent;
-            Sail.windcenter.localPosition =
-                scaleRoot.localPosition
-                + scaleRoot.localRotation * Vector3.Scale(windCenter, scaleRoot.localScale);
-            Sail.windcenter.localRotation = scaleRoot.localRotation * windRotation;
+            Sail.windcenter.localPosition = windCenter;
+            Sail.windcenter.localRotation = windRotation;
         }
 
         internal bool TrySheetAngle(out float angle)

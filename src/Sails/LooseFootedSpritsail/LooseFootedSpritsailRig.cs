@@ -93,8 +93,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal LooseFootedSpritsailClothGeometry ClothGeometry => clothMotion?.Geometry;
         private bool dirty = true;
         private bool warnedRadius;
-        private float lastHeight;
-        private float lastWidth;
+        private Vector3 lastScale;
         private float lastRadius;
         private float lastInstallHeight;
         private Vector3 neutralPosition;
@@ -242,7 +241,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 )
                 : 1;
 
-        // One sensor inherits hinge motion from the sail root. Only refitting or
+        // One sensor inherits resizing and hinge motion from its parents. Only refitting or
         // crossing the existing topsail visibility boundary changes its local pose.
         private void UpdateWindCenter()
         {
@@ -386,8 +385,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Sail.cloth.enabled = false;
             if (
                 !dirty
-                && height == lastHeight
-                && width == lastWidth
+                && referenceScale.Equals(lastScale)
                 && Mathf.Abs(f: radius - lastRadius) < 0.00001f
             )
                 return;
@@ -463,12 +461,14 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var sailFrame = Matrix4x4.TRS(pos: center, q: rotation, s: MirrorScale) * pose.Sail;
             windCenter = LooseFootedSpritsailSailingGeometry.FitWindCenter(
                 authored: Data.WindCenter,
-                sail: sailFrame
+                sail: sailFrame,
+                resizeScale: referenceScale
             );
             mainWindCenter = Data.WindCenterMain.HasValue
                 ? LooseFootedSpritsailSailingGeometry.FitWindCenter(
                     authored: Data.WindCenterMain.Value,
-                    sail: sailFrame
+                    sail: sailFrame,
+                    resizeScale: referenceScale
                 )
                 : windCenter;
             mainWindCenterActive = null;
@@ -486,8 +486,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                         .MultiplyVector(vector: widthVector)
                 )
                 : null;
-            lastHeight = height;
-            lastWidth = width;
+            lastScale = referenceScale;
             dirty = false;
             fitted = true;
             clothMotion.Refresh();

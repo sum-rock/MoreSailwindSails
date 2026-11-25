@@ -34,7 +34,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         // a proper sensor rotation: right follows the chord, forward follows the luff.
         internal static LooseFootedSpritsailWindCenter FitWindCenter(
             LooseFootedSpritsailWindCenter authored,
-            Matrix4x4 sail
+            Matrix4x4 sail,
+            Vector3 resizeScale
         )
         {
             var forward = sail.MultiplyVector(
@@ -43,9 +44,16 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             var right = sail.MultiplyVector(vector: authored.Rotation * Vector3.right);
             right = (right - forward * Vector3.Dot(lhs: right, rhs: forward)).normalized;
             var up = Vector3.Cross(lhs: forward, rhs: right);
+            var position = sail.MultiplyPoint3x4(point: authored.Position);
             return new LooseFootedSpritsailWindCenter
             {
-                Position = sail.MultiplyPoint3x4(point: authored.Position),
+                // ScaleRoot has identity position/rotation. Fitting already includes size,
+                // so undo its scale for the child position; Transform.rotation ignores scale.
+                Position = new Vector3(
+                    x: position.x / resizeScale.x,
+                    y: position.y / resizeScale.y,
+                    z: position.z / resizeScale.z
+                ),
                 Rotation = LooseFootedSpritsailTransform.Rotation(
                     matrix: new Matrix4x4(
                         new Vector4(x: right.x, y: right.y, z: right.z, w: 0),
