@@ -7,6 +7,7 @@ internal static class Program
 {
     private static void Main(string[] args)
     {
+        FlutterAudioChecks.Run();
         LooseFootedSpritsail.BakedAssetChecks.Run();
         LooseFootedSpritsail.FittingChecks.Run();
         LooseFootedSpritsail.SailingChecks.Run();

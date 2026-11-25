@@ -7,6 +7,10 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile
+      Include="../../src/Sails/Audio/SailFlutterAudioResponse.cs"
+      Link="Audio/SailFlutterAudioResponse.cs"
+    />
+    <Compile
       Include="../../src/Sails/FishermansStaysail/FishermansStaysailFlutter.cs"
       Link="FishermansStaysail/FishermansStaysailFlutter.cs"
     />

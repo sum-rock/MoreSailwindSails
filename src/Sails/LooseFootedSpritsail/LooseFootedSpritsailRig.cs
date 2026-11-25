@@ -12,6 +12,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal Sail Sail;
 
         [SerializeField]
+        internal Audio.SailFlutterAudio FlutterAudio;
+
+        [SerializeField]
         internal Transform ScaleRoot;
 
         [SerializeField]
@@ -147,6 +150,8 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 
         private void OnDisable()
         {
+            if (FlutterAudio)
+                FlutterAudio.Silence();
             SailingReady = false;
             LooseFootedSpritsailNotice.Unregister(rig: this);
         }

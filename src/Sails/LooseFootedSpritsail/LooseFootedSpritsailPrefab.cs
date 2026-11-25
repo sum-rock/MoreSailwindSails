@@ -130,6 +130,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 rig.ScaleRoot.localPosition = Vector3.zero;
                 rig.ScaleRoot.localRotation = Quaternion.identity;
                 rig.ScaleRoot.localScale = Vector3.one;
+                rig.FlutterAudio = Audio.SailFlutterAudio.Configure(sail: sail);
                 StripDonor(sail: sail);
                 var body = clone.GetComponent<Rigidbody>();
                 var gaffBody = fullGaff.GetComponent<Rigidbody>();

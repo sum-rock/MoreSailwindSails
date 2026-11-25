@@ -43,6 +43,7 @@ internal static class Program
         );
 
         Compatibility.SpritsailFlipChecks.Run(assembly: assembly);
+        FlutterAudioChecks.Run(assembly: assembly);
         PluginMetadataChecks.Run(assembly: assembly);
         Visuals.RoutedRopeChecks.Run(assembly: assembly);
         HarmonySignatureChecks.Run(assembly);

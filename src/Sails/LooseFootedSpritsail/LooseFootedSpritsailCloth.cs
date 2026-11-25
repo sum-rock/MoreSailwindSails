@@ -136,11 +136,19 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 )
             )
             {
-                if (Geometry == null || rig.IsStruck || renderFrame == Time.frameCount)
+                if (Geometry == null || rig.IsStruck)
+                {
+                    rig.FlutterAudio.Silence();
+                    return;
+                }
+                if (renderFrame == Time.frameCount)
                     return;
                 renderFrame = Time.frameCount;
                 if (Time.deltaTime <= 0 && !visualDirty)
+                {
+                    rig.FlutterAudio.Silence();
                     return;
+                }
                 bool preview = GameState.currentShipyard && rig.Mast && rig.Boat;
                 bool active = LooseFootedSpritsailFlutter.CanAnimate(
                     sailing: rig.SailingReady && GameState.playing,
@@ -185,6 +193,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 }
                 else
                     flutterStrength = 0;
+                rig.FlutterAudio.SetFlutter(
+                    strength: flutterStrength,
+                    deployment: lastSet,
+                    supported: rig.SailingReady
+                );
                 var flutter = LooseFootedSpritsailFlutter.Waves(
                     time: flutterTime,
                     phase: phase,
