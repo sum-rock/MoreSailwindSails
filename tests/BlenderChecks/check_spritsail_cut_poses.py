@@ -42,6 +42,9 @@ data = tool["collect"](
     topsail_hide_frame=definition.topsail_hide_frame,
 )
 assert len(data["ReefPoses"]) == len(definition.reef_frames)
+from spritsail_windcenter_checks import check as check_windcenters
+
+check_windcenters(tool=tool, data=data, cut=cut)
 reopen()
 sail = bpy.data.objects["Sail"]
 top = bpy.data.objects.get("Topsail") if definition.topsail else None

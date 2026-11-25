@@ -9,6 +9,7 @@ internal static class BakedAssetChecks
 {
     internal static void Run()
     {
+        CheckWindCenters();
         var d = LooseFootedSpritsailMkDBakedAsset.Create();
         var dOther = LooseFootedSpritsailMkDBakedAsset.Create();
         Check(part: d.Sail, other: dOther.Sail);
@@ -69,6 +70,57 @@ internal static class BakedAssetChecks
         Console.WriteLine(
             "PASS: spritsail generated channels, assembly frames, anchors and independent arrays."
         );
+    }
+
+    private static void CheckWindCenters()
+    {
+        var cuts = new[]
+        {
+            LooseFootedSpritsailMkABakedAsset.Create(),
+            LooseFootedSpritsailMkBBakedAsset.Create(),
+            LooseFootedSpritsailMkCBakedAsset.Create(),
+            LooseFootedSpritsailMkDBakedAsset.Create(),
+        };
+        var centers = new[]
+        {
+            new Vector3(0, 7.252f, -6.996f),
+            new Vector3(0, 10.962f, -8.865f),
+            new Vector3(0, 13.769f, -7.157f),
+            new Vector3(0, 15.243f, -8.661f),
+        };
+        var mainCenters = new[]
+        {
+            new Vector3(0, 9.675f, -8.226f),
+            new Vector3(0, 10.715f, -9.570f),
+        };
+        for (int i = 0; i < cuts.Length; i++)
+        {
+            var cut = cuts[i];
+            CheckWindCenter(pose: cut.WindCenter, sail: cut.Sail, expected: centers[i]);
+            if (cut.WindCenterMain.HasValue != cut.HasTopsail)
+                throw new Exception("Only topsail cuts need a main-only windcenter.");
+            if (cut.HasTopsail)
+                CheckWindCenter(
+                    pose: cut.WindCenterMain.Value,
+                    sail: cut.Sail,
+                    expected: mainCenters[i - 2]
+                );
+        }
+        Console.WriteLine(
+            "PASS: spritsail baked windcenters, optional main-only poses and native sensor axes."
+        );
+    }
+
+    private static void CheckWindCenter(
+        LooseFootedSpritsailWindCenter pose,
+        LooseFootedSpritsailMeshPart sail,
+        Vector3 expected
+    )
+    {
+        Near(actual: sail.RestTransform.MultiplyPoint3x4(pose.Position), expected: expected);
+        Near(actual: pose.Rotation * Vector3.right, expected: Vector3.back);
+        Near(actual: pose.Rotation * Vector3.up, expected: Vector3.left);
+        Near(actual: pose.Rotation * Vector3.forward, expected: Vector3.up);
     }
 
     private static void Check(
