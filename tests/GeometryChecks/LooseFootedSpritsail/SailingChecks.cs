@@ -35,21 +35,10 @@ internal static class SailingChecks
             var axis = mast.MultiplyVector(vector: Vector3.up);
             var neutralCloth = neutral * pose.Sail;
             var stationaryPlate = neutral * pose.RotationPlate;
-            var neutralThroat = neutralCloth.MultiplyPoint3x4(
-                point: data.Sail.Vertices[data.Throat]
-            );
-            var neutralTack = neutralCloth.MultiplyPoint3x4(point: data.Sail.Vertices[data.Tack]);
-            var neutralPeak = neutralCloth.MultiplyPoint3x4(point: data.Sail.Vertices[data.Peak]);
             var neutralClew = neutralCloth.MultiplyPoint3x4(point: data.Sail.Vertices[data.Clew]);
-            Check(
-                LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                    throat: neutralThroat,
-                    tack: neutralTack,
-                    peak: neutralPeak,
-                    clew: neutralClew,
-                    out var neutralWind
-                ),
-                "Fitted sail has no aerodynamic frame."
+            var neutralWind = LooseFootedSpritsailSailingGeometry.FitWindCenter(
+                authored: data.WindCenter,
+                sail: neutralCloth
             );
             var peakTie = LooseFootedSpritsailTransform.InversePoint(
                 matrix: data.Sprit.RestTransform,
@@ -89,37 +78,43 @@ internal static class SailingChecks
                         neutralCloth.MultiplyPoint3x4(point: data.SheetLineAttachment) - neutralClew
                     ).magnitude
                 );
-                Check(
-                    LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                        throat: throat,
-                        tack: tack,
-                        peak: peak,
-                        clew: clew,
-                        out var wind
-                    ),
-                    "Trimmed sail lost its wind frame."
+                var wind = LooseFootedSpritsailSailingGeometry.FitWindCenter(
+                    authored: data.WindCenter,
+                    sail: cloth
                 );
-                Near(actual: wind.Axis, expected: axis);
-                Near(actual: wind.Normal.magnitude, expected: 1);
-                Near(actual: Vector3.Dot(lhs: wind.Normal, rhs: wind.Axis), expected: 0);
+                Near(actual: (wind.Rotation * Vector3.forward), expected: axis);
+                Near(actual: (wind.Rotation * Vector3.up).magnitude, expected: 1);
                 Near(
-                    actual: wind.Center,
-                    expected: travel.MultiplyPoint3x4(point: neutralWind.Center)
+                    actual: Vector3.Dot(
+                        lhs: (wind.Rotation * Vector3.up),
+                        rhs: (wind.Rotation * Vector3.forward)
+                    ),
+                    expected: 0
                 );
-                var chord = Vector3.Cross(lhs: wind.Normal, rhs: wind.Axis);
+                Near(
+                    actual: wind.Position,
+                    expected: travel.MultiplyPoint3x4(point: neutralWind.Position)
+                );
+                var chord = Vector3.Cross(
+                    lhs: (wind.Rotation * Vector3.up),
+                    rhs: (wind.Rotation * Vector3.forward)
+                );
                 // Native wind sensors require right=chord and forward=mast, including on a rake.
-                Near(actual: Vector3.Dot(lhs: chord, rhs: wind.Normal), expected: 0);
+                Near(
+                    actual: Vector3.Dot(lhs: chord, rhs: (wind.Rotation * Vector3.up)),
+                    expected: 0
+                );
                 Check(
                     Vector3.Dot(lhs: chord, rhs: peak + clew - throat - tack) > 0,
                     "The native sensor's right axis points away from the sail chord."
                 );
                 foreach (float tackSign in new[] { -1f, 1f })
                 {
-                    var incoming = wind.Normal * tackSign;
+                    var incoming = (wind.Rotation * Vector3.up) * tackSign;
                     Near(
                         actual: LooseFootedSpritsailSailingGeometry.ForceDirection(
                             wind: incoming,
-                            normal: wind.Normal
+                            normal: (wind.Rotation * Vector3.up)
                         ),
                         expected: incoming
                     );
@@ -141,63 +136,16 @@ internal static class SailingChecks
         }
         ClothChecks.Run();
         FlutterChecks.Run();
-        CheckCentroid();
         CheckScaledCenters();
         CheckTackPower();
-        Check(
-            !LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                throat: Vector3.zero,
-                tack: Vector3.zero,
-                peak: Vector3.right,
-                clew: Vector3.one,
-                out _
-            ),
-            "Zero luff must suppress propulsion."
-        );
-        Check(
-            !LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                throat: Vector3.up,
-                tack: Vector3.zero,
-                peak: Vector3.up * 2,
-                clew: Vector3.up * 3,
-                out _
-            ),
-            "Collinear corners must suppress propulsion."
-        );
-        Check(
-            !LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                throat: new Vector3(float.NaN, 1, 0),
-                tack: Vector3.zero,
-                peak: Vector3.one,
-                clew: Vector3.right,
-                out _
-            ),
-            "Invalid geometry must suppress propulsion."
-        );
         Check(
             LooseFootedSpritsailSailingGeometry.PowerMultiplier > 0.75f
                 && LooseFootedSpritsailSailingGeometry.PowerMultiplier < 0.85f,
             "Equal-area spritsail power must fall between native junk and gaff power."
         );
         Console.WriteLine(
-            "PASS: spritsail travel on 135 size/rake/tack combinations, fixed mast pivot, spar/clew alignment, aerodynamic centroid and invalid geometry."
+            "PASS: spritsail travel on 135 size/rake/tack combinations, fixed mast pivot, spar/clew alignment, fixed authored sensor poses."
         );
-    }
-
-    private static void CheckCentroid()
-    {
-        Check(
-            LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                throat: new Vector3(x: 0, y: 4, z: 0),
-                tack: Vector3.zero,
-                peak: new Vector3(x: 0, y: 4, z: -6),
-                clew: new Vector3(x: 0, y: 0, z: -2),
-                out var wind
-            ),
-            "Trapezoid must have a wind frame."
-        );
-        Near(actual: wind.Center, expected: new Vector3(x: 0, y: 7f / 3, z: -13f / 6));
-        Near(actual: wind.Normal, expected: Vector3.left);
     }
 
     private static void CheckScaledCenters()
@@ -216,20 +164,9 @@ internal static class SailingChecks
                 data: data,
                 fullGaffHeight: 8.8f
             );
-            var originalPose = LooseFootedSpritsailFittingGeometry.Pose(
-                data: data,
-                baseScale: baseScale,
-                height: 1,
-                width: 1,
-                mastRadius: 0.3f
-            );
-            var original = new LooseFootedSpritsailClothGeometry(data: data, rest: originalPose);
-            var authoredCenter = LooseFootedSpritsailTransform.InversePoint(
-                matrix: originalPose.Sail,
-                point: Center(data: data, cloth: original)
-            );
             foreach (float height in new[] { 0.2f, 1f, 3f })
             foreach (float width in new[] { 0.2f, 1f, 3f })
+            foreach (bool flipped in new[] { false, true })
             {
                 var pose = LooseFootedSpritsailFittingGeometry.Pose(
                     data: data,
@@ -238,35 +175,75 @@ internal static class SailingChecks
                     width: width,
                     mastRadius: 0.3f
                 );
-                var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: pose);
-                // Scale about the fitted attachment, retaining the fixed mast clearance.
-                Near(
-                    actual: Center(data: data, cloth: cloth),
-                    expected: pose.Sail.MultiplyPoint3x4(point: authoredCenter)
+                var mirror = Matrix4x4.Scale(
+                    vector: LooseFootedSpritsailFittingGeometry.MirrorScale(flipped: flipped)
                 );
+                var fitted = mirror * pose.Sail;
+                foreach (
+                    var authored in new[]
+                    {
+                        data.WindCenter,
+                        data.WindCenterMain ?? data.WindCenter,
+                    }
+                )
+                {
+                    var sensor = LooseFootedSpritsailSailingGeometry.FitWindCenter(
+                        authored: authored,
+                        sail: fitted
+                    );
+                    Near(
+                        actual: sensor.Position,
+                        expected: fitted.MultiplyPoint3x4(point: authored.Position)
+                    );
+                    Near(actual: sensor.Rotation * Vector3.forward, expected: Vector3.up);
+                    Near(actual: sensor.Rotation * Vector3.right, expected: Vector3.back);
+                    Near(actual: sensor.Rotation * Vector3.up, expected: Vector3.left);
+                }
+                var cloth = new LooseFootedSpritsailClothGeometry(data: data, rest: pose);
+                var full = LooseFootedSpritsailSailingGeometry.FitWindCenter(
+                    authored: data.WindCenter,
+                    sail: fitted
+                );
+                var main = LooseFootedSpritsailSailingGeometry.FitWindCenter(
+                    authored: data.WindCenterMain ?? data.WindCenter,
+                    sail: fitted
+                );
+                if (data.HasTopsail)
+                    Check(
+                        main.Position.y < full.Position.y,
+                        "Main-only marker must lower the effort center."
+                    );
+                // Boundary and reverse travel share the cloth's visibility rule.
+                foreach (
+                    float deployment in new[]
+                    {
+                        1f,
+                        0.8001f,
+                        0.8f,
+                        0.7999f,
+                        0.4f,
+                        0f,
+                        0.8f,
+                        0.8001f,
+                        1f,
+                    }
+                )
+                {
+                    cloth.Pose(deployment: deployment);
+                    Check(
+                        cloth.TopsailVisible == (data.HasTopsail && deployment > 0.8f),
+                        "Topsail boundary changed."
+                    );
+                    Near(
+                        actual: full.Position,
+                        expected: fitted.MultiplyPoint3x4(point: data.WindCenter.Position)
+                    );
+                }
             }
         }
         Console.WriteLine(
-            "PASS: Mk.A–D effort centers follow independent height and width scaling."
+            "PASS: Mk.A–D authored centers follow independent size/flip fitting and the existing topsail boundary."
         );
-    }
-
-    private static Vector3 Center(
-        LooseFootedSpritsailAssetData data,
-        LooseFootedSpritsailClothGeometry cloth
-    )
-    {
-        Check(
-            LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                throat: cloth.Throat,
-                tack: cloth.Tack,
-                peak: cloth.Peak,
-                clew: cloth.Clew,
-                out var wind
-            ),
-            "Scaled cloth must retain its aerodynamic frame."
-        );
-        return data.HasTopsail ? cloth.AreaCenter : wind.Center;
     }
 
     private static void CheckTackPower()

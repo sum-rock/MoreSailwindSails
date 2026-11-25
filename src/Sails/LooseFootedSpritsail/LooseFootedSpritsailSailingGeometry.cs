@@ -1,4 +1,4 @@
-// Computes mast-centered travel and the aerodynamic frame without Unity scene objects.
+// Computes mast-centered travel and authored sensor fitting without Unity scene objects.
 using System;
 using UnityEngine;
 
@@ -30,57 +30,34 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             );
         }
 
-        internal static bool TryWindFrame(
-            Vector3 throat,
-            Vector3 tack,
-            Vector3 peak,
-            Vector3 clew,
-            out LooseFootedSpritsailWindFrame frame
+        // Fit once after installation, resizing or flipping. Reflected frames retain
+        // a proper sensor rotation: right follows the chord, forward follows the luff.
+        internal static LooseFootedSpritsailWindCenter FitWindCenter(
+            LooseFootedSpritsailWindCenter authored,
+            Matrix4x4 sail
         )
         {
-            frame = default;
-            if (!Finite(throat) || !Finite(tack) || !Finite(peak) || !Finite(clew))
-                return false;
-            var axis = throat - tack;
-            if (axis.sqrMagnitude < 1e-8f)
-                return false;
-            axis.Normalize();
-            var chord = (peak + clew - throat - tack) * 0.5f;
-            chord -= axis * Vector3.Dot(lhs: chord, rhs: axis);
-            if (chord.sqrMagnitude < 1e-8f)
-                return false;
-            chord.Normalize();
-            float first = Vector3.Cross(lhs: tack - throat, rhs: peak - throat).magnitude;
-            float second = Vector3.Cross(lhs: tack - peak, rhs: clew - peak).magnitude;
-            if (
-                !LooseFootedSpritsailFittingGeometry.Finite(value: first + second)
-                || first + second < 1e-8f
-            )
-                return false;
-            frame = new LooseFootedSpritsailWindFrame
+            var forward = sail.MultiplyVector(
+                vector: authored.Rotation * Vector3.forward
+            ).normalized;
+            var right = sail.MultiplyVector(vector: authored.Rotation * Vector3.right);
+            right = (right - forward * Vector3.Dot(lhs: right, rhs: forward)).normalized;
+            var up = Vector3.Cross(lhs: forward, rhs: right);
+            return new LooseFootedSpritsailWindCenter
             {
-                Axis = axis,
-                Normal = Vector3.Cross(lhs: axis, rhs: chord).normalized,
-                Center =
-                    ((throat + tack + peak) * first + (peak + tack + clew) * second)
-                    / (3 * (first + second)),
+                Position = sail.MultiplyPoint3x4(point: authored.Position),
+                Rotation = LooseFootedSpritsailTransform.Rotation(
+                    matrix: new Matrix4x4(
+                        new Vector4(x: right.x, y: right.y, z: right.z, w: 0),
+                        new Vector4(x: up.x, y: up.y, z: up.z, w: 0),
+                        new Vector4(x: forward.x, y: forward.y, z: forward.z, w: 0),
+                        new Vector4(x: 0, y: 0, z: 0, w: 1)
+                    )
+                ),
             };
-            return true;
         }
 
         internal static Vector3 ForceDirection(Vector3 wind, Vector3 normal) =>
             Vector3.Dot(lhs: wind, rhs: normal) >= 0 ? normal : -normal;
-
-        private static bool Finite(Vector3 point) =>
-            LooseFootedSpritsailFittingGeometry.Finite(value: point.x)
-            && LooseFootedSpritsailFittingGeometry.Finite(value: point.y)
-            && LooseFootedSpritsailFittingGeometry.Finite(value: point.z);
-    }
-
-    internal struct LooseFootedSpritsailWindFrame
-    {
-        internal Vector3 Axis,
-            Normal,
-            Center;
     }
 }

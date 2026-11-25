@@ -23,7 +23,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal Vector3 Pivot { get; }
         internal bool TopsailVisible { get; private set; }
         internal float AreaFraction { get; private set; } = 1;
-        internal Vector3 AreaCenter { get; private set; }
         private float deployedArea;
         internal Vector3 Throat => Vertices[data.Throat];
         internal Vector3 Tack => Vertices[data.Tack];
@@ -85,8 +84,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Pose(deployment: 1);
             if (data.HasTopsail)
             {
-                deployedArea = ProjectedArea(out var center);
-                AreaCenter = center;
+                deployedArea = ProjectedArea();
                 AreaFraction = 1;
             }
         }
@@ -138,10 +136,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             }
             Vertices[data.Peak] = posedPeak;
             if (data.HasTopsail && deployedArea > 0)
-            {
-                AreaFraction = Mathf.Clamp01(value: ProjectedArea(out var center) / deployedArea);
-                AreaCenter = center;
-            }
+                AreaFraction = Mathf.Clamp01(value: ProjectedArea() / deployedArea);
             authoredDepth[data.Tack] =
                 authoredDepth[data.Throat] =
                 authoredDepth[data.Peak] =
@@ -150,10 +145,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         }
 
         // Project both cloth pieces onto the rig plane so folds do not add sail area.
-        private float ProjectedArea(out Vector3 center)
+        private float ProjectedArea()
         {
             float area = 0;
-            center = Vector3.zero;
             var triangles = data.Sail.SubmeshTriangles[0];
             int count = TopsailVisible ? triangles.Length : data.TopsailTriangleStart;
             for (int i = 0; i < count; i += 3)
@@ -163,9 +157,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 var c = Vertices[triangles[i + 2]];
                 float weight = Math.Abs(Vector3.Cross(lhs: b - a, rhs: c - a).x) / 2;
                 area += weight;
-                center += (a + b + c) * (weight / 3);
             }
-            center = area > 1e-8f ? center / area : (Throat + Tack + Peak + Clew) / 4;
             return area;
         }
 

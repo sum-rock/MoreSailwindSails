@@ -114,6 +114,9 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             Refresh();
         }
 
+        private LooseFootedSpritsailWindCenter windCenter;
+        private LooseFootedSpritsailWindCenter mainWindCenter;
+        private bool? mainWindCenterActive;
         private bool fitted;
         private int fittedFrame;
 
@@ -174,7 +177,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 Refresh();
                 rigging.Refresh();
                 clothMotion.Refresh();
-                RefreshAerodynamics();
+                UpdateWindCenter();
                 clothMotion.Render();
                 rigging.Draw();
                 UpdatePlate();
@@ -195,6 +198,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 UpdateBodyMotion();
                 rigging.Refresh();
                 clothMotion.Refresh();
+                UpdateWindCenter();
                 // A closed sail must stop wind torque as well as propulsion, without resetting azimuth.
                 if (Sail.IsInstalled() && Sail.currentUnroll <= 0.001f)
                 {
@@ -217,8 +221,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                     && rigging.SheetsReady
                     && LooseFootedSpritsailFittingGeometry.Finite(value: Sail.minAngle)
                     && LooseFootedSpritsailFittingGeometry.Finite(value: Sail.maxAngle)
-                    && Sail.minAngle < Sail.maxAngle
-                    && RefreshAerodynamics();
+                    && Sail.minAngle < Sail.maxAngle;
                 if (!ready)
                 {
                     LooseFootedSpritsailPhysics.Clear(sail: Sail);
@@ -239,26 +242,19 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 )
                 : 1;
 
-        internal bool RefreshAerodynamics()
+        // One sensor inherits hinge motion from the sail root. Only refitting or
+        // crossing the existing topsail visibility boundary changes its local pose.
+        private void UpdateWindCenter()
         {
-            if (
-                !fitted
-                || !LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                    throat: Frame.TransformPoint(position: clothMotion.Geometry.Throat),
-                    tack: Frame.TransformPoint(position: clothMotion.Geometry.Tack),
-                    peak: Frame.TransformPoint(position: clothMotion.Geometry.Peak),
-                    clew: Frame.TransformPoint(position: clothMotion.Geometry.Clew),
-                    out var wind
-                )
-            )
-                return false;
-            if (Data.HasTopsail)
-                wind.Center = Frame.TransformPoint(position: clothMotion.Geometry.AreaCenter);
-            Sail.windcenter.SetPositionAndRotation(
-                position: wind.Center,
-                rotation: Quaternion.LookRotation(forward: wind.Axis, upwards: wind.Normal)
-            );
-            return true;
+            if (!fitted)
+                return;
+            bool main = Data.HasTopsail && !clothMotion.Geometry.TopsailVisible;
+            if (mainWindCenterActive == main)
+                return;
+            var center = main ? mainWindCenter : windCenter;
+            Sail.windcenter.localPosition = center.Position;
+            Sail.windcenter.localRotation = center.Rotation;
+            mainWindCenterActive = main;
         }
 
         private void UpdateBodyMotion()
@@ -464,6 +460,18 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 a: MirrorScale,
                 b: pose.RotationPlate.lossyScale
             );
+            var sailFrame = Matrix4x4.TRS(pos: center, q: rotation, s: MirrorScale) * pose.Sail;
+            windCenter = LooseFootedSpritsailSailingGeometry.FitWindCenter(
+                authored: Data.WindCenter,
+                sail: sailFrame
+            );
+            mainWindCenter = Data.WindCenterMain.HasValue
+                ? LooseFootedSpritsailSailingGeometry.FitWindCenter(
+                    authored: Data.WindCenterMain.Value,
+                    sail: sailFrame
+                )
+                : windCenter;
+            mainWindCenterActive = null;
             clothMotion.Fit(rest: pose);
             RefreshCollision();
             Sail.sailArea = BaseArea * height * width;
@@ -484,7 +492,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
             fitted = true;
             clothMotion.Refresh();
             // Shipyard previews need the fitted center before sailing physics is enabled.
-            RefreshAerodynamics();
+            UpdateWindCenter();
             UpdatePlate();
         }
 

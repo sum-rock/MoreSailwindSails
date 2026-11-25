@@ -114,7 +114,6 @@ internal static class IntegrationChecks
                 "SpritsailUpdatePatch",
                 "SpritsailPhysicsPatch",
                 "SpritsailForceDirectionPatch",
-                "SpritsailWindFramePatch",
                 "SpritsailHingeResetPatch",
                 "SpritsailMovementPatch",
             }

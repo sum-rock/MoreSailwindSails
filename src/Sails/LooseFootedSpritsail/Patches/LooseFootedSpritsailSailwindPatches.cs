@@ -317,14 +317,6 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail.Patches
         }
     }
 
-    [HarmonyPatch(typeof(Sail), "UpdateWindForceOnSail")]
-    internal static class SpritsailWindFramePatch
-    {
-        [HarmonyPrefix]
-        private static void Prefix(Sail __instance) =>
-            __instance.GetComponent<LooseFootedSpritsailRig>()?.RefreshAerodynamics();
-    }
-
     [HarmonyPatch(typeof(Sail), "GetSailForceDirection")]
     internal static class SpritsailForceDirectionPatch
     {
