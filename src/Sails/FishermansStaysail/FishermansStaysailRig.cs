@@ -45,6 +45,12 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         public Transform SheetAttachment;
         public Transform HalyardAttachment;
         public Transform MastFrame;
+
+        [SerializeField]
+        private Vector3 windCenter;
+
+        [SerializeField]
+        private Quaternion windRotation;
         public Vector3 OriginalHingeAxis;
         public Vector3 OriginalHingeAnchor;
         public bool OriginalAutoAnchor;
@@ -179,12 +185,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 throw new InvalidOperationException("Expected a shared brig jib sheet attachment.");
             rig.SheetAttachment.SetParent(rig.Bones[3], false);
             rig.SheetAttachment.localPosition = Vector3.zero;
-            sail.windcenter.SetParent(scaleRoot, false);
-            sail.windcenter.localPosition = data.Center;
-            // The donor windcenter also carries SailFlapAudio, whose Awake only
-            // searches two parents up for Sail. Keep its initial world pose;
-            // RefreshAerodynamics supplies the posed center after scaling/reefing.
-            sail.windcenter.SetParent(rig.MastFrame, true);
+            // SailFlapAudio.Awake searches at most two parents up for Sail.
+            sail.windcenter.SetParent(rig.MastFrame, false);
+            rig.windCenter = data.Center;
+            rig.windRotation = data.WindRotation;
+            rig.UpdateWindCenter();
             connections.colChecker.transform.SetParent(scaleRoot, false);
             ConfigureCollision(connections.colChecker, data.Corners);
             foreach (var visual in scaleRoot.GetComponentsInChildren<MeshRenderer>(true))
@@ -348,6 +353,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                         body.rotation = mount.transform.rotation;
                     body.position = forePoint - body.rotation * nextPivot;
                     RefreshCollisionStrips();
+                    UpdateWindCenter();
                     // The gathered panel stays within its deployed vertical bounds.
                     var clothRenderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
                     var bounds = clothRenderer.sharedMesh.bounds;
@@ -402,6 +408,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             Sail.cloth.enabled = false;
             var data = GetComponent<FishermansStaysailShape>().Create(-Corners[0].z, slope);
             Corners = data.Corners;
+            windCenter = data.Center;
+            windRotation = data.WindRotation;
             var renderer = Sail.cloth.GetComponent<SkinnedMeshRenderer>();
             instanceMesh = UnityEngine.Object.Instantiate(renderer.sharedMesh);
             instanceMesh.name =
@@ -516,33 +524,14 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             return true;
         }
 
-        internal bool RefreshAerodynamics()
+        // Update only when fitting changes; the parent supplies live hinge rotation.
+        private void UpdateWindCenter()
         {
-            using (
-                PerformanceProfile.Measure(
-                    target: ProfileTarget.Aerodynamics,
-                    family: ProfileFamily.Staysail
-                )
-            )
-            {
-                if (!Sail || !Sail.windcenter || Bones == null || Bones.Length < 4)
-                    return false;
-                if (
-                    !FishermansStaysailAerodynamics.TryFrame(
-                        Bones[0].position,
-                        Bones[2].position,
-                        Bones[1].position,
-                        Bones[3].position,
-                        out var frame
-                    )
-                )
-                    return false;
-                Sail.windcenter.SetPositionAndRotation(
-                    frame.Center,
-                    Quaternion.LookRotation(frame.MastAxis, frame.Normal)
-                );
-                return true;
-            }
+            var scaleRoot = Sail.cloth.transform.parent;
+            Sail.windcenter.localPosition =
+                scaleRoot.localPosition
+                + scaleRoot.localRotation * Vector3.Scale(windCenter, scaleRoot.localScale);
+            Sail.windcenter.localRotation = scaleRoot.localRotation * windRotation;
         }
 
         internal bool TrySheetAngle(out float angle)
@@ -710,7 +699,6 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                     PoseAnimation(supported: supported);
                 }
 
-                RefreshAerodynamics();
                 Sail.cloth.enabled = false;
                 bool visible = supported && !GameState.currentlyLoading;
                 bool furled = FishermansStaysailGeometry.IsFurled(unroll: Sail.currentUnroll);
