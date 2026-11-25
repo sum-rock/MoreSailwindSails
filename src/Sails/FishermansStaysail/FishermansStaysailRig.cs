@@ -25,6 +25,9 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
     internal sealed class FishermansStaysailRig : MonoBehaviour
     {
         public Sail Sail;
+
+        [SerializeField]
+        private Audio.SailFlutterAudio flutterAudio;
         public FishermansStaysailReefing Reefing;
         private Mesh instanceMesh,
             instanceShadow;
@@ -73,7 +76,12 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             bindingDirty = true;
         }
 
-        private void OnDisable() => InvalidateSheetSpan();
+        private void OnDisable()
+        {
+            InvalidateSheetSpan();
+            if (flutterAudio)
+                flutterAudio.Silence();
+        }
 
         private void OnEnable() => bindingDirty = true;
 
@@ -112,6 +120,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
             var rig = sail.gameObject.AddComponent<FishermansStaysailRig>();
             rig.Sail = sail;
+            rig.flutterAudio = Audio.SailFlutterAudio.Configure(sail: sail);
             rig.Reefing = nativeReefing;
             reef.furledSail = nativeReefing.Bundle;
             rig.Corners = data.Corners;
@@ -655,11 +664,16 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 );
                 flutterTime += Time.deltaTime;
             }
+            float deployment = FishermansStaysailFlutter.Deployment(unroll: Sail.currentUnroll);
+            flutterAudio.SetFlutter(
+                strength: flutterStrength,
+                deployment: deployment,
+                supported: supported
+            );
             return FishermansStaysailFlutter.Waves(
                 time: flutterTime,
                 phase: flutterPhase,
-                strength: flutterStrength
-                    * FishermansStaysailFlutter.Deployment(unroll: Sail.currentUnroll)
+                strength: flutterStrength * deployment
             );
         }
 
@@ -673,7 +687,11 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             )
             {
                 if (!Sail || Bones == null || Bones.Length != FishermansStaysailGeometry.BoneCount)
+                {
+                    if (flutterAudio)
+                        flutterAudio.Silence();
                     return;
+                }
                 bool supported = RefreshFrame();
                 if (Shadow)
                 {
@@ -685,7 +703,10 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
                 using (PerformanceProfile.Measure(target: ProfileTarget.Shape))
                 {
                     if (!cutInitialized)
+                    {
+                        flutterAudio.Silence();
                         return;
+                    }
                     PoseAnimation(supported: supported);
                 }
 
