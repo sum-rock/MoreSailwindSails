@@ -11,19 +11,6 @@ using UnityEngine;
 
 namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
 {
-    // Refreshes the custom aerodynamic frame before native wind-force calculation.
-    [HarmonyPatch(typeof(Sail), "UpdateWindForceOnSail")]
-    internal static class FishermansStaysailWindFramePatch
-    {
-        [HarmonyPrefix]
-        private static void Prefix(Sail __instance)
-        {
-            var rig = __instance.GetComponent<FishermansStaysailRig>();
-            if (rig)
-                rig.RefreshAerodynamics();
-        }
-    }
-
     // Supplies force direction from the custom sail aerodynamic frame.
     [HarmonyPatch(typeof(Sail), "GetSailForceDirection")]
     internal static class FishermansStaysailForceDirectionPatch
@@ -32,7 +19,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
         private static bool Prefix(Sail __instance, ref Vector3 __result)
         {
             var rig = __instance.GetComponent<FishermansStaysailRig>();
-            if (!rig || !rig.RefreshAerodynamics())
+            if (!rig || !__instance.windcenter)
                 return true;
             __result = FishermansStaysailAerodynamics.ForceDirection(
                 __instance.apparentWind,

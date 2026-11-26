@@ -10,6 +10,11 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal static LooseFootedSpritsailAssetData Create() =>
             new LooseFootedSpritsailAssetData
             {
+                WindCenter = new LooseFootedSpritsailWindCenter
+                {
+                    Position = new Vector3(0f, 9.25199986f, -6.69599962f),
+                    Rotation = new Quaternion(-0.5f, 0.5f, 0.5f, 0.5f),
+                },
                 ReefPoses = new LooseFootedSpritsailReefPose[]
                 {
                     new LooseFootedSpritsailReefPose

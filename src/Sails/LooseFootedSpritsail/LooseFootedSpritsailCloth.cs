@@ -172,9 +172,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                         deltaTime: Time.deltaTime
                     );
                     // Preview physics clears the native wind caches. Read the native angle
-                    // from our posed sail and visual wind without calculating propulsion.
-                    if (preview)
-                        rig.RefreshAerodynamics();
+                    // from the fitted sensor and visual wind without calculating propulsion.
                     float target = LooseFootedSpritsailFlutter.Strength(
                         capturedWind: preview
                             ? windAngle(rig.Sail, apparentWind) / 90 * shadow

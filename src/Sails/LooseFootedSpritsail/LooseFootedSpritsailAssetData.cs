@@ -5,6 +5,10 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
 {
     internal sealed class LooseFootedSpritsailAssetData
     {
+        // Fixed sensor poses in Sail-local metres, Y-up; main-only exists on topsail cuts.
+        internal LooseFootedSpritsailWindCenter WindCenter;
+        internal LooseFootedSpritsailWindCenter? WindCenterMain;
+
         // Rest-local cloth poses; null fractions retain the original evenly spaced timing.
         internal float[] ReefFractions;
 
@@ -35,6 +39,12 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal int Peak;
         internal int Clew;
         internal int SheetVertex;
+    }
+
+    internal struct LooseFootedSpritsailWindCenter
+    {
+        internal Vector3 Position;
+        internal Quaternion Rotation;
     }
 
     internal struct LooseFootedSpritsailReefPose

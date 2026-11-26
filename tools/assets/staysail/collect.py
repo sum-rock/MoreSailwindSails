@@ -95,6 +95,34 @@ def collect_mesh(
     }
 
 
+def collect_windcenter(*, span):
+    marker = bpy.data.objects.get("WindCenter")
+    require(marker is not None and marker.type == "EMPTY", "missing WindCenter Empty")
+    require(
+        marker.parent is None
+        and marker.animation_data is None
+        and not marker.constraints,
+        "WindCenter must be unparented, unanimated and unconstrained",
+    )
+    require(
+        all(abs(value - 1) < 1e-6 for value in marker.scale),
+        "WindCenter must have unit scale",
+    )
+    require(
+        all(math.isfinite(value) for row in marker.matrix_world for value in row),
+        "non-finite WindCenter transform",
+    )
+    # Native sensor axes: right=across the sail, up=normal, forward=up the luff.
+    conversion = Matrix(((0, 0, 1), (0, -1, 0), (1, 0, 0)))
+    position = conversion @ marker.matrix_world.translation / span
+    position.z -= 1
+    rotation = (conversion @ marker.matrix_world.to_3x3()).to_quaternion()
+    return {
+        "Center": tuple(position),
+        "WindRotation": (rotation.x, rotation.y, rotation.z, rotation.w),
+    }
+
+
 def samples(*, cut="A"):
     obj = bpy.data.objects[f"Fishermans Staysail Mk.{cut}"]
     require(
@@ -140,6 +168,8 @@ def collect_cut(*, cut="A"):
         object_name=f"Fishermans Staysail Mk.{cut}",
         animated=True,
     )
+    obj = bpy.data.objects[f"Fishermans Staysail Mk.{cut}"]
+    data.update(collect_windcenter(span=obj.data.vertices[COLUMNS].co.x))
     poses = samples(cut=cut)
     for reef, sheet in ((200, 60), (500, 120)):
         require(

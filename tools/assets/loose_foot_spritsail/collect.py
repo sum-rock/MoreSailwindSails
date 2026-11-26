@@ -365,6 +365,35 @@ def attachment(name, parent):
     )
 
 
+def windcenter(name):
+    """Export an unanimated marker relative to the sail's authored rest frame."""
+    marker = object_named(name, "EMPTY")
+    require(marker.parent is None, f"{name}: windcenter must be unparented")
+    require(
+        all(abs(value - 1) < 1e-6 for value in marker.matrix_world.to_scale()),
+        f"{name}: windcenter must have unit scale",
+    )
+    sail = bpy.data.objects["Sail"]
+    position = CONVERSION @ (
+        sail.matrix_world.inverted() @ marker.matrix_world.translation
+    )
+    relative_rotation = (
+        sail.matrix_world.to_quaternion().inverted()
+        @ marker.matrix_world.to_quaternion()
+    )
+    # Reflection swaps handedness. Reverse the sensor's normal axis so right
+    # remains along the cloth and forward remains up the luff in a proper rotation.
+    rotation = (
+        CONVERSION.to_3x3()
+        @ relative_rotation.to_matrix()
+        @ Matrix.Diagonal((1, -1, 1))
+    ).to_quaternion()
+    return {
+        "Position": tuple(position),
+        "Rotation": (rotation.x, rotation.y, rotation.z, rotation.w),
+    }
+
+
 def collect(
     reef_frames=REEF_FRAMES,
     generate_cloth_uv=False,
@@ -385,6 +414,9 @@ def collect(
     bpy.context.scene.frame_set(0)
     bpy.context.view_layer.update()
     sail = object_named("Sail", "MESH")
+    windcenters = {"WindCenter": windcenter("WindCenter")}
+    if topsail:
+        windcenters["WindCenterMain"] = windcenter("WindCenterMain")
     # Assets without a dedicated cloth map receive proportional planar UVs in memory.
     if generate_cloth_uv and sail.data.uv_layers.get("ClothUV") is None:
         layer = sail.data.uv_layers.new(name="ClothUV")
@@ -400,6 +432,7 @@ def collect(
             )
     corners = cloth_grid(sail)
     data = {name: extract_part(name, sources) for name, sources in PARTS.items()}
+    data.update(windcenters)
     data["Struck"] = extract_part("Struck", STRUCK_PARTS)
     alignment = (
         object_named("Mast", "MESH").matrix_world

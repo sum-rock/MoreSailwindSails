@@ -10,6 +10,16 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal static LooseFootedSpritsailAssetData Create() =>
             new LooseFootedSpritsailAssetData
             {
+                WindCenter = new LooseFootedSpritsailWindCenter
+                {
+                    Position = new Vector3(0f, 14.7690001f, -7.15700006f),
+                    Rotation = new Quaternion(-0.5f, 0.5f, 0.5f, 0.5f),
+                },
+                WindCenterMain = new LooseFootedSpritsailWindCenter
+                {
+                    Position = new Vector3(0f, 10.6750002f, -8.22599983f),
+                    Rotation = new Quaternion(-0.5f, 0.5f, 0.5f, 0.5f),
+                },
                 ReefFractions = new float[] { 0f, 0.04f, 0.16f, 0.2f, 0.25f, 0.3f, 0.533333333f, 0.766666667f, 1f },
                 TopsailVertexStart = 288,
                 TopsailTriangleStart = 1530,

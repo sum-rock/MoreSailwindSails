@@ -105,31 +105,6 @@ internal static class ClothChecks
                         expected: saved[i],
                         message: "Deployment history changed the cloth shape."
                     );
-                foreach (float rake in new[] { -15f, 0f, 22f })
-                foreach (float trim in new[] { -85f, 0f, 85f })
-                {
-                    var world =
-                        LooseFootedSpritsailSailingGeometry.PivotRotation(
-                            center: Vector3.zero,
-                            axis: Vector3.right,
-                            degrees: rake
-                        )
-                        * LooseFootedSpritsailSailingGeometry.PivotRotation(
-                            center: Vector3.zero,
-                            axis: Vector3.up,
-                            degrees: trim
-                        );
-                    Check(
-                        LooseFootedSpritsailSailingGeometry.TryWindFrame(
-                            throat: world.MultiplyPoint3x4(point: cloth.Throat),
-                            tack: world.MultiplyPoint3x4(point: cloth.Tack),
-                            peak: world.MultiplyPoint3x4(point: cloth.Peak),
-                            clew: world.MultiplyPoint3x4(point: cloth.Clew),
-                            out var frame
-                        ),
-                        "Posed corners lost their wind frame."
-                    );
-                }
             }
             cloth.Pose(deployment: 0);
             Check(
@@ -151,7 +126,7 @@ internal static class ClothChecks
             );
         Check(smoothed < -0.99f, "Billow does not settle after tacking.");
         Console.WriteLine(
-            "PASS: spritsail authored cloth across independent sizes, deployments and rakes; rigid sprit, authored poses, reversibility and spar-only clearance across all three cuts."
+            "PASS: spritsail authored cloth across independent sizes and deployments; rigid sprit, authored poses, reversibility and spar-only clearance across all three cuts."
         );
     }
 
@@ -224,13 +199,11 @@ internal static class ClothChecks
             cloth.TopsailVisible && cloth.AreaFraction == 1,
             "Deployed topsail must contribute area."
         );
-        var deployedCenter = cloth.AreaCenter;
         cloth.Pose(deployment: 0.8f);
         Check(
             !cloth.TopsailVisible && cloth.AreaFraction < 1 && cloth.AreaFraction > 0,
             "Topsail must be removed at 20 percent."
         );
-        Check(cloth.AreaCenter.y < deployedCenter.y, "Removing topsail must lower force center.");
         cloth.Pose(deployment: 0.75f);
         var held = (Vector3[])cloth.Vertices.Clone();
         float heldArea = cloth.AreaFraction;

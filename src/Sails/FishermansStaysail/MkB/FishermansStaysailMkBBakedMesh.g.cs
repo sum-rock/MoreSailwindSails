@@ -10,6 +10,8 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.MkB
         internal static FishermansStaysailMeshData Create() =>
             new FishermansStaysailMeshData
             {
+                Center = new Vector3(-0.404347807f, 0f, -0.47434783f),
+                WindRotation = new Quaternion(0.707106769f, 0f, 0.707106769f, 0f),
                 Vertices = new Vector3[]
                 {
                     new Vector3(0f, 0f, -1f),

@@ -136,7 +136,7 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
                 var gaffBody = fullGaff.GetComponent<Rigidbody>();
                 body.mass = gaffBody.mass;
                 body.angularDrag = gaffBody.angularDrag;
-                sail.windcenter = NewNode(name: "Spritsail wind center", parent: sail.transform);
+                sail.windcenter = NewNode(name: "Spritsail wind center", parent: rig.ScaleRoot);
                 var clothMaterial = assets.Own(
                     material: new Material(
                         donor.cloth.GetComponent<SkinnedMeshRenderer>().sharedMaterial

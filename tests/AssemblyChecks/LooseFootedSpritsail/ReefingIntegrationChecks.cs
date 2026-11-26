@@ -192,9 +192,10 @@ internal static class ReefingIntegrationChecks
             "Cloth pose must update before physics admission."
         );
         Check(
-            Calls(type: rig, method: "RefreshAerodynamics", name: "get_Peak")
-                && Calls(type: rig, method: "RefreshAerodynamics", name: "get_Clew"),
-            "Aerodynamics must read posed corners."
+            Calls(type: rig, method: "UpdateWindCenter", name: "get_TopsailVisible")
+                && !Calls(type: rig, method: "UpdateWindCenter", name: "get_Peak")
+                && !Calls(type: rig, method: "UpdateWindCenter", name: "get_Clew"),
+            "Fixed sensor selection must follow topsail visibility without reading posed corners."
         );
         Check(
             !Instructions(method: cloth.GetMethod(name: "Refresh", bindingAttr: All))
@@ -247,9 +248,9 @@ internal static class ReefingIntegrationChecks
         );
         Check(
             Calls(type: cloth, method: "Render", name: "WindLoad")
-                && Calls(type: cloth, method: "Render", name: "RefreshAerodynamics")
+                && !Calls(type: cloth, method: "Render", name: "UpdateWindCenter")
                 && Calls(type: cloth, method: "Render", name: "CanAnimate"),
-            "Preview cloth must sample wind and refresh its posed wind frame independently of propulsion."
+            "Preview cloth must sample wind through the fitted sensor independently of propulsion."
         );
         var physics = Family(name: "LooseFootedSpritsailPhysics");
         foreach (var method in cloth.GetMethods(bindingAttr: All | BindingFlags.DeclaredOnly))

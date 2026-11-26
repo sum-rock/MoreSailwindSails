@@ -10,6 +10,13 @@ namespace MoreSailwindSails.Sails.LooseFootedSpritsail
         internal static LooseFootedSpritsailAssetData Create() =>
             new LooseFootedSpritsailAssetData
             {
+            {% for name, pose in windcenters.items() %}
+                {{ name }} = new LooseFootedSpritsailWindCenter
+                {
+                    Position = {{ vector(pose.Position) }},
+                    Rotation = {{ vector(pose.Rotation, "Quaternion") }},
+                },
+            {% endfor %}
             {% if definition.reef_fractions is not none %}
                 ReefFractions = new float[] { {% for fraction in definition.reef_fractions %}{{ number(fraction) }}{{ ", " if not loop.last else "" }}{% endfor %} },
                 TopsailVertexStart = {{ topsail.TopsailVertexStart }},

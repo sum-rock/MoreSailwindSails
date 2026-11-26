@@ -47,6 +47,14 @@ def bake(*, data, cut="A"):
         radius=number(data["CollarInnerRadius"]),
         attachments={name: vector(data[name]) for name in ATTACHMENTS},
         corners={name: data[name] for name in CORNERS},
+        windcenters={
+            name: data[name]
+            for name in (
+                ("WindCenter", "WindCenterMain")
+                if definition.topsail
+                else ("WindCenter",)
+            )
+        },
         topsail=data,
         vector=vector,
         number=number,

@@ -51,6 +51,58 @@ internal static class SailingIntegrationChecks
             "Installed captured-force query must retain its patchable signature."
         );
         var rig = Family(name: "LooseFootedSpritsailRig");
+        var geometry = Family(name: "LooseFootedSpritsailClothGeometry");
+        var sailing = Family(name: "LooseFootedSpritsailSailingGeometry");
+        Check(
+            rig.GetMethod(name: "RefreshAerodynamics", bindingAttr: All) == null
+                && sailing.GetMethod(name: "TryWindFrame", bindingAttr: All) == null
+                && geometry.GetProperty(name: "AreaCenter", bindingAttr: All) == null,
+            "Dynamic spritsail windframe and centroid calculations must be removed."
+        );
+        var sensorUpdate = rig.GetMethod(name: "UpdateWindCenter", bindingAttr: All);
+        var sensorCalls = CalledMethods(method: sensorUpdate).ToArray();
+        var sensorFields = Instructions(method: sensorUpdate)
+            .Select(i => i.Operand)
+            .OfType<FieldInfo>()
+            .ToArray();
+        Check(
+            sensorCalls.Any(m => m.Name == "get_TopsailVisible")
+                && sensorCalls.Any(m => m.Name == "set_localPosition")
+                && sensorCalls.Any(m => m.Name == "set_localRotation")
+                && sensorFields.Any(f => f.Name == "mainWindCenterActive")
+                && sensorFields.Any(f => f.Name == "mainWindCenter")
+                && sensorFields.Any(f => f.Name == "windCenter")
+                && !sensorCalls.Any(m =>
+                    m.Name
+                        is "FitWindCenter"
+                            or "LookRotation"
+                            or "TransformPoint"
+                            or "SetPositionAndRotation"
+                ),
+            "Sensor switching must use cached local poses and the existing topsail state."
+        );
+        var sensorInstructions = Instructions(method: sensorUpdate).ToArray();
+        int setter = Array.FindIndex(
+            sensorInstructions,
+            i => i.Operand is MethodInfo m && m.Name == "set_localPosition"
+        );
+        Check(
+            sensorInstructions.Take(setter).Any(i => i.Code.FlowControl == FlowControl.Cond_Branch)
+                && sensorInstructions.Take(setter).Any(i => i.Code == OpCodes.Ret),
+            "Unchanged topsail state must return without rewriting the sensor transform."
+        );
+        foreach (var method in rig.GetMethods(bindingAttr: All | BindingFlags.DeclaredOnly))
+            if (method.Name != "Refresh")
+                Check(
+                    !CalledMethods(method: method).Any(m => m.Name == "FitWindCenter"),
+                    "Sensor poses must be fitted only when the fitting changes."
+                );
+        Check(
+            Calls(type: rig, method: "get_ReefPowerMultiplier", called: "get_AreaFraction")
+                && Calls(type: geometry, method: "Pose", called: "ProjectedArea"),
+            "Fixed windcenters must preserve the existing projected-area reefing reduction."
+        );
+
         var powerPatch = Family(name: "Patches.SpritsailPowerPatch");
         Check(
             CalledMethods(method: powerPatch.GetMethod(name: "Postfix", bindingAttr: All))
@@ -136,12 +188,12 @@ internal static class SailingIntegrationChecks
             "The plate must use the neutral mast frame, not the rotating sail frame."
         );
         Check(
-            Calls(type: rig, method: "RefreshAerodynamics", called: "TryWindFrame")
+            Calls(type: rig, method: "Refresh", called: "FitWindCenter")
                 && Calls(type: rig, method: "PositionCollisionChecker", called: "PivotRotation"),
             "Aerodynamics and collision travel must use the custom fitted geometry."
         );
 
-        foreach (string update in new[] { "Refresh", "LateUpdate" })
+        foreach (string update in new[] { "Refresh", "LateUpdate", "PrepareSailing" })
         {
             var calls = CalledMethods(method: rig.GetMethod(name: update, bindingAttr: All))
                 .ToArray();
@@ -153,11 +205,11 @@ internal static class SailingIntegrationChecks
             );
             int center = Array.FindLastIndex(
                 array: calls,
-                match: m => m.Name == "RefreshAerodynamics"
+                match: m => m.Name == "UpdateWindCenter"
             );
             Check(
                 pose >= 0 && center > pose,
-                "Fitting and visual updates must refresh the effort center after posing cloth, even outside sailing."
+                "Fitting, visuals and physics must select the fixed sensor after topsail visibility updates."
             );
         }
 

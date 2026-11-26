@@ -16,6 +16,8 @@ def bake(*, data, cut="A"):
     return render(
         template=Path(__file__).with_name("staysail.cs.jinja"),
         cut=cut,
+        center=vector(data["Center"]),
+        wind_rotation=vector(data["WindRotation"], kind="Quaternion"),
         foot_fore=number(data["Vertices"][800][0]),
         foot_aft=number(data["Vertices"][824][0]),
         arrays=(
