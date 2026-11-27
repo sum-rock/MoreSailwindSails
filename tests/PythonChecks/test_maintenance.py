@@ -46,7 +46,7 @@ def test_install_builds_first_against_custom_game(checkout, tmp_path, monkeypatc
         dll.write_bytes(b"new build")
 
     monkeypatch.setattr(build, "run", fake_run)
-    result = CliRunner().invoke(main, ["install-local", "--game-dir", str(game)])
+    result = CliRunner().invoke(main, ["install", "--game-dir", str(game)])
     assert result.exit_code == 0, result.output
     destination = game / "BepInEx/plugins/MoreSailwindSails/MoreSailwindSails.dll"
     assert destination.read_bytes() == b"new build"
@@ -65,7 +65,7 @@ def test_install_build_failure_preserves_installed_dll(checkout, tmp_path, monke
         raise click.ClickException("build failed")
 
     monkeypatch.setattr(build, "run", fail)
-    result = CliRunner().invoke(main, ["install-local", "--game-dir", str(game)])
+    result = CliRunner().invoke(main, ["install", "--game-dir", str(game)])
     assert result.exit_code == 1 and "build failed" in result.output
     assert destination.read_bytes() == b"installed"
 
@@ -75,7 +75,7 @@ def test_install_rejects_missing_plugins_before_build(checkout, monkeypatch):
         pytest.fail("must not build")
 
     monkeypatch.setattr(install, "rebuild", unexpected)
-    result = CliRunner().invoke(main, ["install-local", "--game-dir", str(checkout)])
+    result = CliRunner().invoke(main, ["install", "--game-dir", str(checkout)])
     assert result.exit_code == 1 and "plugins directory not found" in result.output
 
 
@@ -212,7 +212,14 @@ def test_process_errors_are_concise(monkeypatch, tmp_path, missing):
 
 @pytest.mark.parametrize(
     "arguments",
-    [["install-local"], ["release"], ["decompile"], ["logs"], ["logs", "player"]],
+    [
+        ["install"],
+        ["uninstall"],
+        ["release"],
+        ["decompile"],
+        ["logs"],
+        ["logs", "player"],
+    ],
 )
 def test_maintainer_help(arguments):
     result = CliRunner().invoke(main, [*arguments, "--help"])

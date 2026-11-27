@@ -6,9 +6,11 @@ from tools.assets.cli import assets, bake
 from tools.halyards.cli import generate_fallback_halyards
 from tools.inspection import inspect_boat
 from tools.maintenance.decompile import decompile
-from tools.maintenance.install import install_local
+from tools.maintenance.install import install
 from tools.maintenance.logs import logs
 from tools.maintenance.release import release
+from tools.maintenance.uninstall import uninstall
+from tools.performance.cli import performance
 
 
 @click.group()
@@ -21,9 +23,11 @@ for command in (
     bake,
     generate_fallback_halyards,
     inspect_boat,
-    install_local,
+    install,
+    uninstall,
     release,
     decompile,
     logs,
+    performance,
 ):
     main.add_command(command)

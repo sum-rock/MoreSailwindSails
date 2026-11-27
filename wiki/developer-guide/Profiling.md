@@ -5,6 +5,34 @@ sail performance. Captures cover all loaded boats and distinguish Flying Sail,
 Staysail, and Spritsail measurements. CPU timings cover the mod's instrumented
 operations; Unity Cloth simulation and GPU execution are excluded.
 
+## Choosing a performance tool
+
+The profiler in `src/Utils/Profiling` attributes CPU time and, when available,
+managed allocations to instrumented MSS code. The separate
+[benchmark module](Benchmark) measures whole-game frame intervals for
+comparisons with native sails, including runs with MSS uninstalled.
+
+| Tool                     | Use it to answer                                                                   | Output                                                          |
+| ------------------------ | ---------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Utils profiler, F7       | Which instrumented sail family or operation consumes CPU time or allocates memory? | Periodic BepInEx log reports, grouped by category and family    |
+| Standalone benchmark, F6 | Does this configuration change overall frame timing compared with the baseline?    | Raw frame CSV, metadata JSON, and offline comparison statistics |
+
+Use the benchmark for overall performance comparisons and keep `EnableProfiling`
+false during those captures. Use a separate profiler capture to investigate
+specific mod work. Ordinary BepInEx and Player logs can provide context around
+hitches, but do not replace instrumented cost measurements.
+
+The profiler's frame summary uses Unity's `Time.unscaledDeltaTime`; its GC
+interval diagnostics use a monotonic clock between profiler ticks. The benchmark
+uses monotonic intervals between `LateUpdate` samples, with a warmup and fixed
+measurement duration. These outputs are not interchangeable datasets.
+
+Profiling is disabled by default. Inactive measurement scopes return immediately
+without reading timing or allocation counters, although the calls and checks
+still execute. Active profiling adds measurement and periodic reporting work.
+Neither tool separates GPU or Unity Cloth cost; the benchmark observes their
+possible effect on whole-game timing without attributing it.
+
 ## Configuration and capture
 
 The settings are in `BepInEx/config/com.august.moresailwindsails.cfg`, under
@@ -89,16 +117,19 @@ crossing reporting or capture boundaries are excluded and counted in
 
 ## Source
 
-This reference describes plugin version **0.4.1** at revision
-[`fbc225d`](https://github.com/sum-rock/MoreSailwindSails/tree/fbc225db947d12a6658ac4016c1b4708c1395448).
+The linked code is the source of truth for configuration, measurements, and
+reporting behavior.
 
-- [Configuration and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/PerformanceProfile.cs)
-- [Category selection](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileSelection.cs)
-- [Capture windows and transitions](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileSession.cs)
-- [CPU and allocation collection](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileCollector.cs)
-- [Report fields](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileReport.cs)
-- [GC interval sampling](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileIntervals.cs)
-- [Flying Sail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs)
+This reference describes plugin version **0.4.1** at revision
+[`5d0dd01`](https://github.com/sum-rock/MoreSailwindSails/tree/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a).
+
+- [Configuration and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Utils/Profiling/PerformanceProfile.cs)
+- [Category selection](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Utils/Profiling/ProfileSelection.cs)
+- [Capture windows and transitions](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Utils/Profiling/ProfileSession.cs)
+- [CPU and allocation collection](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Utils/Profiling/ProfileCollector.cs)
+- [Report fields](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Utils/Profiling/ProfileReport.cs)
+- [GC interval sampling](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Utils/Profiling/ProfileIntervals.cs)
+- [Flying Sail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs)
   and
-  [Staysail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansStaysail/FishermansStaysailRig.cs)
-- [Spritsail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRig.cs)
+  [Staysail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Sails/FishermansStaysail/FishermansStaysailRig.cs)
+- [Spritsail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRig.cs)

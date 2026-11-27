@@ -6,6 +6,10 @@ ROOT = Path(__file__).resolve().parents[1]
 PLUGIN_SOURCE = ROOT / "src/Plugin.cs"
 PROJECT_FILE = ROOT / "src/MoreSailwindSails.csproj"
 RELEASE_DLL = ROOT / "src/bin/Release/netstandard2.0/MoreSailwindSails.dll"
+BENCHMARK_PROJECT_FILE = ROOT / "benchmark/SailwindBenchmark.csproj"
+BENCHMARK_RELEASE_DLL = (
+    ROOT / "benchmark/bin/Release/netstandard2.0/SailwindBenchmark.dll"
+)
 RELEASE_NOTES = ROOT / "RELEASE_NOTES.md"
 BOAT_PROFILES = ROOT / "src/BoatConfiguration/Boats"
 RELEASE_BRANCH = "master"
@@ -16,6 +20,7 @@ DEFAULT_GAME = Path.home() / ".local/share/Steam/steamapps/common/Sailwind"
 MANAGED_DIRECTORY = Path("Sailwind_Data/Managed")
 PLUGINS_DIRECTORY = Path("BepInEx/plugins")
 PLUGIN_DIRECTORY = "MoreSailwindSails"
+BENCHMARK_DIRECTORY = "SailwindBenchmark"
 BEPINEX_LOG = DEFAULT_GAME / "BepInEx/LogOutput.log"
 PLAYER_LOG = Path.home() / (
     ".local/share/Steam/steamapps/compatdata/1764530/pfx/drive_c/users/steamuser/"

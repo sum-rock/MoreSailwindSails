@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../../src/MoreSailwindSails.csproj" />
+    <ProjectReference Include="../../benchmark/SailwindBenchmark.csproj" />
     <Reference Include="0Harmony">
       <HintPath>$(SailwindDir)/BepInEx/core/0Harmony.dll</HintPath>
     </Reference>

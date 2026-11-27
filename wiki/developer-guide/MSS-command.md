@@ -1,12 +1,12 @@
 # mss command
 
 `mss` is the repository's Python CLI for asset authoring, installed-boat
-inspection, and maintainer workflows. Its entry point is declared in
-`pyproject.toml` and commands are registered in `tools/cli.py`; boat inspection
-is implemented in `tools/inspection.py`.
+inspection, performance comparisons, and maintainer workflows. Its entry point
+is declared in `pyproject.toml` and commands are registered in `tools/cli.py`;
+boat inspection is implemented in `tools/inspection.py`.
 
-This reference follows revision `eb05402` (plugin metadata **0.4.1**, Python
-package **0.1.0**). The linked code is the source of truth.
+This reference follows revision `5d0dd01` (plugin metadata **0.4.1**, benchmark
+**0.1.2**, Python package **0.1.0**). The linked code is the source of truth.
 
 ## Running mss
 
@@ -27,7 +27,10 @@ tail. Every command and subcommand accepts `--help`.
 | `bake`                         | Alias for `assets bake`                                   | Same bake commands and options                                      |
 | `inspect-boat`                 | List registered mast and stay identities                  | Prints a table without modifying the installation                   |
 | `generate-fallback-halyards`   | Find candidate winch positions in installed boat geometry | Emits C# definitions to stdout or a file                            |
-| `install-local`                | Rebuild and install the plugin                            | Replaces the DLL in the selected game installation                  |
+| `install`                      | Rebuild and install the plugin                            | Replaces the DLL in the selected game installation                  |
+| `uninstall`                    | Remove the base mod                                       | Deletes only `BepInEx/plugins/MoreSailwindSails`                    |
+| `performance install`          | Rebuild and install the optional benchmark                | Installs the recorder independently of MSS                          |
+| `performance compare`          | Compare repeated benchmark captures                       | Reads two directories and prints frame-time statistics              |
 | `release`                      | Prepare and publish a release                             | Updates the checkout, builds, then confirms tagging and publication |
 | `decompile`                    | Refresh a local game-code reference                       | Writes a decompiled snapshot outside the repository                 |
 | `logs bepinex` / `logs player` | Follow game logs                                          | Displays recent lines and continues until Ctrl+C                    |
@@ -78,7 +81,7 @@ writes deterministic C#. The temporary handoff is removed afterward. Every bake
 accepts `--output FILE` and `--check`.
 
 The
-[staysail collector](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/staysail/collect.py)
+[staysail collector](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/assets/staysail/collect.py)
 also evaluates authored sheeting and reefing animation and exports the static
 `WindCenter` marker's position and orientation. See the
 [staysail asset requirements](Fishermans-Staysails#assets-and-ownership).
@@ -186,10 +189,10 @@ determines which definitions are used.
 ## Local installation
 
 ```sh
-./mss install-local --game-dir /path/to/Sailwind
+./mss install --game-dir /path/to/Sailwind
 ```
 
-With Sailwind closed, `install-local` checks for `BepInEx/plugins`, rebuilds the
+With Sailwind closed, `install` checks for `BepInEx/plugins`, rebuilds the
 plugin in Release against the selected installation, and copies the DLL to:
 
 ```text
@@ -201,6 +204,40 @@ without a confirmation prompt. The build uses
 `dotnet build -c Release -t:Rebuild` and the selected `SailwindDir`. This
 command does not run the check suites;
 [Building and contributing](Building-and-contributing) lists them.
+
+## Local uninstallation
+
+```sh
+./mss uninstall --game-dir /path/to/Sailwind
+```
+
+With Sailwind closed, `uninstall` deletes the entire
+`BepInEx/plugins/MoreSailwindSails` directory without a confirmation prompt. It
+leaves saves, configuration, other plugins, benchmark captures, and the
+benchmark recorder intact. If MSS is already absent, the command reports
+`Not installed` and succeeds. The selected game's `BepInEx/plugins` directory
+must exist. A symlink at the mod directory is removed without deleting its
+target.
+
+## Benchmark installation and comparison
+
+```sh
+./mss performance install --game-dir /path/to/Sailwind
+./mss performance compare --baseline /path/to/native-runs --candidate /path/to/mss-runs
+```
+
+`performance install` rebuilds the standalone recorder in Release against the
+selected installation and replaces
+`BepInEx/plugins/SailwindBenchmark/SailwindBenchmark.dll`. Close Sailwind first.
+The command requires `BepInEx/plugins`, creates the recorder's subdirectory if
+needed, and preserves benchmark configuration. It does not install MSS or run
+the check suites.
+
+`performance compare` requires `--baseline DIRECTORY` and
+`--candidate DIRECTORY`; it reads captures offline and does not accept
+`--game-dir`. Each directory must contain matching JSON/CSV pairs for one
+scenario and variant. See [Benchmark](Benchmark) for configuration, capture
+controls, comparison design, and interpretation.
 
 ## Release publication
 
@@ -275,27 +312,31 @@ Log commands use `--path`, not `--game-dir`, for other installations.
 
 ## Source
 
-- [CLI registration](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/cli.py),
-  [wrapper](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/mss),
+- [CLI registration](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/cli.py),
+  [wrapper](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/mss),
   and
-  [package entry point](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/pyproject.toml)
-- [Boat inspection](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/inspection.py)
+  [package entry point](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/pyproject.toml)
+- [Boat inspection](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/inspection.py)
   and
-  [profiles](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/halyards/profiles.py)
-- [Spritsail cut catalog](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/loose_foot_spritsail/authoring.py)
+  [profiles](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/halyards/profiles.py)
+- [Spritsail cut catalog](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/assets/loose_foot_spritsail/authoring.py)
   and
-  [C# rendering and comparison](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/rendering.py)
-- [Halyard search](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/halyards/search.py)
-- [Paths and defaults](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/settings.py)
-- [Asset commands](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/cli.py)
+  [C# rendering and comparison](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/assets/rendering.py)
+- [Halyard search](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/halyards/search.py)
+- [Paths and defaults](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/settings.py)
+- [Asset commands](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/assets/cli.py)
   and
-  [Blender runner](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/runner.py)
-- [Fallback options](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/halyards/cli.py)
+  [Blender runner](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/assets/runner.py)
+- [Fallback options](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/halyards/cli.py)
   and
-  [geometry evaluation](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/halyards/generate.py)
-- [Local installation](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/maintenance/install.py)
+  [geometry evaluation](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/halyards/generate.py)
+- [Base mod removal](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/maintenance/uninstall.py)
+- [Benchmark installation](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/performance/install.py)
   and
-  [release workflow](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/maintenance/release.py)
-- [Decompiled snapshots](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/maintenance/decompile.py)
+  [comparison](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/performance/cli.py)
+- [Local installation](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/maintenance/install.py)
   and
-  [log following](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/maintenance/logs.py)
+  [release workflow](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/maintenance/release.py)
+- [Decompiled snapshots](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/maintenance/decompile.py)
+  and
+  [log following](https://github.com/sum-rock/MoreSailwindSails/blob/5d0dd0167e578f77deba2f9e2d3a2bce591fbb5a/tools/maintenance/logs.py)
