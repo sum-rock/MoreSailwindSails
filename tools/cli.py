@@ -9,6 +9,7 @@ from tools.maintenance.decompile import decompile
 from tools.maintenance.install import install_local
 from tools.maintenance.logs import logs
 from tools.maintenance.release import release
+from tools.performance.cli import performance
 
 
 @click.group()
@@ -25,5 +26,6 @@ for command in (
     release,
     decompile,
     logs,
+    performance,
 ):
     main.add_command(command)
