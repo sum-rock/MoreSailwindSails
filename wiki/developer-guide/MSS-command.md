@@ -5,6 +5,9 @@ inspection, and maintainer workflows. Its entry point is declared in
 `pyproject.toml` and commands are registered in `tools/cli.py`; boat inspection
 is implemented in `tools/inspection.py`.
 
+This reference follows revision `eb05402` (plugin metadata **0.4.1**, Python
+package **0.1.0**). The linked code is the source of truth.
+
 ## Running mss
 
 From the repository root:
@@ -20,7 +23,6 @@ tail. Every command and subcommand accepts `--help`.
 
 | Command                        | Purpose                                                   | Output or effect                                                    |
 | ------------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------- |
-| `assets generate`              | Generate editable sail meshes                             | Creates or replaces a `.blend` file                                 |
 | `assets bake`                  | Bake authored meshes                                      | Writes generated C#, or compares it with `--check`                  |
 | `bake`                         | Alias for `assets bake`                                   | Same bake commands and options                                      |
 | `inspect-boat`                 | List registered mast and stay identities                  | Prints a table without modifying the installation                   |
@@ -34,65 +36,71 @@ Commands that accept `--game-dir` default to
 `~/.local/share/Steam/steamapps/common/Sailwind`. Options belong to the command
 that declares them; there is no global `--game-dir` option.
 
-## Asset generation and baking
+## Asset baking
 
 Blender runs in background mode with factory startup settings and automatic
 script execution disabled. `assets --blender PATH` selects an alternative
 Blender executable; it defaults to `blender` on `PATH`.
 
 ```sh
-./mss assets generate flying_sail
-./mss assets generate staysail --cut B
 ./mss assets bake flying_sail
 ./mss assets bake staysail --cut B --check
 ./mss assets bake stay
+./mss assets bake loose_foot_spritsail --cut D --check
 ./mss assets --blender /path/to/blender bake staysail --cut C
 ```
 
 ### Editable assets
 
-`assets generate` supports `flying_sail` and `staysail`. It recreates a sail
-from the authoring definitions and replaces the output `.blend` file. For
-staysails, `--cut A|B|C` selects the cut, defaults to `A`, and is
-case-insensitive. `--output FILE` selects a different destination.
+Edit the existing `.blend` files in Blender. The CLI provides baking only;
+`assets generate` is no longer available. Baking reads the repository assets
+below without saving changes to them. `--output FILE` changes the generated C#
+destination, not the input asset.
 
-| Asset              | Default generated file and bake input             |
-| ------------------ | ------------------------------------------------- |
-| `flying_sail`      | `assets/flying_sail/fishermans_flying_sail.blend` |
-| `staysail --cut A` | `assets/staysails/fishermans_staysail_mka.blend`  |
-| `staysail --cut B` | `assets/staysails/fishermans_staysail_mkb.blend`  |
-| `staysail --cut C` | `assets/staysails/fishermans_staysail_mkc.blend`  |
-| `stay`             | `assets/stays/stay.blend` (bake only)             |
+| Asset                          | Bake input                                                                                                      |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `flying_sail`                  | `assets/flying_sail/fishermans_flying_sail.blend`                                                               |
+| `staysail --cut A`             | `assets/staysails/fishermans_staysail_mka.blend`                                                                |
+| `staysail --cut B`             | `assets/staysails/fishermans_staysail_mkb.blend`                                                                |
+| `staysail --cut C`             | `assets/staysails/fishermans_staysail_mkc.blend`                                                                |
+| `stay`                         | `assets/stays/stay.blend`                                                                                       |
+| `loose_foot_spritsail --cut A` | `assets/loose_foot_spritsail/loose_foot_spritsail-mkA.blend` (substitute `B`, `C`, or `D` for the selected cut) |
 
-There is no `assets generate stay` command. Baking reads the repository asset
-shown above; `--output` changes the destination, not the input asset.
+Staysails accept `--cut A|B|C`; spritsails accept `--cut A|B|C|D`. Both options
+default to `A` and are case-insensitive. Flying sails and stays have no `--cut`
+option.
 
 ### Generated C#
 
-`assets bake` supports all three asset types. It validates the authored mesh and
-writes deterministic C# mesh data. Staysails have the same `--cut` option as
-generation. Every bake accepts `--output FILE` and `--check`.
+`assets bake` supports all four asset types. Blender validates and extracts the
+authored data into a temporary JSON file, then the repository's Python renderer
+writes deterministic C#. The temporary handoff is removed afterward. Every bake
+accepts `--output FILE` and `--check`.
 
 The
-[staysail collector](https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/tools/assets/staysail/collect.py)
+[staysail collector](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/staysail/collect.py)
 also evaluates authored sheeting and reefing animation and exports the static
 `WindCenter` marker's position and orientation. See the
 [staysail asset requirements](Fishermans-Staysails#assets-and-ownership).
 
-| Asset         | Default bake output                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `flying_sail` | `src/Sails/FishermansFlyingSail/FishermansFlyingSailBakedMesh.g.cs`                                                 |
-| `staysail`    | `src/Sails/FishermansStaysail/MkA/FishermansStaysailMkABakedMesh.g.cs` (substitute `B` or `C` for the selected cut) |
-| `stay`        | `src/Stays/FishermansStay/FishermansStayBakedMesh.g.cs`                                                             |
+| Asset                  | Default bake output                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `flying_sail`          | `src/Sails/FishermansFlyingSail/FishermansFlyingSailBakedMesh.g.cs`                                                            |
+| `staysail`             | `src/Sails/FishermansStaysail/MkA/FishermansStaysailMkABakedMesh.g.cs` (substitute `B` or `C` for the selected cut)            |
+| `stay`                 | `src/Stays/FishermansStay/FishermansStayBakedMesh.g.cs`                                                                        |
+| `loose_foot_spritsail` | `src/Sails/LooseFootedSpritsail/MkA/LooseFootedSpritsailMkABakedAsset.g.cs` (substitute `B`, `C`, or `D` for the selected cut) |
 
-`--check` writes nothing and fails if the destination is missing or differs from
-the generated data. It still requires Blender. `./mss bake staysail --cut A` is
-a shorter form of `./mss assets bake staysail --cut A`; use the `assets` form
-when selecting Blender with `--blender`.
+`--check` leaves the destination unchanged and fails if it is missing or differs
+from the generated data. It still runs Blender extraction and uses temporary
+files. `./mss bake staysail --cut A` is a shorter form of
+`./mss assets bake staysail --cut A`; use the `assets` form when selecting
+Blender with `--blender`.
 
-The [Staysail](Fishermans-Staysails#assets-and-ownership) and
-[Flying Sail](Fishermans-Flying-Sails#assets-and-ownership) pages describe how
-these meshes are shaped and owned at runtime.
+The [Staysail](Fishermans-Staysails#assets-and-ownership),
+[Flying Sail](Fishermans-Flying-Sails#assets-and-ownership), and
+[Spritsail](Loose-Footed-Spritsails#implementation-and-asset-ownership) pages
+describe their assets and runtime ownership. Spritsail bakes include cloth, reef
+samples, hardware, attachments, and authored wind-center poses.
 
 ## Boat inspection
 
@@ -131,10 +139,11 @@ than every object present in an asset bundle.
 ## Fallback halyard generation
 
 `generate-fallback-halyards BOAT` reads installed boat geometry and searches the
-physical base masts for clear winch positions near native halyard height. It
-emits `HalyardFallbackDefinition` entries containing contact points, normals,
-offsets, and template indexes. It reads the installation without modifying game
-assets or automatically editing the plugin's configuration.
+physical base masts for clear winch positions at or above each usable native
+reef-winch template’s height. It emits `HalyardFallbackDefinition` entries
+containing contact points, normals, offsets, and template indexes. It reads the
+installation without modifying game assets or automatically editing the plugin's
+configuration.
 
 ```sh
 ./mss generate-fallback-halyards brig --mast 5
@@ -146,19 +155,21 @@ Supported boat names are `brig`, `junk`, `jong`, `sanbuq`, `baghala`, `cog`,
 case-insensitive. Mod-added boats such as Shroud and the OldChronian boats are
 outside this generator's supported profiles.
 
-| Option                 | Behavior                                                                     |
-| ---------------------- | ---------------------------------------------------------------------------- |
-| `--game-dir DIRECTORY` | Select the installed game to inspect                                         |
-| `--native-only`        | Exclude Shipyard Expansion parts and changes                                 |
-| `--mast INTEGER`       | Restrict the search to one configured physical base mast ID                  |
-| `--output FILE`        | Write definitions to this file instead of stdout                             |
-| `--clearance FLOAT`    | Minimum winch clearance in metres; default `0.02`                            |
-| `--height-range FLOAT` | Maximum distance above or below native winch height in metres; default `0.5` |
+| Option                 | Behavior                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `--game-dir DIRECTORY` | Select the installed game to inspect                                                      |
+| `--native-only`        | Exclude Shipyard Expansion parts and changes                                              |
+| `--mast INTEGER`       | Restrict the search to one configured physical base mast ID                               |
+| `--output FILE`        | Write definitions to this file instead of stdout                                          |
+| `--clearance FLOAT`    | Minimum winch clearance in metres; default `0.01`                                         |
+| `--height-range FLOAT` | Maximum distance upward along the mast from each reference winch in metres; default `2.0` |
 
-Clearance and height range must be finite and nonnegative. Without `--mast`, the
-command evaluates configured base masts; native-only coverage omits absent SE
-masts. Installed SE assets are included when present unless `--native-only` is
-set. An incomplete SE installation can prevent inspection.
+The search begins at each reference height and moves upward along the mast in 2
+cm steps. It tries the available native reef-winch templates until it finds a
+clear seat. Clearance and height range must be finite and nonnegative. Without
+`--mast`, the command evaluates configured base masts; native-only coverage
+omits absent SE masts. Installed SE assets are included when present unless
+`--native-only` is set. An incomplete SE installation can prevent inspection.
 
 Definitions go to stdout and progress or failures go to stderr. Output includes
 input asset hashes and comments identifying unresolved masts. If any requested
@@ -204,8 +215,8 @@ command does not run the check suites;
 2. Read matching versions from `PluginVersion` in `src/Plugin.cs` and `Version`
    in `src/MoreSailwindSails.csproj`. Require an unused `v<VERSION>` tag locally
    and on `origin`.
-3. Require `docs/RELEASE_NOTES.md` and authenticated GitHub CLI access, then
-   rebuild the Release DLL using the default game location.
+3. Require `RELEASE_NOTES.md` at the repository root and authenticated GitHub
+   CLI access, then rebuild the Release DLL using the default game location.
 4. Show the tag, commit, and DLL, and ask **“Publish this release?”**,
    defaulting to no. Checkout updates and the build have already happened at
    this point.
@@ -264,16 +275,27 @@ Log commands use `--path`, not `--game-dir`, for other installations.
 
 ## Source
 
-- [Paths and defaults](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/settings.py)
-- [Asset commands](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/assets/cli.py)
+- [CLI registration](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/cli.py),
+  [wrapper](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/mss),
   and
-  [Blender runner](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/assets/runner.py)
-- [Fallback options](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/halyards/cli.py)
+  [package entry point](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/pyproject.toml)
+- [Boat inspection](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/inspection.py)
   and
-  [geometry evaluation](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/halyards/generate.py)
-- [Local installation](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/maintenance/install.py)
+  [profiles](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/halyards/profiles.py)
+- [Spritsail cut catalog](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/loose_foot_spritsail/authoring.py)
   and
-  [release workflow](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/maintenance/release.py)
-- [Decompiled snapshots](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/maintenance/decompile.py)
+  [C# rendering and comparison](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/rendering.py)
+- [Halyard search](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/halyards/search.py)
+- [Paths and defaults](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/settings.py)
+- [Asset commands](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/cli.py)
   and
-  [log following](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/maintenance/logs.py)
+  [Blender runner](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/assets/runner.py)
+- [Fallback options](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/halyards/cli.py)
+  and
+  [geometry evaluation](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/halyards/generate.py)
+- [Local installation](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/maintenance/install.py)
+  and
+  [release workflow](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/maintenance/release.py)
+- [Decompiled snapshots](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/maintenance/decompile.py)
+  and
+  [log following](https://github.com/sum-rock/MoreSailwindSails/blob/eb054029311b07ef313c2b95369c9fa29d7c7c4d/tools/maintenance/logs.py)

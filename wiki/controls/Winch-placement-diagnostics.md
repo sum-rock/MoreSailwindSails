@@ -135,8 +135,9 @@ control configuration.
 ## Generating halyard fallback positions
 
 The `mss` command can automatically search installed boat geometry for clear
-halyard fallback positions near native winch height. For example, from the
-repository root:
+halyard fallback positions at or above each usable native reef-winch template’s
+height. The default search moves upward along the mast by up to 2 m in 2 cm
+steps, with 1 cm clearance. For example, from the repository root:
 
 ```sh
 ./mss generate-fallback-halyards brig --mast 5
@@ -152,8 +153,9 @@ supported boats, search options, output files, and handling unresolved masts.
 
 ## Source
 
-This page describes revision `fcdf300`, whose plugin metadata version is
-**0.3.0**.
+The diagnostic overlay descriptions follow revision `fcdf300` (plugin metadata
+**0.3.0**). The generator guidance follows the current
+[MSS command reference](MSS-command#fallback-halyard-generation).
 
 - [Settings and startup snapshot](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Plugin.cs)
 - [Sheet selection and retention](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/SheetingWinchPlacementResolver.cs)
