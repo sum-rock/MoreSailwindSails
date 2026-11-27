@@ -3,19 +3,19 @@
 Part of the [Controls reference](Controls). For donor selections and mounting
 measurements, see [Fallback winch templates](Fallback-winch-templates).
 
-MoreSailwindSails places owned sheet and halyard winches for Fisherman's Stays
-and Fisherman's Flying Sails using available positions on the boat's fitted
-rigging. It keeps a valid existing placement; when a new placement is needed, it
-normally checks compatible native positions first, then predefined fallback
-positions. Sheets need a free port and starboard pair, while the halyard is
-placed independently.
+MoreSailwindSails places owned sheet and halyard winches for Fisherman's Stays,
+Fisherman's Flying Sails, and Loose Footed Spritsails using available positions
+on the boat's fitted rigging. It keeps a valid existing placement; when a new
+placement is needed, it normally checks compatible native positions first, then
+predefined fallback positions. Sheets need a free port and starboard pair, while
+the halyard is placed independently.
 
 Placement depends on the consumer's native source policy, usable templates,
-fitted supports, sail span, and occupancy. Both families share the boat's
+fitted supports, sail span, and occupancy. All consumers share the boat's
 reservation ledger. The
 [forced-fallback setting](Winch-placement-diagnostics#forcing-sheet-fallbacks)
-skips native sheet positions for both families; it leaves halyard selection
-unchanged.
+skips native sheet positions for all three consumers; it leaves halyard
+selection unchanged.
 
 ## Winch templates and mounting positions
 
@@ -65,17 +65,28 @@ reef candidates (`FittedMast` policy). It does not search matching stays. The
 mast must be fitted and present in the boat's native inventory.
 
 The adapter requires the forward mast, aft supporting mast, and both guide
-sections to remain active. The fitted forward mast is also the requested halyard
-fallback mast. Physical mast arrays keep their native controls; the adapter
-releases native bindings to the Flying Sail's controllers before using owned
-clones. See the [consumer contract](Controls#consumer-contract-and-ownership)
-for ownership and cleanup.
+sections to remain active. The fitted forward mast supplies the halyard request,
+which the allocator resolves to its physical base for fallback lookup. Physical
+mast arrays keep their native controls; the adapter uses the shared handoff to
+release native bindings to managed controllers before using owned clones. See
+the [consumer contract](Controls#consumer-contract-and-ownership) for ownership
+and cleanup.
+
+## How spritsail sources are found
+
+Spritsails also use `FittedMast`: their selected physical mast supplies native
+sheet and reef candidates. Their neutral fitted span controls sheet fallback
+eligibility, and the selected mast's physical base selects the halyard fallback.
+The halyard additionally needs an active, eligible guide on the fitted mast.
+Sheet and halyard placement are retried independently, so an unavailable halyard
+does not discard working sheets. See
+[spritsail controls](Loose-Footed-Spritsails#sheets-halyard-and-reefing).
 
 ## Selecting sheet and halyard positions
 
-The following placement rules apply to both families, using their respective
-native source policy. Fisherman's Stays use `MatchingStays`; Flying Sails use
-`FittedMast`.
+The following placement rules apply to all three consumers, using their
+respective native source policy. Fisherman's Stays use `MatchingStays`; Flying
+Sails and spritsails use `FittedMast`.
 
 ### Sheeting winches
 
@@ -141,18 +152,19 @@ can recover without waiting for the next scheduled retry.
 For each eligible native source, the allocator examines its `reefWinch` entries
 in array order. Each usable entry is a single-position candidate. For a stay,
 this uses the same base-mast pair as the sheet search, but the halyard and
-sheets can come from different source stays. A Flying Sail searches only its
-fitted physical mast's reef array.
+sheets can come from different source stays. Flying Sails and spritsails search
+only their fitted physical mast's reef array.
 
 After those candidates, it tries the `HalyardFallbacks` entry matching the
 requested **physical base mast's** `orderIndex`: the aft mast for a Fisherman's
-Stay, or the fitted mast for a Flying Sail. That entry supplies an authored
-position and orientation and a `TemplateIndex` into the base mast's `reefWinch`
-array. The original template position may be occupied because the clone is
-placed at the fallback position. That destination must still be free, and the
-requested base mast must be fitted. A missing fallback definition or template
-leaves no fallback candidate. Its mounting normal and offset are authored per
-fallback; rotation and scale come from the selected donor, as described in
+Stay, or the base of the fitted mast for a Flying Sail or spritsail. That entry
+supplies an authored position and orientation and a `TemplateIndex` into the
+base mast's `reefWinch` array. The original template position may be occupied
+because the clone is placed at the fallback position. That destination must
+still be free, and the requested base mast must be fitted. A missing fallback
+definition or template leaves no fallback candidate. Its mounting normal and
+offset are authored per fallback; rotation and scale come from the selected
+donor, as described in
 [Halyard donors](Fallback-winch-templates#halyard-donors).
 
 The halyard winch is separate from the upper rope guide. For a Fisherman's Stay,
@@ -206,26 +218,27 @@ See
 ## Source
 
 This page describes
-[revision `fcdf300`](https://github.com/sum-rock/MoreSailwindSails/tree/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5),
-whose plugin metadata version is **0.3.0**.
+[revision `fbc225d`](https://github.com/sum-rock/MoreSailwindSails/tree/fbc225db947d12a6658ac4016c1b4708c1395448),
+whose plugin metadata version is **0.4.1**.
 
-- [Diagnostic settings and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Plugin.cs)
-- [Native control discovery](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Discovery/NativeWinchInventory.cs)
-- [Stay control construction](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Stays/FishermansStay/FishermansStay.cs)
-- [Control setup and base-mast resolution](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/WinchControls.cs)
-- [Stay dependency traversal](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Discovery/Inventory/StayDependencies.cs)
-- [Matching native sheet pairs](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Discovery/Inventory/NativeSheetPairing.cs)
-- [Halyard placement](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/HalyardWinchPlacementResolver.cs)
-- [Sheet placement](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/SheetingWinchPlacementResolver.cs)
-- [Per-pair donor and mounting data](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/SheetFallbackPair.cs)
-- [Sheet surface alignment](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/SheetFallbackSeat.cs)
-- [Sheet fallback ordering](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/SheetFallbackOrder.cs)
-- [Candidate selection](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/WinchPlacementPolicy.cs)
-- [Position reservations](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/WinchReservations.cs)
-- [Placement retention and retry](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Runtime/WinchGroup.cs)
-- [Boat control configuration](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Configuration/BoatControlCatalog.cs)
-- [Stay consumer adapter](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Stays/FishermansStay/FishermansStayControls.cs)
-- [Flying Sail consumer adapter](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansFlyingSail/FishermansFlyingSailRigging.cs)
-- [Neutral span validation](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/SailControlGeometry.cs)
-- [Staysail fitted width](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansStaysail/FishermansStaysailRig.cs)
-- [Flying Sail fitted width](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs)
+- [Diagnostic settings and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Plugin.cs)
+- [Native control discovery](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Discovery/NativeWinchInventory.cs)
+- [Stay control construction](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/FishermansStay.cs)
+- [Control setup and base-mast resolution](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/WinchControls.cs)
+- [Stay dependency traversal](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Discovery/Inventory/StayDependencies.cs)
+- [Matching native sheet pairs](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Discovery/Inventory/NativeSheetPairing.cs)
+- [Halyard placement](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Placement/HalyardWinchPlacementResolver.cs)
+- [Sheet placement](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Placement/SheetingWinchPlacementResolver.cs)
+- [Per-pair donor and mounting data](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/SheetFallbackPair.cs)
+- [Sheet surface alignment](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/SheetFallbackSeat.cs)
+- [Sheet fallback ordering](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Placement/SheetFallbackOrder.cs)
+- [Candidate selection](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Placement/WinchPlacementPolicy.cs)
+- [Position reservations](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Placement/WinchReservations.cs)
+- [Placement retention and retry](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Runtime/WinchGroup.cs)
+- [Boat control configuration](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/BoatControlCatalog.cs)
+- [Stay consumer adapter](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/FishermansStayControls.cs)
+- [Flying Sail consumer adapter](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailRigging.cs)
+- [Neutral span validation](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/SailControlGeometry.cs)
+- [Staysail fitted width](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansStaysail/FishermansStaysailRig.cs)
+- [Flying Sail fitted width](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs)
+- [Spritsail consumer adapter](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRigging.cs)

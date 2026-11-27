@@ -44,7 +44,8 @@ the installed game signatures and the compiled mod's integration structure,
 including shared consumer wiring, native-binding handoff, physical mast array
 preservation, and diagnostic preview structure. Its startup configuration checks
 use temporary BepInEx files to check defaults, overrides, and isolation from
-live reloads. These suites do not run a Unity scene.
+live reloads. Sail checks also cover authored animation, wind-center fitting,
+reefing, and spritsail integration. These suites do not run a Unity scene.
 
 For a different game location, pass the MSBuild property to both test projects
 and pass the same directory as the AssemblyChecks runtime argument. For example:
@@ -80,7 +81,7 @@ and results in the change description.
 
 ## Code and documentation conventions
 
-[AGENTS.md](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/AGENTS.md)
+[AGENTS.md](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/AGENTS.md)
 records the repository guidance at this revision; consult the checkout's current
 file when contributing.
 
@@ -116,14 +117,19 @@ produce a local DLL without performing either.
 
 ## Source
 
-- [Pinned development environment](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/flake.nix)
-- [Plugin target and assembly references](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/MoreSailwindSails.csproj)
-- [AssemblyChecks entry point](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/AssemblyChecks/Program.cs)
-- [Fitted-span cases](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/GeometryChecks/Controls/SheetSpanChecks.cs)
-- [Authored sheet profiles](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/GeometryChecks/Controls/NativeSeatProfileChecks.cs)
+- [Pinned development environment](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/flake.nix)
+- [Plugin target and assembly references](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/MoreSailwindSails.csproj)
+- [AssemblyChecks entry point](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/AssemblyChecks/Program.cs)
+- [Fitted-span cases](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/Controls/SheetSpanChecks.cs)
+- [Authored sheet profiles](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/Controls/NativeSeatProfileChecks.cs)
   and
-  [halyard profiles](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/GeometryChecks/Controls/HalyardProfileChecks.cs)
-- [Consumer interface checks](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/AssemblyChecks/Controls/SailControlInterfaceChecks.cs)
-- [Startup configuration checks](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/AssemblyChecks/Controls/SheetFallbackConfigurationChecks.cs)
-- [Diagnostic structure checks](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tests/AssemblyChecks/Utils/WinchDiagnosticChecks.cs)
-- [Python tooling and test configuration](https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/pyproject.toml)
+  [halyard profiles](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/Controls/HalyardProfileChecks.cs)
+- [Consumer interface checks](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/AssemblyChecks/Controls/SailControlInterfaceChecks.cs)
+- [Startup configuration checks](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/AssemblyChecks/Controls/SheetFallbackConfigurationChecks.cs)
+- [Diagnostic structure checks](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/AssemblyChecks/Utils/WinchDiagnosticChecks.cs)
+- [Python tooling and test configuration](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/pyproject.toml)
+
+For the sail checks, see the
+[geometry suite entry point](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/Program.cs)
+and
+[assembly suite entry point](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/AssemblyChecks/Program.cs).

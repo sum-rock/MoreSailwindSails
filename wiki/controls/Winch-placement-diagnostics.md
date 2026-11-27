@@ -86,11 +86,10 @@ startup; reloading or editing the live configuration does not change the
 allocator's snapshot. Set it to `false` and restart to restore native sheet
 candidate selection.
 
-This affects sheets for **both Fisherman's Stays and Fisherman's Flying Sails**.
-At the cited revision, the configuration description mentions only Fisherman's
-Stays, but both consumers use the same configured sheet resolver. Native sheet
-placements are neither selected nor retained in forced mode. Halyard selection
-is unchanged.
+This affects sheets for Fisherman's Stays, Flying Sails, and spritsails. The
+configuration description mentions Fisherman's Stays, but all three consumers
+use the same configured sheet resolver. Native sheet placements are neither
+selected nor retained in forced mode. Halyard selection is unchanged.
 
 Donor availability, fitted supports, the
 [fitted-span boundary](How-winches-are-placed#fitted-span-and-fallback-eligibility),
@@ -135,8 +134,9 @@ control configuration.
 ## Generating halyard fallback positions
 
 The `mss` command can automatically search installed boat geometry for clear
-halyard fallback positions near native winch height. For example, from the
-repository root:
+halyard fallback positions at or above each usable native reef-winch template’s
+height. The default search moves upward along the mast by up to 2 m in 2 cm
+steps, with 1 cm clearance. For example, from the repository root:
 
 ```sh
 ./mss generate-fallback-halyards brig --mast 5
@@ -152,17 +152,18 @@ supported boats, search options, output files, and handling unresolved masts.
 
 ## Source
 
-This page describes revision `fcdf300`, whose plugin metadata version is
-**0.3.0**.
+The diagnostic overlay descriptions follow revision `fbc225d` (plugin metadata
+**0.4.1**). The generator guidance follows the current
+[MSS command reference](MSS-command#fallback-halyard-generation).
 
-- [Settings and startup snapshot](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Plugin.cs)
-- [Sheet selection and retention](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Placement/SheetingWinchPlacementResolver.cs)
-- [Shared allocator configuration](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/WinchControls.cs)
-- [Overlay colors, model selection, and lifecycle](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Utils/WinchMountOverlay.cs)
-- [Preview model collection](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Utils/WinchModelPreview.cs)
-- [Mesh drawing and ownership](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Utils/WinchPreviewMesh.cs)
-- [Preview transforms and duplicate positions](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Utils/WinchMountOverlayGeometry.cs)
-- [Surface picking and frame conversion](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Utils/BoatSurfacePicker.cs)
-- [Position logging](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Utils/LogFallbackWinchPlacement.cs)
-- [Halyard generator options](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tools/halyards/cli.py)
-- [Halyard geometry search](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/tools/halyards/generate.py)
+- [Settings and startup snapshot](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Plugin.cs)
+- [Sheet selection and retention](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Placement/SheetingWinchPlacementResolver.cs)
+- [Shared allocator configuration](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/WinchControls.cs)
+- [Overlay colors, model selection, and lifecycle](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/WinchMountOverlay.cs)
+- [Preview model collection](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/WinchModelPreview.cs)
+- [Mesh drawing and ownership](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/WinchPreviewMesh.cs)
+- [Preview transforms and duplicate positions](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/WinchMountOverlayGeometry.cs)
+- [Surface picking and frame conversion](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/BoatSurfacePicker.cs)
+- [Position logging](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/LogFallbackWinchPlacement.cs)
+- [Halyard generator options](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tools/halyards/cli.py)
+- [Halyard geometry search](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tools/halyards/generate.py)

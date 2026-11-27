@@ -5,14 +5,9 @@ luff is tied to the mast; a wooden sprit supports the peak from a snotter
 assembly around the mast. The sprit and snotter turn with the sail, while the
 rotation plate remains fixed in the mast frame.
 
-Loose Footed Spritsails are introduced in **0.4.0**. This page describes that
-release's feature implementation. Source links point to the inspected
-implementation at revision
-[`e00d024`](https://github.com/sum-rock/MoreSailwindSails/tree/e00d0247302d2ad070fd1e206bc1fe0155a48722),
-before the release version bump. Mk.D details cite its registration, cut
-catalog, and shared rendering code at revision
-[`1b1a590`](https://github.com/sum-rock/MoreSailwindSails/tree/1b1a5904149c266b5600d771e4934887d95f1836).
-Code is the source of truth.
+Loose Footed Spritsails were introduced in **0.4.0**. This reference follows
+revision `f453a17` (plugin metadata **0.4.1**). The linked code is the source of
+truth.
 
 ## Cuts and fitting
 
@@ -26,23 +21,33 @@ Code is the source of truth.
 All four appear under **Other** at shipyards. Select a physical mast, choose a
 cut, then size and position it using the shipyard controls. There is no
 boat-specific eligibility list and no aft supporting mast or Fisherman's Stay
-requirement. This broad eligibility does not guarantee sufficient clearance or
-available control positions on every fitting.
+requirement. Native mount restrictions still apply: spritsails cannot use stays
+or square-only mounts. Eligible masts also need enough clearance and available
+control positions.
 
 The initial luff height is based on the native Full Gaff. New sails start at
-unit scale, white (color index 11), and at the highest installation position
-allowed by their topsail rise. Height and width can change independently. The
-reported sail area is the baked triangle area multiplied by the base scale
-squared and the fitted height and width scales. Hardware is fitted separately
-from the stretched cloth; the snotter radius follows the mast surface where it
-can be measured, with collider and authored-radius fallbacks.
+unit scale, fully deployed, white (color index 11), and at the highest
+installation position allowed by their topsail rise. Height and width can change
+independently. The reported sail area is the baked triangle area multiplied by
+the base scale squared and the fitted height and width scales. Hardware is
+fitted separately from the stretched cloth; the snotter radius follows the mast
+surface where it can be measured, with collider and authored-radius fallbacks.
 
-Mk.C and Mk.D need room above the main sail for its topsail. Their upper
-installation limit subtracts the scaled topsail rise from mast height, and the
-height check requires both the luff and topsail to fit. Shipyard collision
-strips follow the fitted sail and sprit through the rotation sweep. The native
-gaff/square coexistence exception is extended to spritsails and square sails
-sharing the same physical mast; unrelated overlaps still count.
+Mk.C and Mk.D need room above the main sail for the topsail. The [mast support
+resolver][support] includes active descendant sections from the boat's authored
+ancestry map, provided the connecting sections are fitted. This lets the
+mainsail use a lower mast while the topsail extends onto its connected topmast.
+Without a known ancestry map, support is limited to the selected mast.
+
+The upper installation limit is the lower of the selected mast's height and
+available support height minus scaled topsail rise. The luff must fit below the
+installation point, and the fully deployed topsail must fit above it; reefing
+does not relax these limits. Shipyard collision strips follow the fitted sail
+and sprit through the rotation sweep. Spritsails can coexist with square sails
+on the same selected mast mount. For Fisherman's Staysails on the same physical
+mast, [luff compatibility](Fishermans-Staysails#placement-and-coexistence)
+allows crossing spars or cloth when the luffs neither touch nor overlap. Other
+overlaps retain their checks.
 
 Sources: [Mk.D registration][mkd], [prefab construction][prefab], [fitting
 geometry][fitting], [rig][rig], and [shipyard patches][patches].
@@ -140,12 +145,27 @@ product of apparent wind and the fitted frame's positive X direction is
 positive. Flipping the fitting reverses that side. Zero dot product receives no
 penalty.
 
-The aerodynamic frame follows the posed throat, tack, peak, and clew. Mk.C and
-Mk.D use the projected area center of the remaining cloth. Apparent wind is
-current wind minus boat velocity, refreshed before native physics applies force.
-Unavailable sheets, invalid fitting, closed sails, and shipyard operations clear
-cached force rather than allowing stale propulsion. A closed sail also returns a
-finite captured-force reading for HUD consumers.
+The wind sensor uses baked, authored positions and orientations:
+
+| Cuts          | Active authored pose                                                                            |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| Mk.A and Mk.B | `WindCenter` throughout deployment                                                              |
+| Mk.C and Mk.D | `WindCenter` above 80% deployment; `WindCenterMain` at 80% or below, when the topsail is hidden |
+
+The rig fits these poses during installation, resizing, and flipping. The sensor
+lives under the resize hierarchy and follows the sail's live hinge motion. Its
+local pose stays fixed between refits and topsail visibility changes; animated
+corners, reef gathering, billow, and flutter do not move it. The switch to the
+main-only pose is immediate at the existing 20% reefing boundary, and reverses
+when the topsail reappears.
+
+Native force uses the sensor's normal facing apparent wind. Mk.C/D still use
+remaining projected cloth area for reefing power reduction; that area no longer
+determines the sensor's center. Apparent wind is current wind minus boat
+velocity, refreshed before native physics applies force. Unavailable sheets,
+invalid fitting, closed sails, and shipyard operations clear cached force rather
+than allowing stale propulsion. A closed sail also returns a finite
+captured-force reading for HUD consumers.
 
 By default, a bottom-right notice reads **Spritsail bad tack: −10% force** when
 any sailing-ready, deployed spritsail on the player's boat is on the bad tack.
@@ -165,7 +185,7 @@ struck bundle shares the sail's color. Shipyard Expansion texture handling
 restricts the family to plain cloth, including normalization of saved patterned
 selections. Visual billow changes side with wind pressure and flutter responds
 to wind capture and shadowing; these visual offsets do not redefine the physical
-corner frame.
+rope attachment positions or authored wind sensor.
 
 Shipyard Expansion is optional. When its supported API is present, its saved
 flip toggle mirrors the fitting, cloth, and hardware and reverses the bad tack.
@@ -187,10 +207,21 @@ an occupied prefab ID and cleans up assets after construction failure.
 
 Blender sources live in `assets/loose_foot_spritsail/`; the cut catalog maps
 them to generated C# assets under each cut's source directory. For example,
-`mss assets bake loose_foot_spritsail --cut D` bakes Mk.D from
+`./mss assets bake loose_foot_spritsail --cut D` bakes Mk.D from
 `assets/loose_foot_spritsail/loose_foot_spritsail-mkD.blend`. The baker exports
-cloth, reef samples, rigid hardware, the struck bundle, and attachment data; it
-does not save the Blender file. Runtime loading uses the generated data.
+cloth, reef samples, rigid hardware, the struck bundle, attachment data, and
+wind-center poses; it does not save the Blender file. Runtime loading uses the
+generated data. See the [MSS command reference](MSS-command#asset-baking) for
+cut selection, output paths, and bake checks.
+
+Every cut requires a `WindCenter` Empty; topsail cuts also require
+`WindCenterMain` for the main-only state. The [collector][collector] reads these
+markers at frame 0 relative to the authored `Sail` rest frame and exports
+position and rotation. Markers must be unparented, unanimated, unconstrained,
+and unit scale, with finite, invertible, unreflected transforms. Author the
+sensor axes with right along the sail chord and forward up the luff; the bake
+converts them to the runtime coordinate system. Runtime fitting preserves a
+proper sensor rotation when the sail is flipped.
 
 The prefab asset owner releases meshes and materials it creates. Instances
 borrow those assets but own their dynamic cloth mesh and recolored material.
@@ -199,51 +230,56 @@ detached controllers when the rig is destroyed. This separation avoids deleting
 shared donor assets or leaving controls behind.
 
 Existing automated coverage includes baked assets, fitting, cloth and reefing,
-flutter, sailing calculations, collision integration, and optional flip wiring.
-See the [build guide](Building-and-contributing) for the check suites.
+flutter, authored wind-center fitting and topsail switching, sailing
+calculations, collision integration, and optional flip wiring. See the
+[build guide](Building-and-contributing) for the check suites.
 
 Sources: [builder][prefab], [asset ownership][assets], [cut catalog][catalog],
 [baker][baker], [geometry checks][checks], and [assembly checks][assembly].
 
 [prefab]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailPrefab.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailPrefab.cs
 [fitting]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailFittingGeometry.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailFittingGeometry.cs
 [rig]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/1b1a5904149c266b5600d771e4934887d95f1836/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRig.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRig.cs
 [rigging]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRigging.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRigging.cs
 [ropes]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRopes.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRopes.cs
 [cloth]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/1b1a5904149c266b5600d771e4934887d95f1836/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailCloth.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailCloth.cs
 [geometry]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/1b1a5904149c266b5600d771e4934887d95f1836/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailClothGeometry.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailClothGeometry.cs
 [sailing]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailSailingGeometry.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailSailingGeometry.cs
 [physics]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailPhysics.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailPhysics.cs
 [notice]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailNotice.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailNotice.cs
 [assets]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailAssets.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailAssets.cs
 [patches]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Sails/LooseFootedSpritsail/Patches/LooseFootedSpritsailSailwindPatches.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/Patches/LooseFootedSpritsailSailwindPatches.cs
 [catalog]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/1b1a5904149c266b5600d771e4934887d95f1836/tools/assets/loose_foot_spritsail_authoring.py
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/tools/assets/loose_foot_spritsail/authoring.py
 [baker]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/tools/assets/bake_loose_foot_spritsail.py
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/tools/assets/loose_foot_spritsail/bake.py
 [plugin]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Plugin.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Plugin.cs
 [flip]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Compatibility/Patches/ShipyardExpansionSpritsailFlipPatch.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Compatibility/Patches/ShipyardExpansionSpritsailFlipPatch.cs
 [textures]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Compatibility/Patches/ShipyardExpansionTexturesPatch.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Compatibility/Patches/ShipyardExpansionTexturesPatch.cs
 [names]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/src/Compatibility/Patches/SailInfoNamesPatch.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Compatibility/Patches/SailInfoNamesPatch.cs
 [checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/tests/GeometryChecks/LooseFootedSpritsail
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/tests/GeometryChecks/LooseFootedSpritsail
 [assembly]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/e00d0247302d2ad070fd1e206bc1fe0155a48722/tests/AssemblyChecks/LooseFootedSpritsail
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/tests/AssemblyChecks/LooseFootedSpritsail
 [mkd]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/1b1a5904149c266b5600d771e4934887d95f1836/src/Sails/LooseFootedSpritsail/MkD/LooseFootedSpritsailMkD.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/MkD/LooseFootedSpritsailMkD.cs
+[support]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailMastSupport.cs
+[collector]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/f453a179075fcc3cf6675f98277e0cadaadcb6e4/tools/assets/loose_foot_spritsail/collect.py

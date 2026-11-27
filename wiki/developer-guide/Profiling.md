@@ -1,9 +1,9 @@
 # Profiling
 
 MoreSailwindSails includes optional CPU and frame diagnostics for investigating
-sail performance. Captures cover all loaded boats and distinguish Flying Sail
-and Staysail measurements. CPU timings cover the mod's instrumented operations;
-Unity Cloth simulation and GPU execution are excluded.
+sail performance. Captures cover all loaded boats and distinguish Flying Sail,
+Staysail, and Spritsail measurements. CPU timings cover the mod's instrumented
+operations; Unity Cloth simulation and GPU execution are excluded.
 
 ## Configuration and capture
 
@@ -43,16 +43,21 @@ and are ignored; recognized names still apply.
 
 | Target         | Measured work                                                                        |
 | -------------- | ------------------------------------------------------------------------------------ |
-| `Rig`          | The sail rig's `LateUpdate` work, including nested measured operations.              |
+| `Rig`          | Rig updates, including spritsail sailing preparation and nested measured operations. |
 | `Frame`        | Refreshing the sail's spatial frame and supporting rig transforms.                   |
-| `Shape`        | Updating the sail's shape and billow.                                                |
-| `Aerodynamics` | Refreshing the sail's aerodynamic frame and wind-center transform.                   |
+| `Shape`        | Updating authored or procedural sail poses, billow, and flutter.                     |
+| `Aerodynamics` | Flying Sail aerodynamic-frame and wind-center updates.                               |
 | `Ropes`        | Instrumented custom rope updates, including Flying Sail support lines and luff ties. |
 
 Use `ProfileTargets = All` to select every CPU category. An empty value
 (`ProfileTargets =`) records overall frame statistics and GC interval summaries
 without CPU category timings. Overall frame statistics are collected during
 every capture; the `Frame` category specifically measures spatial-frame work.
+
+The current staysail and spritsail rigs use authored wind centers and do not
+emit separate `Aerodynamics` timings. Spritsail fitting is included in `Rig`; it
+has no separate `Frame` scope. A category with no calls for a family is not
+reported.
 
 ## Reading reports
 
@@ -84,15 +89,16 @@ crossing reporting or capture boundaries are excluded and counted in
 
 ## Source
 
-This reference describes plugin version **0.3.0** at revision
-[`3a2062d`](https://github.com/sum-rock/MoreSailwindSails/tree/3a2062d3436d8067c923d5fe00b1c025c8b477f5).
+This reference describes plugin version **0.4.1** at revision
+[`fbc225d`](https://github.com/sum-rock/MoreSailwindSails/tree/fbc225db947d12a6658ac4016c1b4708c1395448).
 
-- [Configuration and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Utils/Profiling/PerformanceProfile.cs)
-- [Category selection](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Utils/Profiling/ProfileSelection.cs)
-- [Capture windows and transitions](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Utils/Profiling/ProfileSession.cs)
-- [CPU and allocation collection](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Utils/Profiling/ProfileCollector.cs)
-- [Report fields](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Utils/Profiling/ProfileReport.cs)
-- [GC interval sampling](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Utils/Profiling/ProfileIntervals.cs)
-- [Flying Sail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs)
+- [Configuration and shortcuts](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/PerformanceProfile.cs)
+- [Category selection](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileSelection.cs)
+- [Capture windows and transitions](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileSession.cs)
+- [CPU and allocation collection](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileCollector.cs)
+- [Report fields](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileReport.cs)
+- [GC interval sampling](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Utils/Profiling/ProfileIntervals.cs)
+- [Flying Sail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs)
   and
-  [Staysail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/3a2062d3436d8067c923d5fe00b1c025c8b477f5/src/Sails/FishermansStaysail/FishermansStaysailRig.cs)
+  [Staysail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansStaysail/FishermansStaysailRig.cs)
+- [Spritsail measurement scopes](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRig.cs)

@@ -2,7 +2,7 @@
 
 This guide is for boat authors contributing support to MoreSailwindSails and
 maintainers adding another boat later. It follows plugin **0.4.1** at revision
-`2254dfe`. The linked source is the authority; check the current implementation
+`fbc225d`. The linked source is the authority; check the current implementation
 when applying the examples to a later version.
 
 Boat support is authored in this repository. There is currently no public
@@ -27,7 +27,8 @@ positions are optional fallbacks for when usable native positions are occupied.
 A boat can use its existing control positions without a `BoatControlCatalog`
 entry. Spritsails use native fitting restrictions; their ability to span a lower
 mast and its topmast comes from the shared ancestry map, without a separate
-spritsail boat catalog.
+spritsail boat catalog. Sh’ba is an example of an ancestry-only entry: it has no
+Fisherman’s Stay or fallback-control definition.
 
 ## 1. Inventory the boat's installed rigging
 
@@ -124,7 +125,7 @@ new FishermansStayVariantDefinition(
     extendedGuide: false,
     guideIndex: 0,
     required: new[] { 3, 5 },
-    forbidden: new[] { 55, 56 }
+    forbidden: new int[0]
 )
 ```
 
@@ -142,7 +143,8 @@ resolution][references]:
   usable.
 - `fore` and `aft` are distinct physical mast sections with
   `onlyStaysails = false` and `CapsuleCollider`s. The luff follows the forward
-  section; this is not a general deck-to-mast staysail mount.
+  section and can extend down its usable connected parent sections; this is not
+  a general deck-to-mast staysail mount.
 - `forePoint` and `aftPoint` are local to their respective mast transforms.
   Convert a boat-local measurement through `boat.transform.TransformPoint(...)`,
   then through the target mast's `InverseTransformPoint(...)`. Do not treat
@@ -155,9 +157,9 @@ resolution][references]:
   `mastReefAttExtension` when `extendedGuide` is true. The guide must exist and
   be fitted. The aft mast must also supply a usable reef winch template.
 - `required` includes both endpoint sections **and their supporting lower
-  sections**. `forbidden` excludes conflicting mast or stay options. For
-  ordinary native-guide-height variants, existing checks require excluding
-  continuations above the selected aft section.
+  sections**. `forbidden` excludes genuinely conflicting mast or stay options. A
+  fitted continuation above either endpoint does not by itself require an
+  exclusion; lower stays can remain available with topmasts fitted.
 
 For special geometry, `alignGuideHeightToAftAnchor` moves the effective halyard
 guide to the aft anchor's axial height while retaining its radial offset. Follow
@@ -260,40 +262,40 @@ addition pass. If occupied slots require nonconsecutive IDs, add an explicit
 expected mapping that still protects saved identities.
 
 [boat-catalog]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/BoatConfiguration/BoatCatalog.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/BoatConfiguration/BoatCatalog.cs
 [stay-catalog]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/FishermansStayCatalog.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Configuration/FishermansStayCatalog.cs
 [control-catalog]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Controls/Configuration/BoatControlCatalog.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/BoatControlCatalog.cs
 [references]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/FishermansStayReferences.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/FishermansStayReferences.cs
 [brig]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/BoatConfiguration/Boats/Brig.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/BoatConfiguration/Boats/Brig.cs
 [boat-definition]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/BoatConfiguration/BoatDefinition.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/BoatConfiguration/BoatDefinition.cs
 [spritsail-support]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailMastSupport.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailMastSupport.cs
 [cog-stays]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/Boats/CogStays.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Configuration/Boats/CogStays.cs
 [variant]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/FishermansStayVariantDefinition.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Configuration/FishermansStayVariantDefinition.cs
 [caelanor-stays]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/Boats/CaelanorStays.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Configuration/Boats/CaelanorStays.cs
 [cog-controls]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Controls/Configuration/Boats/CogControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/Boats/CogControls.cs
 [shroud-controls]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Controls/Configuration/Boats/ShroudControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/Boats/ShroudControls.cs
 [stay-patches]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Patches/StaySailwindPatches.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Patches/StaySailwindPatches.cs
 [registry]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/FishermansStayRegistry.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/FishermansStayRegistry.cs
 [measurements]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/FishermansStay/StayMeasurements.txt
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/FishermansStay/StayMeasurements.txt
 [stay-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/FishermansStay/StayChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/FishermansStay/StayChecks.cs
 [profile-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/FishermansStay/ProfileChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/FishermansStay/ProfileChecks.cs
 [seat-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/Controls/NativeSeatProfileChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/Controls/NativeSeatProfileChecks.cs
 [halyard-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/Controls/HalyardProfileChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/Controls/HalyardProfileChecks.cs

@@ -4,6 +4,9 @@ Mk.A, Mk.B, and Mk.C share one rig and differ in their authored sail cut. They
 fit the custom Fisherman's Stay mounts in the **Staysails** category. The stay
 provides the attachment points and owns the sheet and halyard controls.
 
+This reference follows revision `3639f89` (plugin metadata **0.4.1**). The
+linked code is the source of truth.
+
 ## Prefab IDs and fitting
 
 | Sail         | Prefab sail ID | Luff length | Foot direction toward the aft mast |
@@ -30,68 +33,60 @@ saved sizes use the native restoration path.
 
 ## Shape and movement
 
-The shared [mesh fitter][fitting] scales the baked cut and adjusts its head to
-the stay slope. The template uses a 20° head; first binding fits an installed or
-preview instance to its actual stay before enabling Cloth. The fitting range is
-0–80°, with positive luff and leech lengths required.
+The shared [mesh fitter][fitting] scales each baked cut and adjusts its head to
+the stay slope. The source uses a 20° head; fitted slopes range from 0–80°, with
+positive luff and leech lengths required. The luff follows the forward mast's
+axis, including on raked masts.
 
-The luff follows the forward mast. The upper aft corner is held leeward at **14°
-× deployment**, independently of the lower sheets. Apparent wind selects the
-tack using a ±0.6 m/s deadband, and side changes are smoothed. The lower aft
-corner responds to sheeting; coupled foot/leech fitting keeps it within the
-available edge lengths. As the sail reefs, that corner gathers back toward the
-head angle.
+[Authored animation][animation] supplies the sail's sheeting and reefing shapes.
+The rig interpolates baked sheet poses and reef sequences for tight and eased
+sheets, then adapts the surface to the fitted width and head slope. Sheet ease
+comes from the current hinge angle relative to its permitted travel. Apparent
+wind selects the tack with a deadband and a smoothed transition between sides.
 
-The rest shape has a rounded spanwise belly with a head peak of **12% of W**,
-tapering toward the foot. A **24 × 32** panel grid is skinned across six
-spanwise shaping intervals. The whole luff and the two aft corners are pinned to
-their skin targets; the remaining Cloth vertices have bounded travel around the
-shaped surface. Tacking moves bones while retaining the initialized mesh, UVs,
-and bind poses.
+The runtime updates the visible mesh directly. Unity Cloth and WindCloth remain
+disabled; the replacement Cloth component exists for native references. Visual
+flutter is layered over the authored surface without moving the corner rope
+attachments or wind center. A separate sample mesh and collider support native
+wind shielding.
 
-Fitting reserves **15 cm** below the stay head and ahead of the aft mast, checks
-spar/span limits, and uses separate collision strips for the shipyard. A
-targeted collision exemption permits contact with a square sail on the same
-forward physical mast, including its topmast sections. Other sail contacts and
-solid obstructions retain their checks.
+### Placement and coexistence
+
+[Fitting][installation] reserves 15 cm below the stay head and ahead of the aft
+mast. A luff attached at a topmast can extend down the connected, fitted lower
+mast sections recorded in the boat's ancestry map. The support calculation stops
+at missing or unusable parents and does not count overlapping sections twice.
+The sail must still fit the supported mast length and the span between masts.
+
+Square sails can coexist on the forward physical mast, including its other
+sections. For gaffs and spritsails on that same physical mast, [luff
+compatibility][luff] permits crossing spars or cloth only when the two luffs
+neither touch nor overlap. Other collisions retain their normal checks. The
+[stay configuration](Fishermans-Stay#fitting-conditions) determines which mast
+pairs are available; a variant label alone does not identify its actual
+attachment sections.
 
 ## Physics and reefing
 
-The [aerodynamic frame][aerodynamics] comes from the four posed corners. It sets
-the native wind sensor's center to the area-weighted centroid of two triangles
-and aligns the sensor with the luff, sail chord, and sail normal. Before native
-wind-force calculation, the rig refreshes this frame. A scoped patch supplies
-the sail normal facing with the apparent wind as the force direction; Sailwind
-continues to calculate the force magnitude. Cloth ripples are visual simulation
-around the shaped surface, while propulsion uses this corner-derived frame.
+Each cut exports an authored `WindCenter` position and orientation. Fitting
+scales and adjusts the marker position to the stay slope while retaining its
+authored axes. The sensor sits beneath the sail's resize hierarchy, so resizing
+and live hinge rotation carry it with the sail. Its local pose stays fixed
+through sheeting animation, reefing, tacking, and flutter; it is not recomputed
+from animated corners. The [force-direction patch][patches] faces the sensor's
+normal toward apparent wind while native Sailwind calculates force magnitude.
 
-| Setting                                    | Value in this rig                         |
-| ------------------------------------------ | ----------------------------------------- |
-| Maximum trim travel                        | ±40°, retaining tighter controller limits |
-| Sail Rigidbody mass / angular drag         | `0.1` / `1`                               |
-| Cloth bending / stretching stiffness       | `0.4` / `0.99`                            |
-| Cloth solver frequency                     | `120`                                     |
-| Cloth world velocity / acceleration scales | Both `0`                                  |
-| WindCloth damping range                    | `0.25–0.8`                                |
-
-Cloth keeps the donor's friction, gravity setting, and serialized wind response.
-A separate nine-point center-plane mesh and collider support native wind
-shielding. The shadow-sample mesh is separate from the visible cloth mesh.
-
-Reefing gathers the panel **upward toward its head**. The rig samples the native
-brig-jib reef animation in an inactive hierarchy stripped of duplicate scripts,
-renderers, Cloth, and colliders. Its rope motion provides the lift amount:
-
-| `currentUnroll`        | Visible representation                         |
-| ---------------------- | ---------------------------------------------- |
-| Below `0.04`           | Native furled bundle fitted along the head     |
-| `0.04` to below `0.98` | Skinned panel posed by the sampled reef motion |
-| `0.98` and above       | Deployed Cloth                                 |
+Reefing gathers the authored panel upward toward its head. Every positive
+`currentUnroll` uses the animated panel, including partial reefing. At zero
+deployment, the [native furled bundle][reefing] is drawn along the physical stay
+over the fitted sail span. The donor's reef animation is not sampled or played
+at runtime.
 
 The
 [stay's allocated halyard](How-winches-are-placed#how-staysail-sheets-and-halyards-are-found)
-drives reefing. Native rope rendering is retained, with rope attachments on
-separate leaf transforms so rope rotation does not rotate the shaping bones.
+drives reefing. Native rope rendering is retained, with attachments following
+the authored corners on separate leaf transforms. When fully furled, the sheet
+and halyard attachments meet the aft end of the bundle.
 
 The stay's [control adapter](Controls#consumer-contract-and-ownership) submits
 the fitted sail's existing rope controllers to the shared allocator. The
@@ -99,18 +94,26 @@ the fitted sail's existing rope controllers to the shared allocator. The
 [sheet fallbacks](How-winches-are-placed#fitted-span-and-fallback-eligibility)
 remain aft of the fitted span. Resizing can invalidate a placement; live trim,
 reefing, and billow do not change the span. While fitted geometry is
-unavailable, authored sheet fallbacks are deferred. These control descriptions
-follow revision `fcdf300` (plugin metadata **0.3.0**).
+unavailable, authored sheet fallbacks are deferred.
 
 ## Assets and ownership
 
 Editable cuts live in `assets/staysails/fishermans_staysail_mka.blend`,
-`fishermans_staysail_mkb.blend`, and `fishermans_staysail_mkc.blend`. The
-[authoring definitions][authoring] use a nominal width of 13.8 units, a 20°
-head, and the cut dimensions above. Blender X points aft, Z points up, and the
-flat panel lies at Y = 0. The baker validates the grid, outline, transforms, and
-planar UVs, then writes each mark's `*BakedMesh.g.cs` arrays. Runtime fitting
-adds the belly and reprojects UVs with a 5% margin.
+`fishermans_staysail_mkb.blend`, and `fishermans_staysail_mkc.blend`. The [cut
+catalog][authoring] maps these files to their generated C# paths and lists the
+animation sample frames. Blender X points aft and Z points up; the base panel
+lies at Y = 0. Edit the existing Blender assets to change their shapes.
+
+The [collector][collector] validates the 24 × 32 quad grid, applied object
+transforms, and seam-free `ClothUV` layer. Animation samples must retain the
+same topology. It evaluates the authored simulation sequentially to export sheet
+poses and both reef sequences into each mark's `*BakedMesh.g.cs` arrays. Runtime
+fitting reprojects the flat cut's UVs with a 5% margin.
+
+Each asset must also contain a `WindCenter` Empty with a finite transform and
+unit scale, without a parent, animation, or constraints. Its position and
+orientation are exported with the mesh and animation data. This marker is the
+authoring control for the native wind sensor.
 
 From the repository root, bake one edited cut and check its generated data with:
 
@@ -123,22 +126,20 @@ Use `B` or `C` for the other cuts. Commit the edited Blender asset and its
 generated C# together. The plugin consumes those arrays; it does not load the
 Blender files or require a separate sail asset bundle at runtime.
 
-The [prefab builder][prefab] works beneath an inactive container and creates
-fresh Cloth for the new topology. That container owns the template cloth and
-shadow meshes. Each fitted instance then owns its slope-specific cloth and
-shadow mesh copies and destroys them when removed. Live tacking and reefing do
-not replace topology or rewrite bind poses.
+The [prefab builder][prefab] owns its template meshes beneath an inactive
+container. Each fitted instance owns its fitted cloth and shadow mesh copies and
+destroys them when removed. Animation updates vertices without replacing
+topology or rewriting bind poses.
 
-Native recoloring provides a private material. The cloth, reefed panel, furled
-bundle, and hidden color reference use the same current recolored material. New
-sails use palette **11** and a plain white texture; optional Shipyard Expansion
-texture handling keeps these sails on its blank-white selection. Borrowed donor
-animation, bundle mesh, and shared game assets remain intact.
+Native recoloring supplies the current material for the animated panel and
+furled bundle. New sails use palette **11** and a plain white texture; optional
+Shipyard Expansion texture handling keeps these sails on its blank-white
+selection. Borrowed game assets remain intact.
 
 ## Implementation reference
 
-- [Shared rig: Cloth setup, fitted mesh ownership, shaping, and rendering][rig]
-- [Fixed-head tack selection][fixed-head] and [reef animation sampling][reefing]
+- [Shared rig: fitting, wind sensor, animation, and rendering][rig]
+- [Tack selection][fixed-head] and [visual flutter][flutter]
 - [Native integration: fitting, force direction, scaling, and
   registration][patches]
 - [Plain cloth and recoloring][appearance]
@@ -146,26 +147,34 @@ animation, bundle mesh, and shared game assets remain intact.
   family
 
 [mk-a]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/MkA/FishermansStaysailMkA.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/MkA/FishermansStaysailMkA.cs
 [mk-b]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/MkB/FishermansStaysailMkB.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/MkB/FishermansStaysailMkB.cs
 [mk-c]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/MkC/FishermansStaysailMkC.cs
-[fitting]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailMeshFitting.cs
-[aerodynamics]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailAerodynamics.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/MkC/FishermansStaysailMkC.cs
 [authoring]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/assets/staysail_authoring.py
-[prefab]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailPrefab.cs
-[rig]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansStaysail/FishermansStaysailRig.cs
-[fixed-head]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailFixedHead.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/tools/assets/staysail/authoring.py
+[collector]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/tools/assets/staysail/collect.py
+[fitting]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailMeshFitting.cs
+[animation]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailAnimation.cs
+[installation]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailInstallationGeometry.cs
+[luff]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailLuffCompatibility.cs
 [reefing]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailReefing.cs
-[patches]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/Patches/StaysailSailwindPatches.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailReefing.cs
+[prefab]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailPrefab.cs
+[rig]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailRig.cs
+[fixed-head]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailFixedHead.cs
+[flutter]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailFlutter.cs
 [appearance]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansStaysail/FishermansStaysailAppearance.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/FishermansStaysailAppearance.cs
+[patches]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Sails/FishermansStaysail/Patches/StaysailSailwindPatches.cs

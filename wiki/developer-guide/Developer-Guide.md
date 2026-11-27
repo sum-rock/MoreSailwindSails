@@ -12,5 +12,5 @@ Tools and workflows for developing MoreSailwindSails.
 - [Winch placement diagnostics](Winch-placement-diagnostics) covers mounting
   overlays, model previews, forced sheet fallbacks, and surface measurements.
 - [mss command](MSS-command) documents the repository CLI, including asset
-  generation and baking, boat inspection, fallback halyard generation, local
-  installation, releases, decompilation, and log following.
+  baking, boat inspection, fallback halyard generation, local installation,
+  releases, decompilation, and log following.
