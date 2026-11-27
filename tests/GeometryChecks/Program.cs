@@ -18,6 +18,7 @@ internal static class Program
         StayChecks.Run();
         AuthoredMeshChecks.Run();
         Utils.ProfilingChecks.Run();
+        Utils.BenchmarkChecks.Run();
         Utils.WinchCaptureChecks.Run();
         Utils.WinchMountOverlayChecks.Run();
         Controls.NativeSeatProfileChecks.Run();

@@ -42,6 +42,11 @@ internal static class Program
             Path.Combine(AppContext.BaseDirectory, "MoreSailwindSails.dll")
         );
 
+        Utils.BenchmarkIntegrationChecks.Run(
+            assembly: Assembly.LoadFrom(
+                Path.Combine(AppContext.BaseDirectory, "SailwindBenchmark.dll")
+            )
+        );
         Compatibility.SpritsailFlipChecks.Run(assembly: assembly);
         FlutterAudioChecks.Run(assembly: assembly);
         PluginMetadataChecks.Run(assembly: assembly);

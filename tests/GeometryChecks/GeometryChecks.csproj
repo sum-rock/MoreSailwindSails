@@ -6,6 +6,7 @@
       >$(HOME)/.local/share/Steam/steamapps/common/Sailwind</SailwindDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../benchmark/Core/*.cs" Link="Benchmark/%(Filename)%(Extension)" />
     <Compile
       Include="../../src/Sails/Audio/SailFlutterAudioResponse.cs"
       Link="Audio/SailFlutterAudioResponse.cs"
