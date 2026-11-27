@@ -1,5 +1,6 @@
 """Validate benchmark artifacts and compare repeated whole-game frame captures."""
 
+from collections import Counter
 import csv
 import json
 import math
@@ -99,7 +100,7 @@ def load_capture(path: Path) -> tuple[dict, dict[str, float]]:
         raise ValueError(f"{path}: invalid plugin inventory")
     if metadata["measurement"] != "late-update-monotonic-frame-intervals":
         raise ValueError(f"{path}: unsupported measurement")
-    for key in ("durationSeconds", "elapsedSeconds", "timeScale", "fixedDeltaTime"):
+    for key in ("durationSeconds", "elapsedSeconds", "fixedDeltaTime"):
         value = metadata[key]
         if (
             not isinstance(value, (int, float))
@@ -123,6 +124,14 @@ def load_capture(path: Path) -> tuple[dict, dict[str, float]]:
     for key in ("fullscreen", "shipyard"):
         if type(metadata[key]) is not bool:
             raise ValueError(f"{path}: invalid boolean {key}")
+    time_scale = metadata["timeScale"]
+    if (
+        type(time_scale) not in (int, float)
+        or not math.isfinite(time_scale)
+        or time_scale < 0
+    ):
+        raise ValueError(f"{path}: invalid timeScale")
+    validate_events(metadata=metadata, path=path)
     warmup = metadata["warmupSeconds"]
     if type(warmup) not in (int, float) or not math.isfinite(warmup) or warmup < 0:
         raise ValueError(f"{path}: invalid warmupSeconds")
@@ -156,6 +165,52 @@ def load_capture(path: Path) -> tuple[dict, dict[str, float]]:
     if gc != [metadata[f"gc{i}"] for i in range(3)]:
         raise ValueError(f"{path}: GC totals mismatch")
     return metadata, summarize(seconds)
+
+
+def validate_events(*, metadata: dict, path: Path) -> None:
+    """Events annotate samples; old recorders have no event information."""
+    if "events" not in metadata:
+        return
+    events = metadata["events"]
+    dropped = metadata.get("droppedEvents", 0)
+    if not isinstance(events, list) or type(dropped) is not int or dropped < 0:
+        raise ValueError(f"{path}: invalid event data")
+    previous = 0.0
+    for event in events:
+        if not isinstance(event, dict):
+            raise ValueError(f"{path}: invalid event")
+        seconds, value = event.get("seconds"), event.get("value")
+        if (
+            type(seconds) not in (int, float)
+            or not math.isfinite(seconds)
+            or seconds < previous
+            or type(value) not in (int, float)
+            or not math.isfinite(value)
+            or event.get("phase") not in ("warmup", "measured")
+            or not isinstance(event.get("kind"), str)
+            or not event["kind"]
+        ):
+            raise ValueError(f"{path}: invalid event")
+        previous = seconds
+
+
+def event_summary(metadata: dict) -> str:
+    if "events" not in metadata:
+        return "events: unavailable (legacy capture)"
+    events = metadata["events"]
+    measured = Counter(
+        event["kind"] for event in events if event["phase"] == "measured"
+    )
+    warmup_count = sum(event["phase"] == "warmup" for event in events)
+    kinds = (
+        ", ".join(f"{kind}={count}" for kind, count in sorted(measured.items()))
+        or "none"
+    )
+    return (
+        f"events: warmup={warmup_count} measured={sum(measured.values())} "
+        f"dropped={metadata.get('droppedEvents', 0)}; measured event counts: {kinds}. "
+        "All frame intervals retained; event times and values are in JSON."
+    )
 
 
 def environment(metadata: dict) -> dict:
@@ -250,6 +305,7 @@ def compare(baseline: Path, candidate: Path) -> None:
                 "    "
                 + " ".join(f"{key}={value:.3f}" for key, value in summary.items())
             )
+            click.echo("    " + event_summary(metadata))
             if metadata.get("notes"):
                 click.echo(f"    notes: {metadata['notes']}")
     click.echo("\nAcross runs: median [min, max]; runs are not pooled.")

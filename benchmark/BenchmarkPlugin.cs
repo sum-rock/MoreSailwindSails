@@ -15,7 +15,7 @@ namespace SailwindBenchmark
     [DefaultExecutionOrder(32000)]
     public sealed class BenchmarkPlugin : BaseUnityPlugin
     {
-        public const string Version = "0.1.0";
+        public const string Version = "0.1.1";
         private ConfigEntry<KeyboardShortcut> shortcut;
         private ConfigEntry<string> scenario,
             variant,
@@ -24,10 +24,8 @@ namespace SailwindBenchmark
             duration;
         private BenchmarkCapture capture;
         private BenchmarkMetadata metadata;
-        private bool configChanged;
-        private int sceneHandle;
-        private bool shipyard;
-        private Transform boat;
+        private KeyboardShortcut captureShortcut;
+        private bool applicationPaused;
 
         private static double Now => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
 
@@ -71,7 +69,7 @@ namespace SailwindBenchmark
                 key: "DurationSeconds",
                 defaultValue: 60.0,
                 configDescription: new ConfigDescription(
-                    "Measured duration; includes the last complete frame interval.",
+                    "Wall-clock measurement duration, including pauses, background time and loading. Includes the last complete frame interval.",
                     new AcceptableValueRange<double>(1, 600)
                 )
             );
@@ -85,41 +83,48 @@ namespace SailwindBenchmark
         }
 
         private void SettingsChanged(object sender, SettingChangedEventArgs args) =>
-            configChanged = true;
+            capture?.Observe(
+                now: Now,
+                kind: BenchmarkEventKind.ConfigurationChanged,
+                value: 1,
+                occurrence: true
+            );
 
-        private void SceneChanged(Scene previous, Scene next) => Cancel(reason: "scene-changed");
+        private void SceneChanged(Scene previous, Scene next) =>
+            capture?.Observe(
+                now: Now,
+                kind: BenchmarkEventKind.ActiveScene,
+                value: next.buildIndex
+            );
 
-        private void SceneLoaded(Scene scene, LoadSceneMode mode) => Cancel(reason: "scene-loaded");
+        private void SceneLoaded(Scene scene, LoadSceneMode mode) =>
+            capture?.Observe(
+                now: Now,
+                kind: BenchmarkEventKind.SceneLoaded,
+                value: scene.buildIndex,
+                occurrence: true
+            );
 
-        private void SceneUnloaded(Scene scene) => Cancel(reason: "scene-unloaded");
-
-        private static bool Ready =>
-            Application.isFocused
-            && GameState.playing
-            && !GameState.currentlyLoading
-            && !GameState.loadingBoatLocalItems
-            && GameState.loadingScenes == 0
-            && !GameState.recovering
-            && !GameState.sleeping
-            && (!GameState.inCursorMenu || GameState.currentShipyard)
-            && Time.timeScale > 0;
+        private void SceneUnloaded(Scene scene) =>
+            capture?.Observe(
+                now: Now,
+                kind: BenchmarkEventKind.SceneUnloaded,
+                value: scene.buildIndex,
+                occurrence: true
+            );
 
         private void LateUpdate()
         {
             if (capture != null && capture.Active)
             {
-                if (configChanged)
-                    Cancel(reason: "configuration-changed");
-                else if (!Ready)
-                    Cancel(reason: "focus-pause-or-loading");
-                else if (!EnvironmentMatches())
-                    Cancel(reason: "environment-changed");
-                else if (shortcut.Value.IsDown())
+                if (captureShortcut.IsDown())
                     Cancel(reason: "user-cancelled");
                 else
                 {
+                    double now = Now;
+                    ObserveState(now: now);
                     capture.Tick(
-                        now: Now,
+                        now: now,
                         frame: Time.frameCount,
                         collections0: GC.CollectionCount(generation: 0),
                         collections1: GC.CollectionCount(generation: 1),
@@ -130,12 +135,11 @@ namespace SailwindBenchmark
                 }
                 return;
             }
-            configChanged = false;
             if (shortcut.Value.IsDown())
             {
                 try
                 {
-                    // Read labels/settings only before warm-up, never during measurement.
+                    // Configuration is frozen for this capture, including its stop shortcut.
                     Config.Reload();
                     StartCapture();
                 }
@@ -146,23 +150,93 @@ namespace SailwindBenchmark
             }
         }
 
-        private bool EnvironmentMatches() =>
-            Screen.width == metadata.width
-            && Screen.height == metadata.height
-            && Screen.fullScreen == metadata.fullscreen
-            && QualitySettings.GetQualityLevel() == metadata.quality
-            && QualitySettings.vSyncCount == metadata.vSyncCount
-            && Application.targetFrameRate == metadata.targetFrameRate
-            && Time.timeScale == metadata.timeScale
-            && Time.fixedDeltaTime == metadata.fixedDeltaTime
-            && SceneManager.GetActiveScene().handle == sceneHandle
-            && (bool)GameState.currentShipyard == shipyard
-            && GameState.currentBoat == boat;
+        private void ObserveState(double now)
+        {
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.Focused,
+                value: Application.isFocused ? 1 : 0
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.ApplicationPaused,
+                value: applicationPaused ? 1 : 0
+            );
+            Observe(now: now, kind: BenchmarkEventKind.Playing, value: GameState.playing ? 1 : 0);
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.CurrentlyLoading,
+                value: GameState.currentlyLoading ? 1 : 0
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.LoadingBoatLocalItems,
+                value: GameState.loadingBoatLocalItems ? 1 : 0
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.LoadingScenes,
+                value: GameState.loadingScenes
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.Recovering,
+                value: GameState.recovering ? 1 : 0
+            );
+            Observe(now: now, kind: BenchmarkEventKind.Sleeping, value: GameState.sleeping ? 1 : 0);
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.CursorMenu,
+                value: GameState.inCursorMenu ? 1 : 0
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.Shipyard,
+                value: GameState.currentShipyard ? 1 : 0
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.BoatInstance,
+                value: GameState.currentBoat ? GameState.currentBoat.GetInstanceID() : 0
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.ActiveScene,
+                value: SceneManager.GetActiveScene().buildIndex
+            );
+            Observe(now: now, kind: BenchmarkEventKind.Width, value: Screen.width);
+            Observe(now: now, kind: BenchmarkEventKind.Height, value: Screen.height);
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.Fullscreen,
+                value: Screen.fullScreen ? 1 : 0
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.Quality,
+                value: QualitySettings.GetQualityLevel()
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.VSyncCount,
+                value: QualitySettings.vSyncCount
+            );
+            Observe(
+                now: now,
+                kind: BenchmarkEventKind.TargetFrameRate,
+                value: Application.targetFrameRate
+            );
+            Observe(now: now, kind: BenchmarkEventKind.TimeScale, value: Time.timeScale);
+            Observe(now: now, kind: BenchmarkEventKind.FixedDeltaTime, value: Time.fixedDeltaTime);
+        }
+
+        private void Observe(double now, BenchmarkEventKind kind, double value) =>
+            capture.Observe(now: now, kind: kind, value: value);
 
         private void StartCapture()
         {
             if (
-                !Ready
+                !GameState.playing
                 || string.IsNullOrWhiteSpace(scenario.Value)
                 || string.IsNullOrWhiteSpace(variant.Value)
                 || double.IsNaN(warmup.Value)
@@ -172,15 +246,13 @@ namespace SailwindBenchmark
             )
             {
                 Logger.LogWarning(
-                    "Capture requires focused, unpaused gameplay and nonempty Scenario/Variant labels with valid durations."
+                    "Capture requires a running game and nonempty Scenario/Variant labels with valid durations."
                 );
                 return;
             }
             capture = new BenchmarkCapture();
             var scene = SceneManager.GetActiveScene();
-            sceneHandle = scene.handle;
-            shipyard = GameState.currentShipyard;
-            boat = GameState.currentBoat;
+            captureShortcut = shortcut.Value;
             var plugins = Chainloader
                 .PluginInfos.Values.Select(info => info.Metadata.GUID + "@" + info.Metadata.Version)
                 .OrderBy(value => value, StringComparer.Ordinal)
@@ -213,7 +285,7 @@ namespace SailwindBenchmark
                 vSyncCount = QualitySettings.vSyncCount,
                 targetFrameRate = Application.targetFrameRate,
                 scene = scene.name,
-                shipyard = shipyard,
+                shipyard = GameState.currentShipyard,
                 timeScale = Time.timeScale,
                 fixedDeltaTime = Time.fixedDeltaTime,
                 warmupSeconds = warmup.Value,
@@ -224,8 +296,13 @@ namespace SailwindBenchmark
                     + metadata.captureId
                     + " warming up; no further output until capture stops."
             );
-            configChanged = false;
-            capture.Start(now: Now, warmupSeconds: warmup.Value, durationSeconds: duration.Value);
+            double now = Now;
+            capture.Start(
+                now: now,
+                warmupSeconds: metadata.warmupSeconds,
+                durationSeconds: metadata.durationSeconds
+            );
+            ObserveState(now: now);
         }
 
         private void Cancel(string reason)
@@ -269,14 +346,17 @@ namespace SailwindBenchmark
 
         private void OnApplicationFocus(bool focused)
         {
-            if (!focused)
-                Cancel(reason: "focus-lost");
+            capture?.Observe(now: Now, kind: BenchmarkEventKind.Focused, value: focused ? 1 : 0);
         }
 
         private void OnApplicationPause(bool paused)
         {
-            if (paused)
-                Cancel(reason: "paused");
+            applicationPaused = paused;
+            capture?.Observe(
+                now: Now,
+                kind: BenchmarkEventKind.ApplicationPaused,
+                value: paused ? 1 : 0
+            );
         }
 
         private void OnDisable() => Cancel(reason: "recorder-disabled");

@@ -10,8 +10,10 @@ internal static class BenchmarkChecks
 {
     internal static void Run()
     {
+        Events();
         var capture = new BenchmarkCapture(capacity: 8);
         capture.Start(now: 0, warmupSeconds: 2, durationSeconds: 1);
+        capture.Observe(now: 0, kind: BenchmarkEventKind.Focused, value: 1);
         Tick(capture, 1, 0);
         Tick(capture, 2, 1);
         Check(
@@ -34,11 +36,11 @@ internal static class BenchmarkChecks
         capture.Start(now: 0, warmupSeconds: 0, durationSeconds: 10);
         Tick(capture, 0, 0);
         Tick(capture, 1, 1);
-        capture.Cancel(reason: "focus-lost");
+        capture.Cancel(reason: "user-cancelled");
         Check(
             capture.Count == 1
                 && capture.State == CaptureState.Cancelled
-                && capture.Reason == "focus-lost",
+                && capture.Reason == "user-cancelled",
             "Cancel preserves partial data"
         );
         capture.Start(now: 10, warmupSeconds: 0, durationSeconds: 1);
@@ -79,6 +81,89 @@ internal static class BenchmarkChecks
         Check(allocated == 0, "Warmed capture allocates zero bytes");
         Console.WriteLine(
             "PASS: independent benchmark boundaries, cancellation, GC counters, buffer limits, exports and allocation-free sampling."
+        );
+    }
+
+    private static void Events()
+    {
+        var capture = new BenchmarkCapture(capacity: 10, eventCapacity: 64);
+        capture.Start(now: 100, warmupSeconds: 1, durationSeconds: 60);
+        capture.Observe(now: 100, kind: BenchmarkEventKind.Focused, value: 1);
+        capture.Observe(now: 100.5, kind: BenchmarkEventKind.Focused, value: 1);
+        Check(capture.Events.Count == 1, "Unchanged state does not repeat");
+        Tick(capture: capture, now: 101, frame: 0);
+        foreach (
+            var kind in new[]
+            {
+                BenchmarkEventKind.LoadingBoatLocalItems,
+                BenchmarkEventKind.LoadingScenes,
+                BenchmarkEventKind.CurrentlyLoading,
+                BenchmarkEventKind.ApplicationPaused,
+                BenchmarkEventKind.CursorMenu,
+                BenchmarkEventKind.Sleeping,
+                BenchmarkEventKind.Recovering,
+                BenchmarkEventKind.ActiveScene,
+                BenchmarkEventKind.BoatInstance,
+                BenchmarkEventKind.Quality,
+                BenchmarkEventKind.ConfigurationChanged,
+            }
+        )
+        {
+            capture.Observe(now: 102, kind: kind, value: 1);
+            capture.Observe(now: 103, kind: kind, value: 0);
+        }
+        capture.Observe(now: 103, kind: BenchmarkEventKind.Focused, value: 0);
+        Tick(capture: capture, now: 103, frame: 1);
+        Check(capture.Active && capture.Count == 1, "Gameplay transitions never interrupt capture");
+        capture.Observe(now: 180, kind: BenchmarkEventKind.Focused, value: 1);
+        Tick(capture: capture, now: 180, frame: 2);
+        Check(
+            capture.State == CaptureState.Complete
+                && capture.Elapsed == 79
+                && capture.Samples[1].seconds == 77,
+            "Suspended callbacks retain entire pause gap and finish on resumption"
+        );
+        Check(
+            capture.Events.Entries[0].Seconds == 0
+                && !capture.Events.Entries[0].Measuring
+                && capture.Events.Entries[1].Seconds == 2
+                && capture.Events.Entries[1].Measuring,
+            "Events distinguish warm-up and measured time relative to capture start"
+        );
+        int count = capture.Events.Count;
+        capture.Observe(now: 181, kind: BenchmarkEventKind.Focused, value: 0);
+        Check(capture.Events.Count == count, "Completed event history stays fixed");
+        capture.Start(now: 200, warmupSeconds: 0, durationSeconds: 1);
+        Check(
+            capture.Events.Count == 0 && capture.Events.Dropped == 0,
+            "Restart resets event history"
+        );
+        capture.Observe(now: 200, kind: BenchmarkEventKind.Focused, value: 1);
+        Check(capture.Events.Count == 1, "Restart records initial state again");
+
+        var bounded = new BenchmarkCapture(capacity: 4, eventCapacity: 1);
+        bounded.Start(now: 0, warmupSeconds: 0, durationSeconds: 2);
+        bounded.Observe(now: 0, kind: BenchmarkEventKind.Focused, value: 1);
+        Tick(capture: bounded, now: 0, frame: 0);
+        bounded.Observe(now: 1, kind: BenchmarkEventKind.Focused, value: 0);
+        bounded.Observe(now: 1, kind: BenchmarkEventKind.Focused, value: 0);
+        Tick(capture: bounded, now: 2, frame: 1);
+        Check(
+            bounded.Events.Count == 1
+                && bounded.Events.Dropped == 1
+                && bounded.State == CaptureState.Complete,
+            "Event overflow counts dropped transitions without stopping samples"
+        );
+
+        var warmed = new BenchmarkCapture(eventCapacity: 32);
+        warmed.Start(now: 0, warmupSeconds: 0, durationSeconds: 100);
+        warmed.Observe(now: 0, kind: BenchmarkEventKind.TimeScale, value: 1);
+        long start = GC.GetAllocatedBytesForCurrentThread();
+        for (int i = 0; i < 10000; i++)
+            warmed.Observe(now: i, kind: BenchmarkEventKind.TimeScale, value: i % 2);
+        Check(
+            GC.GetAllocatedBytesForCurrentThread() - start == 0,
+            "Event collection and overflow allocate no memory"
         );
     }
 
@@ -138,6 +223,15 @@ internal static class BenchmarkChecks
                 "Export totals"
             );
             Check(File.ReadAllLines(path + ".csv").Length == 3, "Raw samples retained");
+            var events = json.RootElement.GetProperty("events");
+            Check(
+                events.GetArrayLength() == 1
+                    && events[0].GetProperty("kind").GetString() == "Focused"
+                    && events[0].GetProperty("phase").GetString() == "warmup"
+                    && events[0].GetProperty("seconds").GetDouble() == 0
+                    && events[0].GetProperty("value").GetDouble() == 1,
+                "JSON retains named events and their timing/value"
+            );
             bool refused = false;
             try
             {

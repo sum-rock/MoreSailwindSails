@@ -17,6 +17,19 @@ namespace SailwindBenchmark
         {
             if (capture.Active || capture.State == CaptureState.Idle)
                 throw new InvalidOperationException("Capture must be stopped before export.");
+            metadata.events = new BenchmarkEventData[capture.Events.Count];
+            metadata.droppedEvents = capture.Events.Dropped;
+            for (int i = 0; i < capture.Events.Count; i++)
+            {
+                var entry = capture.Events.Entries[i];
+                metadata.events[i] = new BenchmarkEventData
+                {
+                    seconds = entry.Seconds,
+                    phase = entry.Measuring ? "measured" : "warmup",
+                    kind = entry.Kind.ToString(),
+                    value = entry.Value,
+                };
+            }
             metadata.complete = capture.State == CaptureState.Complete;
             metadata.reason = capture.Reason;
             metadata.frames = capture.Count;
@@ -67,9 +80,20 @@ namespace SailwindBenchmark
     }
 
     [Serializable]
+    internal struct BenchmarkEventData
+    {
+        public double seconds,
+            value;
+        public string phase,
+            kind;
+    }
+
+    [Serializable]
     internal sealed class BenchmarkMetadata
     {
         public int schemaVersion = 1;
+        public BenchmarkEventData[] events;
+        public int droppedEvents;
         public string captureId,
             createdUtc,
             scenario,

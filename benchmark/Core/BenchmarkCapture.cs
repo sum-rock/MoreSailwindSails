@@ -6,6 +6,8 @@ namespace SailwindBenchmark
     internal sealed class BenchmarkCapture
     {
         internal readonly FrameSample[] Samples;
+        internal readonly BenchmarkEvents Events;
+        private double started;
         internal CaptureState State { get; private set; }
         internal string Reason { get; private set; } = "";
         internal int Count { get; private set; }
@@ -19,11 +21,12 @@ namespace SailwindBenchmark
             gc1,
             gc2;
 
-        internal BenchmarkCapture(int capacity = 262144)
+        internal BenchmarkCapture(int capacity = 262144, int eventCapacity = 4096)
         {
             if (capacity < 1)
                 throw new ArgumentOutOfRangeException(nameof(capacity));
             Samples = new FrameSample[capacity];
+            Events = new BenchmarkEvents(capacity: eventCapacity);
         }
 
         internal void Start(double now, double warmupSeconds, double durationSeconds)
@@ -36,6 +39,8 @@ namespace SailwindBenchmark
                 || durationSeconds <= 0
             )
                 throw new ArgumentOutOfRangeException(nameof(durationSeconds));
+            Events.Clear();
+            started = now;
             Count = 0;
             Elapsed = 0;
             Reason = "";
@@ -97,6 +102,23 @@ namespace SailwindBenchmark
             gc2 = collections2;
             if (Elapsed >= duration)
                 State = CaptureState.Complete;
+        }
+
+        internal void Observe(
+            double now,
+            BenchmarkEventKind kind,
+            double value,
+            bool occurrence = false
+        )
+        {
+            if (Active && Finite(now) && now >= started && Finite(value))
+                Events.Observe(
+                    seconds: now - started,
+                    measuring: State == CaptureState.Measuring,
+                    kind: kind,
+                    value: value,
+                    occurrence: occurrence
+                );
         }
 
         internal void Cancel(string reason)
