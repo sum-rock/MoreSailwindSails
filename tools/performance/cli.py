@@ -8,6 +8,8 @@ import statistics
 
 import click
 
+from tools.performance.install import install
+
 MSS_GUID = "com.august.moresailwindsails"
 ENVIRONMENT = (
     "measurement",
@@ -196,7 +198,10 @@ def require_matching(first: dict, second: dict) -> None:
 
 @click.group()
 def performance() -> None:
-    """Compare optional SailwindBenchmark captures; never access the game."""
+    """Install the optional benchmark recorder or compare its captures offline."""
+
+
+performance.add_command(install)
 
 
 @performance.command()
