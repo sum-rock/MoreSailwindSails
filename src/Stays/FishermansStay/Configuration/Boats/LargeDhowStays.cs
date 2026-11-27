@@ -36,7 +36,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
                             extendedGuide: false,
                             guideIndex: 0,
                             required: new[] { 0, 2 },
-                            forbidden: new[] { 3 }
+                            forbidden: new int[0]
                         ),
                         // 63.86 degrees at aft mast; visible foremast head fallback.
                         new FishermansStayVariantDefinition(
@@ -72,7 +72,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
                             extendedGuide: false,
                             guideIndex: 0,
                             required: new[] { 1, 2 },
-                            forbidden: new[] { 3 }
+                            forbidden: new int[0]
                         ),
                         // 67.12 degrees at aft mast; visible foremast head fallback.
                         new FishermansStayVariantDefinition(
@@ -108,7 +108,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
                             extendedGuide: false,
                             guideIndex: 0,
                             required: new[] { 0, 4 },
-                            forbidden: new[] { 5 }
+                            forbidden: new int[0]
                         ),
                         // 55.00 degrees at aft mast; visible foremast head fallback.
                         new FishermansStayVariantDefinition(
@@ -144,7 +144,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
                             extendedGuide: false,
                             guideIndex: 0,
                             required: new[] { 1, 4 },
-                            forbidden: new[] { 5 }
+                            forbidden: new int[0]
                         ),
                         // 60.71 degrees at aft mast; visible foremast head fallback.
                         new FishermansStayVariantDefinition(

@@ -48,6 +48,33 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             return (float)(Math.Atan2(along, span) * 180 / Math.PI);
         }
 
+        // Extend only through usable ancestors; overlapping sections do not add length twice.
+        internal static Vector3 SupportBottom(
+            BoatDefinition boat,
+            int section,
+            Vector3 sectionBottom,
+            Vector3 axis,
+            Func<int, Vector3?> parentBottom
+        )
+        {
+            var bottom = sectionBottom;
+            while (
+                boat != null && boat.MastParents.TryGetValue(section, out int parent) && parent >= 0
+            )
+            {
+                var candidate = parentBottom(parent);
+                if (!candidate.HasValue)
+                    break;
+                var point = candidate.Value;
+                if (!Finite(point.x) || !Finite(point.y) || !Finite(point.z))
+                    break;
+                if (Vector3.Dot(point - bottom, axis) < 0)
+                    bottom = point;
+                section = parent;
+            }
+            return bottom;
+        }
+
         internal static string FitError(float width, float luff, float drop, float room, float span)
         {
             if (
@@ -64,7 +91,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             if (drop < -0.001f)
                 return "(SAIL HEAD ABOVE FISHERMAN'S STAY)";
             if (luff > room + 0.02f)
-                return "(LUFF EXCEEDS FORWARD MAST SECTION)";
+                return "(LUFF EXCEEDS SUPPORTED FORWARD MAST)";
             if (width > span - AftClearance)
                 return "(SAIL TOO WIDE FOR MAST PAIR)";
             return null;
