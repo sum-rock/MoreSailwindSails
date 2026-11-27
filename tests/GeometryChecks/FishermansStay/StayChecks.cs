@@ -97,14 +97,16 @@ internal static class StayChecks
                     }
                     Check(fore.y < aft.y, "Stay must descend toward the foremast.");
                 }
-                // Native-guide-height variants exclude continuations above the selected aft section.
-                // Optional T'gallants on authored aligned-guide stays are covered by their profile checks.
-                if (!stay.AlignGuideHeightToAftAnchor)
-                    foreach (var upper in masts.Values.Where(m => m.Parents.Contains(stay.Aft)))
-                        Check(
-                            stay.Forbidden.Contains(upper.Id),
-                            "A lower stay remains eligible beneath a topmast."
-                        );
+                // Fitted continuations must not disable a stay on a lower section.
+                foreach (
+                    var upper in masts.Values.Where(m =>
+                        m.Parents.Contains(stay.Aft) || m.Parents.Contains(stay.Fore)
+                    )
+                )
+                    Check(
+                        !stay.Forbidden.Contains(upper.Id),
+                        "A connected topmast disables a lower stay."
+                    );
                 Check(
                     stay.Required.Contains(stay.Fore) && stay.Required.Contains(stay.Aft),
                     "Missing supporting section dependency."

@@ -1,4 +1,5 @@
 // Binds staysail geometry and controls to the registered stay's endpoints and prerequisites.
+using MoreSailwindSails.BoatConfiguration;
 using MoreSailwindSails.Stays.FishermansStay;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -102,7 +103,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             binding.ForeSailFrame(out var head, out var axis);
             var scale = sail.cloth.transform.parent.localScale;
             float width = -rig.Corners[0].z * scale.z;
-            var bottom = binding.SectionBottom;
+            var bottom = binding.SupportBottom;
             float room = Vector3.Dot(head - bottom, axis);
             float span = Vector3
                 .ProjectOnPlane(binding.AftPoint - binding.ForePoint, axis)
@@ -133,20 +134,48 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
             return Vector3.Dot(axis, Pair.Boat.transform.up) < 0 ? -axis : axis;
         }
 
-        internal Vector3 SectionBottom
+        internal Vector3 SupportBottom =>
+            FishermansStaysailInstallationGeometry.SupportBottom(
+                boat: BoatCatalog.Find(boatName: Pair.Boat.name),
+                section: Pair.Fore.orderIndex,
+                sectionBottom: MastBottom(mast: Pair.Fore),
+                axis: ForeAxis,
+                parentBottom: ActiveParentBottom
+            );
+
+        private Vector3? ActiveParentBottom(int section)
         {
-            get
-            {
-                var c = Pair.Fore.GetComponent<CapsuleCollider>();
-                var center = c.transform.TransformPoint(c.center);
-                var direction =
-                    c.direction == 0 ? Vector3.right
-                    : c.direction == 1 ? Vector3.up
-                    : Vector3.forward;
-                return center
-                    - ForeAxis * c.transform.TransformVector(direction * c.height * 0.5f).magnitude;
-            }
+            if (Pair.Boat.masts == null)
+                return null;
+            foreach (var mast in Pair.Boat.masts)
+                if (
+                    mast
+                    && mast.orderIndex == section
+                    && mast.gameObject.activeInHierarchy
+                    && !mast.onlyStaysails
+                )
+                {
+                    var collider = mast.GetComponent<CapsuleCollider>();
+                    if (!collider || !(collider.height > 0))
+                        return null;
+                    return MastBottom(mast: mast);
+                }
+            return null;
         }
+
+        private Vector3 MastBottom(Mast mast)
+        {
+            var c = mast.GetComponent<CapsuleCollider>();
+            var center = c.transform.TransformPoint(c.center);
+            var direction =
+                c.direction == 0 ? Vector3.right
+                : c.direction == 1 ? Vector3.up
+                : Vector3.forward;
+            return center
+                - MastAxis(mast: mast)
+                    * c.transform.TransformVector(direction * c.height * 0.5f).magnitude;
+        }
+
         internal float HeadSlope =>
             FishermansStaysailInstallationGeometry.HeadSlope(AftPoint - ForePoint, ForeAxis);
 
@@ -165,7 +194,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
 
         internal Vector3 AftReference => AftPoint;
 
-        // Reefing stays on the fitted section: the foot travels up to the head.
+        // Reefing follows the same straight mast axis across connected sections.
         internal Vector3 LuffPoint(Vector3 requested) =>
             FishermansStaysailFrameGeometry.ProjectOntoMast(
                 point: requested,

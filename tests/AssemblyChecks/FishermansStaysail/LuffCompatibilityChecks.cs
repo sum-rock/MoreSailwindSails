@@ -20,6 +20,20 @@ internal static class LuffCompatibilityChecks
                 "MoreSailwindSails.Sails.FishermansStaysail." + name,
                 throwOnError: true
             );
+        var binding = Find("FishermansStaysailRigging");
+        var supportBottom = binding.GetProperty("SupportBottom", All).GetMethod;
+        var install = binding.GetMethod("InstallError", All);
+        var move = Find("Patches.FishermansStaysailMovePatch").GetMethod("Prefix", All);
+        Require(
+            CalledMethods(install).Contains(supportBottom)
+                && CalledMethods(move).Contains(supportBottom),
+            "Installation and movement must share connected mast support limits."
+        );
+        Require(
+            CalledMethods(binding.GetMethod("ActiveParentBottom", All))
+                .Any(m => m.Name == "get_activeInHierarchy"),
+            "Connected support must ignore inactive parent masts."
+        );
         var compatibility = Find("FishermansStaysailLuffCompatibility");
         var pair = compatibility.GetMethod("TryOverlap", All);
         var scan = compatibility.GetMethod("HasOverlap", All);

@@ -139,8 +139,7 @@ internal static class ProfileChecks
             || !largeDhow.Sections(5).SequenceEqual(new[] { 5, 4 })
         )
             throw new Exception("Large dhow topmasts lost their matching lower sections.");
-        // Every native combination gets exactly one stay per adjacent mast pair.
-        // Adding a topmast replaces the forward stay without disabling the aft stay.
+        // A topmast adds an upper forward stay choice while retaining the lower stay.
         foreach (int fore in new[] { 0, 1 })
         foreach (int main in new[] { 2, 4 })
         foreach (bool topmast in new[] { false, true })
@@ -153,7 +152,7 @@ internal static class ProfileChecks
                 if (
                     group.Variants.Count(s =>
                         s.Required.All(active.Contains) && !s.Forbidden.Any(active.Contains)
-                    ) != 1
+                    ) != (topmast && group == LargeDhowStays.Definition.Stays[0] ? 2 : 1)
                 )
                     throw new Exception(
                         "Large dhow mast combination has missing or ambiguous stays."
@@ -167,7 +166,7 @@ internal static class ProfileChecks
         )
             throw new Exception("Gloriana lost its connected mizzen or mast-specific controls.");
         // Native stays supply assets only: either custom group remains available
-        // with both native stays removed. Topmast presence replaces the lower stay.
+        // with both native stays removed. Topmast presence adds an upper stay choice.
         foreach (bool fore in new[] { false, true })
         foreach (bool main in new[] { false, true })
         foreach (bool mizzen in new[] { false, true })
@@ -188,7 +187,8 @@ internal static class ProfileChecks
                 );
             if (
                 Available(GlorianaStays.Definition.Stays[0]) != (fore && main ? 1 : 0)
-                || Available(GlorianaStays.Definition.Stays[1]) != (main && mizzen ? 1 : 0)
+                || Available(GlorianaStays.Definition.Stays[1])
+                    != (main && mizzen ? (top ? 2 : 1) : 0)
             )
                 throw new Exception("Gloriana has missing or ambiguous stays for fitted supports.");
         }

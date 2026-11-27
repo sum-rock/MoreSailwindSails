@@ -34,7 +34,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
                             extendedGuide: false,
                             guideIndex: 0,
                             required: new[] { 9, 10 },
-                            forbidden: new[] { 62 }
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
@@ -94,7 +94,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
                             extendedGuide: false,
                             guideIndex: 0,
                             required: new[] { 10, 12 },
-                            forbidden: new[] { 53 }
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(
@@ -130,7 +130,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
                             extendedGuide: false,
                             guideIndex: 0,
                             required: new[] { 11, 12 },
-                            forbidden: new[] { 53 }
+                            forbidden: new int[0]
                         ),
                         // 70.00 degrees at aft mast.
                         new FishermansStayVariantDefinition(

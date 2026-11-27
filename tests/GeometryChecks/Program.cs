@@ -45,6 +45,7 @@ internal static class Program
         FishermansStaysail.AnimationChecks.Run();
         FishermansStaysail.FlutterChecks.Run();
         FishermansStaysail.MkC.CutChecks.Run();
+        FishermansStaysail.SupportChecks.Run();
         FishermansStaysail.CollisionChecks.Run();
         FishermansStaysail.FixedHeadChecks.Run();
         FishermansStaysail.TravelChecks.Run();

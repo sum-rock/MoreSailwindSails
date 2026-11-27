@@ -56,7 +56,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration.Boats
                             extendedGuide: false,
                             guideIndex: 0,
                             required: new[] { 2, 3 },
-                            forbidden: new[] { 4 }
+                            forbidden: new int[0]
                         ),
                         new FishermansStayVariantDefinition(
                             mountIndex: 130,

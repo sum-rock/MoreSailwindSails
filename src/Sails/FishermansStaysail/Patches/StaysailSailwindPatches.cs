@@ -161,7 +161,7 @@ namespace MoreSailwindSails.Sails.FishermansStaysail.Patches
             var binding = FishermansStaysailRigging.For(sail);
             var mount = __instance.GetCurrentMast();
             float room =
-                Vector3.Dot(binding.ForePoint - binding.SectionBottom, binding.ForeAxis)
+                Vector3.Dot(binding.ForePoint - binding.SupportBottom, binding.ForeAxis)
                 - FishermansStaysailInstallationGeometry.HeadClearance;
             float maxDrop = Mathf.Max(0, room - sail.GetScaledHeight());
             float height = Mathf.Clamp(

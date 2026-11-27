@@ -119,7 +119,7 @@ internal static class CutChecks
         float nominalLuff = -nominal[2].x;
         if (
             FishermansStaysailInstallationGeometry.FitError(3, nominalLuff, 0, 3.5f, 4)
-                != "(LUFF EXCEEDS FORWARD MAST SECTION)"
+                != "(LUFF EXCEEDS SUPPORTED FORWARD MAST)"
             || FishermansStaysailInstallationGeometry.FitError(
                 3,
                 nominalLuff,
