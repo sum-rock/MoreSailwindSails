@@ -171,52 +171,34 @@ def test_empty_and_missing_csv(tmp_path):
     assert compare(left, right).exit_code == 1
 
 
-def test_events_do_not_filter_pauses_or_loading(tmp_path):
+@pytest.mark.parametrize(
+    "extra",
+    [
+        {},
+        {"droppedEvents": 0},
+        {
+            "events": [
+                dict(seconds=0.1, phase="measured", kind="LoadingScenes", value=1)
+            ],
+            "droppedEvents": 3,
+        },
+        {"events": None, "droppedEvents": "unused"},
+    ],
+)
+def test_retired_events_ignored_and_long_frames_retained(tmp_path, extra):
     left, right = tmp_path / "left", tmp_path / "right"
-    events = [
-        dict(seconds=0, phase="warmup", kind="Focused", value=1),
-        dict(seconds=0.1, phase="measured", kind="LoadingScenes", value=1),
-        dict(seconds=0.2, phase="measured", kind="TimeScale", value=0),
-        dict(seconds=2.1, phase="measured", kind="TimeScale", value=1),
-    ]
-    for directory, name in [(left, "a"), (right, "b")]:
-        capture(directory, name, seconds=(0.1, 2.0), events=events, droppedEvents=3)
-    metadata, summary = load_capture(left / "a.json")
+    capture(left, "a", seconds=(0.1, 2.0), timeScale=0, **extra)
+    capture(right, "b", seconds=(0.1, 2.0), timeScale=0)
+    _, summary = load_capture(left / "a.json")
     assert summary["max_ms"] == 2000 and summary["fps"] == pytest.approx(2 / 2.1)
     result = compare(left, right)
     assert result.exit_code == 0, result.output
-    assert "warmup=1 measured=3 dropped=3" in result.output
-    assert "LoadingScenes=1, TimeScale=2" in result.output
-    assert "All frame intervals retained" in result.output
-
-
-def test_legacy_events_unavailable_and_paused_start_supported(tmp_path):
-    left, right = tmp_path / "left", tmp_path / "right"
-    capture(left, "a", timeScale=0)
-    capture(right, "b", timeScale=0)
-    result = compare(left, right)
-    assert result.exit_code == 0, result.output
-    assert "events: unavailable (legacy capture)" in result.output
-
-
-@pytest.mark.parametrize(
-    "events",
-    [
-        None,
-        [dict(seconds=-1, phase="measured", kind="Focused", value=0)],
-        [dict(seconds=1, phase="invalid", kind="Focused", value=0)],
-        [dict(seconds=1, phase="measured", kind="Focused", value=float("nan"))],
-    ],
-)
-def test_invalid_event_data(tmp_path, events):
-    path = capture(tmp_path, "a", events=events)
-    with pytest.raises(ValueError, match="event"):
-        load_capture(path)
+    assert "event" not in result.output.lower()
 
 
 def test_recorder_versions_cannot_be_mixed(tmp_path):
     left, right = tmp_path / "left", tmp_path / "right"
-    capture(left, "a", recorderVersion="0.1.0")
-    capture(right, "b", recorderVersion="0.1.1", events=[])
+    capture(left, "a", recorderVersion="0.1.1")
+    capture(right, "b", recorderVersion="0.1.2")
     result = compare(left, right)
     assert result.exit_code == 1 and "recorderVersion" in result.output

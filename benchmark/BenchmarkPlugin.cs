@@ -15,7 +15,7 @@ namespace SailwindBenchmark
     [DefaultExecutionOrder(32000)]
     public sealed class BenchmarkPlugin : BaseUnityPlugin
     {
-        public const string Version = "0.1.1";
+        public const string Version = "0.1.2";
         private ConfigEntry<KeyboardShortcut> shortcut;
         private ConfigEntry<string> scenario,
             variant,
@@ -25,7 +25,6 @@ namespace SailwindBenchmark
         private BenchmarkCapture capture;
         private BenchmarkMetadata metadata;
         private KeyboardShortcut captureShortcut;
-        private bool applicationPaused;
 
         private static double Now => Stopwatch.GetTimestamp() / (double)Stopwatch.Frequency;
 
@@ -73,45 +72,10 @@ namespace SailwindBenchmark
                     new AcceptableValueRange<double>(1, 600)
                 )
             );
-            Config.SettingChanged += SettingsChanged;
-            SceneManager.activeSceneChanged += SceneChanged;
-            SceneManager.sceneLoaded += SceneLoaded;
-            SceneManager.sceneUnloaded += SceneUnloaded;
             Logger.LogInfo(
                 "Sailwind Benchmark ready. Set Scenario and Variant, then press F6. Results: BepInEx/benchmark-results. Primary runs should have MSS profiling OFF."
             );
         }
-
-        private void SettingsChanged(object sender, SettingChangedEventArgs args) =>
-            capture?.Observe(
-                now: Now,
-                kind: BenchmarkEventKind.ConfigurationChanged,
-                value: 1,
-                occurrence: true
-            );
-
-        private void SceneChanged(Scene previous, Scene next) =>
-            capture?.Observe(
-                now: Now,
-                kind: BenchmarkEventKind.ActiveScene,
-                value: next.buildIndex
-            );
-
-        private void SceneLoaded(Scene scene, LoadSceneMode mode) =>
-            capture?.Observe(
-                now: Now,
-                kind: BenchmarkEventKind.SceneLoaded,
-                value: scene.buildIndex,
-                occurrence: true
-            );
-
-        private void SceneUnloaded(Scene scene) =>
-            capture?.Observe(
-                now: Now,
-                kind: BenchmarkEventKind.SceneUnloaded,
-                value: scene.buildIndex,
-                occurrence: true
-            );
 
         private void LateUpdate()
         {
@@ -122,7 +86,6 @@ namespace SailwindBenchmark
                 else
                 {
                     double now = Now;
-                    ObserveState(now: now);
                     capture.Tick(
                         now: now,
                         frame: Time.frameCount,
@@ -149,89 +112,6 @@ namespace SailwindBenchmark
                 }
             }
         }
-
-        private void ObserveState(double now)
-        {
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.Focused,
-                value: Application.isFocused ? 1 : 0
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.ApplicationPaused,
-                value: applicationPaused ? 1 : 0
-            );
-            Observe(now: now, kind: BenchmarkEventKind.Playing, value: GameState.playing ? 1 : 0);
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.CurrentlyLoading,
-                value: GameState.currentlyLoading ? 1 : 0
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.LoadingBoatLocalItems,
-                value: GameState.loadingBoatLocalItems ? 1 : 0
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.LoadingScenes,
-                value: GameState.loadingScenes
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.Recovering,
-                value: GameState.recovering ? 1 : 0
-            );
-            Observe(now: now, kind: BenchmarkEventKind.Sleeping, value: GameState.sleeping ? 1 : 0);
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.CursorMenu,
-                value: GameState.inCursorMenu ? 1 : 0
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.Shipyard,
-                value: GameState.currentShipyard ? 1 : 0
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.BoatInstance,
-                value: GameState.currentBoat ? GameState.currentBoat.GetInstanceID() : 0
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.ActiveScene,
-                value: SceneManager.GetActiveScene().buildIndex
-            );
-            Observe(now: now, kind: BenchmarkEventKind.Width, value: Screen.width);
-            Observe(now: now, kind: BenchmarkEventKind.Height, value: Screen.height);
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.Fullscreen,
-                value: Screen.fullScreen ? 1 : 0
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.Quality,
-                value: QualitySettings.GetQualityLevel()
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.VSyncCount,
-                value: QualitySettings.vSyncCount
-            );
-            Observe(
-                now: now,
-                kind: BenchmarkEventKind.TargetFrameRate,
-                value: Application.targetFrameRate
-            );
-            Observe(now: now, kind: BenchmarkEventKind.TimeScale, value: Time.timeScale);
-            Observe(now: now, kind: BenchmarkEventKind.FixedDeltaTime, value: Time.fixedDeltaTime);
-        }
-
-        private void Observe(double now, BenchmarkEventKind kind, double value) =>
-            capture.Observe(now: now, kind: kind, value: value);
 
         private void StartCapture()
         {
@@ -302,7 +182,6 @@ namespace SailwindBenchmark
                 warmupSeconds: metadata.warmupSeconds,
                 durationSeconds: metadata.durationSeconds
             );
-            ObserveState(now: now);
         }
 
         private void Cancel(string reason)
@@ -344,30 +223,8 @@ namespace SailwindBenchmark
             }
         }
 
-        private void OnApplicationFocus(bool focused)
-        {
-            capture?.Observe(now: Now, kind: BenchmarkEventKind.Focused, value: focused ? 1 : 0);
-        }
-
-        private void OnApplicationPause(bool paused)
-        {
-            applicationPaused = paused;
-            capture?.Observe(
-                now: Now,
-                kind: BenchmarkEventKind.ApplicationPaused,
-                value: paused ? 1 : 0
-            );
-        }
-
         private void OnDisable() => Cancel(reason: "recorder-disabled");
 
-        private void OnDestroy()
-        {
-            Cancel(reason: "recorder-destroyed");
-            Config.SettingChanged -= SettingsChanged;
-            SceneManager.activeSceneChanged -= SceneChanged;
-            SceneManager.sceneLoaded -= SceneLoaded;
-            SceneManager.sceneUnloaded -= SceneUnloaded;
-        }
+        private void OnDestroy() => Cancel(reason: "recorder-destroyed");
     }
 }

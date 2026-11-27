@@ -41,27 +41,6 @@ internal static class BenchmarkIntegrationChecks
         }
         var plugin = assembly.GetType("SailwindBenchmark.BenchmarkPlugin", throwOnError: true);
         const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
-        foreach (
-            string name in new[]
-            {
-                "SettingsChanged",
-                "SceneChanged",
-                "SceneLoaded",
-                "SceneUnloaded",
-                "OnApplicationFocus",
-                "OnApplicationPause",
-                "ObserveState",
-            }
-        )
-        {
-            var calls = IlReader
-                .CalledMethods(plugin.GetMethod(name: name, bindingAttr: flags))
-                .ToArray();
-            Require(
-                !calls.Any(c => c.Name is "Cancel" or "Stop" or "Export"),
-                "Gameplay events must never stop or export the capture"
-            );
-        }
         var loop = plugin.GetMethod(name: "LateUpdate", bindingAttr: flags);
         var reasons = IlReader
             .Instructions(method: loop)
