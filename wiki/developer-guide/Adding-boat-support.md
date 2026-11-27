@@ -2,8 +2,9 @@
 
 This guide is for boat authors contributing support to MoreSailwindSails and
 maintainers adding another boat later. It follows plugin **0.4.1** at revision
-`2254dfe`. The linked source is the authority; check the current implementation
-when applying the examples to a later version.
+`2254dfe`, with the stay fitting guidance in section 3 updated to `3639f89`. The
+linked source is the authority; check the current implementation when applying
+the examples to a later version.
 
 Boat support is authored in this repository. There is currently no public
 registration API for another plugin. Adding a boat to the catalogs lets the
@@ -124,7 +125,7 @@ new FishermansStayVariantDefinition(
     extendedGuide: false,
     guideIndex: 0,
     required: new[] { 3, 5 },
-    forbidden: new[] { 55, 56 }
+    forbidden: new int[0]
 )
 ```
 
@@ -142,7 +143,8 @@ resolution][references]:
   usable.
 - `fore` and `aft` are distinct physical mast sections with
   `onlyStaysails = false` and `CapsuleCollider`s. The luff follows the forward
-  section; this is not a general deck-to-mast staysail mount.
+  section and can extend down its usable connected parent sections; this is not
+  a general deck-to-mast staysail mount.
 - `forePoint` and `aftPoint` are local to their respective mast transforms.
   Convert a boat-local measurement through `boat.transform.TransformPoint(...)`,
   then through the target mast's `InverseTransformPoint(...)`. Do not treat
@@ -155,9 +157,9 @@ resolution][references]:
   `mastReefAttExtension` when `extendedGuide` is true. The guide must exist and
   be fitted. The aft mast must also supply a usable reef winch template.
 - `required` includes both endpoint sections **and their supporting lower
-  sections**. `forbidden` excludes conflicting mast or stay options. For
-  ordinary native-guide-height variants, existing checks require excluding
-  continuations above the selected aft section.
+  sections**. `forbidden` excludes genuinely conflicting mast or stay options. A
+  fitted continuation above either endpoint does not by itself require an
+  exclusion; lower stays can remain available with topmasts fitted.
 
 For special geometry, `alignGuideHeightToAftAnchor` moves the effective halyard
 guide to the aft anchor's axial height while retaining its radial offset. Follow
@@ -266,7 +268,7 @@ expected mapping that still protects saved identities.
 [control-catalog]:
   https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Controls/Configuration/BoatControlCatalog.cs
 [references]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/FishermansStayReferences.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Stays/FishermansStay/FishermansStayReferences.cs
 [brig]:
   https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/BoatConfiguration/Boats/Brig.cs
 [boat-definition]:
@@ -276,7 +278,7 @@ expected mapping that still protects saved identities.
 [cog-stays]:
   https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/Boats/CogStays.cs
 [variant]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/FishermansStayVariantDefinition.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Stays/FishermansStay/Configuration/FishermansStayVariantDefinition.cs
 [caelanor-stays]:
   https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/Boats/CaelanorStays.cs
 [cog-controls]:
@@ -290,9 +292,9 @@ expected mapping that still protects saved identities.
 [measurements]:
   https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/FishermansStay/StayMeasurements.txt
 [stay-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/FishermansStay/StayChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/tests/GeometryChecks/FishermansStay/StayChecks.cs
 [profile-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/FishermansStay/ProfileChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/tests/GeometryChecks/FishermansStay/ProfileChecks.cs
 [seat-checks]:
   https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/Controls/NativeSeatProfileChecks.cs
 [halyard-checks]:

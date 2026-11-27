@@ -73,6 +73,12 @@ shown above; `--output` changes the destination, not the input asset.
 writes deterministic C# mesh data. Staysails have the same `--cut` option as
 generation. Every bake accepts `--output FILE` and `--check`.
 
+The
+[staysail collector](https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/tools/assets/staysail/collect.py)
+also evaluates authored sheeting and reefing animation and exports the static
+`WindCenter` marker's position and orientation. See the
+[staysail asset requirements](Fishermans-Staysails#assets-and-ownership).
+
 | Asset         | Default bake output                                                                                                 |
 | ------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `flying_sail` | `src/Sails/FishermansFlyingSail/FishermansFlyingSailBakedMesh.g.cs`                                                 |

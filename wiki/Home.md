@@ -51,12 +51,12 @@ separates installed object names and providers from authored parent
 relationships and custom stay mappings. They are a reference for those fittings,
 not a complete inventory of every object on a boat.
 
-Source links identify the inspected revision for each topic. The boat reference
-links to revision
+Source links identify the inspected revision for each topic. The original boat
+object reference links to revision
 [`43540e5`](https://github.com/sum-rock/MoreSailwindSails/tree/43540e59195537d3f5504c983f4c48ee5a9317fb),
-whose plugin version is **0.3.0**; other topics may cite newer revisions. Each
-boat page lists the inspected game/mod versions and date. Available parts can
-change between versions; the
+whose plugin version is **0.3.0**. Updated stay configurations and sail topics
+identify newer source revisions separately. Each boat page lists the inspected
+game/mod versions and date. Available parts can change between versions; the
 [boat inspection command](MSS-command#boat-inspection) can check supported boats
 against your installation.
 
