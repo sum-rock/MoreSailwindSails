@@ -16,7 +16,7 @@ from tools import settings
     default=settings.DEFAULT_GAME,
     show_default=True,
 )
-def install_local(game_dir: Path) -> None:
+def install(game_dir: Path) -> None:
     """Rebuild and install the plugin locally. Close Sailwind first."""
     game_dir = game_dir.expanduser().resolve()
     plugins = game_dir / settings.PLUGINS_DIRECTORY
