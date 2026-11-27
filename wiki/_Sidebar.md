@@ -26,4 +26,5 @@
   - [Adding boat support](Adding-boat-support)
   - [Building and contributing](Building-and-contributing)
   - [Profiling](Profiling)
+  - [Benchmark](Benchmark)
   - [mss command](MSS-command)

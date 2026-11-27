@@ -39,10 +39,13 @@ For Loose Footed Spritsail cuts, fitting, reefing, and sailing behavior, see
   ancestry, stays, and optional additional control positions for a contribution.
 - [Building and contributing](Building-and-contributing): environment setup,
   builds, automated checks, and contributions.
-- [Profiling](Profiling): CPU and frame capture settings, category selection,
-  and timing, allocation, and GC reports.
+- [Profiling](Profiling): CPU time and allocations in instrumented sail code,
+  with frame and GC diagnostics.
+- [Benchmark](Benchmark): standalone whole-game frame captures and comparisons
+  with native sails.
 - [mss command](MSS-command): asset tools, boat inspection, fallback generation,
-  installation, releases, decompilation, and logs.
+  installation and removal, benchmark commands, releases, decompilation, and
+  logs.
 
 ## What the references describe
 
