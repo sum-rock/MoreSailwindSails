@@ -31,6 +31,12 @@ serialized files used for its object IDs. Custom stay mappings come from the
 linked MoreSailwindSails source. Missing optional-mod parts can make a
 configuration unavailable without changing its saved position.
 
+These tables cover Fisherman's Stay support. The shared boat catalog also
+contains
+[Sh’ba's ancestry](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/BoatConfiguration/Boats/ShBa.cs)
+for spritsail topsail fitting, without Fisherman's Stay definitions. Shared
+ancestry alone does not add stays or Flying Sail support pairs.
+
 Winch donors are documented in the [Controls reference](Controls), including
 [the fallback donor table](Fallback-winch-templates#sheet-donors). The object
 tables on these boat pages identify mast and stay components, not individual

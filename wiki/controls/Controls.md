@@ -12,24 +12,26 @@ control.
 | Runtime clones and prefab registration                               | [Template identity and ownership](Fallback-winch-templates#template-identity-and-ownership) |
 | Overlay, model previews, surface capture, and forced fallbacks       | [Winch placement diagnostics](Winch-placement-diagnostics)                                  |
 
-[Fisherman's Stays](Fishermans-Stay) and
-[Fisherman's Flying Sails](Fishermans-Flying-Sails) own cloned sheet and halyard
+[Fisherman's Stays](Fishermans-Stay),
+[Fisherman's Flying Sails](Fishermans-Flying-Sails), and
+[Loose Footed Spritsails](Loose-Footed-Spritsails) own cloned sheet and halyard
 controls through the same boat-level allocator. It retains valid placements,
 normally tries compatible native positions first when another placement is
-needed, then tries authored fallbacks. Both families share position
+needed, then tries authored fallbacks. All consumers share position
 reservations.
 
-| Consumer                   | Native candidates                                           | Halyard fallback mast  |
-| -------------------------- | ----------------------------------------------------------- | ---------------------- |
-| Sail on a Fisherman's Stay | Unoccupied native stays matching both supporting base masts | Aft physical base mast |
-| Fisherman's Flying Sail    | Controls on its fitted physical mast                        | Fitted physical mast   |
+| Consumer                   | Native candidates                                           | Halyard fallback mast       |
+| -------------------------- | ----------------------------------------------------------- | --------------------------- |
+| Sail on a Fisherman's Stay | Unoccupied native stays matching both supporting base masts | Aft physical base mast      |
+| Fisherman's Flying Sail    | Controls on its fitted physical mast                        | Fitted mast’s physical base |
+| Loose Footed Spritsail     | Controls on its fitted physical mast                        | Fitted mast’s physical base |
 
 The [source-selection rules](How-winches-are-placed) determine which controls
 can supply a position. Authored sheet pairs also depend on the sail's
 [neutral fitted span](How-winches-are-placed#fitted-span-and-fallback-eligibility).
 The
 [forced-fallback setting](Winch-placement-diagnostics#forcing-sheet-fallbacks)
-skips native sheet positions for both families.
+skips native sheet positions for all three consumers.
 
 ## Consumer contract and ownership
 
@@ -46,11 +48,17 @@ placements. An unavailable request or inactive support suspends placement.
 empty control set.
 
 The stay adapter publishes clones into its dedicated `Mast` arrays. Flying Sails
-bind their own rope controllers to owned clones while preserving the physical
-mast's native arrays. After native attachment, Flying Sail integration releases
-only bindings to participating Flying Sail controllers before restoring their
-routes and limits. Disabling or destroying a Flying Sail releases its controls;
-destroying a stay unregisters its adapter.
+and spritsails preserve the physical mast's native arrays. Their rigs implement
+`INativeSailControlRig` for the shared native-attachment handoff: missing or
+occupied native slots are skipped for these managed sails, and sheet binding
+requires a usable pair. After native attachment, the shared patch releases
+bindings to all participating managed controllers before asking any of them to
+allocate owned controls. Bindings to other sails are preserved.
+
+Disabling a Flying Sail releases its controls; destroying a stay unregisters its
+adapter. Spritsails hide controls immediately on disable and let the allocator
+release inactive requests on its next update. Final spritsail destruction
+disposes owned winches and any detached rope controllers.
 
 Use the [boat reference](Boats) to identify mast and stay indexes. Use the
 [sail reference](Sails) for sail prefab IDs and fitting rules; those identities
@@ -58,12 +66,14 @@ are separate from control donor array indexes.
 
 ## Source
 
-The code at revision `fcdf300` (plugin metadata **0.3.0**) is the source of
+The code at revision `fbc225d` (plugin metadata **0.4.1**) is the source of
 truth:
 
-- [Manager and consumer interface](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/WinchControls.cs)
-- [Requests, published controls, and placement lifecycle](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Runtime/WinchGroup.cs)
-- [Native source policies](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Controls/Discovery/NativeWinchInventory.cs)
-- [Stay adapter](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Stays/FishermansStay/FishermansStayControls.cs)
-- [Flying Sail ownership and binding handoff](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansFlyingSail/FishermansFlyingSailRigging.cs)
-- [Native attachment integration](https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansFlyingSail/Patches/FlyingSailSailwindPatches.cs)
+- [Manager and consumer interface](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/WinchControls.cs)
+- [Requests, published controls, and placement lifecycle](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Runtime/WinchGroup.cs)
+- [Native source policies](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Discovery/NativeWinchInventory.cs)
+- [Stay adapter](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/FishermansStayControls.cs)
+- [Flying Sail ownership and binding handoff](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailRigging.cs)
+- [Native attachment integration](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Patches/ControlsSailwindPatches.cs)
+- [Native binding guards and handoff contract](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/NativeSailControls.cs)
+- [Spritsail consumer and lifecycle](https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailRigging.cs)

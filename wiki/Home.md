@@ -25,8 +25,8 @@ For Loose Footed Spritsail cuts, fitting, reefing, and sailing behavior, see
 ## Controls
 
 - [How winches are placed](How-winches-are-placed): native positions, authored
-  fallbacks, fitted sail spans, occupancy, and shared reservations for both sail
-  families.
+  fallbacks, fitted sail spans, occupancy, and shared reservations for stays,
+  Flying Sails, and spritsails.
 - [Fallback winch templates](Fallback-winch-templates): donor array indexes,
   per-pair sheet templates, halyard templates, mounting frames, and runtime
   clones.

@@ -99,10 +99,10 @@ unavailable, authored sheet fallbacks are deferred.
 ## Assets and ownership
 
 Editable cuts live in `assets/staysails/fishermans_staysail_mka.blend`,
-`fishermans_staysail_mkb.blend`, and `fishermans_staysail_mkc.blend`. The
-[authoring definitions][authoring] use a nominal width of 13.8 units and the cut
-dimensions above. Blender X points aft and Z points up; the base panel lies at Y
-= 0.
+`fishermans_staysail_mkb.blend`, and `fishermans_staysail_mkc.blend`. The [cut
+catalog][authoring] maps these files to their generated C# paths and lists the
+animation sample frames. Blender X points aft and Z points up; the base panel
+lies at Y = 0. Edit the existing Blender assets to change their shapes.
 
 The [collector][collector] validates the 24 × 32 quad grid, applied object
 transforms, and seam-free `ClothUV` layer. Animation samples must retain the

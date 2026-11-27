@@ -2,9 +2,8 @@
 
 This guide is for boat authors contributing support to MoreSailwindSails and
 maintainers adding another boat later. It follows plugin **0.4.1** at revision
-`2254dfe`, with the stay fitting guidance in section 3 updated to `3639f89`. The
-linked source is the authority; check the current implementation when applying
-the examples to a later version.
+`fbc225d`. The linked source is the authority; check the current implementation
+when applying the examples to a later version.
 
 Boat support is authored in this repository. There is currently no public
 registration API for another plugin. Adding a boat to the catalogs lets the
@@ -28,7 +27,8 @@ positions are optional fallbacks for when usable native positions are occupied.
 A boat can use its existing control positions without a `BoatControlCatalog`
 entry. Spritsails use native fitting restrictions; their ability to span a lower
 mast and its topmast comes from the shared ancestry map, without a separate
-spritsail boat catalog.
+spritsail boat catalog. Sh’ba is an example of an ancestry-only entry: it has no
+Fisherman’s Stay or fallback-control definition.
 
 ## 1. Inventory the boat's installed rigging
 
@@ -262,40 +262,40 @@ addition pass. If occupied slots require nonconsecutive IDs, add an explicit
 expected mapping that still protects saved identities.
 
 [boat-catalog]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/BoatConfiguration/BoatCatalog.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/BoatConfiguration/BoatCatalog.cs
 [stay-catalog]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/FishermansStayCatalog.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Configuration/FishermansStayCatalog.cs
 [control-catalog]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Controls/Configuration/BoatControlCatalog.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/BoatControlCatalog.cs
 [references]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Stays/FishermansStay/FishermansStayReferences.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/FishermansStayReferences.cs
 [brig]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/BoatConfiguration/Boats/Brig.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/BoatConfiguration/Boats/Brig.cs
 [boat-definition]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/BoatConfiguration/BoatDefinition.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/BoatConfiguration/BoatDefinition.cs
 [spritsail-support]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailMastSupport.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/LooseFootedSpritsail/LooseFootedSpritsailMastSupport.cs
 [cog-stays]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/Boats/CogStays.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Configuration/Boats/CogStays.cs
 [variant]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/src/Stays/FishermansStay/Configuration/FishermansStayVariantDefinition.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Configuration/FishermansStayVariantDefinition.cs
 [caelanor-stays]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Configuration/Boats/CaelanorStays.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Configuration/Boats/CaelanorStays.cs
 [cog-controls]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Controls/Configuration/Boats/CogControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/Boats/CogControls.cs
 [shroud-controls]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Controls/Configuration/Boats/ShroudControls.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Configuration/Boats/ShroudControls.cs
 [stay-patches]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/Patches/StaySailwindPatches.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/Patches/StaySailwindPatches.cs
 [registry]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/src/Stays/FishermansStay/FishermansStayRegistry.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Stays/FishermansStay/FishermansStayRegistry.cs
 [measurements]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/FishermansStay/StayMeasurements.txt
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/FishermansStay/StayMeasurements.txt
 [stay-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/tests/GeometryChecks/FishermansStay/StayChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/FishermansStay/StayChecks.cs
 [profile-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/3639f8900d57defaa76186eb41c46282c5950fff/tests/GeometryChecks/FishermansStay/ProfileChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/FishermansStay/ProfileChecks.cs
 [seat-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/Controls/NativeSeatProfileChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/Controls/NativeSeatProfileChecks.cs
 [halyard-checks]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/2254dfecb6194e7bddc14cf83dfafbee35b67033/tests/GeometryChecks/Controls/HalyardProfileChecks.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tests/GeometryChecks/Controls/HalyardProfileChecks.cs

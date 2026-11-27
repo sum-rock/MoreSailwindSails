@@ -4,6 +4,9 @@ The Fisherman's Flying Sail is a four-corner trapezoid hoisted from the deck on
 a physical mast, with an aft mast supplying support. It appears in the
 shipyard's **Other** category and uses the physical mast's native sail slot.
 
+This reference follows revision `fbc225d` (plugin metadata **0.4.1**). The
+linked code is the source of truth.
+
 ## Prefab ID and fitting
 
 | Identity             | Value                   |
@@ -84,28 +87,29 @@ Flying Sails own cloned controls through the
 [shared allocator](Controls#consumer-contract-and-ownership). Native candidates
 come from the fitted physical mast's paired sheet arrays and reef array. If no
 native position is available, sheets can use the boat's authored fallback pairs
-and the halyard can use that fitted mast's fallback. The aft mast and both guide
-sections must remain fitted, but the aft mast does not select the halyard donor.
+and the halyard can use that fitted mast's physical-base fallback. The aft mast
+and both guide sections must remain fitted, but the aft mast does not select the
+halyard donor.
 
-After native attachment updates, the [rigging adapter][rigging] releases
-bindings to this sail's rope controllers and restores its own routes and travel
-limits. Physical mast arrays retain their native controls. Owned clones and
-reservations are released when the sail is disabled or destroyed.
+After native attachment updates, the [shared handoff][handoff] releases bindings
+to managed sail controllers before invoking the [rigging adapters][rigging] to
+restore their routes and travel limits. Physical mast arrays retain their native
+controls. Owned clones and reservations are released when the sail is disabled
+or destroyed.
 
 The [rig][rig] supplies a neutral fitted width projected along boat-local Z for
 [sheet fallback eligibility](How-winches-are-placed#fitted-span-and-fallback-eligibility).
 Fitting scale and orientation affect that span; live trim, hoisting, and billow
-do not. These control descriptions follow revision `fcdf300` (plugin metadata
-**0.3.0**).
+do not.
 
 ## Assets and ownership
 
 The editable mesh is [`assets/flying_sail/fishermans_flying_sail.blend`][asset].
 Its nominal flat cut is 4.6 units wide with a 9.2-unit luff. Blender X points
-aft, Z points up, and the panel lies at Y = 0. The baker validates the outline,
-grid, transforms, and planar UVs, then writes
-`FishermansFlyingSailBakedMesh.g.cs`. Runtime geometry scales those arrays and
-adds the belly and luff bow.
+aft, Z points up, and the panel lies at Y = 0. The [collector][collector]
+validates the quad grid, applied transforms, finite coordinates, and seam-free
+`ClothUV` layer, then the baker writes `FishermansFlyingSailBakedMesh.g.cs`.
+Runtime geometry scales those arrays and adds the belly and luff bow.
 
 From the repository root, bake an edited asset and check the generated data
 with:
@@ -144,30 +148,35 @@ are retained.
 - [Native integration: force direction, controls, fitting, and
   registration][patches]
 - [Plain cloth and recoloring][appearance]
-- [Corner-knot extraction][knots] and [authoring dimensions][authoring]
+- [Corner-knot extraction][knots] and [asset paths][authoring] and [bake
+  validation][collector]
 - [Fisherman's Staysails](Fishermans-Staysails) for the stay-mounted family
 
 [prefab]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansFlyingSail/FishermansFlyingSailPrefab.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailPrefab.cs
 [rigging]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansFlyingSail/FishermansFlyingSailRigging.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailRigging.cs
 [geometry]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansFlyingSail/FishermansFlyingSailGeometry.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailGeometry.cs
 [aerodynamics]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansFlyingSail/FishermansFlyingSailAerodynamics.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailAerodynamics.cs
 [asset]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/assets/flying_sail/fishermans_flying_sail.blend
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/assets/flying_sail/fishermans_flying_sail.blend
 [ropes]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Visuals/RoutedRope.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Visuals/RoutedRope.cs
 [rig]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailRig.cs
 [frame]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansFlyingSail/FishermansFlyingSailFrameGeometry.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailFrameGeometry.cs
 [patches]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/fcdf300dd1ad89943b26e0c9db97152d6e01d3d5/src/Sails/FishermansFlyingSail/Patches/FlyingSailSailwindPatches.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/Patches/FlyingSailSailwindPatches.cs
 [appearance]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansFlyingSail/FishermansFlyingSailAppearance.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailAppearance.cs
 [knots]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/src/Sails/FishermansFlyingSail/FishermansFlyingSailKnots.cs
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Sails/FishermansFlyingSail/FishermansFlyingSailKnots.cs
 [authoring]:
-  https://github.com/sum-rock/MoreSailwindSails/blob/43540e59195537d3f5504c983f4c48ee5a9317fb/tools/assets/flying_sail_authoring.py
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tools/assets/flying_sail/authoring.py
+[handoff]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/src/Controls/Patches/ControlsSailwindPatches.cs
+[collector]:
+  https://github.com/sum-rock/MoreSailwindSails/blob/fbc225db947d12a6658ac4016c1b4708c1395448/tools/assets/flying_sail/collect.py
