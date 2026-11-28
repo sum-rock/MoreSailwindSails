@@ -129,14 +129,14 @@ internal static class NativeSeatProfileChecks
         );
         var shba = ShBaControls.Definition;
         Check(
-            shba.HalyardFallbacks.Count == 0
+            shba.HalyardFallbacks.Count == 3
                 && shba.SheetFallbacks.Select(pair => pair.Name)
                     .SequenceEqual(new[] { "Forward", "Midships", "Aft" })
                 && shba.SheetFallbacks.All(pair =>
                     pair.Fallback.Port.Supports.Count == 0
                     && pair.Fallback.Starboard.Supports.Count == 0
                 ),
-            "Sh'ba captures define three hull-mounted sheet pairs and no halyard fallbacks."
+            "Sh'ba captures define three hull-mounted sheet pairs and three cleat halyard fallbacks."
         );
         // Raw port/starboard F9 contacts, ordered forward to aft. Captures #7-8 are excluded.
         var captures = new[]
@@ -168,6 +168,30 @@ internal static class NativeSeatProfileChecks
                 .Single()
                 .Name == "Aft",
             "A Sh'ba sail extending behind the midships pair must use the aft pair."
+        );
+        // Preserve native coil poses on the matching starboard cleats, rather than
+        // using the deck points hit by the captures. Mast 28 resolves to base 3.
+        var shbaCoils = new[]
+        {
+            (3, 0, new Vector3(-0.84375024f, 2.47900033f, -2.52999997f)),
+            (4, 1, new Vector3(-0.84765649f, 2.50200057f, -2.88281298f)),
+            (5, 0, new Vector3(-0.82800001f, 2.49099994f, -3.21600008f)),
+        };
+        foreach (var (mast, index, portPivot) in shbaCoils)
+        {
+            var seat = shba.HalyardFallbacks.Single(group => group.Mast == mast).Fallback;
+            Check(
+                seat.TemplateIndex == index
+                    && (seat.Position - portPivot - new Vector3(1.5905841f, 0f, 0f)).magnitude
+                        < 0.000001f
+                    && (seat.Normal - seat.SourceNormal).magnitude < 0.000001f
+                    && Math.Abs(seat.Offset - 0.088011f) < 0.000001f,
+                "Sh'ba halyard coils must retain native cleat seating, rotation and model depth."
+            );
+        }
+        Check(
+            shba.Boat.Base(section: 28) == 3,
+            "Sh'ba main topmast must share its base mast's halyard fallback."
         );
         var reef = caelanor.HalyardFallbacks.Single();
         Check(
