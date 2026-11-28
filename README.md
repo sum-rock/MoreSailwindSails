@@ -1,5 +1,16 @@
 # MoreSailwindSails
 
+<!-- prettier-ignore -->
+> [!IMPORTANT]
+> **AI Disclosure**
+>
+> As a modern software engineer, I embrace the tools available to me to
+> continually refine my craft and produce high-quality work efficiently and
+> effectively. AI is one of those tools. I use it to interrogate existing code,
+> assist in authoring new code, explore alternative approaches, and critically
+> evaluate solutions. The engineering decisions, direction, and responsibility
+> for the resulting work remain my own.
+
 ## Overview
 
 MoreSailwindSails adds three families of sails to Sailwind:
