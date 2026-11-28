@@ -23,6 +23,7 @@ namespace MoreSailwindSails.Stays.FishermansStay.Configuration
                 CaelanorStays.Definition,
                 KakamStays.Definition,
                 DhowStays.Definition,
+                ShBaStays.Definition,
             }
         );
 
