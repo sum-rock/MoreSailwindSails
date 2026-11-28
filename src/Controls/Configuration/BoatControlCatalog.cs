@@ -23,6 +23,7 @@ namespace MoreSailwindSails.Controls.Configuration
                 CaelanorControls.Definition,
                 KakamControls.Definition,
                 DhowControls.Definition,
+                ShBaControls.Definition,
             }
         );
 

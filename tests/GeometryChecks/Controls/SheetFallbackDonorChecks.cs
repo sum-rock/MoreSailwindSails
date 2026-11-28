@@ -51,6 +51,10 @@ internal static class SheetFallbackDonorChecks
             (ShroudControls.Definition, "Midships", 6, WinchRole.Reef, 0.088011f, 1f),
             (ShroudControls.Definition, "Aft", 6, WinchRole.Reef, 0.088011f, 1f),
             (ShroudControls.Definition, "Stern", 6, WinchRole.Reef, 0.088011f, 1f),
+            // Sh'ba installed donor inspected 2026-11-27.
+            (ShBaControls.Definition, "Forward", 0, WinchRole.Reef, 0.088011f, 1f),
+            (ShBaControls.Definition, "Midships", 0, WinchRole.Reef, 0.088011f, 1f),
+            (ShBaControls.Definition, "Aft", 0, WinchRole.Reef, 0.088011f, 1f),
         };
         foreach (var (boat, name, mast, role, rearDepth, scale) in donors)
         {

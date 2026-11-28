@@ -84,10 +84,13 @@ internal static class ProfileChecks
                     ShBaStays.Definition
                 )
                 || FlyingSailCatalog.Find(boatName: name) != null
-                || BoatControlCatalog.Find(boatName: name) != null
+                || !ReferenceEquals(
+                    BoatControlCatalog.Find(boatName: name),
+                    ShBaControls.Definition
+                )
             )
                 throw new Exception(
-                    "Sh'ba must resolve in the shared boat and stay catalogs only."
+                    "Sh'ba must resolve in the shared boat, stay and control catalogs only."
                 );
         }
         if (!ReferenceEquals(BoatCatalog.All, BoatCatalog.All))

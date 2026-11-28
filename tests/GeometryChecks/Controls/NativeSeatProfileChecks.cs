@@ -34,8 +34,8 @@ internal static class NativeSeatProfileChecks
                 );
         }
         Check(
-            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 32,
-            "Preserve the thirty-two authored sheet fallback pairs."
+            BoatControlCatalog.All.Sum(boat => boat.SheetFallbacks.Count) == 35,
+            "Preserve the thirty-five authored sheet fallback pairs."
         );
         foreach (var pair in BoatControlCatalog.All.SelectMany(boat => boat.SheetFallbacks))
         foreach (var seat in new[] { pair.Fallback.Port, pair.Fallback.Starboard })
@@ -96,6 +96,9 @@ internal static class NativeSeatProfileChecks
                         definition.Fallback
                     )
                 )
+                .Concat(
+                    ShBaControls.Definition.SheetFallbacks.Select(definition => definition.Fallback)
+                )
         )
             Check(
                 (pair.Port.Contact - Reflect(pair.Starboard.Contact)).magnitude < 0.000001f
@@ -106,7 +109,7 @@ internal static class NativeSeatProfileChecks
                     ).magnitude < 0.000001f
                     && pair.Port.Contact.x < 0
                     && pair.Starboard.Contact.x > 0,
-                "Brig, Caelanor, Gloriana, Chronian, LargeDhow, Sanbuq and Shroud sheet contacts, mounting offsets and normals must mirror at the deck centreline."
+                "Brig, Caelanor, Gloriana, Chronian, LargeDhow, Sanbuq, Shroud and ShBa sheet contacts, mounting offsets and normals must mirror at the deck centreline."
             );
         Check(
             SheetFallbackOrder
@@ -123,6 +126,48 @@ internal static class NativeSeatProfileChecks
                     .Single()
                     .Name == "Mizzenmast",
             "Both Chronian sheet pairs must be aft of its mainmast; only the mizzen pair is aft of its mizzen."
+        );
+        var shba = ShBaControls.Definition;
+        Check(
+            shba.HalyardFallbacks.Count == 0
+                && shba.SheetFallbacks.Select(pair => pair.Name)
+                    .SequenceEqual(new[] { "Forward", "Midships", "Aft" })
+                && shba.SheetFallbacks.All(pair =>
+                    pair.Fallback.Port.Supports.Count == 0
+                    && pair.Fallback.Starboard.Supports.Count == 0
+                ),
+            "Sh'ba captures define three hull-mounted sheet pairs and no halyard fallbacks."
+        );
+        // Raw port/starboard F9 contacts, ordered forward to aft. Captures #7-8 are excluded.
+        var captures = new[]
+        {
+            (
+                new Vector3(-2.165846f, 2.195129f, -1.480298f),
+                new Vector3(2.174113f, 2.173539f, -1.402985f)
+            ),
+            (
+                new Vector3(-1.973168f, 2.203034f, -3.472220f),
+                new Vector3(1.977959f, 2.248368f, -3.388218f)
+            ),
+            (
+                new Vector3(-1.290075f, 2.210968f, -7.604544f),
+                new Vector3(1.299061f, 2.240326f, -7.614885f)
+            ),
+        };
+        for (int i = 0; i < captures.Length; i++)
+            Check(
+                (
+                    shba.SheetFallbacks[i].Fallback.Port.Contact
+                    - (captures[i].Item1 + Reflect(captures[i].Item2)) * 0.5f
+                ).magnitude < 0.000001f,
+                "Sh'ba sheet pairs must average the six accepted captures."
+            );
+        Check(
+            SheetFallbackOrder
+                .FromBoundary(fallbacks: shba.SheetFallbacks, aftBoundaryZ: -3.5f)
+                .Single()
+                .Name == "Aft",
+            "A Sh'ba sail extending behind the midships pair must use the aft pair."
         );
         var reef = caelanor.HalyardFallbacks.Single();
         Check(
@@ -157,6 +202,7 @@ internal static class NativeSeatProfileChecks
                 "Caelanor",
                 "Kakam",
                 "Dhow",
+                "ShBa",
             }
         )
             Check(rows.Any(r => r[1] == boat), "Missing boat inventory: " + boat);
@@ -174,6 +220,7 @@ internal static class NativeSeatProfileChecks
             "Caelanor",
             "Kakam",
             "Dhow",
+            "ShBa",
         };
         for (int b = 0; b < BoatControlCatalog.All.Count; b++)
         {
