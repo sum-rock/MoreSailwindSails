@@ -76,12 +76,20 @@ internal static class PatchChecks
             || !dependencyFields.Any(f =>
                 f.DeclaringType.Name == "FishermansStay" && f.Name == "Option"
             )
-            || !dependencyFields.Any(f =>
+        )
+            throw new Exception(
+                "Staysail dependencies must retain the occupied stay and its explicit prerequisites."
+            );
+        // Sh'ba's topmast options point childMast at their lower masts. Treating
+        // those references as dependencies forces unselected topmasts on during
+        // SetOptionEnabled(false), and incorrectly blocks their removal.
+        if (
+            dependencyFields.Any(f =>
                 f.DeclaringType.Name == "BoatPartOption" && f.Name == "childMast"
             )
         )
             throw new Exception(
-                "Staysail dependencies must retain the stay, prerequisites and child-mast aliases."
+                "Staysail support guards must not infer prerequisites from childMast references."
             );
         foreach (string patch in new[] { "SupportRemoval", "SupportPreview" })
         {

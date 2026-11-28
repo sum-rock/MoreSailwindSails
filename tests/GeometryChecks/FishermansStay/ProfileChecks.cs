@@ -73,16 +73,25 @@ internal static class ProfileChecks
         ChronianChecks.Run();
         CaelanorChecks.Run();
         DhowChecks.Run();
+        ShBaChecks.Run();
         foreach (string suffix in new[] { "", "(Clone)", "(Clone)(Clone)" })
         {
             string name = "BOAT Shroud Small (160)" + suffix;
             if (
                 !ReferenceEquals(BoatCatalog.Find(boatName: name), ShBa.Definition)
-                || FishermansStayCatalog.Find(boatName: name) != null
+                || !ReferenceEquals(
+                    FishermansStayCatalog.Find(boatName: name),
+                    ShBaStays.Definition
+                )
                 || FlyingSailCatalog.Find(boatName: name) != null
-                || BoatControlCatalog.Find(boatName: name) != null
+                || !ReferenceEquals(
+                    BoatControlCatalog.Find(boatName: name),
+                    ShBaControls.Definition
+                )
             )
-                throw new Exception("Sh'ba must resolve only in the shared boat catalog.");
+                throw new Exception(
+                    "Sh'ba must resolve in the shared boat, stay and control catalogs only."
+                );
         }
         if (!ReferenceEquals(BoatCatalog.All, BoatCatalog.All))
             throw new Exception("Catalog is rebuilt on access.");

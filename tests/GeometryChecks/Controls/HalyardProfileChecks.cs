@@ -24,6 +24,7 @@ internal static class HalyardProfileChecks
             "Caelanor",
             "Kakam",
             "Dhow",
+            "ShBa",
         };
         var rows = File.ReadAllLines(
                 Path.Combine(AppContext.BaseDirectory, "FishermansStay", "NativeWinchSeats.txt")
@@ -56,11 +57,11 @@ internal static class HalyardProfileChecks
                     );
                 count++;
             }
-        if (count != 62)
-            throw new Exception("Preserve all sixty-two authored halyard fallbacks.");
+        if (count != 65)
+            throw new Exception("Preserve all sixty-five authored halyard fallbacks.");
         StayDependencyChecks.Run();
         Console.WriteLine(
-            "PASS: sixty-two authored reef fallbacks retain recorded native templates."
+            "PASS: sixty-five authored reef fallbacks retain recorded native templates."
         );
     }
 }

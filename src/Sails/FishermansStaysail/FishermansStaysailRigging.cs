@@ -254,16 +254,12 @@ namespace MoreSailwindSails.Sails.FishermansStaysail
         {
             if (Pair == null || !option)
                 return false;
-            if (Pair.Mount && (Pair.Stay.Option == option || option.childMast == Pair.Mount))
+            // Only authored prerequisites support the stay. A topmast option can
+            // reference its base through childMast without supporting a lower stay.
+            if (Pair.Mount && Pair.Stay.Option == option)
                 return true;
             foreach (var required in Pair.Stay.References.Required)
-                if (
-                    required
-                    && (
-                        required == option
-                        || (option.childMast && required.GetComponent<Mast>() == option.childMast)
-                    )
-                )
+                if (required && required == option)
                     return true;
             return false;
         }

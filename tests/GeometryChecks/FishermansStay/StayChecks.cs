@@ -29,7 +29,7 @@ internal static class StayChecks
         );
         int variants = 0,
             fallback = 0;
-        int[] counts = { 24, 9, 9, 26, 3, 8, 14, 3, 2, 1, 2, 2 };
+        int[] counts = { 24, 9, 9, 26, 3, 8, 14, 3, 2, 1, 2, 2, 6 };
         for (int boatIndex = 0; boatIndex < FishermansStayCatalog.All.Count; boatIndex++)
         {
             var boat = FishermansStayCatalog.All[boatIndex];
